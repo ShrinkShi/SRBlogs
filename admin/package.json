@@ -1,0 +1,44 @@
+{
+  "name": "srblogs-admin",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5174",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview --host 0.0.0.0 --port 6174",
+    "lint": "eslint . --ext .vue,.ts --fix",
+    "format": "prettier --write src/"
+  },
+  "dependencies": {
+    "@codemirror/lang-markdown": "latest",
+    "@codemirror/state": "latest",
+    "@codemirror/view": "latest",
+    "@vitejs/plugin-vue": "latest",
+    "axios": "latest",
+    "codemirror": "latest",
+    "dompurify": "latest",
+    "highlight.js": "latest",
+    "marked": "latest",
+    "pinia": "latest",
+    "vue": "3.5.32",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@types/dompurify": "latest",
+    "@types/node": "latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "@vue/eslint-config-prettier": "latest",
+    "@vue/eslint-config-typescript": "latest",
+    "autoprefixer": "latest",
+    "eslint": "latest",
+    "eslint-plugin-vue": "latest",
+    "postcss": "latest",
+    "prettier": "latest",
+    "tailwindcss": "3.4.17",
+    "typescript": "latest",
+    "vite": "latest",
+    "vue-tsc": "latest"
+  }
+}
