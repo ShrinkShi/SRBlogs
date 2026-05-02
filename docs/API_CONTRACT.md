@@ -1,0 +1,242 @@
+# API Contract
+
+Base path: `/api`
+
+统一错误响应：
+
+```json
+{ "code": "ERROR_CODE", "message": "用户可读错误", "detail": {} }
+```
+
+状态码约定：
+
+- `400`：参数、格式、slug、JSON/Markdown 校验失败。
+- `401`：未登录或 token 缺失/失效。
+- `403`：已登录但无权限。
+- `404`：资源不存在。
+- `409`：slug 冲突、版本冲突、重复提交。
+- `413`：上传文件过大。
+- `415`：上传类型或 MIME 不允许。
+- `500`：服务端未预期错误。
+
+敏感配置不得进入前端构建产物。JWT Secret、管理员密码、AI Key、OSS Key、GitHub OAuth Secret 只能保存在后端 `.env` 或服务端配置中。
+
+## Content APIs
+
+适用于 `/api/posts`、`/api/moments`、`/api/chatters`。
+
+### GET `/{section}`
+
+公开读取。后台可传 `include_drafts=true` 查看草稿。
+
+响应：
+
+```json
+[
+  {
+    "slug": "welcome",
+    "meta": {
+      "title": "标题",
+      "date": "2026-05-02 12:00",
+      "tags": ["Vue3"],
+      "draft": false,
+      "cover": "",
+      "summary": ""
+    },
+    "content": "Markdown 正文"
+  }
+]
+```
+
+### GET `/{section}/{slug}`
+
+公开读取单条内容。`slug` 必须通过 `validate_slug`，禁止路径穿越。
+
+### POST `/{section}`
+
+后台 JWT。请求体：
+
+```json
+{
+  "slug": "new-post",
+  "meta": {
+    "title": "标题",
+    "date": "",
+    "tags": [],
+    "draft": false,
+    "cover": "",
+    "summary": ""
+  },
+  "content": "Markdown 正文"
+}
+```
+
+响应为保存后的 `ContentItem`。
+
+### PUT `/{section}/{slug}`
+
+后台 JWT。请求体同 POST。允许通过 body 中的新 `slug` 重命名，旧文件删除前必须备份。
+
+### DELETE `/{section}/{slug}`
+
+后台 JWT。删除前必须备份。响应：
+
+```json
+{ "ok": true }
+```
+
+## Settings APIs
+
+### GET `/settings/public`
+
+前台公开读取。只返回公开站点配置：
+
+```json
+{
+  "title": "SRBlogs",
+  "authorName": "Author",
+  "bio": "",
+  "avatarUrl": "",
+  "defaultPostCover": "",
+  "photoWallImage": "",
+  "bgImages": [],
+  "themeColors": [],
+  "cloudMusicIds": [],
+  "danmakuList": [],
+  "social": {},
+  "counts": {},
+  "chatterTitle": "",
+  "chatterDescription": "",
+  "buildDate": "",
+  "theme": "nebula",
+  "gitalkConfig": {
+    "clientID": "",
+    "repo": "",
+    "owner": "",
+    "admin": [],
+    "clientSecretConfigured": false
+  }
+}
+```
+
+不得返回 `clientSecret`、AI Key、OSS Key、JWT Secret、管理员密码。
+
+### GET `/admin/settings`
+
+后台 JWT。返回可管理配置和 Secret 配置状态。Secret 不返回明文，只返回布尔值：
+
+```json
+{
+  "title": "SRBlogs",
+  "gitalkConfig": {
+    "clientID": "",
+    "repo": "",
+    "owner": "",
+    "admin": [],
+    "clientSecretConfigured": true
+  },
+  "imageBed": {
+    "driver": "local",
+    "ossKeyConfigured": false
+  },
+  "ai": {
+    "active": "a",
+    "aiKeyConfigured": false
+  },
+  "serverSecrets": {
+    "jwtSecretConfigured": true,
+    "adminPasswordConfigured": true,
+    "ossKeyConfigured": false,
+    "aiKeyConfigured": false,
+    "githubOAuthSecretConfigured": true
+  }
+}
+```
+
+### PUT `/admin/settings`
+
+后台 JWT。请求体：
+
+```json
+{ "data": { "title": "SRBlogs", "theme": "nebula" } }
+```
+
+保存到 `backend/data/settings.json`，写入必须走 `safe_write_json`。如果请求未提供已有 Secret，服务端保留旧值。
+
+## Upload API
+
+### POST `/upload`
+
+后台 JWT。`multipart/form-data` 字段：`file`。
+
+限制：
+
+- 扩展名：`.jpg`、`.jpeg`、`.png`、`.gif`、`.webp`、`.svg`
+- MIME：`image/jpeg`、`image/png`、`image/gif`、`image/webp`、`image/svg+xml`
+- 大小：不超过 5 MB
+
+响应：
+
+```json
+{ "filename": "uuid.png", "url": "http://127.0.0.1:8000/uploads/uuid.png", "size": 1234 }
+```
+
+## Comments API
+
+### GET `/comments/{resource}/{slug}`
+
+公开读取。`resource` 仅允许 `posts`、`moments`、`chatters`，`slug` 必须通过 `validate_slug`。
+
+### POST `/comments/{resource}/{slug}`
+
+公开提交。请求体：
+
+```json
+{ "author": "name", "email": "optional@example.com", "content": "comment" }
+```
+
+响应：
+
+```json
+{
+  "id": "uuid",
+  "author": "name",
+  "email": "optional@example.com",
+  "content": "comment",
+  "created_at": "2026-05-02 12:00"
+}
+```
+
+提交内容必须用 bleach 清洗。
+
+## Dashboard API
+
+### GET `/dashboard/stats`
+
+后台 JWT。响应：
+
+```json
+{ "posts": 0, "moments": 0, "chatters": 0, "photos": 0 }
+```
+
+## Chat API
+
+### POST `/chat`
+
+后台 JWT。AI Key 只从后端环境变量读取。
+
+请求体：
+
+```json
+{
+  "provider": "a",
+  "messages": [{ "role": "user", "content": "hello" }],
+  "stream": false
+}
+```
+
+响应为上游兼容 OpenAI `/chat/completions` 的 JSON；未配置时返回：
+
+```json
+{ "content": "AI endpoint is not configured." }
+```

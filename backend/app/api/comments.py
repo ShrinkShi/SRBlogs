@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException
 from datetime import datetime
 from uuid import uuid4
+
 import bleach
+from fastapi import APIRouter, HTTPException
+
 from app.config import get_settings
 from app.models.schemas import CommentCreate, CommentItem
+from app.services.file_store import FileStoreError, validate_slug
 from app.services.json_service import JsonStore
 
 router = APIRouter(prefix="/comments", tags=["comments"])
@@ -12,8 +15,11 @@ ALLOWED_RESOURCES = {"posts", "moments", "chatters"}
 
 def _store(resource: str, slug: str) -> JsonStore:
     if resource not in ALLOWED_RESOURCES:
-        raise HTTPException(status_code=400, detail="非法评论资源")
-    safe_slug = "".join(ch for ch in slug if ch.isalnum() or ch in "-_")
+        raise HTTPException(status_code=400, detail="Invalid comment resource")
+    try:
+        safe_slug = validate_slug(slug)
+    except FileStoreError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return JsonStore(get_settings().data_path, f"comments/{resource}-{safe_slug}.json", [])
 
 

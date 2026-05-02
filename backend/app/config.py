@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     jwt_secret: str = "please-change-this-secret"
     jwt_expire_minutes: int = 1440
 
-    cors_origins: str = "http://127.0.0.1:5173,http://127.0.0.1:5174,http://localhost:5173,http://localhost:5174"
+    cors_origins: str = "http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:5175,http://localhost:5173,http://localhost:5174,http://localhost:5175"
 
     upload_driver: str = "local"
     oss_access_key_id: str = ""
@@ -36,7 +36,14 @@ class Settings(BaseSettings):
     def data_path(self) -> Path:
         path = Path(self.data_dir)
         if not path.is_absolute():
-            path = Path.cwd() / path
+            repo_root = Path(__file__).resolve().parents[2]
+            backend_root = repo_root / "backend"
+            if path.parts[:2] == ("backend", "data"):
+                path = repo_root / path
+            elif path.parts[:1] == ("data",):
+                path = backend_root / path
+            else:
+                path = repo_root / path
         return path
 
     @property

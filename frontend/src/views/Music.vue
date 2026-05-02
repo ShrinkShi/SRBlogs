@@ -6,7 +6,7 @@ import { contentApi } from '@/api/content'
 import type { MusicItem, SiteSettings } from '@/types'
 const tracks = ref<MusicItem[]>([])
 const settings = ref<SiteSettings | null>(null)
-onMounted(async () => { tracks.value = await contentApi.json<MusicItem[]>('/music'); settings.value = await contentApi.json<SiteSettings>('/settings') })
+onMounted(async () => { tracks.value = await contentApi.json<MusicItem[]>('/music'); settings.value = await contentApi.json<SiteSettings>('/settings/public') })
 </script>
 <template>
   <section class="grid gap-5">

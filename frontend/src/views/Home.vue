@@ -21,7 +21,7 @@ onMounted(async () => {
     contentApi.list('moments'),
     contentApi.list('chatters'),
     contentApi.json<ProjectItem[]>('/projects'),
-    contentApi.json<SiteSettings>('/settings')
+    contentApi.json<SiteSettings>('/settings/public')
   ])
   if (p.status === 'fulfilled') posts.value = p.value
   if (m.status === 'fulfilled') moments.value = m.value

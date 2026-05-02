@@ -16,7 +16,7 @@ import type { MusicItem, SiteSettings } from '@/types'
 const settings = ref<SiteSettings | null>(null)
 const tracks = ref<MusicItem[]>([])
 onMounted(async () => {
-  try { settings.value = await contentApi.json<SiteSettings>('/settings') } catch { settings.value = null }
+  try { settings.value = await contentApi.json<SiteSettings>('/settings/public') } catch { settings.value = null }
   try { tracks.value = await contentApi.json<MusicItem[]>('/music') } catch { tracks.value = [] }
 })
 </script>

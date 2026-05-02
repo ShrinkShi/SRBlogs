@@ -11,7 +11,7 @@ marked.use({
   breaks: true,
   async: false,
   renderer: new marked.Renderer(),
-  highlight(code, lang) {
+  highlight(code: string, lang: string) {
     const language = hljs.getLanguage(lang) ? lang : 'plaintext'
     return hljs.highlight(code, { language }).value
   }
@@ -30,7 +30,7 @@ const headings = computed(() => {
 
 const html = computed(() => {
   const raw = marked.parse(props.content) as string
-  const withIds = raw.replace(/<h([23])>(.*?)<\/h\1>/g, (_m, level, text) => {
+  const withIds = raw.replace(/<h([23])>(.*?)<\/h\1>/g, (_m: string, level: string, text: string) => {
     const id = String(text).replace(/<[^>]+>/g, '').toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-')
     return `<h${level} id="${id}">${text}</h${level}>`
   })

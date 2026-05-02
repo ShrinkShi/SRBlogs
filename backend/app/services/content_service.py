@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import re
-from pathlib import Path
 from datetime import datetime
-import yaml
-from app.models.schemas import ContentItem, ContentMeta, ContentWrite
+from pathlib import Path
 
-SLUG_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$")
+import yaml
+
+from app.models.schemas import ContentItem, ContentMeta, ContentWrite
+from app.services.file_store import backup_file, resolve_data_path, safe_read_text, safe_write_text, validate_slug
 
 
 class ContentError(ValueError):
@@ -14,10 +14,10 @@ class ContentError(ValueError):
 
 
 def ensure_slug(slug: str) -> str:
-    slug = slug.strip()
-    if not SLUG_RE.match(slug):
-        raise ContentError("slug 只能包含字母、数字、下划线和中划线，且长度不超过 81")
-    return slug
+    try:
+        return validate_slug(slug)
+    except ValueError as exc:
+        raise ContentError(str(exc)) from exc
 
 
 def _split_front_matter(raw: str) -> tuple[dict, str]:
@@ -38,7 +38,7 @@ def _dump_front_matter(meta: dict, content: str) -> str:
 
 class MarkdownStore:
     def __init__(self, base: Path, section: str):
-        self.path = base / section
+        self.path = resolve_data_path(section)
         self.path.mkdir(parents=True, exist_ok=True)
 
     def _file(self, slug: str) -> Path:
@@ -58,7 +58,7 @@ class MarkdownStore:
         file = self._file(slug)
         if not file.exists():
             raise FileNotFoundError(slug)
-        raw = file.read_text(encoding="utf-8")
+        raw = safe_read_text(file)
         meta_dict, content = _split_front_matter(raw)
         if not meta_dict.get("date"):
             meta_dict["date"] = datetime.fromtimestamp(file.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
@@ -72,12 +72,14 @@ class MarkdownStore:
         if old_slug and ensure_slug(old_slug) != slug:
             old = self._file(old_slug)
             if old.exists():
+                backup_file(old)
                 old.unlink()
-        target.write_text(_dump_front_matter(payload.meta.model_dump(), payload.content), encoding="utf-8")
+        safe_write_text(target, _dump_front_matter(payload.meta.model_dump(), payload.content))
         return self.read(slug)
 
     def delete(self, slug: str) -> None:
         file = self._file(slug)
         if not file.exists():
             raise FileNotFoundError(slug)
+        backup_file(file)
         file.unlink()

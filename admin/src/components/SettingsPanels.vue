@@ -10,14 +10,17 @@ const active = ref<SettingsTab>('site')
 const tabs: { key: SettingsTab; label: string }[] = [
   { key: 'site', label: '站点控制中心' },
   { key: 'image', label: '图床配置' },
-  { key: 'ai', label: 'AI 猫猫助理' },
+  { key: 'ai', label: 'AI 助手' },
   { key: 'deploy', label: '部署同步' }
 ]
 const parsed = computed(() => {
   try { return JSON.parse(text.value) as Record<string, unknown> } catch { return {} }
 })
-onMounted(async () => { text.value = JSON.stringify(await adminApi.json('/settings'), null, 2) })
-async function save(){ await adminApi.putJson('/settings', JSON.parse(text.value)); ui.show('设置已保存') }
+onMounted(async () => { text.value = JSON.stringify(await adminApi.json('/admin/settings'), null, 2) })
+async function save(){
+  text.value = JSON.stringify(await adminApi.putJson('/admin/settings', JSON.parse(text.value)), null, 2)
+  ui.show('设置已保存')
+}
 function patch(key: string, value: unknown) {
   const data = { ...parsed.value, [key]: value }
   text.value = JSON.stringify(data, null, 2)
@@ -35,7 +38,7 @@ function patch(key: string, value: unknown) {
         <div class="relative z-[1]">
           <template v-if="active === 'site'">
             <h2 class="text-2xl font-black text-white">siteConfig</h2>
-            <p class="mt-2 text-sm leading-6 text-white/50">对应前台的站点标题、头像、背景图、弹幕、社交链接、建站日期。这里直接编辑 JSON，保存后前台刷新即可读取。</p>
+            <p class="mt-2 text-sm leading-6 text-white/50">对应前台的站点标题、头像、背景图、弹幕、社交链接和建站日期。后台接口不会返回 Secret 明文。</p>
             <div class="mt-4 grid gap-3 md:grid-cols-2">
               <button class="admin-btn admin-btn-ghost" @click="patch('theme', 'nebula')">切换默认星云主题</button>
               <button class="admin-btn admin-btn-ghost" @click="patch('theme', 'sakura')">切换樱花主题</button>
@@ -43,15 +46,15 @@ function patch(key: string, value: unknown) {
           </template>
           <template v-else-if="active === 'image'">
             <h2 class="text-2xl font-black text-white">图床配置</h2>
-            <p class="mt-2 text-sm leading-6 text-white/50">生产环境不要把 OSS AccessKey 明文存到前端仓库。建议写入后端 .env，再由上传接口读取。</p>
+            <p class="mt-2 text-sm leading-6 text-white/50">OSS AccessKey 只能写入后端 .env 或服务端配置。此处只显示配置状态，不显示密钥明文。</p>
           </template>
           <template v-else-if="active === 'ai'">
-            <h2 class="text-2xl font-black text-white">AI 猫猫助理</h2>
-            <p class="mt-2 text-sm leading-6 text-white/50">保留 A/B 双线配置入口。真实 API Key 仍建议放在后端环境变量里。</p>
+            <h2 class="text-2xl font-black text-white">AI 助手</h2>
+            <p class="mt-2 text-sm leading-6 text-white/50">AI Key 由后端代理读取环境变量，前台和后台构建产物都不能包含密钥。</p>
           </template>
           <template v-else>
             <h2 class="text-2xl font-black text-white">部署同步</h2>
-            <p class="mt-2 text-sm leading-6 text-white/50">当前版本以阿里云轻量服务器 + Nginx + Systemd 为主，不再使用原项目 Vercel/本地控制台一键脚本路线。</p>
+            <p class="mt-2 text-sm leading-6 text-white/50">当前版本保留服务器部署路线：Nginx + Systemd + FastAPI，不复刻 GitHub/Vercel 双轨同步。</p>
           </template>
         </div>
       </div>

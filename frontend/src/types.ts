@@ -68,6 +68,13 @@ export interface SiteSettings {
   chatterTitle?: string
   chatterDescription?: string
   theme?: string
+  gitalkConfig?: {
+    clientID?: string
+    repo?: string
+    owner?: string
+    admin?: string[]
+    clientSecretConfigured?: boolean
+  }
   imageBed?: Record<string, unknown>
   ai?: Record<string, unknown>
 }
