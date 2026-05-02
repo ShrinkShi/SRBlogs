@@ -19,15 +19,15 @@ const wechat = () => social().wechat || 'srblogs'
 async function copy(value: string, label: string) {
   try {
     await navigator.clipboard.writeText(value)
-    ui.showToast(`${label} 已复制`)
+    ui.showToast(`${label} 已复制`, 'success')
   } catch {
-    ui.showToast(`${label} 复制失败`)
+    ui.showToast(`${label} 复制失败`, 'error')
   }
 }
 </script>
 
 <template>
-  <GlassCard class="min-h-full min-w-0 max-w-full">
+  <GlassCard hover class="min-h-full min-w-0 max-w-full">
     <div class="grid min-w-0 gap-6">
       <div class="grid min-w-0 gap-5 sm:grid-cols-[8.5rem_minmax(0,1fr)] sm:items-center">
         <div class="relative mx-auto sm:mx-0">

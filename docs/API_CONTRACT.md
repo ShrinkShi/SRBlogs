@@ -369,6 +369,16 @@ Sitemap: https://example.com/api/sitemap.xml
 
 ## Upload API
 
+2026-05-03 更新：`POST /api/upload` 继续要求管理员 JWT，但本地资源上传范围从图片扩展为图片、音频和视频。后台表单可将上传返回的 URL 回填到头像、背景、照片、封面、音乐 URL 或后续视频字段。接口仍必须同时校验扩展名、MIME 和大小；非法类型返回 `415`，超大文件返回 `413`。
+
+当前默认允许：
+
+- 图片：`.jpg`、`.jpeg`、`.png`、`.gif`、`.webp`、`.svg`
+- 音频：`.mp3`、`.wav`、`.ogg`、`.m4a`
+- 视频：`.mp4`、`.webm`、`.mov`
+- MIME：`image/jpeg`、`image/png`、`image/gif`、`image/webp`、`image/svg+xml`、`audio/mpeg`、`audio/wav`、`audio/ogg`、`audio/mp4`、`video/mp4`、`video/webm`、`video/quicktime`
+- 默认大小上限：`UPLOAD_MAX_SIZE`，本地默认 5 MB。
+
 ### POST `/upload`
 
 后台 JWT。`multipart/form-data` 字段：`file`。

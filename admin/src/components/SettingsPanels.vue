@@ -30,6 +30,29 @@ const tabs: { key: SettingsTab; label: string }[] = [
   { key: 'deploy', label: '部署与安全提示' }
 ]
 
+const tokenLabels: Record<string, string> = {
+  bgPage: '页面背景',
+  bgCard: '卡片背景',
+  bgCardElevated: '卡片高层背景',
+  borderGlass: '玻璃边框',
+  textPrimary: '主文字',
+  textSecondary: '次文字',
+  accent: '强调色',
+  accentSoft: '柔和强调色',
+  navBg: '导航背景',
+  homePanelBg: '首页面板背景',
+  shadowGlow: '发光阴影'
+}
+
+function tokenLabel(key: string) {
+  return tokenLabels[key] || key
+}
+
+function colorPickerValue(value: unknown) {
+  const text = String(value || '').trim()
+  return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#67e8f9'
+}
+
 const form = reactive({
   siteTitle: '',
   subtitle: '',
@@ -361,13 +384,25 @@ onMounted(load)
               <div class="rounded-[24px] border border-white/10 bg-white/[0.06] p-4">
                 <h3 class="font-black text-white">日间模式核心 token</h3>
                 <div class="mt-4 grid gap-3 md:grid-cols-2">
-                  <label v-for="(_, key) in form.themeConfig.day" :key="String(key)" class="grid gap-2 text-xs text-white/58">{{ key }}<input v-model="form.themeConfig.day[key]" class="admin-input" /></label>
+                  <label v-for="(_, key) in form.themeConfig.day" :key="String(key)" class="grid gap-2 text-xs text-white/58">
+                    <span>{{ tokenLabel(String(key)) }} <small class="text-white/35">({{ key }})</small></span>
+                    <div class="flex gap-2">
+                      <input type="color" class="h-11 w-12 shrink-0 rounded-xl border border-white/10 bg-white/10 p-1" :value="colorPickerValue(form.themeConfig.day[key])" @input="form.themeConfig.day[key] = ($event.target as HTMLInputElement).value" />
+                      <input v-model="form.themeConfig.day[key]" class="admin-input min-w-0 flex-1" />
+                    </div>
+                  </label>
                 </div>
               </div>
               <div class="rounded-[24px] border border-white/10 bg-white/[0.06] p-4">
                 <h3 class="font-black text-white">夜间模式核心 token</h3>
                 <div class="mt-4 grid gap-3 md:grid-cols-2">
-                  <label v-for="(_, key) in form.themeConfig.night" :key="String(key)" class="grid gap-2 text-xs text-white/58">{{ key }}<input v-model="form.themeConfig.night[key]" class="admin-input" /></label>
+                  <label v-for="(_, key) in form.themeConfig.night" :key="String(key)" class="grid gap-2 text-xs text-white/58">
+                    <span>{{ tokenLabel(String(key)) }} <small class="text-white/35">({{ key }})</small></span>
+                    <div class="flex gap-2">
+                      <input type="color" class="h-11 w-12 shrink-0 rounded-xl border border-white/10 bg-white/10 p-1" :value="colorPickerValue(form.themeConfig.night[key])" @input="form.themeConfig.night[key] = ($event.target as HTMLInputElement).value" />
+                      <input v-model="form.themeConfig.night[key]" class="admin-input min-w-0 flex-1" />
+                    </div>
+                  </label>
                 </div>
               </div>
             </div>

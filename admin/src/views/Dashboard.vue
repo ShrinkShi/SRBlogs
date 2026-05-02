@@ -23,7 +23,7 @@ onMounted(async () => { stats.value = await adminApi.stats() })
       <GlassCard v-for="(v,k) in stats" :key="k"><p class="text-xs uppercase tracking-[.24em] text-white/38">{{ k }}</p><b class="mt-2 block text-4xl text-white">{{ v }}</b><div class="mt-3 h-1 rounded-full bg-white/10"><div class="h-1 rounded-full bg-cyan-300/80" :style="{ width: Math.min(100, Number(v) * 20 + 10) + '%' }"></div></div></GlassCard>
     </div>
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-      <RouterLink v-for="item in quick" :key="item[1]" :to="item[1]" class="glass rounded-[28px] p-5 transition hover:-translate-y-1 hover:border-cyan-200/30">
+      <RouterLink v-for="item in quick" :key="item[1]" :to="item[1]" class="glass rounded-[28px] p-5 transition hover:scale-[1.015] hover:border-cyan-200/30">
         <div class="relative z-[1]"><h2 class="text-xl font-black text-white">{{ item[0] }}</h2><p class="mt-2 text-sm leading-6 text-white/50">{{ item[2] }}</p></div>
       </RouterLink>
     </div>

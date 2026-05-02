@@ -244,6 +244,78 @@ body::before {
   align-items: stretch;
 }
 
+.home-carousel-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  align-items: stretch;
+}
+
+.home-carousel-right {
+  display: grid;
+  grid-template-rows: minmax(18rem, 1fr) minmax(16rem, .92fr);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  min-width: 0;
+}
+
+.home-carousel-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(14rem, 1fr);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  min-width: 0;
+}
+
+.home-media-carousel,
+.home-text-carousel,
+.home-theme-card {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 32px;
+  border: 1px solid var(--border-glass);
+  background: linear-gradient(135deg, var(--bg-card-elevated), var(--bg-card));
+  box-shadow: 0 24px 80px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.15);
+}
+
+.home-media-carousel {
+  min-height: 18rem;
+}
+
+.home-carousel-tall {
+  min-height: 35.5rem;
+}
+
+.home-carousel-copy {
+  position: absolute;
+  z-index: 1;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 1.35rem;
+}
+
+.home-carousel-dots {
+  position: absolute;
+  z-index: 2;
+  left: 1.35rem;
+  top: 1.25rem;
+  display: flex;
+  gap: .5rem;
+}
+
+.home-text-carousel,
+.home-theme-card {
+  display: flex;
+  min-height: 16rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.35rem;
+  text-align: left;
+}
+
+.home-theme-card {
+  align-items: flex-start;
+}
+
 .home-status-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -436,8 +508,18 @@ body::before {
 
 @media (max-width: 1024px) {
   .home-asymmetric-grid,
-  .home-feature-grid {
+  .home-feature-grid,
+  .home-carousel-layout,
+  .home-carousel-bottom {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-carousel-right {
+    grid-template-rows: auto;
+  }
+
+  .home-carousel-tall {
+    min-height: 24rem;
   }
 }
 

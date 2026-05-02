@@ -1,23 +1,10 @@
 [
   {
-    "title": "Midnight City",
-    "artist": "SRBlogs Demo",
+    "title": "知我",
+    "artist": "国风堂、哦漏",
+    "cover": "",
     "url": "",
-    "cover": "https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=500&auto=format&fit=crop",
-    "id": "1809646618"
-  },
-  {
-    "title": "Glass Light",
-    "artist": "SRBlogs Demo",
-    "url": "",
-    "cover": "https://images.unsplash.com/photo-1506157786151-b8491531f063?q=80&w=500&auto=format&fit=crop",
-    "id": "3361076230"
-  },
-  {
-    "title": "Cyber Sakura",
-    "artist": "SRBlogs Demo",
-    "url": "",
-    "cover": "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?q=80&w=500&auto=format&fit=crop",
-    "id": "1859390262"
+    "id": "",
+    "sort": 0
   }
 ]

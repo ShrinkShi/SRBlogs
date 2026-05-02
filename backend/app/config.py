@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     upload_driver: str = "local"
     upload_max_size: int = 5242880
-    upload_allowed_types: str = "image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+    upload_allowed_types: str = "image/jpeg,image/png,image/gif,image/webp,image/svg+xml,audio/mpeg,audio/wav,audio/ogg,audio/mp4,video/mp4,video/webm,video/quicktime"
     oss_access_key_id: str = ""
     oss_access_key_secret: str = ""
     oss_bucket: str = ""

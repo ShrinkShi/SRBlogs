@@ -11,6 +11,7 @@ export interface StructuredField {
   placeholder?: string
   required?: boolean
   options?: string[]
+  accept?: string
 }
 
 const props = defineProps<{
@@ -243,7 +244,7 @@ onMounted(load)
                 />
                 <label class="cursor-pointer rounded-2xl border border-cyan-200/25 px-4 py-3 text-cyan-100">
                   上传
-                  <input type="file" accept="image/*" class="hidden" @change="uploadForField(field, ($event.target as HTMLInputElement).files)" />
+                  <input type="file" :accept="field.accept || 'image/*,audio/*,video/*'" class="hidden" @change="uploadForField(field, ($event.target as HTMLInputElement).files)" />
                 </label>
               </div>
               <div v-if="uploadProgress[field.key]" class="h-2 rounded-full bg-white/10">

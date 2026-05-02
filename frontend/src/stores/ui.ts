@@ -10,7 +10,8 @@ export const useUiStore = defineStore('ui', {
     bgIndex: Number(localStorage.getItem('sr-bg-index') || '0'),
     danmaku: localStorage.getItem('sr-danmaku') !== 'off',
     ambience: localStorage.getItem('sr-ambience') !== 'off',
-    toast: ''
+    toast: '',
+    toastKind: 'info' as 'info' | 'success' | 'error'
   }),
   actions: {
     setTheme(theme: ThemeName | string) {
@@ -40,8 +41,9 @@ export const useUiStore = defineStore('ui', {
       this.ambience = !this.ambience
       localStorage.setItem('sr-ambience', this.ambience ? 'on' : 'off')
     },
-    showToast(message: string) {
+    showToast(message: string, kind: 'info' | 'success' | 'error' = 'info') {
       this.toast = message
+      this.toastKind = kind
       window.setTimeout(() => (this.toast = ''), 2200)
     }
   }

@@ -1,32 +1,88 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePendingStore } from '@/stores/pending'
+
+type NavGroup = {
+  title: string
+  items: { label: string; path: string; note?: string }[]
+}
 
 const auth = useAuthStore()
 const pendingStore = usePendingStore()
 const route = useRoute()
+const router = useRouter()
 const queueOpen = ref(true)
-const links = [
-  ['仪表盘', '/', '总览'],
-  ['写作', '/editor/posts', 'Markdown'],
-  ['文章', '/posts', '发布'],
-  ['草稿', '/drafts', '暂存'],
-  ['动态', '/moments', '短记'],
-  ['杂谈', '/chatters', '长记'],
-  ['评论', '/comments', '本地'],
-  ['审计', '/audit', '日志'],
-  ['备份', '/backups', '恢复'],
-  ['友链', '/friends', '链接'],
-  ['音乐', '/music', '歌单'],
-  ['照片墙', '/photos', '图片'],
-  ['项目', '/projects', '展示'],
-  ['关于', '/about', '页面'],
-  ['AI助手', '/chat', '双线'],
-  ['设置', '/settings', '配置']
+const queueVisible = ref(true)
+const expanded = ref('content')
+
+const groups: NavGroup[] = [
+  {
+    title: '总览',
+    items: [
+      { label: '仪表盘', path: '/', note: '状态' },
+      { label: '审计日志', path: '/audit', note: '追踪' },
+      { label: '备份恢复', path: '/backups', note: '安全' }
+    ]
+  },
+  {
+    title: '内容',
+    items: [
+      { label: '写作编辑器', path: '/editor/posts', note: 'Markdown' },
+      { label: '文章管理', path: '/posts', note: '发布' },
+      { label: '草稿', path: '/drafts', note: '暂存' },
+      { label: '动态', path: '/moments', note: '短记' },
+      { label: '杂谈', path: '/chatters', note: '长文' },
+      { label: '关于页', path: '/about', note: 'Markdown' }
+    ]
+  },
+  {
+    title: '互动',
+    items: [
+      { label: '评论', path: '/comments', note: '本地' },
+      { label: 'AI 助手', path: '/chat', note: '开关' }
+    ]
+  },
+  {
+    title: '媒体',
+    items: [
+      { label: '友链', path: '/friends', note: '链接' },
+      { label: '项目', path: '/projects', note: '展示' },
+      { label: '音乐', path: '/music', note: '歌单' },
+      { label: '照片墙', path: '/photos', note: '图片' }
+    ]
+  },
+  {
+    title: '系统',
+    items: [
+      { label: '设置中心', path: '/settings', note: '配置' }
+    ]
+  }
 ]
-const active = computed(() => route.path)
+
+const activePath = computed(() => route.path)
+const layoutClass = computed(() => queueVisible.value
+  ? 'xl:grid-cols-[260px_minmax(0,1fr)_300px]'
+  : 'xl:grid-cols-[260px_minmax(0,1fr)]'
+)
+
+function groupKey(group: NavGroup) {
+  return group.title === '总览' ? 'overview'
+    : group.title === '内容' ? 'content'
+      : group.title === '互动' ? 'interaction'
+        : group.title === '媒体' ? 'media'
+          : 'system'
+}
+
+function isGroupActive(group: NavGroup) {
+  return group.items.some((item) => item.path === activePath.value || (item.path !== '/' && activePath.value.startsWith(item.path)))
+}
+
+function goGroup(group: NavGroup) {
+  expanded.value = groupKey(group)
+  router.push(group.items[0].path)
+}
 
 function logout() {
   auth.logout()
@@ -36,39 +92,57 @@ function logout() {
 
 <template>
   <div class="min-h-screen p-3 md:p-6">
-    <div class="mx-auto grid max-w-[1500px] gap-5 xl:grid-cols-[260px_minmax(0,1fr)_300px]">
-      <aside class="glass h-fit max-h-[72vh] overflow-auto rounded-[32px] p-4 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)]">
-        <div class="mb-5 px-3">
+    <div class="mx-auto grid max-w-[1500px] gap-5" :class="layoutClass">
+      <aside class="admin-sidebar h-fit max-h-[78vh] overflow-auto rounded-[24px] p-3 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)]">
+        <div class="mb-4 px-3 py-2">
           <div class="flex items-center gap-3">
-            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-cyan-300/15 text-cyan-100">SR</span>
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cyan-300/15 text-cyan-100">SR</span>
             <div class="min-w-0">
-              <h1 class="truncate text-2xl font-black text-white">SRBlogs</h1>
+              <h1 class="truncate text-xl font-black text-white">SRBlogs</h1>
               <p class="text-xs text-white/45">管理控制台</p>
             </div>
           </div>
         </div>
-        <nav class="grid gap-1" aria-label="后台导航">
-          <RouterLink
-            v-for="link in links"
-            :key="link[1]"
-            :to="link[1]"
-            class="relative z-[1] flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-sm transition"
-            :class="active === link[1] ? 'border border-cyan-200/25 bg-cyan-300/[0.16] text-cyan-100 shadow-[inset_3px_0_0_rgba(103,232,249,.75)]' : 'border border-transparent text-white/64 hover:bg-white/10 hover:text-white'"
-          >
-            <span>{{ link[0] }}</span>
-            <span class="text-[10px] text-white/35">{{ link[2] }}</span>
-          </RouterLink>
+
+        <nav class="relative z-[1] grid gap-2" aria-label="后台导航">
+          <section v-for="group in groups" :key="group.title" class="admin-nav-group">
+            <button
+              type="button"
+              class="admin-nav-parent"
+              :class="isGroupActive(group) ? 'admin-nav-parent-active' : ''"
+              @click="goGroup(group)"
+            >
+              <span>{{ group.title }}</span>
+              <span>{{ expanded === groupKey(group) ? '收起' : '展开' }}</span>
+            </button>
+            <div v-if="expanded === groupKey(group) || isGroupActive(group)" class="admin-nav-children">
+              <RouterLink
+                v-for="item in group.items"
+                :key="item.path"
+                :to="item.path"
+                class="admin-nav-child"
+                :class="activePath === item.path || (item.path !== '/' && activePath.startsWith(item.path)) ? 'admin-nav-child-active' : ''"
+              >
+                <span>{{ item.label }}</span>
+                <small>{{ item.note }}</small>
+              </RouterLink>
+            </div>
+          </section>
         </nav>
+
         <button type="button" class="admin-btn admin-btn-ghost relative z-[1] mt-5 w-full text-sm" @click="logout">退出登录</button>
       </aside>
 
       <main class="min-w-0"><slot /></main>
 
-      <aside class="hidden xl:block">
-        <div class="glass sticky top-6 rounded-[32px] p-5">
+      <aside v-if="queueVisible" class="hidden xl:block">
+        <div class="glass sticky top-6 rounded-[28px] p-5">
           <div class="relative z-[1] flex items-center justify-between gap-3">
             <h2 class="font-black text-white">操作暂存区</h2>
-            <button type="button" class="text-xs text-white/45 hover:text-white/75" :aria-expanded="queueOpen" @click="queueOpen = !queueOpen">{{ queueOpen ? '收起' : '展开' }}</button>
+            <div class="flex gap-2">
+              <button type="button" class="text-xs text-white/45 hover:text-white/75" :aria-expanded="queueOpen" @click="queueOpen = !queueOpen">{{ queueOpen ? '收起内容' : '展开内容' }}</button>
+              <button type="button" class="text-xs text-cyan-100/70 hover:text-cyan-100" @click="queueVisible = false">完全隐藏</button>
+            </div>
           </div>
           <div v-if="queueOpen" class="relative z-[1] mt-4 grid gap-3">
             <p class="rounded-2xl border border-amber-200/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-50/72">
@@ -103,6 +177,15 @@ function logout() {
           </div>
         </div>
       </aside>
+
+      <button
+        v-else
+        type="button"
+        class="fixed bottom-5 right-5 z-50 rounded-2xl border border-cyan-200/25 bg-cyan-300/15 px-4 py-3 text-sm font-bold text-cyan-100 backdrop-blur"
+        @click="queueVisible = true"
+      >
+        显示暂存区
+      </button>
     </div>
   </div>
 </template>

@@ -10,7 +10,7 @@ const links = [
   ['文章', '/posts'],
   ['搜索', '/search'],
   ['归档', '/archive'],
-  ['碎碎念', '/chatters'],
+  ['杂谈', '/chatters'],
   ['友链', '/friends'],
   ['音乐', '/music'],
   ['照片墙', '/photowall'],
@@ -80,15 +80,19 @@ onBeforeUnmount(() => {
         >
           {{ link[0] }}
         </RouterLink>
-        <a href="/admin/" class="ml-2 rounded-2xl border border-cyan-200/25 bg-cyan-300/[0.12] px-3 py-2 text-sm font-bold text-cyan-100 hover:bg-cyan-300/20">后台</a>
       </div>
     </nav>
 
     <div v-if="open" id="mobile-nav" class="sr-page-shell grid grid-cols-2 gap-2 pb-3 sm:grid-cols-3 lg:hidden">
-      <RouterLink v-for="link in links" :key="link[1]" :to="link[1]" class="rounded-2xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-white/80 hover:bg-white/10" @click="open = false">
+      <RouterLink
+        v-for="link in links"
+        :key="link[1]"
+        :to="link[1]"
+        class="rounded-2xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-white/80 hover:bg-white/10"
+        @click="open = false"
+      >
         {{ link[0] }}
       </RouterLink>
-      <a href="/admin/" class="rounded-2xl border border-cyan-200/25 px-3 py-2 text-sm text-cyan-100">后台</a>
     </div>
   </header>
 </template>
