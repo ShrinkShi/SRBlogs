@@ -14,7 +14,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 body {
   margin: 0;
   min-height: 100vh;
@@ -36,6 +36,42 @@ body::before {
   z-index: 0;
 }
 #app { min-height: 100vh; }
+
+.sr-page-shell {
+  width: min(calc(100% - 3rem), 80rem);
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+@media (max-width: 480px) {
+  .sr-page-shell { width: min(calc(100% - 1.5rem), 80rem); }
+}
+
+.home-hero-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+  align-items: stretch;
+  max-width: 100%;
+}
+
+@media (min-width: 1360px) {
+  .home-hero-grid {
+    grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr);
+  }
+}
+
+.home-hero-grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.home-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+  gap: .75rem;
+  max-width: 100%;
+}
 
 .glass {
   position: relative;

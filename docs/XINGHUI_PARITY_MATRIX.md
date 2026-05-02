@@ -166,11 +166,69 @@ Windows 本地启动命令：
 - 当前环境对旧 8000 监听进程 PID 2560 的查询/终止受限，未继续强制处理用户进程。需要用户在普通终端关闭旧后端并重新运行 `start-backend.cmd`。
 - 结论：代码与临时后端验证已通过，但用户 8000 实际后端需重启后才能完成浏览器回归；评论模块继续保持 `进行中`。
 
+2026-05-02 首页响应式溢出修复轮当前结果：
+
+- 主内容容器和顶部导航统一使用 `.sr-page-shell`，宽度为 `min(calc(100% - 2rem), 80rem)`。
+- 首页 Hero + ProfileCard 双列从 `lg` 推迟到 `xl`，1024px 附近默认单列，减少右栏裁切风险。
+- 首页 grid 子项补充 `min-w-0`、`minmax(0, ...)` 和文本换行。
+- ProfileCard 在 420px 以下统计项改为单列，避免小屏挤压。
+- SiteDashboard 统计块改为 `sm` 三列、`lg` 五列，窄屏自动换行。
+- 顶部导航桌面链接从 `lg` 起展示，`lg` 以下使用菜单，避免中等宽度导航溢出。
+- 主题/背景/弹幕 fixed 控件在中等宽度下移到底部左侧横排，`xl` 以上恢复右侧竖排。
+- FloatingPlayer 弹出面板宽度限制为 `min(290px, calc(100vw - 2rem))`。
+- `cd frontend && npm run build`：通过。
+- `cd admin && npm run build`：通过。
+- `python -m compileall backend\app`：通过。
+- 临时后端 `/api/health`：通过。
+- 已尝试 Edge headless + DevTools Protocol 自动尺寸采样，但当前工具环境未能稳定建立调试连接；需用户继续在普通浏览器中人工验收 1440px、1280px、1024px、390px。
+- 结论：首页响应式代码修复已落地，但未完成用户人工验收，首页继续保持 `进行中`。
+
+2026-05-02 首页组件裁切二次修复轮当前结果：
+
+- 人工验收确认上一轮仍存在 ProfileCard 和 SiteDashboard 被裁切，不能视为完成。
+- 已移除 `Home.vue` 根容器的 `overflow-hidden`，避免父级直接裁掉内容。
+- Hero + ProfileCard 改为 `.home-hero-grid`，默认使用 `auto-fit + minmax(min(100%, 24rem), 1fr)`，1280px 以上才并排为主列 + ProfileCard 列。
+- ProfileCard 统计区改为 auto-fit 响应式网格，卡片和内部内容都限制在 `max-width: 100%` 内。
+- SiteDashboard 统计区改为 `.home-stats-grid`，所有统计卡片参与自动换行，不隐藏“照片”卡片。
+- 移除 `#app` 的 `overflow-x: clip`，全局横向隐藏只保留为兜底，主要修复依赖响应式网格和 `min-w-0/max-width`。
+- BackgroundSlider 在 `xl` 以上定位到主内容外侧安全区域，中等宽度继续底部左侧，减少遮挡 ProfileCard。
+- `cd frontend && npm run build`：通过。
+- `cd admin && npm run build`：通过。
+- `python -m compileall backend\app`：通过。
+- 临时后端 `/api/health`：通过。
+- 已尝试 Edge headless 截图验证，但当前工具环境因 Crashpad/Mojo 权限错误未能生成截图；仍需用户浏览器人工验收。
+- 结论：首页继续保持 `进行中`，无横向滚动条但组件被裁切明确视为不通过。
+
+2026-05-02 首页左右边距统一修复轮当前结果：
+
+- `.sr-page-shell` 主容器宽度调整为 `min(calc(100% - 3rem), 80rem)`，常规视口左右保留约 24px；480px 以下左右保留约 12px。
+- Hero + ProfileCard 双列断点从 1280px 调整到 1360px，1280px 下不再为了并排牺牲右侧边距。
+- 顶部导航、首页 Hero/ProfileCard、SiteDashboard、LatestPosts 均继续处于同一 `.sr-page-shell` 主容器内。
+- 主题/背景/弹幕 fixed 控件只在 `2xl` 以上回到右侧竖排，中等宽度保留底部左侧，避免干扰主内容右边距。
+- `cd frontend && npm run build`：通过。
+- `cd admin && npm run build`：通过。
+- `python -m compileall backend\app`：通过。
+- 临时后端 `/api/health`：通过。
+- 结论：首页左右边距修复已落地，但需用户人工确认 1440px、1280px、1024px、390px 视觉居中；首页保持 `进行中`。
+
+2026-05-02 首页最新文章列表撑宽修复轮当前结果：
+
+- 人工判断首页右边距异常可能由“最新文章”横向列表撑宽页面导致。
+- `LatestPostsCarousel.vue` 已从横向滚动 `flex + overflow-x-auto + min-w-[280/360px]` 改为 `grid-cols-1 md:grid-cols-2 xl:grid-cols-3` 响应式网格。
+- 最新文章卡片移除固定 `min-width`，改用 `min-w-0`，4 篇文章应在 xl 三列布局下换到第二行第一列。
+- `LatestChatterCarousel.vue` 同步补 `min-w-0/max-w-full`，并改为 `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`，避免中等宽度撑宽。
+- `MomentTimeline.vue` 补 `min-w-0/max-w-full`。
+- `cd frontend && npm run build`：通过。
+- `cd admin && npm run build`：通过。
+- `python -m compileall backend\app`：通过。
+- 临时后端 `/api/health`：通过。
+- 结论：首页内容列表撑宽风险已修复，但需用户确认 4 篇文章换行和整体左右边距恢复正常；首页保持 `进行中`。
+
 ## Matrix
 
 | 模块 | 原项目能力 | SRBlogs 当前状态 | 差距等级 | 实现轮次 | 状态 | 验收标准 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 首页 | 毛玻璃首页、个人资料、最新内容、动态氛围组件 | 已有首页、ProfileCard、站点统计、最新文章/杂谈/动态组件；浏览器可打开，统计数据源已修复为非零 | P1 | 3 视觉首页轮 | 进行中 | 剩余差距：文章/评论 P0 闭环未完成，首页聚合模块仍需跟随真实内容状态做空状态、加载失败和移动端细节验收 |
+| 首页 | 毛玻璃首页、个人资料、最新内容、动态氛围组件 | 已有首页、ProfileCard、站点统计、最新文章/杂谈/动态组件；浏览器可打开，统计数据源已修复为非零；已移除首页父级裁切，Hero/ProfileCard 和 SiteDashboard 改为 auto-fit 响应式网格；最新文章从横向滚动轨道改为 1/2/3 列响应式网格，4 篇文章应换到第二行 | P1 | 3 视觉首页轮 | 进行中 | 剩余差距：需要用户人工确认 4 篇文章时正确换行、页面左右边距恢复正常、没有任何 section 再撑宽整个首页；通过前不得标记完成 |
 | 文章列表 | 文章卡片、标签、摘要、封面、列表浏览 | Posts 页面真实读取 `/api/posts`，已补加载、空、错误状态、封面兜底、标签、日期、摘要和详情跳转；公开列表默认不含草稿 | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：需要完成更完整的浏览器人工回归、移动端检查和草稿公开性回归，满足 Definition of Done 后才能完成 |
 | 文章详情 | Markdown 详情、代码高亮、评论、分享 | PostDetail 真实读取 `/api/posts/{slug}`，已补加载、404/错误状态、封面兜底、元信息展示、分享和评论挂载；MarkdownRenderer 继续使用 DOMPurify；前台 Markdown 样式已补齐列表编号、项目符号、表格滚动和图片自适应；人工回归项已写入 `docs/MANUAL_QA_CHECKLIST.md` | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：TOC 点击滚动、代码块视觉高亮、分享按钮交互、390px 移动端仍需浏览器人工验收 |
 | 动态 | 类朋友圈短内容流和轻量评论 | 已有 Moments 页面和 moments Markdown 数据 | P1 | 6 媒体互动轮 | 未开始 | 动态列表、详情、评论、时间展示和移动端密度达到可用 |

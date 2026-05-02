@@ -391,3 +391,177 @@ API 实测结果：
 
 - 需要重启当前 8000 后端进程，使其加载最新代码；重启后 `/docs` 应能看到 `GET /api/admin/comments/index`。
 - 评论模块仍保持 `进行中`，等待用户确认自动索引、点击加载、删除、count 同步和前台同步消失全部通过。
+
+## 2026-05-02 - 首页响应式溢出修复轮
+
+本轮目标：
+
+- 只修复前台首页响应式布局和横向溢出问题。
+- 不新增 P2 视觉特效，不进入媒体互动轮。
+- 不重构评论管理、Markdown 编辑器、文章详情 TOC/分享逻辑。
+
+前台变更：
+
+- `App.vue` 主内容容器改为统一的 `.sr-page-shell`，避免 `max-width`、padding 和 viewport 宽度不一致造成裁切。
+- `AppNav.vue` 顶部导航改用 `.sr-page-shell`，移动菜单断点从 `md` 调整为 `lg` 以下，避免 768-1023px 宽度下导航链接挤出。
+- `Home.vue` 首页首屏双列从 `lg` 调整到 `xl`，并使用 `minmax(0, ...)` 和 `min-w-0` 防止 grid 子项撑破 viewport。
+- `ProfileCard.vue` 增加 `min-w-0`、文本换行和 420px 以下统计项单列布局，防止右栏被裁切。
+- `SiteDashboard.vue` 统计卡片改为 `sm:grid-cols-3`、`lg:grid-cols-5`，并为子项补 `min-w-0` 和换行。
+- `BackgroundSlider.vue` 在中等宽度下从右侧 fixed 改到底部左侧横排，`xl` 以上恢复右侧竖排，避免覆盖 ProfileCard。
+- `FloatingPlayer.vue` 弹出面板宽度改为 `min(290px, calc(100vw - 2rem))`，移动端不再横向撑出。
+- `frontend/src/styles.css` 新增 `.sr-page-shell`，并为 `html/#app` 增加横向裁切保护；这不是唯一修复手段，主要布局已通过断点和 `min-w-0` 处理。
+
+后台变更：
+
+- 本轮未修改后台评论管理和 Markdown 编辑器。
+
+后端/API 变更：
+
+- 本轮未修改后端业务 API。
+
+文档变更：
+
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，新增首页 1440px、1280px、1024px、390px 响应式验收项。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，同步首页响应式修复进展和剩余人工验收要求。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动后端到 `127.0.0.1:8025` 并访问 `/api/health`，返回 `health=True`。
+- 已尝试：使用 Edge headless + DevTools Protocol 对构建产物做 1440px、1280px、1024px、390px 自动尺寸采样；当前工具环境下 Edge 调试端口/WebSocket 未稳定建立，未能完成自动浏览器采样。
+- 代码级确认：修复已覆盖主容器宽度、导航宽度、首页双列断点、ProfileCard 换行、SiteDashboard 换行、主题按钮 fixed 位置和 FloatingPlayer 移动端宽度。
+
+遗留问题：
+
+- 需要用户在普通浏览器中按 `docs/MANUAL_QA_CHECKLIST.md` 完成首页 1440px、1280px、1024px、390px 人工验收。
+- 首页仍保持 `进行中`，不得标记为 `已完成`，直到用户确认响应式人工验收通过。
+
+## 2026-05-02 - 首页组件裁切二次修复轮
+
+本轮目标：
+
+- 修复首页无横向滚动条但 ProfileCard 和 SiteDashboard 组件内容被裁切的问题。
+- 不通过 `overflow-x: hidden` 假装修复，必须让内容自身完整显示和换行。
+- 不重构评论管理、Markdown 编辑器，不新增 P2 视觉特效，不进入媒体互动轮。
+
+前台变更：
+
+- 移除 `Home.vue` 根容器的 `overflow-hidden`，避免首页内容被父级直接裁掉。
+- 首页 Hero + ProfileCard 外层改为 `.home-hero-grid`，使用 `repeat(auto-fit, minmax(min(100%, 24rem), 1fr))`；宽屏 1280px 以上才切换为 `minmax(0, 1.35fr) minmax(20rem, .65fr)`。
+- `.home-hero-grid > *` 显式设置 `min-width: 0` 和 `max-width: 100%`，防止 grid 子项撑破或被裁切。
+- `ProfileCard` 保持 `max-width: 100%`，内部统计区改为 `repeat(auto-fit, minmax(min(100%, 5.5rem), 1fr))`，社交按钮继续允许换行。
+- `SiteDashboard` 统计区改为 `.home-stats-grid`，使用 `repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr))`，最后一个“照片”卡片必须参与换行而不是被隐藏或裁掉。
+- 移除 `#app` 的 `overflow-x: clip`，保留 `html/body` 横向隐藏仅作为兜底；布局本身依赖 grid 换行和宽度约束。
+- `BackgroundSlider` 在 `xl` 以上固定到主内容外侧安全区域，避免覆盖 ProfileCard；中等宽度继续在底部左侧。
+
+后台变更：
+
+- 本轮未修改后台。
+
+后端/API 变更：
+
+- 本轮未修改后端 API。
+
+文档变更：
+
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，明确“无横向滚动条但组件被裁切”仍为不通过。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，记录首页组件裁切二次修复仍待人工验收。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动后端到 `127.0.0.1:8026` 并访问 `/api/health`，返回 `health=True`。
+- 已尝试：使用 Edge headless 截图验证 1440px、1280px、1024px、390px；当前工具环境下 Edge headless 因 Crashpad/Mojo 权限错误未能生成截图。
+- 代码级确认：本轮不再依赖首页父级裁切，ProfileCard 和 SiteDashboard 均改为 auto-fit 响应式网格。
+
+遗留问题：
+
+- 需要用户在普通浏览器重新人工验收 1440px、1280px、1024px、390px。
+- 首页继续保持 `进行中`，不得标记为 `已完成`，直到 ProfileCard、统计卡片和 fixed 控件均确认完整可见。
+
+## 2026-05-02 - 首页左右边距统一修复轮
+
+本轮目标：
+
+- 只修复首页左右边距不一致和主内容视觉上向右顶出的问题。
+- 不新增 P2 视觉特效，不重构评论管理，不重构 Markdown 编辑器，不修改后端接口。
+
+前台变更：
+
+- `.sr-page-shell` 主容器宽度从 `min(calc(100% - 2rem), 80rem)` 调整为 `min(calc(100% - 3rem), 80rem)`，常规视口左右保留约 24px 安全边距。
+- 480px 以下 `.sr-page-shell` 使用 `min(calc(100% - 1.5rem), 80rem)`，保证 390px 下左右 padding 仍一致。
+- Hero + ProfileCard 双列断点从 1280px 调整到 1360px，避免 1280px 宽度下为了并排牺牲右边距；1280px 默认单列或自然换行。
+- `BackgroundSlider` 右侧固定按钮只在 `2xl` 以上恢复右侧竖排，中等宽度继续底部左侧，避免右侧视觉空间干扰主内容判断。
+- 首页主要区域仍共用 `.sr-page-shell`，导航、Hero/ProfileCard、SiteDashboard、LatestPosts 均在同一居中容器内。
+
+后台变更：
+
+- 本轮未修改后台。
+
+后端/API 变更：
+
+- 本轮未修改后端。
+
+文档变更：
+
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，补充首页左右边距一致和导航/首页共用宽度验收项。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，记录首页左右边距修复仍待人工验收。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动后端到 `127.0.0.1:8027` 并访问 `/api/health`，返回 `health=True`。
+- 代码级确认：主内容容器、顶部导航和首页主要区块使用同一 `.sr-page-shell`；1280px 不再强制 Hero/ProfileCard 并排。
+
+遗留问题：
+
+- 需要用户在普通浏览器确认 1440px、1280px、1024px、390px 下左右边距基本一致。
+- 首页继续保持 `进行中`，不得标记为 `已完成`，直到用户确认左右边距一致。
+
+## 2026-05-02 - 首页最新文章列表撑宽修复轮
+
+本轮目标：
+
+- 只修复首页内容列表布局导致的整体宽度异常问题。
+- 不新增 P2 视觉特效，不修改评论系统、Markdown 编辑器或后端接口。
+
+前台变更：
+
+- `LatestPostsCarousel.vue` 从横向滚动 `flex + overflow-x-auto + min-w-[280/360px]` 改为真正响应式网格。
+- 最新文章网格使用 `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`，因此 4 篇文章在当前主容器宽度下会换到第二行第一列，不再继续排成第一行第四列。
+- 移除最新文章卡片的固定 `min-width`，改为 `min-w-0`，防止卡片撑宽主容器。
+- 最新文章 section/header 增加 `min-w-0`、`max-w-full` 和标题区域换行约束。
+- `LatestChatterCarousel.vue` 同步补 `min-w-0`、`max-w-full`，并从 `md:grid-cols-3` 调整为 `grid-cols-1 md:grid-cols-2 xl:grid-cols-3`，避免杂谈列表在中等宽度撑宽。
+- `MomentTimeline.vue` 补 `min-w-0`、`max-w-full`，避免时间线卡片参与横向撑宽。
+
+后台变更：
+
+- 本轮未修改后台。
+
+后端/API 变更：
+
+- 本轮未修改后端。
+
+文档变更：
+
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，补充“最新文章不是横向滚动轨道”和“4 篇文章应换行”的验收项。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，记录首页最新文章列表撑宽修复仍待人工验收。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动后端到 `127.0.0.1:8028` 并访问 `/api/health`，返回 `health=True`。
+- 代码级确认：首页最新文章区域不再使用 `overflow-x-auto`、固定 `min-width` 横向轨道；卡片数量变化不应再改变主容器宽度。
+
+遗留问题：
+
+- 需要用户人工确认 4 篇文章时第 4 张卡确实换到第二行第一列。
+- 首页继续保持 `进行中`，不得标记为 `已完成`，直到用户确认没有任何 section 再撑宽整个首页。

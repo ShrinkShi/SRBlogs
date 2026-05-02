@@ -8,8 +8,8 @@ const track = computed(() => props.tracks?.[index.value])
 function next(){ if (props.tracks?.length) index.value = (index.value + 1) % props.tracks.length }
 </script>
 <template>
-  <div v-if="tracks?.length" class="fixed bottom-5 right-5 z-40">
-    <div v-if="open" class="glass mb-3 w-[290px] rounded-[28px] p-4">
+  <div v-if="tracks?.length" class="fixed bottom-4 right-4 z-40 md:bottom-5 md:right-5">
+    <div v-if="open" class="glass mb-3 w-[min(290px,calc(100vw-2rem))] rounded-[28px] p-4">
       <div class="flex items-center gap-3">
         <div class="h-12 w-12 rounded-2xl bg-white/10 bg-cover bg-center" :style="{ backgroundImage: track?.cover ? `url(${track.cover})` : '' }"></div>
         <div class="min-w-0"><p class="truncate font-bold text-white">{{ track?.title }}</p><p class="truncate text-xs text-white/48">{{ track?.artist }}</p></div>
