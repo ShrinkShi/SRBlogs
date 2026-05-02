@@ -45,6 +45,8 @@
 ## 后台评论管理
 
 - [ ] `/admin/comments` 可进入。
+- [ ] 重启后端后，`http://127.0.0.1:8000/docs` 中能看到 `GET /api/admin/comments/index`。
+- [ ] 登录后直接请求 `GET /api/admin/comments/index` 返回 200，不再是 404。
 - [ ] 页面打开后不需要手动输入 slug。
 - [ ] 默认显示有评论的内容索引。
 - [ ] 索引项显示标题、resource、slug、评论数和最近更新时间。

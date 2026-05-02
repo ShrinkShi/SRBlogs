@@ -152,6 +152,20 @@ Windows 本地启动命令：
 - 独立 `cmd.exe` 调用 `start-admin.cmd` 仍复现 `spawn EPERM`，5174 未监听；完整浏览器人工回归仍需在用户普通 Windows 终端环境完成。
 - 结论：Markdown 预览和后台评论主流程已完成代码级修复与 API 验证，但仍需浏览器人工回归，相关项保持 `进行中`。
 
+2026-05-02 评论索引 API 路由确认与同步复测轮当前结果：
+
+- 人工验收发现当前 `127.0.0.1:8000` 返回 `/api/admin/comments/index` 404。
+- 复查代码确认 `backend/app/api/comments.py` 已定义 `GET /api/admin/comments/index`，`backend/app/main.py` 已注册 `comments_admin_router`。
+- 当前 8000 进程的 `/openapi.json` 不包含 `/api/admin/comments/index`，说明浏览器连接的是旧代码进程或未重载进程。
+- 用当前工作区代码临时启动后端后，`/docs` 返回 200，`/openapi.json` 包含 `/api/admin/comments/index`。
+- 临时后端未登录访问 `/api/admin/comments/index` 返回 401，登录后返回 200。
+- 登录后索引响应包含 `posts/post-1777703928848`，能从 `posts-post-1777703928848.json` 反推 `resource=posts`、`slug=post-1777703928848`。
+- 前台 API 提交评论到 `posts/post-1777703928848` 后能通过 `GET /api/comments/posts/post-1777703928848` 读到；后台 DELETE 删除后再次 GET 该评论消失。
+- 删除评论前备份验证通过，`posts-post-1777703928848` 匹配备份数从 1 增加到 3。
+- 空昵称、空内容、非法邮箱均返回 400；删除不存在评论返回 404；XSS 评论内容保存为清洗后的文本。
+- 当前环境对旧 8000 监听进程 PID 2560 的查询/终止受限，未继续强制处理用户进程。需要用户在普通终端关闭旧后端并重新运行 `start-backend.cmd`。
+- 结论：代码与临时后端验证已通过，但用户 8000 实际后端需重启后才能完成浏览器回归；评论模块继续保持 `进行中`。
+
 ## Matrix
 
 | 模块 | 原项目能力 | SRBlogs 当前状态 | 差距等级 | 实现轮次 | 状态 | 验收标准 |

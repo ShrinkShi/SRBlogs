@@ -343,3 +343,51 @@ API 实测结果：
 - 文章详情、评论、Markdown 编辑器继续保持 `进行中`，不得标记为 `已完成`。
 - 评论隐藏/恢复、审核、分页仍未实现，不在本轮范围。
 - 暂存队列仍未实现，评论管理也不进入 pendingOperations。
+
+## 2026-05-02 - 评论索引 API 路由确认与同步复测轮
+
+本轮目标：
+
+- 针对人工验收中 `/api/admin/comments/index` 返回 404 的问题，确认并修复评论索引 API 与后台评论管理主流程。
+- 不重构已通过人工验收的 Markdown 预览。
+- 不新增 P2 视觉特效，不进入媒体互动轮。
+
+前台变更：
+
+- 本轮未改动前台文章详情和 Markdown 渲染。
+- 前台评论错误处理沿用已有 UI：空昵称、空内容、非法邮箱均会在评论区显示错误，不只写控制台。
+
+后台变更：
+
+- 后台评论管理索引加载失败时，如果遇到 404/Not Found，会在 UI 中提示检查后端是否已重启到最新代码，并确认 `/api/admin/comments/index` 是否出现在 `/docs`。
+- 后台评论管理主流程仍保持：打开页面自动请求评论索引，点击索引项加载评论，手动 `resource/slug` 只保留在“高级加载”折叠区。
+
+后端/API 变更：
+
+- 复查确认当前代码已在 `backend/app/api/comments.py` 定义 `GET /api/admin/comments/index`。
+- 复查确认当前代码已在 `backend/app/main.py` 通过 `app.include_router(comments_admin_router, prefix="/api")` 注册，最终路径为 `/api/admin/comments/index`。
+- 该接口继续要求管理员 JWT；未登录访问返回 401。
+- 无评论或 comments 目录不存在时返回 `[]`，不返回 404。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动当前代码后端到 `127.0.0.1:8024`，`GET /docs` 返回 200，`/openapi.json` 中包含 `/api/admin/comments/index`。
+- 通过：临时启动当前代码后端到 `127.0.0.1:8021`，未登录调用 `GET /api/admin/comments/index` 返回 401，登录后返回 200。
+- 通过：登录后 `GET /api/admin/comments/index` 返回包含 `posts/post-1777703928848` 和 `posts/srblogs-p0-20260502130609` 的索引；其中 `posts-post-1777703928848.json` 能正确反推 `resource=posts`、`slug=post-1777703928848`。
+- 通过：临时后端返回的原始索引包含 `{"resource":"posts","slug":"post-1777703928848","count":1,"updatedAt":"2026-05-02 14:41","title":"测试"}`。
+- 通过：前台 API 提交评论到 `posts/post-1777703928848` 后，`GET /api/comments/posts/post-1777703928848` 能读到该评论；后台 DELETE 删除后再次 GET，该评论消失。
+- 通过：删除评论前备份验证，`backend/data/comments/.backups` 中 `posts-post-1777703928848` 匹配备份数从 1 增加到 3。
+- 通过：删除不存在评论返回 404。
+- 通过：空昵称提交返回 400。
+- 通过：空评论内容提交返回 400。
+- 通过：非法邮箱提交返回 400。
+- 通过：XSS 评论内容保存为 `alert(1)safe`，脚本标签未保留。
+- 发现：当前正在运行的 `127.0.0.1:8000` 后端进程仍返回 404；其 `/openapi.json` 不包含 `/api/admin/comments/index`，说明 8000 是旧代码进程或未重载进程。`netstat` 显示 8000 有 Python 进程监听，未在本轮强制终止用户进程。
+
+遗留问题：
+
+- 需要重启当前 8000 后端进程，使其加载最新代码；重启后 `/docs` 应能看到 `GET /api/admin/comments/index`。
+- 评论模块仍保持 `进行中`，等待用户确认自动索引、点击加载、删除、count 同步和前台同步消失全部通过。

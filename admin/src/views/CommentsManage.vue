@@ -17,6 +17,14 @@ const commentsError = ref('')
 const advancedResource = ref<'posts' | 'moments' | 'chatters'>('posts')
 const advancedSlug = ref('')
 
+function readableError(exc: unknown, fallback: string) {
+  const message = exc instanceof Error ? exc.message : fallback
+  if (/not found/i.test(message) || message.includes('404')) {
+    return `${message}。请确认后端已重启到最新代码，并且 /api/admin/comments/index 已出现在 /docs。`
+  }
+  return message
+}
+
 async function loadIndex(keepSelection = true) {
   indexError.value = ''
   loadingIndex.value = true
@@ -41,7 +49,7 @@ async function loadIndex(keepSelection = true) {
       comments.value = []
     }
   } catch (exc) {
-    indexError.value = exc instanceof Error ? exc.message : '评论索引加载失败'
+    indexError.value = readableError(exc, '评论索引加载失败')
   } finally {
     loadingIndex.value = false
   }
@@ -54,7 +62,7 @@ async function loadComments(resource: 'posts' | 'moments' | 'chatters', slug: st
   try {
     comments.value = await adminApi.comments(resource, slug)
   } catch (exc) {
-    commentsError.value = exc instanceof Error ? exc.message : '评论加载失败'
+    commentsError.value = readableError(exc, '评论加载失败')
   } finally {
     loadingComments.value = false
   }
@@ -97,7 +105,7 @@ async function remove(item: CommentItem) {
     await loadIndex(true)
     ui.show('评论已删除')
   } catch (exc) {
-    commentsError.value = exc instanceof Error ? exc.message : '评论删除失败'
+    commentsError.value = readableError(exc, '评论删除失败')
   } finally {
     deleting.value = ''
   }
@@ -112,7 +120,7 @@ async function deleteMissingForCheck() {
   try {
     await adminApi.deleteComment(selected.value.resource, selected.value.slug, 'missing-comment-id')
   } catch (exc) {
-    commentsError.value = exc instanceof Error ? exc.message : '评论删除失败'
+    commentsError.value = readableError(exc, '评论删除失败')
   }
 }
 

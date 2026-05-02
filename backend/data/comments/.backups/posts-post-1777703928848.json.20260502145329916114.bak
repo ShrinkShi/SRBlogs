@@ -1,0 +1,16 @@
+[
+  {
+    "id": "209cf7923ffa42729be937918c1a845e",
+    "author": "6",
+    "email": "",
+    "content": "测试评论",
+    "created_at": "2026-05-02 14:41"
+  },
+  {
+    "id": "d51810aad677408599312d6be9dbe23c",
+    "author": "XSS Validator",
+    "email": "",
+    "content": "alert(1)safe",
+    "created_at": "2026-05-02 14:53"
+  }
+]
