@@ -1,0 +1,29 @@
+[
+  {
+    "name": "XHBlogs Inspiration",
+    "url": "https://github.com/heiehiehi/XinghuisamaBlogs",
+    "avatar": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+    "description": "视觉和交互方向参考来源；SRBlogs 不直接复制其源码。"
+  },
+  {
+    "name": "Vue",
+    "url": "https://vuejs.org/",
+    "avatar": "https://vuejs.org/logo.svg",
+    "description": "前端 SPA 的核心框架。"
+  },
+  {
+    "name": "FastAPI",
+    "url": "https://fastapi.tiangolo.com/",
+    "avatar": "",
+    "description": "后端 REST API 与内容读写服务。"
+  },
+  {
+    "name": "QA Friend 20260502192102",
+    "url": "https://example.com/friend-20260502192102",
+    "description": "qa friend edited",
+    "avatar": "",
+    "tags": [
+      "qa"
+    ]
+  }
+]

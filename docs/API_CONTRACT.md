@@ -163,6 +163,47 @@ Base path: `/api`
 
 保存到 `backend/data/settings.json`，写入必须走 `safe_write_json`。如果请求未提供已有 Secret，服务端保留旧值。
 
+## Structured JSON APIs
+
+适用于 `/friends`、`/projects`、`/music`、`/photos`。
+
+### GET `/{resource}`
+
+公开读取结构化内容列表。`/photos` 实际存储在 `backend/data/photos/photos.json`。
+
+响应示例：
+
+```json
+[
+  {
+    "name": "站点名称",
+    "url": "https://example.com",
+    "description": "说明",
+    "tags": ["Blog"]
+  }
+]
+```
+
+各资源主字段：
+- `/friends`：`name`、`url`、`description`、`avatar`、`tags`
+- `/projects`：`name`、`description`、`tags`、`url`、`repo`、`cover`、`status`
+- `/music`：`title`、`artist`、`cover`、`url`、`id`、`sort`
+- `/photos`：`url`、`title`、`description`、`date`、`tags`
+
+### PUT `/{resource}`
+
+后台 JWT。请求体：
+
+```json
+{ "data": [] }
+```
+
+说明：
+- 后台主流程应使用表单化管理，保留高级 JSON 编辑作为兜底。
+- 高级 JSON 必须是数组；前端应在发送前校验 JSON 格式。
+- 写入必须通过 `JsonStore.write` -> `safe_write_json`，覆盖前生成 `.backups` 备份。
+- 图片上传、Secret 修改、评论删除不进入本地 `pendingOperations`。
+
 ## Upload API
 
 ### POST `/upload`

@@ -626,3 +626,66 @@ API 实测结果：
 - 暂存队列当前为前端内存态，刷新页面会丢失；第二阶段才做服务端持久化。
 - settings 修改未纳入本轮 pendingOperations；图片上传、Secret 修改、评论管理按计划不进入本地 pendingOperations。
 - 不得把“后台写作”“草稿”“暂存队列”标记为 `已完成`，直到浏览器人工验收通过。
+
+## 2026-05-02 - 媒体与结构化内容管理轮
+
+本轮目标：
+
+- 将 friends/projects/music/photos 的后台管理从“默认 JSON 文本框”升级为表单化主流程。
+- 保留高级 JSON 编辑作为兜底，并要求 JSON 格式错误时阻止保存。
+- 完善四类内容的前台动态读取、加载状态、空状态、错误状态和基础展示。
+- 不新增 P2 视觉特效，不重构文章、评论、Markdown、暂存队列。
+
+前台变更：
+
+- `Friends.vue` 改为带加载、空、错误状态的动态友链页，展示名称、简介、头像/图标、标签，外链使用新标签页打开。
+- `Projects.vue` 改为带加载、空、错误状态的项目页，展示名称、描述、技术栈、链接、仓库链接、状态和封面。
+- `Music.vue` 改为带加载、空、错误状态的歌单页，按 `sort` 排序并将后端歌单绑定到 `CloudPlayer`。
+- `CloudPlayer` 在歌曲存在 `url` 时使用原生 audio 执行播放/暂停/结束后切歌；仅配置云音乐 ID 时保留基础状态切换和数据展示。
+- `Photowall.vue` 改为带加载、空、错误状态的照片墙，图片懒加载，点击可放大预览，并展示标题、描述、日期、标签。
+- `frontend/src/types.ts` 补充 friends/projects/music/photos 的结构化字段。
+
+后台变更：
+
+- 新增 `admin/src/components/StructuredJsonManager.vue`，统一提供列表区、编辑表单、新增、保存、删除、加载/错误/空状态、成功反馈和高级 JSON 折叠区。
+- `FriendsManage.vue` 改为表单化管理名称、URL、描述、头像/图标 URL、标签。
+- `ProjectsManage.vue` 改为表单化管理名称、描述、技术栈、项目链接、GitHub/Gitee 链接、封面 URL、状态。
+- `MusicManage.vue` 改为表单化管理歌曲标题、艺术家、封面 URL、歌曲 URL、云音乐 ID、排序。
+- `PhotowallManage.vue` 改为表单化管理图片 URL、标题、描述、日期、标签，并支持调用上传接口后自动填入 URL。
+- 高级 JSON 编辑保留在折叠区，根节点不是数组或 JSON 格式错误时会显示错误并阻止保存。
+
+后端/API 变更：
+
+- 本轮未新增后端路由，继续复用 `GET/PUT /api/friends`、`GET/PUT /api/projects`、`GET/PUT /api/music`、`GET/PUT /api/photos` 和 `POST /api/upload`。
+- friends/projects/music/photos 写入继续通过 `JsonStore.write` -> `safe_write_json`，覆盖前生成 `.backups` 备份。
+- 上传接口仍要求管理员 JWT，并校验扩展名、MIME 和 5 MB 大小限制。
+
+文档变更：
+
+- 更新 `docs/API_CONTRACT.md`，补充结构化 JSON API 字段、GET/PUT 契约和备份要求。
+- 更新 `docs/SECURITY_NOTES.md`，补充结构化 JSON 管理、高级 JSON 校验和图片上传不进入 pendingOperations 的规则。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，新增媒体与结构化内容管理人工验收项。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，照片墙、音乐、友链、项目状态改为 `进行中` 并写明剩余人工验收差距。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：`http://127.0.0.1:8000/api/health` 返回 `ok=true`。
+- 通过：`GET /api/friends` 返回 3 条。
+- 通过：`GET /api/projects` 返回 3 条。
+- 通过：`GET /api/music` 返回 3 条。
+- 通过：`GET /api/photos` 返回 6 条。
+- 通过：friends 新增/编辑/删除 API 验证，新增后可读、编辑后可读、删除后消失，`backend/data/.backups/friends.json.*.bak` 数量从 0 增加到 3。
+- 通过：projects 新增/编辑/删除 API 验证，新增后可读、编辑后可读、删除后消失，`backend/data/.backups/projects.json.*.bak` 数量从 0 增加到 3。
+- 通过：music 新增/编辑/删除 API 验证，新增后可读、编辑后可读、删除后消失，`backend/data/.backups/music.json.*.bak` 数量从 0 增加到 3。
+- 通过：photos 新增/编辑/删除 API 验证，新增后可读、编辑后可读、删除后消失，`backend/data/photos/.backups/photos.json.*.bak` 数量从 0 增加到 3。
+- 通过：上传接口最小验证，`POST /api/upload` 返回 200、URL 和 size；测试上传文件随后已清理。
+- 通过：构建产物静态搜索未匹配到 `clientSecret`、`accessKeySecret`、`api_key`、`jwt_secret`、`admin_password`、`please-change-this-secret`、`change-me`。
+
+遗留问题：
+
+- 本轮完成代码和 API 验证，但 friends/projects/music/photos 的后台表单页和前台页面仍需用户浏览器人工验收。
+- 媒体与结构化内容管理模块保持 `进行中`，不得标记为 `已完成`。
+- 图片上传、Secret 修改、评论删除继续不进入本地 pendingOperations。

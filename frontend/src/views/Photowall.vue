@@ -3,25 +3,67 @@ import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { contentApi } from '@/api/content'
 import type { PhotoItem } from '@/types'
+
 const photos = ref<PhotoItem[]>([])
 const active = ref<PhotoItem | null>(null)
-onMounted(async () => { photos.value = await contentApi.json<PhotoItem[]>('/photos') })
+const loading = ref(false)
+const error = ref('')
+
+async function load() {
+  loading.value = true
+  error.value = ''
+  try {
+    photos.value = await contentApi.json<PhotoItem[]>('/photos')
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '照片加载失败'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(load)
 </script>
+
 <template>
   <section class="grid gap-5">
     <GlassCard>
       <p class="text-xs font-bold uppercase tracking-[.32em] text-pink-100/45">photowall</p>
       <h1 class="mt-2 text-4xl font-black text-white">照片墙</h1>
-      <p class="mt-3 text-white/56">瀑布流预览 + 点击灯箱。图片 URL 可由后台上传后写入 JSON。</p>
+      <p class="mt-3 text-white/56">图片记录从后端 JSON 动态读取，点击图片可放大预览。</p>
     </GlassCard>
-    <div class="columns-1 gap-5 md:columns-2 lg:columns-3">
+
+    <GlassCard v-if="loading">
+      <p class="text-white/60">照片加载中...</p>
+    </GlassCard>
+    <GlassCard v-else-if="error">
+      <p class="text-red-200/85">{{ error }}</p>
+      <button class="mt-4 rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/70" @click="load">重试</button>
+    </GlassCard>
+    <GlassCard v-else-if="!photos.length">
+      <p class="text-white/60">暂无照片。</p>
+    </GlassCard>
+
+    <div v-else class="columns-1 gap-5 md:columns-2 xl:columns-3">
       <button v-for="item in photos" :key="item.url" class="glass glass-hover mb-5 block w-full break-inside-avoid overflow-hidden rounded-[30px] text-left" @click="active = item">
-        <img :src="item.url" loading="lazy" class="relative z-[1] w-full object-cover" />
-        <div class="relative z-[1] p-4"><h3 class="font-bold text-white">{{ item.title }}</h3><p class="mt-1 text-sm text-white/55">{{ item.description }}</p></div>
+        <img :src="item.url" :alt="item.title || 'photo'" loading="lazy" class="relative z-[1] w-full object-cover" />
+        <div class="relative z-[1] p-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 class="break-words font-bold text-white">{{ item.title || '未命名照片' }}</h3>
+            <span v-if="item.date" class="text-xs text-white/42">{{ item.date }}</span>
+          </div>
+          <p v-if="item.description" class="mt-1 break-words text-sm leading-6 text-white/55">{{ item.description }}</p>
+          <div v-if="item.tags?.length" class="mt-3 flex flex-wrap gap-2">
+            <span v-for="tag in item.tags" :key="tag" class="rounded-full border border-white/10 px-2 py-1 text-[11px] text-white/50">#{{ tag }}</span>
+          </div>
+        </div>
       </button>
     </div>
+
     <div v-if="active" class="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm" @click="active = null">
-      <div class="max-w-5xl"><img :src="active.url" class="max-h-[82vh] max-w-[92vw] rounded-3xl border border-white/15 object-contain" /><p class="mt-3 text-center text-white/70">{{ active.title }}</p></div>
+      <div class="max-w-5xl" @click.stop>
+        <img :src="active.url" :alt="active.title || 'photo'" class="max-h-[82vh] max-w-[92vw] rounded-3xl border border-white/15 object-contain" />
+        <p class="mt-3 text-center text-white/70">{{ active.title }}</p>
+      </div>
     </div>
   </section>
 </template>

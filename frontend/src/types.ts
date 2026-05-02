@@ -18,6 +18,7 @@ export interface FriendItem {
   url: string
   avatar?: string
   description?: string
+  tags?: string[]
 }
 
 export interface ProjectItem {
@@ -27,6 +28,7 @@ export interface ProjectItem {
   tags?: string[]
   cover?: string
   status?: string
+  repo?: string
 }
 
 export interface MusicItem {
@@ -35,12 +37,15 @@ export interface MusicItem {
   url?: string
   cover?: string
   id?: string
+  sort?: number
 }
 
 export interface PhotoItem {
   url: string
   title?: string
   description?: string
+  date?: string
+  tags?: string[]
 }
 
 export interface CommentItem {

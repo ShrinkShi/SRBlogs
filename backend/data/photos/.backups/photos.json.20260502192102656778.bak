@@ -1,0 +1,41 @@
+[
+  {
+    "url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1000&auto=format&fit=crop",
+    "title": "远山",
+    "description": "照片墙示例图。"
+  },
+  {
+    "url": "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1000&auto=format&fit=crop",
+    "title": "星空",
+    "description": "适合做博客背景的深色图。"
+  },
+  {
+    "url": "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=1000&auto=format&fit=crop",
+    "title": "森林",
+    "description": "自然系动态背景。"
+  },
+  {
+    "url": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop",
+    "title": "代码",
+    "description": "技术文章封面。"
+  },
+  {
+    "url": "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1000&auto=format&fit=crop",
+    "title": "游戏",
+    "description": "游戏开发笔记封面。"
+  },
+  {
+    "url": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=1000&auto=format&fit=crop",
+    "title": "空间",
+    "description": "项目记录封面。"
+  },
+  {
+    "url": "https://example.com/photo-20260502192102.png",
+    "title": "QA Photo 20260502192102",
+    "description": "qa photo",
+    "date": "2026-05-02",
+    "tags": [
+      "qa"
+    ]
+  }
+]

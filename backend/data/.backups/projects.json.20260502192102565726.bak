@@ -1,0 +1,50 @@
+[
+  {
+    "name": "SRBlogs",
+    "url": "https://github.com/yourname/SRBlogs",
+    "description": "Vue3 + FastAPI 的个人博客系统，包含前台展示、后台管理、Markdown 存储、图床预留和 AI 助手。",
+    "tags": [
+      "Vue3",
+      "FastAPI",
+      "Glassmorphism"
+    ],
+    "cover": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop",
+    "status": "active"
+  },
+  {
+    "name": "CampusFlow",
+    "url": "#",
+    "description": "学习空间智能调度与治理系统，面向图书馆与自习室的座位状态感知和多端展示。",
+    "tags": [
+      "AI",
+      "校园空间",
+      "管理端"
+    ],
+    "cover": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=1000&auto=format&fit=crop",
+    "status": "demo"
+  },
+  {
+    "name": "Game Dev Notes",
+    "url": "#",
+    "description": "游戏开发、关卡设计、工具链和项目复盘的长期记录。",
+    "tags": [
+      "Game",
+      "Unity",
+      "Design"
+    ],
+    "cover": "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1000&auto=format&fit=crop",
+    "status": "notes"
+  },
+  {
+    "name": "QA Project 20260502192102",
+    "url": "https://example.com/project-20260502192102",
+    "repo": "https://github.com/example/repo",
+    "description": "qa project",
+    "tags": [
+      "Vue3",
+      "FastAPI"
+    ],
+    "cover": "",
+    "status": "active"
+  }
+]
