@@ -39,10 +39,25 @@
 - [ ] `/admin/comments` 可进入评论管理。
 - [ ] `/admin/friends`、`/admin/projects`、`/admin/music`、`/admin/photos` 可进入表单化管理页。
 - [ ] `/admin/settings` 可进入设置中心。
+- [ ] `/admin/audit` 可进入审计日志页面。
+- [ ] `/admin/backups` 可进入备份恢复页面。
 - [ ] 未登录或登录过期时跳转登录页。
 - [ ] API 失败时页面显示 UI 错误，不只写 console。
 - [ ] 删除类操作都有确认。
 - [ ] 高级 JSON 编辑不作为默认主流程。
+
+## 3.1 审计日志与备份恢复检查
+- [ ] 登录成功/失败、文章写入、评论删除、settings 修改、结构化内容保存、上传、手动备份、恢复、导入、导出有审计记录。
+- [ ] `GET /api/admin/audit/logs` 需要 JWT，并支持 limit、offset、action、resource、q。
+- [ ] 审计日志不包含 Secret 明文。
+- [ ] `POST /api/admin/backups` 可创建手动备份。
+- [ ] `GET /api/admin/backups` 可列出备份。
+- [ ] `GET /api/admin/backups/{name}/download` 可下载备份且需要 JWT。
+- [ ] `POST /api/admin/backups/{name}/restore` 恢复前自动创建 `pre-restore-*.zip`。
+- [ ] 备份 zip 不包含 `.env`、`.venv`、`node_modules`、`dist`、前端源码或 `.manual_backups`。
+- [ ] 备份 zip 中 `settings.json` 不包含 Secret 明文字段。
+- [ ] 下载/恢复路径穿越名称返回 400 或 404，不读取任意文件。
+- [ ] 导出数据 zip 可下载，导入 zip 前会自动备份当前数据。
 
 ## 4. 内容写入检查
 

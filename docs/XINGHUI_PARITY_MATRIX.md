@@ -296,6 +296,17 @@ Windows 本地启动命令：
 - 构建、后端编译、主要前后台路由 HTTP 探测、RSS/Sitemap/Search 回归、真实 Secret 值静态扫描均通过。
 - 当前工具环境未提供可用 headless browser，因此 390px 真实视觉回归、Tab 顺序和图片失败视觉兜底仍需用户浏览器人工确认；相关模块不因本轮自动标记完成。
 
+2026-05-02 管理端审计日志与数据备份恢复轮当前结果：
+
+- 新增后台审计日志服务，写入 `backend/data/audit/audit.log`，覆盖登录、内容写入/删除、评论新增/删除、settings 修改、结构化 JSON 保存、上传、备份、恢复、导入、导出等操作。
+- 新增 `GET /api/admin/audit/logs`，支持 `limit`、`offset`、`action`、`resource`、`q` 筛选，必须管理员 JWT。
+- 新增手动备份服务，备份写入 `backend/data/.manual_backups/{timestamp}.zip`，恢复前自动创建 `pre-restore-{timestamp}.zip`。
+- 新增 `POST /api/admin/backups`、`GET /api/admin/backups`、`GET /api/admin/backups/{name}/download`、`POST /api/admin/backups/{name}/restore`、`GET /api/admin/export`、`POST /api/admin/import`。
+- 备份 zip 排除 `.env`、`.venv`、`node_modules`、`dist`、前端源码和 `.manual_backups` 本身；`settings.json` 写入 zip 前剔除 Secret 字段。
+- 后台新增 `/admin/audit` 和 `/admin/backups` 页面，提供日志筛选、备份列表、手动备份、下载、恢复、导出和导入入口。
+- API 验证通过：创建备份、列表、下载、恢复前备份、审计日志、评论创建/删除审计、导出、路径穿越防护、zip 不含 `.env` 与 Secret 字段。
+- 当前工具环境无法启动固定 8000/5174 服务进行真实浏览器页面验收，`/admin/audit` 和 `/admin/backups` 仍需用户人工确认后才能标记完成。
+
 ## Matrix
 
 | 模块 | 原项目能力 | SRBlogs 当前状态 | 差距等级 | 实现轮次 | 状态 | 验收标准 |
@@ -323,3 +334,4 @@ Windows 本地启动命令：
 | 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`；`WINDOWS_START.md` 已记录固定地址、strictPort、端口占用 PID 和设置中心提示；新增 `docs/DEPLOYMENT.md`，包含 Nginx、systemd、backend/data 权限、生产 `.env`、HTTPS 和生产前检查 | P0 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮服务器部署文档完整实操核验；不得标记完成 |
 | SEO/订阅/分享 | Meta、OpenGraph、RSS、Sitemap、robots、分享 | 已新增统一 SEO meta 工具；主要前台页面接入 title/description/OG/Twitter Card；后端新增 RSS、Sitemap、robots；前台新增 RSS 入口；分享复制增加成功/失败提示；已通过用户人工验收 | P1 | SEO、订阅与分享增强轮 | 已完成 | RSS、Sitemap、robots、动态 meta、RSS 入口和分享复制均已通过人工验收 |
 | 性能/可访问性/体验稳定 | 图片性能、移动端可读性、错误兜底、键盘可访问性、构建体积可控 | 已补 SafeImage 图片懒加载/兜底、StateBlock 通用状态、照片预览关闭能力、评论表单 label、前台导航/播放器/背景控制 aria、后台侧栏窄屏滚动和输入 aria；构建体积已记录，Markdown 相关 chunk 仍需后续观察 | P1 | 性能、可访问性与体验稳定轮 | 进行中 | 剩余差距：390px 真实浏览器视觉回归、键盘 Tab 顺序、图片失败视觉兜底、后台窄屏表单操作仍需人工确认；不得在人工验收前标记完成 |
+| 审计日志与备份恢复 | 后台操作审计、数据备份、下载、恢复、导入导出 | 已新增审计日志服务、`/admin/audit`、手动备份服务、`/admin/backups`、下载、恢复、导出和导入 API；恢复前自动创建 pre-restore 备份；备份 zip 排除 `.env` 和 Secret 字段；API 级验证已通过 | P0 | 管理端审计日志与数据备份恢复轮 | 进行中 | 剩余差距：需要用户浏览器人工确认 `/admin/audit` 日志筛选、`/admin/backups` 创建/下载/恢复/导入导出主流程和 UI 错误状态；通过前不得标记完成 |

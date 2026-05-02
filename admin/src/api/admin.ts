@@ -1,5 +1,5 @@
 import { http } from './http'
-import type { CommentIndexItem, CommentItem, ContentItem, Stats } from '@/types'
+import type { AuditLogResponse, BackupItem, CommentIndexItem, CommentItem, ContentItem, Stats } from '@/types'
 
 export const adminApi = {
   login: async (username: string, password: string) => {
@@ -61,6 +61,38 @@ export const adminApi = {
   },
   chat: async (messages: { role: string; content: string }[], provider = 'a') => {
     const { data } = await http.post('/chat', { provider, messages, stream: false })
+    return data
+  },
+  auditLogs: async (params: { limit?: number; offset?: number; action?: string; resource?: string; q?: string }) => {
+    const { data } = await http.get<AuditLogResponse>('/admin/audit/logs', { params })
+    return data
+  },
+  backups: async () => {
+    const { data } = await http.get<BackupItem[]>('/admin/backups')
+    return data
+  },
+  createBackup: async () => {
+    const { data } = await http.post<BackupItem>('/admin/backups')
+    return data
+  },
+  restoreBackup: async (name: string) => {
+    const { data } = await http.post<{ ok: boolean; restored: string; preRestoreBackup: string }>(`/admin/backups/${encodeURIComponent(name)}/restore`)
+    return data
+  },
+  downloadBackup: async (name: string) => {
+    const { data } = await http.get<Blob>(`/admin/backups/${encodeURIComponent(name)}/download`, { responseType: 'blob' })
+    return data
+  },
+  exportData: async () => {
+    const { data } = await http.get<Blob>('/admin/export', { responseType: 'blob' })
+    return data
+  },
+  importData: async (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    const { data } = await http.post<{ ok: boolean; restored: string; preRestoreBackup: string }>('/admin/import', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     return data
   }
 }

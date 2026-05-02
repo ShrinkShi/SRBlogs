@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends
 
 from app.config import get_settings
 from app.models.schemas import JsonWrite
+from app.services.audit_service import write_audit
 from app.services.auth_service import require_admin
 from app.services.json_service import JsonStore
 
@@ -115,8 +116,8 @@ def read_admin_settings():
     return admin_settings(_store().read())
 
 
-@router.put("/admin/settings", dependencies=[Depends(require_admin)])
-def write_admin_settings(payload: JsonWrite):
+@router.put("/admin/settings")
+def write_admin_settings(payload: JsonWrite, actor: str = Depends(require_admin)):
     current = _store().read()
     incoming = _strip_computed_fields(payload.data) if isinstance(payload.data, dict) else {}
     for secret_section, secret_key in (
@@ -136,5 +137,10 @@ def write_admin_settings(payload: JsonWrite):
             incoming_value = incoming_section.get(secret_key)
             if current_value and (incoming_value is None or incoming_value == ""):
                 incoming_section[secret_key] = current_value
-    _store().write(incoming)
-    return admin_settings(incoming)
+    try:
+        _store().write(incoming)
+        write_audit(actor=actor, action="settings.update", resource="settings", target="settings.json", result="success", message="Settings updated")
+        return admin_settings(incoming)
+    except Exception as exc:
+        write_audit(actor=actor, action="settings.update", resource="settings", target="settings.json", result="failed", message=str(exc))
+        raise

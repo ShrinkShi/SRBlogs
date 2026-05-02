@@ -60,6 +60,20 @@
 - 高级 JSON 编辑只作为兜底入口，保存前必须校验 JSON 格式且根节点必须为数组。
 - 图片上传只写入上传文件并返回 URL；照片记录仍需通过 `/api/photos` 写入 JSON，且不进入本地 `pendingOperations`。
 
+## Audit Logs And Backups
+
+- 后台审计日志写入 `backend/data/audit/audit.log`，使用 JSON Lines，每条日志必须包含时间、操作者、动作、资源、目标、结果和说明。
+- 审计日志写入失败不得阻断主业务操作，但删除、恢复、导入、导出、上传、settings 修改和内容写入等高风险动作应尽量记录。
+- 审计日志 `detail` 必须清洗 `secret`、`password`、`token`、`key`、`authorization` 等字段，不得记录 Secret 明文。
+- 所有手动备份、下载备份、恢复备份、导入和导出接口必须要求管理员 JWT。
+- 手动备份只能写入 `backend/data/.manual_backups/{timestamp}.zip`，文件名必须使用时间戳避免覆盖。
+- 备份不得包含 `.env`、`.venv`、`node_modules`、`dist`、前端源码或 `.manual_backups` 本身。
+- 备份中的 `settings.json` 必须剔除 Secret 字段后再写入 zip；生产 Secret 应保存在后端 `.env` 或服务端配置。
+- 下载和恢复备份时必须校验 zip 文件名，禁止 `..`、`/`、`\` 和非 `.zip` 名称。
+- 恢复和导入 zip 时必须检查 zip 内每个路径，禁止绝对路径、`..`、不在允许备份范围内的路径和排除目录。
+- 恢复或导入前必须自动创建恢复前备份，避免误操作无法回滚。
+- 后台恢复页面必须显示明确风险提示：恢复会覆盖当前 `backend/data` 内容，系统会先创建恢复前备份。
+
 ## Pending Queue Scope
 
 状态机固定为：

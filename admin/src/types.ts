@@ -28,3 +28,29 @@ export interface CommentIndexItem {
   updatedAt: string
   title: string
 }
+
+export interface AuditLogItem {
+  id: string
+  time: string
+  actor: string
+  action: string
+  resource: string
+  target: string
+  result: 'success' | 'failed'
+  message: string
+  ip?: string
+  detail?: Record<string, unknown>
+}
+
+export interface AuditLogResponse {
+  items: AuditLogItem[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface BackupItem {
+  name: string
+  createdAt: string
+  size: number
+}

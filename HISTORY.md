@@ -1,5 +1,70 @@
 # HISTORY
 
+## 2026-05-02 - 管理端审计日志与数据备份恢复轮
+
+本轮目标：
+
+- 提升后台数据安全和可恢复能力。
+- 新增后台操作审计日志、手动备份、备份列表、备份下载、恢复前自动备份、恢复备份、导入导出。
+- 不新增前台视觉特效，不扩展前台新业务页面，不处理设置中心此前延期项。
+
+前台变更：
+
+- 本轮未改动前台业务页面和视觉特效。
+
+后台变更：
+
+- 新增 `/admin/audit` 审计日志页面，支持 action/resource/关键词筛选、加载更多、加载/空/错误状态和失败日志状态标识。
+- 新增 `/admin/backups` 备份恢复页面，支持创建手动备份、备份列表、下载备份、二次确认恢复、导出数据和导入 zip。
+- 后台导航新增“审计”和“备份”入口。
+- 备份下载使用 axios blob 请求，保留 JWT Authorization，不使用裸链接绕过鉴权。
+
+后端/API 变更：
+
+- 新增 `backend/app/services/audit_service.py`，审计日志写入 `backend/data/audit/audit.log`，日志字段包含 `id`、`time`、`actor`、`action`、`resource`、`target`、`result`、`message`、`ip`、`detail`。
+- 新增 `backend/app/services/backup_service.py`，手动备份写入 `backend/data/.manual_backups/{timestamp}.zip`。
+- 新增 `backend/app/api/admin_tools.py`。
+- 新增 `GET /api/admin/audit/logs`，支持 `limit`、`offset`、`action`、`resource`、`q`。
+- 新增 `POST /api/admin/backups`、`GET /api/admin/backups`、`GET /api/admin/backups/{name}/download`、`POST /api/admin/backups/{name}/restore`。
+- 新增 `GET /api/admin/export` 和 `POST /api/admin/import`。
+- 备份范围覆盖 posts、moments、chatters、comments、photos、friends.json、projects.json、music.json、settings.json、about.md、uploads。
+- 备份排除 `.env`、`.venv`、`node_modules`、`dist`、前端源码和 `.manual_backups` 本身；`settings.json` 写入 zip 前会剔除 Secret 字段。
+- 恢复和导入前自动创建 `pre-restore-*.zip`。
+- 登录成功/失败、内容创建/编辑/删除、发布/撤回、评论创建/删除、settings 修改、结构化 JSON 保存、上传、备份、恢复、导入、导出均尽量写入审计日志；日志写入失败不阻断主业务。
+
+文档变更：
+
+- 更新 `docs/API_CONTRACT.md`，补充审计日志、备份、下载、恢复、导入导出接口契约。
+- 更新 `docs/SECURITY_NOTES.md`，补充审计日志、备份 zip、Secret 剔除、路径穿越防护和恢复前备份规则。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，增加审计日志与备份恢复人工验收项。
+- 更新 `docs/RELEASE_CHECKLIST.md`，增加发布前审计和备份恢复检查。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，新增审计日志与备份恢复模块，状态保持 `进行中`。
+- 更新 `README.md`，补充后台审计/备份路由和数据目录说明。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：TestClient 登录后 `POST /api/admin/backups` 创建备份，返回 `20260502215203745663.zip`。
+- 通过：`GET /api/admin/backups` 返回备份列表。
+- 通过：`GET /api/admin/backups/{name}/download` 返回 `application/zip`。
+- 通过：备份 zip 检查不包含 `.env`。
+- 通过：备份 zip 中 `settings.json` 未匹配 `secret`、`password`、`token`、`apikey`、`api_key`、`accesskey` 等敏感词。
+- 通过：`POST /api/admin/backups/{name}/restore` 成功，且 `.manual_backups` 新增 `pre-restore-*.zip`。
+- 通过：`GET /api/admin/export` 返回 `application/zip`。
+- 通过：下载和恢复接口对 `..evil.zip`、`not-a-zip` 等非法名称返回 400。
+- 通过：新增并删除一条测试评论后，`GET /api/admin/audit/logs?q=comment` 能看到 `comment.create` 和 `comment.delete`。
+- 通过：`GET /api/admin/audit/logs?resource=backups` 能看到备份相关审计记录。
+- 通过：构建产物真实 Secret 值扫描未命中 `backend/.env` 中敏感值。
+- 未通过固定端口探测：当前工具环境中 8000、5174 未运行；尝试临时启动 uvicorn 的权限审批超时，改用 TestClient 完成 API 级验证。
+- 未完成：`/admin/audit` 和 `/admin/backups` 仍需用户浏览器人工验收后才能标记完成。
+
+遗留问题：
+
+- 审计日志与备份恢复矩阵项保持 `进行中`，不得在人工验收前标记完成。
+- 设置中心此前跳过的空 Secret 不覆盖、评论开关、图床设置与上传、AI 设置、部署文档实操核验继续保持 `延期/未验收`。
+
 ## 2026-05-02 - 性能、可访问性与体验稳定轮
 
 本轮目标：

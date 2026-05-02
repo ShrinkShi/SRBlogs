@@ -99,6 +99,17 @@ http://127.0.0.1:8000/docs
 
 详细接口契约见 [docs/API_CONTRACT.md](docs/API_CONTRACT.md)。
 
+## 后台主要路由
+
+- `/admin/`：仪表盘
+- `/admin/editor`：Markdown 写作
+- `/admin/posts`、`/admin/drafts`：文章与草稿
+- `/admin/comments`：本地评论管理
+- `/admin/audit`：后台操作审计日志
+- `/admin/backups`：数据备份、下载、恢复、导入导出
+- `/admin/friends`、`/admin/projects`、`/admin/music`、`/admin/photos`：结构化内容管理
+- `/admin/settings`：设置中心
+
 ## 前台主要路由
 
 - `/`：首页
@@ -141,8 +152,11 @@ http://127.0.0.1:8000/docs
 - `photos/photos.json`：照片墙数据
 - `uploads/`：本地上传文件
 - `.backups/`：覆盖写入或删除前的备份
+- `audit/audit.log`：后台操作审计日志
+- `.manual_backups/*.zip`：后台手动备份、导出和恢复前备份
 
 所有 JSON/Markdown 写入必须通过后端安全写入封装，禁止业务路由直接 `open(..., "w")` 写文件。
+手动备份不包含 `.env`、前端源码、`node_modules`、`dist` 或 `.manual_backups` 本身；`settings.json` 写入备份前会剔除 Secret 字段。
 
 ## 构建
 

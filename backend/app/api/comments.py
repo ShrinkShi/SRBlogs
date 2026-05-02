@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from app.config import get_settings
 from app.models.schemas import CommentCreate, CommentIndexItem, CommentItem
+from app.services.audit_service import write_audit
 from app.services.auth_service import require_admin
 from app.services.content_service import MarkdownStore
 from app.services.file_store import FileStoreError, resolve_data_path, safe_read_json, validate_slug
@@ -65,17 +66,20 @@ def create_comment(resource: str, slug: str, payload: CommentCreate):
     }
     comments.append(item)
     store.write(comments)
+    write_audit(actor=item["author"], action="comment.create", resource=resource, target=slug, result="success", message="Comment created", detail={"commentId": item["id"]})
     return item
 
 
 @router.delete("/{resource}/{slug}/{comment_id}", dependencies=[Depends(require_admin)])
-def delete_comment(resource: str, slug: str, comment_id: str):
+def delete_comment(resource: str, slug: str, comment_id: str, actor: str = Depends(require_admin)):
     store = _store(resource, slug)
     comments = store.read()
     next_comments = [item for item in comments if item.get("id") != comment_id]
     if len(next_comments) == len(comments):
+        write_audit(actor=actor, action="comment.delete", resource=resource, target=slug, result="failed", message="comment not found", detail={"commentId": comment_id})
         raise HTTPException(status_code=404, detail="comment not found")
     store.write(next_comments)
+    write_audit(actor=actor, action="comment.delete", resource=resource, target=slug, result="success", message="Comment deleted", detail={"commentId": comment_id})
     return {"ok": True}
 
 

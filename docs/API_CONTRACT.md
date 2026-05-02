@@ -428,6 +428,93 @@ Sitemap: https://example.com/api/sitemap.xml
 { "posts": 0, "moments": 0, "chatters": 0, "photos": 0 }
 ```
 
+## Admin Audit API
+
+### GET `/admin/audit/logs`
+
+后台 JWT。读取 `backend/data/audit/audit.log` 审计日志。
+
+Query：
+- `limit`：默认 50，最大 200。
+- `offset`：默认 0。
+- `action`：可选，精确筛选动作，例如 `posts.create`、`comment.delete`、`backup.restore`。
+- `resource`：可选，精确筛选资源，例如 `posts`、`comments`、`backups`。
+- `q`：可选，模糊搜索 actor/action/resource/target/result/message。
+
+响应：
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "time": "2026-05-02T12:00:00",
+      "actor": "admin",
+      "action": "posts.create",
+      "resource": "posts",
+      "target": "post-slug",
+      "result": "success",
+      "message": "Content created",
+      "ip": "127.0.0.1",
+      "detail": {}
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+日志不得包含 Secret 明文。日志写入失败不得导致主业务操作失败。
+
+## Admin Backup API
+
+### POST `/admin/backups`
+
+后台 JWT。创建手动备份，写入 `backend/data/.manual_backups/{timestamp}.zip`。
+
+备份范围：`posts`、`moments`、`chatters`、`comments`、`photos`、`friends.json`、`projects.json`、`music.json`、`settings.json`、`about.md`、`uploads`。不包含 `.env`、`.venv`、`node_modules`、`dist`、前端源码或手动备份目录本身。`settings.json` 写入 zip 前会剔除 Secret 字段。
+
+响应：
+```json
+{ "name": "20260502120000000000.zip", "createdAt": "2026-05-02T12:00:00", "size": 12345 }
+```
+
+### GET `/admin/backups`
+
+后台 JWT。返回手动备份列表。
+
+```json
+[
+  { "name": "20260502120000000000.zip", "createdAt": "2026-05-02T12:00:00", "size": 12345 }
+]
+```
+
+### GET `/admin/backups/{name}/download`
+
+后台 JWT。下载备份 zip。`name` 必须是当前 `.manual_backups` 下的合法 `.zip` 文件名，禁止 `..`、`/`、`\` 和非 zip 名称。
+
+### POST `/admin/backups/{name}/restore`
+
+后台 JWT。恢复备份。恢复前会自动创建 `pre-restore-{timestamp}.zip`。
+
+响应：
+```json
+{ "ok": true, "restored": "20260502120000000000.zip", "preRestoreBackup": "pre-restore-20260502121000000000.zip" }
+```
+
+错误：
+- `400`：备份名非法、zip 内路径不安全、zip 包含不允许路径。
+- `404`：备份不存在。
+- `500`：恢复过程发生未预期错误。
+
+### GET `/admin/export`
+
+后台 JWT。导出当前内容数据 zip。语义等同创建 `export-{timestamp}.zip` 后下载，不包含 `.env` 或 Secret 明文字段。
+
+### POST `/admin/import`
+
+后台 JWT。上传 zip 并导入。导入前自动创建恢复前备份；zip 内路径必须安全且仅允许落在备份范围内。导入失败不得破坏现有数据。
+
 ## Chat API
 
 ### POST `/chat`
