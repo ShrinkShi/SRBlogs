@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse
 
+from app.config import get_settings
 from app.services.audit_service import read_audit_logs, write_audit
 from app.services.auth_service import require_admin
 from app.services.backup_service import BackupError, backup_path, create_backup, import_backup, list_backups, restore_backup
@@ -19,6 +22,31 @@ def audit_logs(
     q: str = "",
 ):
     return read_audit_logs(limit=limit, offset=offset, action=action, resource=resource, q=q)
+
+
+@router.get("/system/status")
+def system_status():
+    settings = get_settings()
+    data_path = settings.data_path
+    uploads_path = data_path / "uploads"
+    return {
+        "app": settings.app_name,
+        "backendRunning": True,
+        "environment": settings.app_env,
+        "dataPath": {
+            "path": str(data_path),
+            "exists": data_path.exists(),
+            "readable": os.access(data_path, os.R_OK),
+            "writable": os.access(data_path, os.W_OK),
+        },
+        "uploads": {
+            "path": str(uploads_path),
+            "exists": uploads_path.exists(),
+            "readable": os.access(uploads_path, os.R_OK),
+            "writable": os.access(uploads_path, os.W_OK),
+        },
+        "version": "release-candidate",
+    }
 
 
 @router.post("/backups")

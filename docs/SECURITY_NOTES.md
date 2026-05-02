@@ -74,6 +74,16 @@
 - 恢复或导入前必须自动创建恢复前备份，避免误操作无法回滚。
 - 后台恢复页面必须显示明确风险提示：恢复会覆盖当前 `backend/data` 内容，系统会先创建恢复前备份。
 
+## 生产部署安全
+
+- 生产配置应从 `backend/.env.production.example` 复制到服务端环境文件，例如 `/etc/srblogs/backend.env`，不得提交真实 Secret。
+- 生产必须修改 `ADMIN_PASSWORD` 和 `JWT_SECRET`，不得使用本地开发默认值。
+- `CORS_ORIGINS` 生产环境不得使用 `*`，只能包含可信前台和后台域名。
+- `PUBLIC_BASE_URL` 只能配置公开站点 origin，用于 RSS、Sitemap、robots、OpenGraph 和上传 URL；不得配置后台管理地址。
+- Nginx 不得直接暴露 `.env`、`.manual_backups`、`audit`、前端源码、`node_modules` 或构建内部目录。
+- `GET /api/admin/system/status` 必须要求管理员 JWT，只能返回目录存在性和读写状态，不得返回环境变量内容或 Secret。
+- systemd 日志通过 `journalctl` 查看；Nginx access/error log 应保存在系统日志目录，排查时不得粘贴 Secret。
+
 ## Pending Queue Scope
 
 状态机固定为：

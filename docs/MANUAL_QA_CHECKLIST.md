@@ -123,6 +123,17 @@
 - [ ] 恢复备份前出现二次确认，文案包含“恢复会覆盖当前 backend/data 内容，系统会先创建恢复前备份。”
 - [ ] 恢复成功后 `.manual_backups` 中新增 `pre-restore-*.zip`。
 - [ ] 备份 zip 不包含 `.env`、前端源码、`node_modules`、`dist` 或 Secret 明文。
+
+## 发布候选与生产部署演练
+
+- [ ] `backend/.env.production.example` 不包含真实 Secret，并明确 `ADMIN_PASSWORD`、`JWT_SECRET` 生产必须修改。
+- [ ] `deploy/build-all.sh` 能构建前台、后台并执行后端语法检查。
+- [ ] `deploy/start-backend.sh` 使用 `/etc/srblogs/backend.env` 或指定 `ENV_FILE` 启动后端。
+- [ ] `deploy/srblogs-backend.service` 不包含本地 Windows 路径，包含 `WorkingDirectory`、`EnvironmentFile`、`ExecStart`、`Restart=always`、`User`。
+- [ ] `deploy/nginx.srblogs.conf` 包含前台静态、后台静态、`/api` 反代、`/uploads`、`/robots.txt`、gzip、缓存和上传大小限制。
+- [ ] `deploy/healthcheck.sh` 能检查后端 health、前台、后台、RSS、Sitemap 和 robots。
+- [ ] `GET /api/admin/system/status` 登录后可访问，不返回 Secret。
+- [ ] `docs/PRODUCTION_CHECKLIST.md` 覆盖构建、环境变量、Secret、CORS、Nginx、systemd、RSS/Sitemap/robots、上传、审计、备份、恢复和回滚。
 - [ ] 下载/恢复路径穿越名称被拒绝。
 - [ ] 导出数据 zip 可下载。
 - [ ] 导入 zip 前有二次确认，导入失败时显示 UI 错误。

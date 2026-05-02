@@ -1,131 +1,155 @@
 # SRBlogs Deployment Guide
 
-This project keeps the current stack: Vue 3 + Vite + TypeScript + Tailwind CSS + FastAPI.
+SRBlogs keeps the current stack: Vue 3 + Vite + TypeScript + Tailwind CSS + FastAPI.
 
-## Build
+This guide uses `/opt/srblogs` as the Linux deployment path and `/etc/srblogs/backend.env` as the production environment file. Replace `example.com` with your real domain.
 
-Frontend:
+## 1. Production Environment
 
-```powershell
-cd frontend
-npm install
-npm run build
-```
-
-Admin:
-
-```powershell
-cd admin
-npm install
-npm run build
-```
-
-Backend:
-
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-```
-
-## Production `.env`
-
-Set these on the server, not in frontend/admin source:
-
-```env
-APP_ENV=production
-PUBLIC_BASE_URL=https://example.com
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=replace-with-a-strong-password
-JWT_SECRET=replace-with-a-long-random-secret
-JWT_EXPIRE_MINUTES=1440
-CORS_ORIGINS=https://example.com
-UPLOAD_DRIVER=local
-AI_A_API_KEY=
-OSS_ACCESS_KEY_ID=
-OSS_ACCESS_KEY_SECRET=
-```
-
-## Data Directory
-
-- `backend/data` stores Markdown, JSON, comments, uploads, and backups.
-- The backend process user must have read/write permission to `backend/data`.
-- Back up `backend/data` before deployment and before migrations.
-- Do not serve `.env` or backup files directly through Nginx.
-
-## Nginx Example
-
-```nginx
-server {
-    listen 80;
-    server_name example.com;
-
-    root /srv/srblogs/frontend/dist;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    location /admin/ {
-        alias /srv/srblogs/admin/dist/;
-        try_files $uri $uri/ /admin/index.html;
-    }
-
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000/api/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /uploads/ {
-        proxy_pass http://127.0.0.1:8000/uploads/;
-    }
-}
-```
-
-Use HTTPS in production, for example with Certbot or the platform's managed TLS.
-
-## systemd Example
-
-```ini
-[Unit]
-Description=SRBlogs FastAPI
-After=network.target
-
-[Service]
-WorkingDirectory=/srv/srblogs/backend
-EnvironmentFile=/srv/srblogs/backend/.env
-ExecStart=/srv/srblogs/backend/.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
-Restart=always
-User=srblogs
-Group=srblogs
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Commands:
+Start from the template:
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable srblogs
-sudo systemctl start srblogs
-sudo systemctl status srblogs
+sudo mkdir -p /etc/srblogs
+sudo cp /opt/srblogs/backend/.env.production.example /etc/srblogs/backend.env
+sudo editor /etc/srblogs/backend.env
 ```
 
-## Preflight Checklist
+Required production changes:
 
-- `ADMIN_PASSWORD` is changed from the default.
-- `JWT_SECRET` is changed to a long random value.
-- `CORS_ORIGINS` only includes production domains.
-- Development ports 5173/5174 are not exposed.
-- `frontend/dist` and `admin/dist` do not contain Secret values.
+- `ADMIN_PASSWORD`: must not be the development default.
+- `JWT_SECRET`: must be a long random value.
+- `PUBLIC_BASE_URL`: must be the public site origin, for example `https://example.com`.
+- `CORS_ORIGINS`: must list trusted origins only. Do not use `*` in production.
+- `DATA_DIR`: should point to the persistent data directory, usually `/opt/srblogs/backend/data`.
+
+`PUBLIC_BASE_URL` is used by RSS, sitemap, robots, OpenGraph URLs, and upload URLs.
+
+## 2. Build
+
+Use the deploy helper:
+
+```bash
+cd /opt/srblogs
+bash deploy/build-all.sh
+```
+
+Equivalent manual commands:
+
+```bash
+cd /opt/srblogs/frontend
+npm install
+npm run build
+
+cd /opt/srblogs/admin
+npm install
+npm run build
+
+cd /opt/srblogs
+python -m compileall backend/app
+```
+
+## 3. Backend
+
+```bash
+cd /opt/srblogs/backend
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+mkdir -p data/uploads data/audit data/.manual_backups
+```
+
+Reference startup script:
+
+```bash
+bash /opt/srblogs/deploy/start-backend.sh
+```
+
+The script loads `/etc/srblogs/backend.env` when present and starts uvicorn on `127.0.0.1:8000`.
+
+## 4. systemd
+
+Reference unit: `deploy/srblogs-backend.service`
+
+```bash
+sudo cp /opt/srblogs/deploy/srblogs-backend.service /etc/systemd/system/srblogs-backend.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now srblogs-backend
+sudo systemctl status srblogs-backend
+```
+
+Logs:
+
+```bash
+journalctl -u srblogs-backend -f
+```
+
+## 5. Nginx
+
+Reference config: `deploy/nginx.srblogs.conf`
+
+The example includes:
+
+- frontend static files from `/opt/srblogs/frontend/dist`
+- admin static files from `/opt/srblogs/admin/dist`
+- `/api` reverse proxy to `127.0.0.1:8000`
+- `/uploads` reverse proxy to the backend upload service
+- `/robots.txt` reverse proxy to the backend route
+- gzip
+- static cache headers
+- `client_max_body_size 5m`
+
+Install:
+
+```bash
+sudo cp /opt/srblogs/deploy/nginx.srblogs.conf /etc/nginx/conf.d/srblogs.conf
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+Use HTTPS in production, for example through Certbot or your platform's managed TLS.
+
+## 6. Health Check
+
+Backend endpoints:
+
+- `GET /api/health`: public basic health check.
+- `GET /api/admin/system/status`: admin JWT required; checks app name, environment, data directory, uploads directory, and read/write flags without returning secrets.
+
+Deploy helper:
+
+```bash
+PUBLIC_BASE_URL=https://example.com API_BASE_URL=http://127.0.0.1:8000 bash deploy/healthcheck.sh
+```
+
+The script checks backend health, frontend homepage, admin entry, RSS, sitemap, and robots.
+
+## 7. Data And Logs
+
+Persistent directories:
+
+- `backend/data`: Markdown, JSON, comments, uploads, audit logs, and manual backups.
+- `backend/data/.manual_backups`: manual backups, exports, and pre-restore backups.
+- `backend/data/audit/audit.log`: admin audit log in JSON Lines format.
+- `backend/data/uploads`: uploaded files.
+
+Do not serve `.env`, `.manual_backups`, or `audit` directly through Nginx.
+
+Before restore operations:
+
+- confirm the backend service user owns or can write `backend/data`;
+- create a fresh backup;
+- confirm disk space is sufficient.
+
+## 8. Production Preflight
+
+- `ADMIN_PASSWORD` changed.
+- `JWT_SECRET` changed.
+- `CORS_ORIGINS` restricted to production origins.
+- development ports `5173` and `5174` are not exposed.
+- `frontend/dist` and `admin/dist` do not contain secret values.
+- `/api/settings/public` does not return secret fields or values.
+- `/api/admin/settings` only returns `xxxConfigured` booleans for secrets.
+- `/api/rss.xml`, `/api/sitemap.xml`, and `/robots.txt` return public data only.
 - `backend/data` has a backup.
-- Upload size/type/MIME limits are enabled.
-- `/api/health` returns OK.
-- `/api/settings/public` does not return Secret fields or values.
-- `/api/admin/settings` only returns configured booleans for Secrets.
+- upload size/type/MIME limits are enabled.
+
+See also [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md).

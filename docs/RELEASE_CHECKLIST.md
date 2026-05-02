@@ -134,14 +134,20 @@
 
 ## 10. 部署前检查
 
+- [ ] `backend/.env.production.example` 已复制到服务端环境文件，例如 `/etc/srblogs/backend.env`。
 - [ ] `ADMIN_PASSWORD` 已修改。
 - [ ] `JWT_SECRET` 已修改。
 - [ ] `CORS_ORIGINS` 已收紧。
 - [ ] DEBUG/开发端口不暴露。
+- [ ] Secret 不在构建产物中。
 - [ ] HTTPS 已配置。
 - [ ] `backend/data` 已备份。
 - [ ] `backend/data` 权限只给后端进程所需读写权限。
 - [ ] 上传大小限制有效。
+- [ ] `deploy/nginx.srblogs.conf` 已按域名调整，并通过 `nginx -t`。
+- [ ] `deploy/srblogs-backend.service` 已按部署路径调整，并通过 `systemctl status`。
+- [ ] `deploy/healthcheck.sh` 检查后端、前台、后台、RSS、Sitemap、robots。
+- [ ] `docs/PRODUCTION_CHECKLIST.md` 已逐项核对。
 
 ## 11. 已知延期项
 

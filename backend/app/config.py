@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     cors_origins: str = "http://127.0.0.1:5173,http://127.0.0.1:5174,http://127.0.0.1:5175,http://localhost:5173,http://localhost:5174,http://localhost:5175"
 
     upload_driver: str = "local"
+    upload_max_size: int = 5242880
+    upload_allowed_types: str = "image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
     oss_access_key_id: str = ""
     oss_access_key_secret: str = ""
     oss_bucket: str = ""

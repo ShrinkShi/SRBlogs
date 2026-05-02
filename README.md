@@ -18,6 +18,7 @@ SRBlogs/
 ├── backend/                # FastAPI 后端
 │   ├── app/                # API、服务和配置
 │   └── data/               # Markdown、JSON、评论、上传和备份
+├── deploy/                 # Linux 部署脚本、Nginx、systemd 和健康检查
 ├── docs/                   # 契约、安全、验收、部署和发布文档
 ├── start-backend.cmd       # Windows 后端启动
 ├── start-frontend.cmd      # Windows 前台启动
@@ -87,7 +88,7 @@ npm run dev
 密码：change-me
 ```
 
-默认账号仅用于本地开发。生产前必须修改 `backend/.env` 中的 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
+默认账号仅用于本地开发。生产前必须基于 `backend/.env.production.example` 配置服务端环境文件，并修改 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
 
 ## API 文档
 
@@ -191,6 +192,17 @@ python -m compileall backend\app
 - 生产 `.env`
 - HTTPS 和生产前检查
 
+生产发布候选参考文件：
+
+- `backend/.env.production.example`：生产环境变量模板，不包含真实 Secret。
+- `deploy/build-all.sh`：构建前台、后台并检查后端语法。
+- `deploy/start-backend.sh`：Linux 后端启动脚本。
+- `deploy/srblogs-backend.service`：systemd 示例。
+- `deploy/nginx.srblogs.conf`：Nginx 示例。
+- `deploy/healthcheck.sh`：生产健康检查脚本。
+- [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md)：生产发布清单。
+- [CHANGELOG.md](CHANGELOG.md) 与 [docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md)：发布说明。
+
 ## 常见问题
 
 ### Tailwind v3/v4 问题
@@ -233,5 +245,6 @@ taskkill /PID <PID> /F
 ## 当前交付状态
 
 - 友链、项目、音乐、照片墙已通过人工验收并在矩阵中标记为 `已完成`。
+- 审计日志与备份恢复已通过人工验收并可在矩阵中标记为 `已完成`。
 - 设置中心与生产化已有基础实现，但空 Secret 保留、评论开关、图床设置/上传、AI 设置、部署文档实操核验仍按用户决定标记为延期/未验收。
 - 发布前总检查见 [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)。

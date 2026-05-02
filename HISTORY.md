@@ -1,5 +1,73 @@
 # HISTORY
 
+## 2026-05-02 - 发布候选与部署演练轮
+
+本轮目标：
+
+- 将 SRBlogs 整理为可交付、可部署、可演示的发布候选版本。
+- 补齐生产环境变量模板、Linux 部署资产、生产健康检查、目录/日志规范、发布清单和发布说明。
+- 不新增业务功能，不新增 P2 视觉特效，不处理设置中心此前延期项。
+
+前台变更：
+
+- 未改动前台业务页面和视觉特效。
+- 重新执行前台生产构建，生成 `frontend/dist`。
+
+后台变更：
+
+- 未改动已通过验收的后台业务主流程。
+- 重新执行后台生产构建，生成 `admin/dist`。
+
+后端/API 变更：
+
+- 新增 `GET /api/admin/system/status`，需要管理员 JWT，返回 app、环境、data/uploads 目录存在性和读写状态，不返回 Secret。
+- `backend/app/config.py` 新增 `UPLOAD_MAX_SIZE` 和 `UPLOAD_ALLOWED_TYPES` 配置项。
+- 上传服务改为读取后端配置中的上传大小和 MIME 白名单，仍保持扩展名、MIME、大小限制。
+
+部署与配置变更：
+
+- 新增 `backend/.env.production.example`，包含 APP、DATA_DIR、PUBLIC_BASE_URL、管理员、JWT、CORS、上传、AI、OSS、GitHub OAuth 占位字段，并明确生产必须修改 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
+- 新增 `deploy/build-all.sh`、`deploy/start-backend.sh`、`deploy/srblogs-backend.service`、`deploy/nginx.srblogs.conf`、`deploy/healthcheck.sh`、`deploy/README.md`。
+- 同步修复 `deploy/nginx/srblogs.conf`、`deploy/systemd/srblogs.service`、`deploy/setup.sh`，统一使用 `/opt/srblogs` 和 `/etc/srblogs/backend.env` 占位路径，不写死本机 Windows 路径。
+
+文档变更：
+
+- 新增 `docs/PRODUCTION_CHECKLIST.md`。
+- 新增 `CHANGELOG.md`。
+- 新增 `docs/RELEASE_NOTES.md`。
+- 更新 `README.md`，补充生产 env 模板、deploy 目录、生产检查清单和审计/备份已通过状态。
+- 更新 `WINDOWS_START.md`，指向生产 env 模板、deploy 文档和生产检查清单。
+- 更新 `docs/DEPLOYMENT.md`，统一生产部署流程、Nginx、systemd、healthcheck、目录、日志和生产预检说明。
+- 更新 `docs/API_CONTRACT.md`，补充 `GET /api/admin/system/status`。
+- 更新 `docs/SECURITY_NOTES.md`，补充生产部署安全规则。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md` 和 `docs/RELEASE_CHECKLIST.md`，补充发布候选与生产部署检查项。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，将审计日志与备份恢复标记为 `已完成`；部署文档继续保持 `延期/未验收`，因为本轮不做真实服务器部署和 HTTPS 实操。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动后端并访问 `http://127.0.0.1:8000/api/health`，返回 200；验证后已停止临时进程。
+- 通过：真实 HTTP `GET /api/rss.xml` 返回 200，`Content-Type=application/rss+xml; charset=utf-8`。
+- 通过：真实 HTTP `GET /api/sitemap.xml` 返回 200，`Content-Type=application/xml; charset=utf-8`。
+- 通过：真实 HTTP `GET /robots.txt` 返回 200，`Content-Type=text/plain; charset=utf-8`。
+- 通过：真实 HTTP `GET /api/settings/public` 返回 200。
+- 通过：TestClient `GET /api/settings/public` 未匹配 `admin_password`、`jwt_secret`、`api_key`、`accessKeySecret`、`clientSecret`、`githubOAuthSecret`、`authorization` 等敏感字段名。
+- 通过：登录后 TestClient `GET /api/admin/system/status` 返回 200，包含 `app`、`backendRunning`、`environment`、`dataPath`、`uploads`、`version`。
+- 通过：构建产物 Secret 值静态搜索，未发现 `backend/.env` 中非空 Secret 值进入 `frontend/dist` 或 `admin/dist`。
+- 通过：`deploy/nginx.srblogs.conf` 静态检查包含 `/admin/`、`/api/`、`/uploads/`、`/robots.txt`、gzip、缓存、`client_max_body_size` 和后端反代。
+- 通过：`deploy/srblogs-backend.service` 和 `deploy/systemd/srblogs.service` 未匹配本地 Windows 路径。
+- 通过：`backend/.env.production.example` 未匹配开发默认 `ADMIN_PASSWORD=change-me` 或 `JWT_SECRET=please-change-this-secret`，AI/OSS/GitHub Secret 字段为空占位。
+- 通过：`docs/PRODUCTION_CHECKLIST.md` 覆盖构建、环境变量、Secret、CORS、后端健康、Nginx、systemd、前台、后台、RSS/Sitemap/robots、上传、审计、备份、恢复、回滚和已知延期项。
+- 已清理：临时后端 HTTP 探测日志文件；未留下 8000 监听进程。
+
+遗留问题：
+
+- 本轮按要求不做真实服务器部署、真实域名 HTTPS 申请、云端备份、OSS/Gitalk/AI 真实联调。
+- 设置中心此前跳过的空 Secret 不覆盖、评论开关、图床设置与上传流程、AI 设置、部署文档完整实操核验继续保持 `延期/未验收`。
+- 后端系统状态接口验证时产生登录审计记录，`backend/data/audit/audit.log` 有正常审计写入。
+
 ## 2026-05-02 - 管理端审计日志与数据备份恢复轮
 
 本轮目标：
@@ -62,7 +130,7 @@
 
 遗留问题：
 
-- 审计日志与备份恢复矩阵项保持 `进行中`，不得在人工验收前标记完成。
+- 后续用户已确认审计日志与备份恢复人工验收通过，矩阵已在发布候选轮更新为 `已完成`。
 - 设置中心此前跳过的空 Secret 不覆盖、评论开关、图床设置与上传、AI 设置、部署文档实操核验继续保持 `延期/未验收`。
 
 ## 2026-05-02 - 性能、可访问性与体验稳定轮

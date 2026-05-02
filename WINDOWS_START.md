@@ -57,5 +57,5 @@ Stop it with: taskkill /PID 12345 /F
 - 公开设置接口：`http://127.0.0.1:8000/api/settings/public`
 - 后台设置接口需要登录 JWT：`GET/PUT http://127.0.0.1:8000/api/admin/settings`
 - 后台不会回显 AI Key、OSS Key、GitHub OAuth Secret 等 Secret 明文，只显示 `xxxConfigured` 布尔值。
-- 默认账号 `admin / change-me` 仅用于本地开发；生产前必须修改 `backend/.env` 中的 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
-- 服务器部署、Nginx、systemd、`.env` 和生产前检查见 `docs/DEPLOYMENT.md`。
+- 默认账号 `admin / change-me` 仅用于本地开发；生产前必须基于 `backend/.env.production.example` 配置服务端环境文件，并修改 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
+- 服务器部署、Nginx、systemd、生产 `.env` 模板和生产前检查见 `docs/DEPLOYMENT.md`、`deploy/README.md` 和 `docs/PRODUCTION_CHECKLIST.md`。

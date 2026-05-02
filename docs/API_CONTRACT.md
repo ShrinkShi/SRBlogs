@@ -466,6 +466,34 @@ Query：
 
 日志不得包含 Secret 明文。日志写入失败不得导致主业务操作失败。
 
+### GET `/admin/system/status`
+
+后台 JWT。返回生产健康检查所需的非敏感系统状态。
+
+响应：
+```json
+{
+  "app": "SRBlogs API",
+  "backendRunning": true,
+  "environment": "production",
+  "dataPath": {
+    "path": "/opt/srblogs/backend/data",
+    "exists": true,
+    "readable": true,
+    "writable": true
+  },
+  "uploads": {
+    "path": "/opt/srblogs/backend/data/uploads",
+    "exists": true,
+    "readable": true,
+    "writable": true
+  },
+  "version": "release-candidate"
+}
+```
+
+不得返回 `.env` 内容、管理员密码、JWT Secret、AI Key、OSS Key 或 OAuth Secret。
+
 ## Admin Backup API
 
 ### POST `/admin/backups`

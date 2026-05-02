@@ -305,7 +305,15 @@ Windows 本地启动命令：
 - 备份 zip 排除 `.env`、`.venv`、`node_modules`、`dist`、前端源码和 `.manual_backups` 本身；`settings.json` 写入 zip 前剔除 Secret 字段。
 - 后台新增 `/admin/audit` 和 `/admin/backups` 页面，提供日志筛选、备份列表、手动备份、下载、恢复、导出和导入入口。
 - API 验证通过：创建备份、列表、下载、恢复前备份、审计日志、评论创建/删除审计、导出、路径穿越防护、zip 不含 `.env` 与 Secret 字段。
-- 当前工具环境无法启动固定 8000/5174 服务进行真实浏览器页面验收，`/admin/audit` 和 `/admin/backups` 仍需用户人工确认后才能标记完成。
+- 用户已确认审计日志与数据备份恢复轮通过人工验收，`/admin/audit`、`/admin/backups`、备份下载、恢复前备份和高风险操作审计可标记为 `已完成`。
+
+2026-05-02 发布候选与部署演练轮当前结果：
+
+- 新增 `backend/.env.production.example`，明确生产必须修改 `ADMIN_PASSWORD`、`JWT_SECRET`，并限制 `CORS_ORIGINS` 不使用 `*`。
+- 新增 `deploy/build-all.sh`、`deploy/start-backend.sh`、`deploy/srblogs-backend.service`、`deploy/nginx.srblogs.conf`、`deploy/healthcheck.sh` 和 `deploy/README.md`。
+- 新增 `GET /api/admin/system/status`，管理员 JWT 保护，返回 app、环境、data/uploads 目录存在性和读写状态，不返回 Secret。
+- 新增 `docs/PRODUCTION_CHECKLIST.md`、`CHANGELOG.md`、`docs/RELEASE_NOTES.md`，并同步生产部署、目录、日志、备份和发布说明。
+- 本轮不做真实服务器部署和 HTTPS 申请；设置中心此前跳过的五项继续保持 `延期/未验收`。
 
 ## Matrix
 
@@ -331,7 +339,7 @@ Windows 本地启动命令：
 | 图床 | 图床配置、上传、Token 测试 | 设置中心已提供 provider、publicBaseUrl、bucket、region、endpoint、AccessKey configured、Secret configured 和新密钥输入；后台不回显密钥明文；本地上传 API 测试通过；上传接口继续校验类型、MIME 和大小 | P0 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮图床表单、上传流程和空 Secret 保留旧值的浏览器人工验收；不得标记完成 |
 | AI 设置 | Gemini/兼容模型配置和后台助手 | 设置中心已提供 provider、baseUrl、model、enableChat、aiKeyConfigured 和新 API Key 输入；后台不回显 API Key 明文；构建产物 Secret 搜索通过 | P1 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮 AI 设置浏览器验收和真实大模型联调；不得标记完成 |
 | 评论设置 | GitHub OAuth/Gitalk 配置面板 | 设置中心已提供评论开关、邮箱要求、最大长度、邮箱显示、本地评论开关和 Gitalk/GitHub 占位字段；前台评论区已尊重 enabled/localEnabled，关闭后隐藏提交框 | P1 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮评论开关浏览器人工验收；不得标记完成 |
-| 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`；`WINDOWS_START.md` 已记录固定地址、strictPort、端口占用 PID 和设置中心提示；新增 `docs/DEPLOYMENT.md`，包含 Nginx、systemd、backend/data 权限、生产 `.env`、HTTPS 和生产前检查 | P0 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮服务器部署文档完整实操核验；不得标记完成 |
+| 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`；`WINDOWS_START.md` 已记录固定地址、strictPort、端口占用 PID 和设置中心提示；新增生产 env 模板、Nginx/systemd/build/healthcheck 部署资产、`docs/DEPLOYMENT.md`、`docs/PRODUCTION_CHECKLIST.md`、`CHANGELOG.md` 和发布说明 | P0 | 7 设置中心与生产化轮 / 发布候选与部署演练轮 | 延期/未验收 | 原因：生产部署文档和脚本已补齐，但用户要求本轮不做真实服务器部署、域名 HTTPS 和完整实操核验；不得标记完成 |
 | SEO/订阅/分享 | Meta、OpenGraph、RSS、Sitemap、robots、分享 | 已新增统一 SEO meta 工具；主要前台页面接入 title/description/OG/Twitter Card；后端新增 RSS、Sitemap、robots；前台新增 RSS 入口；分享复制增加成功/失败提示；已通过用户人工验收 | P1 | SEO、订阅与分享增强轮 | 已完成 | RSS、Sitemap、robots、动态 meta、RSS 入口和分享复制均已通过人工验收 |
 | 性能/可访问性/体验稳定 | 图片性能、移动端可读性、错误兜底、键盘可访问性、构建体积可控 | 已补 SafeImage 图片懒加载/兜底、StateBlock 通用状态、照片预览关闭能力、评论表单 label、前台导航/播放器/背景控制 aria、后台侧栏窄屏滚动和输入 aria；构建体积已记录，Markdown 相关 chunk 仍需后续观察 | P1 | 性能、可访问性与体验稳定轮 | 进行中 | 剩余差距：390px 真实浏览器视觉回归、键盘 Tab 顺序、图片失败视觉兜底、后台窄屏表单操作仍需人工确认；不得在人工验收前标记完成 |
-| 审计日志与备份恢复 | 后台操作审计、数据备份、下载、恢复、导入导出 | 已新增审计日志服务、`/admin/audit`、手动备份服务、`/admin/backups`、下载、恢复、导出和导入 API；恢复前自动创建 pre-restore 备份；备份 zip 排除 `.env` 和 Secret 字段；API 级验证已通过 | P0 | 管理端审计日志与数据备份恢复轮 | 进行中 | 剩余差距：需要用户浏览器人工确认 `/admin/audit` 日志筛选、`/admin/backups` 创建/下载/恢复/导入导出主流程和 UI 错误状态；通过前不得标记完成 |
+| 审计日志与备份恢复 | 后台操作审计、数据备份、下载、恢复、导入导出 | 已新增审计日志服务、`/admin/audit`、手动备份服务、`/admin/backups`、下载、恢复、导出和导入 API；恢复前自动创建 pre-restore 备份；备份 zip 排除 `.env` 和 Secret 字段；API 级验证和用户人工验收均已通过 | P0 | 管理端审计日志与数据备份恢复轮 | 已完成 | 后台审计日志、备份列表、手动备份、下载、恢复、恢复前备份和高风险操作审计均已通过人工验收 |
