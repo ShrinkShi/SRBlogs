@@ -8,6 +8,7 @@ import BackButton from '@/components/BackButton.vue'
 import ShareButtons from '@/components/ShareButtons.vue'
 import CommentBox from '@/components/CommentBox.vue'
 import type { ContentItem } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 
 const props = withDefaults(defineProps<{ section?: 'posts' | 'moments' | 'chatters' }>(), { section: 'posts' })
 const route = useRoute()
@@ -18,6 +19,14 @@ const coverFailed = ref(false)
 const slug = computed(() => String(route.params.slug))
 const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop'
 const coverUrl = computed(() => (coverFailed.value ? fallbackCover : item.value?.meta.cover || fallbackCover))
+
+useSeo({
+  title: () => error.value ? '404 内容不存在' : item.value?.meta.title || '内容加载中',
+  description: () => item.value?.meta.summary || item.value?.content?.slice(0, 140) || error.value || 'SRBlogs 内容详情',
+  image: () => coverUrl.value,
+  type: 'article',
+  path: () => `/${props.section}/${slug.value}`
+})
 
 async function load(){
   loading.value = true

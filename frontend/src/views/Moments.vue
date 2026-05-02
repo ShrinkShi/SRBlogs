@@ -4,9 +4,11 @@ import MomentTimeline from '@/components/MomentTimeline.vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { contentApi } from '@/api/content'
 import type { ContentItem } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 const items = ref<ContentItem[]>([])
 const loading = ref(true)
 const error = ref('')
+useSeo({ title: '瞬间', description: 'SRBlogs 的短动态和时间线记录。', path: '/moments' })
 async function load() {
   loading.value = true
   error.value = ''

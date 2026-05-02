@@ -873,3 +873,61 @@ API 实测结果：
 - `/search`、`/tags`、`/tags/:tag`、`/archive` 仍需用户浏览器人工验收，包括 390px 移动端检查、搜索空状态、不存在标签空状态和结果跳转。
 - 本轮未做全文索引数据库、AI 搜索、后台搜索管理增强、真实 OSS/Gitalk/OAuth 或设置中心延期项。
 - 内容发现相关矩阵项保持 `进行中`，不得标记为 `已完成`。
+
+## 2026-05-02 - SEO、订阅与分享增强轮
+
+本轮目标：
+
+- 提升 SRBlogs 的可发现性、可分享性和可订阅性。
+- 新增基础动态 meta、OpenGraph、Twitter Card、RSS、Sitemap、robots 和前台 RSS 入口。
+- 不做服务端渲染、不迁移 Next.js、不接入复杂 SEO 平台、不做 AI 搜索、不新增 P2 视觉特效。
+
+前台变更：
+
+- 新增 `frontend/src/composables/useSeo.ts`，统一设置 `title`、`description`、OpenGraph 和 Twitter Card。
+- 首页、文章列表、文章详情、瞬间、杂谈、友链、项目、音乐、照片墙、关于、时间线、搜索、标签、标签详情、归档和 404 页面已接入统一 SEO 工具。
+- 文章详情 SEO 来源优先使用文章标题、摘要和封面；不存在或加载失败时 title 显示 404/内容不存在。
+- `frontend/index.html` 更新基础 title、description、OG、Twitter Card 和 RSS alternate link。
+- 文章列表页和关于页新增 RSS 入口。
+- `ShareButtons.vue` 增强复制链接：成功显示提示，失败时显示可读失败提示，并保留 X 分享链接但不依赖第三方 SDK。
+
+后台变更：
+
+- 本轮未修改后台页面和后台业务流程。
+
+后端/API 变更：
+
+- 新增 `backend/app/api/seo.py` 并注册到 FastAPI。
+- 新增 `GET /api/rss.xml`：公开 RSS 2.0，包含已发布 posts 和部分 chatters，排除 `draft=true`。
+- 新增 `GET /api/sitemap.xml`：公开 XML sitemap，包含公开固定路由、已发布 posts 详情、chatters 详情和 tags 详情，排除 `draft=true`。
+- 新增 `GET /robots.txt`：允许公开前台页面，禁止 `/admin`，并指向 sitemap。
+- RSS description 使用 XML/HTML 转义；RSS/Sitemap/robots 不需要 JWT，不输出 Secret。
+- SEO 链接基于 `PUBLIC_BASE_URL`；开发默认将 `127.0.0.1:8000` 兜底转换为前台 `127.0.0.1:5173`。
+
+文档变更：
+
+- 更新 `docs/API_CONTRACT.md`，补充 RSS、Sitemap、robots 契约。
+- 更新 `README.md`，补充 SEO 与订阅公开地址。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，新增 SEO、订阅与分享人工验收项。
+- 更新 `docs/RELEASE_CHECKLIST.md`，新增 SEO 与订阅发布前检查。
+- 更新 `docs/SECURITY_NOTES.md`，补充公开 SEO 端点安全规则。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，将内容发现与归档相关项按用户人工验收结果标记为 `已完成`，新增 SEO/订阅/分享项并保持 `进行中`。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：TestClient `GET /api/rss.xml` 返回 200，`Content-Type=application/rss+xml`，包含 RSS item，不包含 `demo-draft` 草稿和 Secret pattern。
+- 通过：TestClient `GET /api/sitemap.xml` 返回 200，`Content-Type=application/xml`，包含 `<urlset>`，不包含 `demo-draft` 草稿和 Secret pattern。
+- 通过：TestClient `GET /robots.txt` 返回 200，包含 `Disallow: /admin`，不包含 Secret pattern。
+- 通过：临时启动后端到 `127.0.0.1:8000`，`GET /api/rss.xml`、`GET /api/sitemap.xml`、`GET /robots.txt` 均可通过 HTTP 打开。
+- 通过：`frontend/dist/index.html` 基础 title 为 `SRBlogs`，包含 description、OG、Twitter Card 和 RSS alternate link。
+- 通过：构建产物静态搜索未匹配到 `clientSecret`、`accessKeySecret`、`secretKey`、`apiKey`、`jwt_secret`、`admin_password`、`please-change-this-secret`、`change-me` 或本轮临时 Secret 值。
+- 已尝试但未通过：使用 Edge headless 验证文章详情运行时动态 title/meta/og 时，当前工具环境返回空 DOM；未能完成浏览器自动验收。
+
+遗留问题：
+
+- 文章详情动态 title/meta/og 随文章变化、文章详情复制链接可用、RSS 入口可见仍需用户浏览器人工验收。
+- 本轮未做 SSR，因此搜索引擎对 SPA 运行时 meta 的抓取能力取决于爬虫是否执行 JavaScript；RSS/Sitemap/robots 已由后端直接提供。
+- SEO/订阅/分享矩阵项保持 `进行中`，不得标记为 `已完成`，直到人工验收通过。

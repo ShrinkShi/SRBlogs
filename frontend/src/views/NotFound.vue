@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import GlassCard from '@/components/GlassCard.vue'
+import { useSeo } from '@/composables/useSeo'
+
+useSeo({ title: '404 页面不存在', description: '这个地址没有匹配到 SRBlogs 前台页面。', path: () => window.location.pathname })
 </script>
 
 <template>

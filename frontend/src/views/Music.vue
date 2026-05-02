@@ -4,11 +4,13 @@ import CloudPlayer from '@/components/CloudPlayer.vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { contentApi } from '@/api/content'
 import type { MusicItem, SiteSettings } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 
 const tracks = ref<MusicItem[]>([])
 const settings = ref<SiteSettings | null>(null)
 const loading = ref(false)
 const error = ref('')
+useSeo({ title: '音乐', description: 'SRBlogs 的公开歌单和音乐播放入口。', path: '/music' })
 
 const sortedTracks = computed(() => [...tracks.value].sort((a, b) => Number(a.sort ?? 0) - Number(b.sort ?? 0)))
 

@@ -3,10 +3,12 @@ import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { contentApi } from '@/api/content'
 import type { FriendItem } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 
 const friends = ref<FriendItem[]>([])
 const loading = ref(false)
 const error = ref('')
+useSeo({ title: '友链', description: 'SRBlogs 的朋友站点和推荐链接。', path: '/friends' })
 
 async function load() {
   loading.value = true

@@ -3,10 +3,12 @@ import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { contentApi } from '@/api/content'
 import type { ProjectItem } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 
 const projects = ref<ProjectItem[]>([])
 const loading = ref(false)
 const error = ref('')
+useSeo({ title: '项目', description: 'SRBlogs 的项目陈列、技术栈和链接。', path: '/projects' })
 
 async function load() {
   loading.value = true

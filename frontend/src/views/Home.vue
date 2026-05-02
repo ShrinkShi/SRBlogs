@@ -8,6 +8,7 @@ import LatestChatterCarousel from '@/components/LatestChatterCarousel.vue'
 import MomentTimeline from '@/components/MomentTimeline.vue'
 import { contentApi } from '@/api/content'
 import type { ContentItem, ProjectItem, SiteSettings, TagItem } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 
 const posts = ref<ContentItem[]>([])
 const moments = ref<ContentItem[]>([])
@@ -15,6 +16,13 @@ const chatters = ref<ContentItem[]>([])
 const projects = ref<ProjectItem[]>([])
 const settings = ref<SiteSettings | null>(null)
 const tags = ref<TagItem[]>([])
+
+useSeo({
+  title: () => settings.value?.siteTitle || settings.value?.title || '首页',
+  description: () => settings.value?.description || settings.value?.bio || 'SRBlogs 首页',
+  image: () => settings.value?.avatar || settings.value?.avatarUrl || settings.value?.bgImages?.[0],
+  path: '/'
+})
 
 onMounted(async () => {
   const [p, m, c, pr, s, t] = await Promise.allSettled([

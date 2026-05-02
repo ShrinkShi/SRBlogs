@@ -3,11 +3,13 @@ import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { contentApi } from '@/api/content'
 import type { ArchiveResponse } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 
 const archive = ref<ArchiveResponse>({ years: [] })
 const loading = ref(true)
 const error = ref('')
 const typeLabels: Record<string, string> = { posts: '文章', moments: '瞬间', chatters: '杂谈' }
+useSeo({ title: '内容归档', description: '按年份和月份浏览 SRBlogs 的公开文章、瞬间和杂谈。', path: '/archive' })
 
 async function load() {
   loading.value = true

@@ -89,6 +89,16 @@
 - [ ] `admin/dist` 不包含默认密码、JWT Secret、AI Key、OSS Key、GitHub OAuth Secret 或真实 Secret 值。
 - [ ] 生产 `.env` 不提交到 Git。
 
+## 8.1 SEO 与订阅检查
+
+- [ ] `GET /api/rss.xml` 返回 RSS 2.0 XML。
+- [ ] `GET /api/sitemap.xml` 返回 XML sitemap。
+- [ ] `GET /robots.txt` 包含 `Disallow: /admin`。
+- [ ] RSS 和 sitemap 不包含草稿。
+- [ ] 文章详情动态 title/meta/og 随文章变化。
+- [ ] 前台 RSS 入口可见。
+- [ ] 文章详情复制链接可用。
+
 ## 9. 构建检查
 
 - [ ] `cd frontend && npm run build` 通过。

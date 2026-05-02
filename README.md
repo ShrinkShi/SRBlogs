@@ -111,6 +111,16 @@ http://127.0.0.1:8000/docs
 - `/friends`、`/projects`、`/music`、`/photowall`：结构化内容
 - `/about`、`/timeline`：关于和视觉时间线
 
+## SEO 与订阅
+
+公开接口：
+
+- RSS：`http://127.0.0.1:8000/api/rss.xml`
+- Sitemap：`http://127.0.0.1:8000/api/sitemap.xml`
+- Robots：`http://127.0.0.1:8000/robots.txt`
+
+前台文章列表和关于页提供 RSS 入口。生产环境请在后端 `.env` 设置 `PUBLIC_BASE_URL`，用于 RSS、Sitemap、robots 和上传 URL。
+
 ## 数据目录
 
 `backend/data` 是当前文件存储根目录：

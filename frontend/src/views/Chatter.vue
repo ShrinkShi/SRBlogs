@@ -4,9 +4,11 @@ import PostList from '@/components/PostList.vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { contentApi } from '@/api/content'
 import type { ContentItem } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 const items = ref<ContentItem[]>([])
 const loading = ref(true)
 const error = ref('')
+useSeo({ title: '杂谈', description: 'SRBlogs 的长短想法、碎片记录和杂谈内容。', path: '/chatters' })
 async function load() {
   loading.value = true
   error.value = ''

@@ -5,6 +5,7 @@ import GlassCard from '@/components/GlassCard.vue'
 import DiscoveryResultCard from '@/components/DiscoveryResultCard.vue'
 import { contentApi } from '@/api/content'
 import type { DiscoveryType, SearchResponse } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,6 +21,8 @@ const typeOptions: { label: string; value: DiscoveryType }[] = [
   { label: '杂谈', value: 'chatters' },
   { label: '项目', value: 'projects' }
 ]
+
+useSeo({ title: () => `标签：${tagName.value}`, description: () => `浏览标签 ${tagName.value} 下的公开内容。`, path: () => `/tags/${encodeURIComponent(tagName.value)}` })
 
 async function load() {
   loading.value = true

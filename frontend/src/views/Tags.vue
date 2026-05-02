@@ -3,10 +3,12 @@ import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { contentApi } from '@/api/content'
 import type { TagItem } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 
 const tags = ref<TagItem[]>([])
 const loading = ref(true)
 const error = ref('')
+useSeo({ title: '标签', description: '浏览 SRBlogs 的内容标签索引。', path: '/tags' })
 
 async function load() {
   loading.value = true

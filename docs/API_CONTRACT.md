@@ -207,8 +207,6 @@ Base path: `/api`
 - 写入必须通过 `JsonStore.write` -> `safe_write_json`，覆盖前生成 `.backups` 备份。
 - 图片上传、Secret 修改、评论删除不进入本地 `pendingOperations`。
 
-## Upload API
-
 ## Discovery APIs
 
 ### GET `/search`
@@ -302,6 +300,37 @@ Query 参数：
   ]
 }
 ```
+
+## SEO And Subscription APIs
+
+### GET `/api/rss.xml`
+
+公开 RSS 2.0 Feed，不需要 JWT。至少包含已发布 posts，可包含部分 chatters；`draft=true` 内容不得进入 RSS。
+
+响应类型：`application/rss+xml; charset=utf-8`
+
+每个 item 至少包含 `title`、`link`、`guid`、`pubDate`、`description`。`description` 必须做 XML/HTML 转义。站点链接基于 `PUBLIC_BASE_URL`；开发默认兜底为 `http://127.0.0.1:5173`。
+
+### GET `/api/sitemap.xml`
+
+公开 XML Sitemap，不需要 JWT。包含公开前台固定路由、已发布 posts 详情页、chatters 详情页和标签详情页；`draft=true` 内容不得进入 sitemap。
+
+响应类型：`application/xml; charset=utf-8`
+
+每个 url 至少包含 `loc`；有可解析日期时提供 `lastmod`。
+
+### GET `/robots.txt`
+
+公开 robots 文件，不需要 JWT。必须禁止爬取后台路径，并指向 sitemap。
+
+```text
+User-agent: *
+Allow: /
+Disallow: /admin
+Sitemap: https://example.com/api/sitemap.xml
+```
+
+## Upload API
 
 ### POST `/upload`
 

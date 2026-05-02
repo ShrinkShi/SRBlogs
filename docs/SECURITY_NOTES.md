@@ -16,6 +16,14 @@
 - GitHub OAuth Secret 仅作为服务端配置或后台写入字段存在，前台评论区只允许读取公开显示配置，不接入或暴露真实 OAuth Secret。
 - 每次发布前必须对 `frontend/dist` 和 `admin/dist` 做静态搜索，确认没有默认密码、JWT Secret、AI Key、OSS Key、GitHub OAuth Secret 或真实 Secret 值。
 
+## Public SEO Endpoints
+
+- `GET /api/rss.xml`、`GET /api/sitemap.xml` 和 `GET /robots.txt` 是公开接口，不需要 JWT。
+- RSS 和 sitemap 只能包含公开内容，`draft=true` 的 posts/moments/chatters 不得进入输出。
+- RSS description 必须经过 XML/HTML 转义，不得输出未经转义的 Markdown/HTML。
+- robots 必须禁止爬取 `/admin`，不得暴露 `.env`、备份目录、服务器绝对路径或 Secret。
+- OpenGraph、Twitter Card、RSS、Sitemap 使用的站点 URL 只能来自公开 base URL 或当前浏览器 origin，不得写入后台 admin 地址或私有配置。
+
 ## Uploads
 
 - 上传接口必须要求管理员 JWT。

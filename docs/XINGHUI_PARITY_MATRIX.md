@@ -273,7 +273,17 @@ Windows 本地启动命令：
 - 前台新增 `/search`、`/tags`、`/tags/:tag`、`/archive`；首页新增轻量内容发现入口。
 - `cd frontend && npm run build`、`cd admin && npm run build`、`python -m compileall backend\app`：通过。
 - API 验证：`/api/search?q=vue`、`/api/search?q=vue&type=posts`、`/api/search?tag=Vue`、`/api/tags`、`/api/archive` 均返回 200。
-- 结论：内容发现代码和 API 已落地，但新增页面仍需浏览器人工验收，相关项保持 `进行中`。
+- 结论：内容发现与归档扩张轮已通过用户人工验收，搜索、标签、归档相关项可标记为 `已完成`。
+
+2026-05-02 SEO、订阅与分享增强轮当前结果：
+
+- 新增前台 `useSeo` 工具，统一设置 title、description、OpenGraph 和 Twitter Card。
+- 主要前台页面已接入动态 meta；文章详情会使用文章标题、摘要和封面，错误状态显示 404/内容不存在。
+- 新增 `GET /api/rss.xml`、`GET /api/sitemap.xml` 和 `GET /robots.txt`，均为公开接口，不需要 JWT。
+- 文章列表和关于页新增 RSS 入口；文章详情分享复制链接增加失败提示。
+- `cd frontend && npm run build`、`cd admin && npm run build`、`python -m compileall backend\app`：通过。
+- TestClient 验证 RSS、Sitemap、robots 均返回 200，不包含 `demo-draft` 草稿和 Secret pattern；robots 包含 `Disallow: /admin`。
+- 结论：SEO/订阅/分享代码和 API 已落地，但动态 meta 与分享复制仍需浏览器人工验收，相关项保持 `进行中`。
 
 ## Matrix
 
@@ -284,7 +294,9 @@ Windows 本地启动命令：
 | 文章详情 | Markdown 详情、代码高亮、评论、分享 | PostDetail 真实读取 `/api/posts/{slug}`，已补加载、404/错误状态、封面兜底、元信息展示、分享和评论挂载；MarkdownRenderer 继续使用 DOMPurify；前台 Markdown 样式已补齐列表编号、项目符号、表格滚动和图片自适应；人工回归项已写入 `docs/MANUAL_QA_CHECKLIST.md` | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：TOC 点击滚动、代码块视觉高亮、分享按钮交互、390px 移动端仍需浏览器人工验收 |
 | 动态 | 类朋友圈短内容流和轻量评论 | Moments 页面真实读取 `/api/moments`，本轮补齐加载、空、错误状态；详情复用 PostDetail | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：动态详情、评论和 390px 移动端仍需浏览器人工回归 |
 | 杂谈 | 云端杂谈/碎片化文章卡片 | Chatter 页面真实读取 `/api/chatters`，本轮公开路由统一为 `/chatters` 和 `/chatters/:slug`，旧 `/chatter` 保留重定向；已补加载、空、错误状态 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：杂谈详情、首页聚合跳转和移动端仍需浏览器人工回归 |
-| 时间线 | 内容按时间汇总展示 | Timeline 页面真实读取 `/api/moments`，已补齐加载、空、错误状态；新增 `/archive` 使用 `/api/archive` 聚合 posts/moments/chatters 按年月浏览 | P1 | 6 媒体互动轮 / 内容发现轮 | 进行中 | 剩余差距：新增 `/archive` 页面仍需浏览器人工验收；`/timeline` 保留为视觉时间线，不破坏既有页面 |
+| 时间线 | 内容按时间汇总展示 | Timeline 页面真实读取 `/api/moments`，已补齐加载、空、错误状态；新增 `/archive` 使用 `/api/archive` 聚合 posts/moments/chatters 按年月浏览；归档页面已通过人工验收 | P1 | 6 媒体互动轮 / 内容发现轮 | 已完成 | `/archive` 按年月展示公开内容、跳转详情、空/加载/错误状态和首页入口均已通过人工验收；`/timeline` 保留为视觉时间线 |
+| 搜索 | 全站内容发现 | 新增 `GET /api/search` 和前台 `/search`，支持关键词、类型、标签、URL query、加载/空/错误状态和结果跳转；搜索结果覆盖文章、瞬间、杂谈、项目、照片、友链、音乐且排除草稿；已通过人工验收 | P1 | 内容发现轮 | 已完成 | `/search`、关键词搜索、类型筛选、标签筛选、空结果和首页搜索入口均已通过人工验收 |
+| 标签 | 标签聚合与标签内容页 | 新增 `GET /api/tags`、`/tags`、`/tags/:tag`，合并 posts/moments/chatters/projects 标签，支持标签数量、类型和内容列表；已通过人工验收 | P1 | 内容发现轮 | 已完成 | `/tags`、`/tags/:tag`、不存在标签空状态和首页热门标签入口均已通过人工验收 |
 | 照片墙 | 图片墙、封面、图集浏览 | 前台 Photowall 动态读取 `/api/photos`，已有加载/空/错误状态、懒加载、点击放大预览、标题/描述/日期/标签展示；后台照片管理已改为表单化主流程，支持上传接口填入 URL，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 照片墙懒加载、点击放大、上传填 URL、后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
 | 音乐 | 网易云 ID 配置和悬浮/页面播放器 | 前台 Music 动态读取 `/api/music`，已有加载/空/错误状态、歌曲列表和 CloudPlayer 数据绑定；CloudPlayer 在歌曲存在 URL 时支持原生 audio 播放/暂停；后台歌单管理已改为表单化主流程，支持标题、艺术家、封面、URL/云音乐 ID、排序，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 音乐播放、后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
 | 友链 | 友链卡片和头像展示 | 前台 Friends 动态读取 `/api/friends`，已有加载/空/错误状态、头像兜底、标签和新标签外链；后台友链管理已改为表单化主流程，支持新增/编辑/删除名称、URL、描述、头像/图标、标签，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 友链后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
@@ -298,3 +310,4 @@ Windows 本地启动命令：
 | AI 设置 | Gemini/兼容模型配置和后台助手 | 设置中心已提供 provider、baseUrl、model、enableChat、aiKeyConfigured 和新 API Key 输入；后台不回显 API Key 明文；构建产物 Secret 搜索通过 | P1 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮 AI 设置浏览器验收和真实大模型联调；不得标记完成 |
 | 评论设置 | GitHub OAuth/Gitalk 配置面板 | 设置中心已提供评论开关、邮箱要求、最大长度、邮箱显示、本地评论开关和 Gitalk/GitHub 占位字段；前台评论区已尊重 enabled/localEnabled，关闭后隐藏提交框 | P1 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮评论开关浏览器人工验收；不得标记完成 |
 | 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`；`WINDOWS_START.md` 已记录固定地址、strictPort、端口占用 PID 和设置中心提示；新增 `docs/DEPLOYMENT.md`，包含 Nginx、systemd、backend/data 权限、生产 `.env`、HTTPS 和生产前检查 | P0 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮服务器部署文档完整实操核验；不得标记完成 |
+| SEO/订阅/分享 | Meta、OpenGraph、RSS、Sitemap、robots、分享 | 已新增统一 SEO meta 工具；主要前台页面接入 title/description/OG/Twitter Card；后端新增 RSS、Sitemap、robots；前台新增 RSS 入口；分享复制增加成功/失败提示 | P1 | SEO、订阅与分享增强轮 | 进行中 | 剩余差距：需要浏览器人工确认文章详情动态 meta/og 随文章变化、RSS 入口可见、复制链接可用 |

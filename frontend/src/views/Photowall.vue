@@ -3,11 +3,13 @@ import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { contentApi } from '@/api/content'
 import type { PhotoItem } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 
 const photos = ref<PhotoItem[]>([])
 const active = ref<PhotoItem | null>(null)
 const loading = ref(false)
 const error = ref('')
+useSeo({ title: '照片墙', description: 'SRBlogs 的照片墙、图片记录和预览。', path: '/photowall' })
 
 async function load() {
   loading.value = true

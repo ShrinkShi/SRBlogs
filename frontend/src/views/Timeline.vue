@@ -4,9 +4,11 @@ import MomentTimeline from '@/components/MomentTimeline.vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { contentApi } from '@/api/content'
 import type { ContentItem } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 const items = ref<ContentItem[]>([])
 const loading = ref(true)
 const error = ref('')
+useSeo({ title: '时间线', description: 'SRBlogs 的公开动态时间线。', path: '/timeline' })
 async function load() {
   loading.value = true
   error.value = ''

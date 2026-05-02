@@ -5,6 +5,7 @@ import GlassCard from '@/components/GlassCard.vue'
 import DiscoveryResultCard from '@/components/DiscoveryResultCard.vue'
 import { contentApi } from '@/api/content'
 import type { DiscoveryType, SearchResponse, TagItem } from '@/types'
+import { useSeo } from '@/composables/useSeo'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,6 +27,8 @@ const typeOptions: { label: string; value: DiscoveryType }[] = [
   { label: '友链', value: 'friends' },
   { label: '音乐', value: 'music' }
 ]
+
+useSeo({ title: () => q.value ? `搜索：${q.value}` : '全站搜索', description: '搜索 SRBlogs 的文章、瞬间、杂谈、项目、照片、友链和音乐。', path: () => `/search${window.location.search}` })
 
 const activeQuery = computed(() => ({ q: q.value.trim(), type: type.value, tag: tag.value.trim() }))
 
