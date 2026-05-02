@@ -286,7 +286,7 @@ onMounted(load)
         <div class="relative z-[1] flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="text-2xl font-black text-white">{{ tabs.find((tab) => tab.key === active)?.label }}</h2>
-            <p class="mt-2 text-sm text-white/50">后台不回显 Secret 明文，只显示 configured 状态；空 Secret 保存时保留旧值。</p>
+            <p class="mt-2 text-sm text-white/50">公开设置会进入前台；AI Key、OSS Key、GitHub OAuth Secret 等私有配置只保存在后端。后台不回显 Secret 明文，只显示 configured 状态；Secret 输入框留空保存时会保留旧值。</p>
           </div>
           <button class="admin-btn admin-btn-ghost" @click="load">刷新</button>
         </div>

@@ -100,6 +100,8 @@ http://127.0.0.1:8000/docs
 
 详细接口契约见 [docs/API_CONTRACT.md](docs/API_CONTRACT.md)。
 
+日常使用步骤见 [docs/USER_GUIDE.md](docs/USER_GUIDE.md)，包含登录后台、写文章、草稿发布、评论管理、媒体管理、站点设置、备份恢复、审计日志和前台搜索/标签/归档使用说明。
+
 ## 后台主要路由
 
 - `/admin/`：仪表盘
@@ -158,6 +160,8 @@ http://127.0.0.1:8000/docs
 
 所有 JSON/Markdown 写入必须通过后端安全写入封装，禁止业务路由直接 `open(..., "w")` 写文件。
 手动备份不包含 `.env`、前端源码、`node_modules`、`dist` 或 `.manual_backups` 本身；`settings.json` 写入备份前会剔除 Secret 字段。
+
+仓库中的示例数据用于本地演示和回归验证，包含公开文章、草稿、动态、杂谈、友链、项目、音乐、照片和 about 内容。运行时生成的手动备份、审计日志、上传缓存和 `.backups` 文件不应作为发布代码提交。
 
 ## 构建
 
@@ -249,6 +253,6 @@ taskkill /PID <PID> /F
 - 后台写作、草稿、发布/撤回、删除文章和 pendingOperations 第一阶段已通过人工验收并在矩阵中标记为 `已完成`。
 - 设置中心剩余项已完成验收：空 Secret 保留、评论开关、图床 local 上传、AI 设置边界和部署文档核验均已通过；真实 OSS/Gitalk/AI 联调仍不属于当前 P0/P1 收口范围。
 - 最终总回归已完成 API/HTTP 快速验证：完整内容生产演示流、评论前后台同步、审计日志、手动备份、下载备份、恢复前备份、RSS/Sitemap/robots、Secret 扫描均通过。
-- 当前进度估算：P0 约 100%，P1 约 98%，P2 40% 且冻结。
+- 当前进度估算：P0 100%，P1 100%，P2 40% 且冻结；P1 后续仅保留长期优化。
 - 真实服务器、域名和 HTTPS 部署实操仍标记为 `部署实操待执行`；当前仓库提供的是上线准备脚本、Nginx/systemd 示例、环境变量模板和部署检查清单。
 - 发布前总检查见 [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)。

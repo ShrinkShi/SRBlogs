@@ -16,6 +16,7 @@ This release candidate packages SRBlogs as a deployable Vue 3 + Vite + TypeScrip
 - Data safety: atomic writes, per-file backups, audit logs, manual backup list/create/download/restore, export/import.
 - Deployment readiness: production env template, Nginx example, systemd example, healthcheck script, production checklist.
 - Final regression: content production demo flow, comment sync, audit logs, manual backup, backup download, pre-restore backup, restore, RSS/sitemap/robots, and Secret scans.
+- Usability closure: clearer admin operation feedback, runtime artifact ignore rules, and `docs/USER_GUIDE.md` for daily use.
 
 ## Production Notes
 

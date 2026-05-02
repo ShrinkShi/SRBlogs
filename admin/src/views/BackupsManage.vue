@@ -43,7 +43,7 @@ async function createBackup() {
   success.value = ''
   try {
     const item = await adminApi.createBackup()
-    success.value = `已创建备份：${item.name}`
+    success.value = `已创建手动备份：${item.name}。建议在升级、恢复或导入前下载并保存到服务器外部位置。`
     await load()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '创建备份失败'
@@ -92,6 +92,7 @@ async function download(item: BackupItem) {
   try {
     const blob = await adminApi.downloadBackup(item.name)
     downloadBlob(blob, item.name)
+    success.value = `备份已开始下载：${item.name}`
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '下载备份失败'
   } finally {
@@ -100,7 +101,7 @@ async function download(item: BackupItem) {
 }
 
 async function restore(item: BackupItem) {
-  const message = '恢复会覆盖当前 backend/data 内容，系统会先创建恢复前备份。确认继续？'
+  const message = `恢复 ${item.name} 会覆盖当前 backend/data 内容。系统会先创建恢复前备份，但恢复后仍需要重新检查前台、后台和上传文件。确认继续？`
   if (!window.confirm(message)) return
   working.value = `restore:${item.name}`
   error.value = ''

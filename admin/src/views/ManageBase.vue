@@ -43,12 +43,12 @@ async function load(){
   }
 }
 async function remove(slug: string){
-  if(confirm(`确认立即删除 ${slug}? 删除前后端会生成备份。`)){
+  if(confirm(`确认立即删除 ${slug}？此操作会移除公开内容，前台详情将返回 404。系统会先生成备份，但恢复需要手动处理。`)){
     error.value = ''
     actionBusy.value = slug
     try {
       await adminApi.remove(props.section, slug)
-      ui.show('已删除')
+      ui.show('文章已删除，列表已刷新')
       await load()
     } catch (exc) {
       error.value = exc instanceof Error ? exc.message : '删除失败'
@@ -59,13 +59,13 @@ async function remove(slug: string){
 }
 async function toggleDraft(item: ContentItem, draft: boolean) {
   const label = draft ? '设为草稿' : '发布'
-  if (!confirm(`确认${label} ${item.slug}?`)) return
+  if (!confirm(`确认${label} ${item.slug}？${draft ? '设为草稿后前台列表和详情将不可公开访问。' : '发布后前台列表和详情将公开可见。'}`)) return
   error.value = ''
   actionBusy.value = item.slug
   try {
     const payload: ContentItem = { ...item, meta: { ...item.meta, draft } }
     await adminApi.save(props.section, payload, item.slug)
-    ui.show(draft ? '已撤回发布' : '已发布')
+    ui.show(draft ? '已撤回发布，前台将不再显示' : '已发布，前台文章列表可见')
     await load()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : `${label}失败`

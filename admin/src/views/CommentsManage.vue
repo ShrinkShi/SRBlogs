@@ -94,7 +94,7 @@ async function advancedLoad() {
 
 async function remove(item: CommentItem) {
   if (!selected.value) return
-  if (!window.confirm(`确认删除 ${item.author} 的这条评论？`)) return
+  if (!window.confirm(`确认删除 ${item.author} 的这条评论？删除会立即写回后端评论文件，并在覆盖前生成备份。`)) return
 
   commentsError.value = ''
   deleting.value = item.id
@@ -103,7 +103,7 @@ async function remove(item: CommentItem) {
     await adminApi.deleteComment(target.resource, target.slug, item.id)
     await loadComments(target.resource, target.slug)
     await loadIndex(true)
-    ui.show('评论已删除')
+    ui.show('评论已删除，索引和列表已刷新')
   } catch (exc) {
     commentsError.value = readableError(exc, '评论删除失败')
   } finally {

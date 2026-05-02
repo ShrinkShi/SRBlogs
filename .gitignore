@@ -7,3 +7,11 @@ __pycache__/
 .DS_Store
 backend/data/uploads/*
 !backend/data/uploads/.gitkeep
+backend/data/.manual_backups/*
+!backend/data/.manual_backups/.gitkeep
+backend/data/**/.backups/*
+!backend/data/**/.backups/.gitkeep
+backend/data/audit/*.log
+*.tsbuildinfo
+*.tmp
+*.bak

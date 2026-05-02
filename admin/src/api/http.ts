@@ -14,8 +14,14 @@ http.interceptors.request.use((config) => {
 http.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error?.response?.status === 401) localStorage.removeItem('srblogs-token')
-    const message = error?.response?.data?.message || error?.response?.data?.detail || error?.message || 'Request failed'
+    if (error?.response?.status === 401) {
+      localStorage.removeItem('srblogs-token')
+    }
+    const message = error?.response?.status === 401
+      ? '登录已失效，请重新登录后再操作。'
+      : error?.response?.status === 403
+        ? '权限不足，请确认当前账号是否具备管理员权限。'
+        : error?.response?.data?.message || error?.response?.data?.detail || error?.message || 'Request failed'
     return Promise.reject(new Error(message))
   }
 )

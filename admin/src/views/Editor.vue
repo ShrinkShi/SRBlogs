@@ -20,6 +20,7 @@ const saving = ref(false)
 const error = ref('')
 const success = ref('')
 const slugPattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$/
+const slugHelp = 'slug 会出现在公开 URL 中，只允许字母、数字、下划线和连字符，例如 vue-fastapi-blog。'
 
 onMounted(async () => {
   if (!oldSlug.value) return
@@ -78,8 +79,10 @@ async function save(){
     oldSlug.value = saved.slug
     slug.value = saved.slug
     meta.draft = saved.meta.draft
-    success.value = '保存成功，已写入后端文件。'
-    ui.show('已保存到后端文件')
+    success.value = meta.draft
+      ? '保存成功，已作为草稿写入后端文件；前台公开列表不会显示。'
+      : '保存成功，已写入后端文件；前台文章列表和详情会显示最新内容。'
+    ui.show(meta.draft ? '草稿已保存' : '文章已保存并公开')
     router.replace(`/editor/${section.value}/${saved.slug}`)
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '保存失败'
@@ -115,8 +118,8 @@ async function publishNow() {
     oldSlug.value = saved.slug
     slug.value = saved.slug
     meta.draft = false
-    success.value = '发布成功，前台文章列表现在可见。'
-    ui.show('草稿已发布')
+    success.value = '发布成功，前台文章列表现在可见，文章详情可公开访问。'
+    ui.show('草稿已发布，前台可见')
     router.replace(`/editor/${section.value}/${saved.slug}`)
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '发布失败'
@@ -132,11 +135,14 @@ function insertImage(url: string){ content.value += `\n![图片](${url})\n` }
       <p class="mb-4 text-sm leading-6 text-amber-100/75">“保存”会直接持久化写入后端 Markdown 文件；“加入暂存”只进入本地 pendingOperations，刷新页面会丢失，点击右侧“应用”后才会写后端。</p>
       <div class="grid gap-4 md:grid-cols-3">
         <input v-model="meta.title" aria-label="文章标题" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="标题" />
-        <input v-model="slug" aria-label="文章 slug" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="slug" />
+        <label class="grid gap-1">
+          <input v-model="slug" aria-label="文章 slug" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="slug" />
+          <span class="px-1 text-xs text-white/45">{{ slugHelp }}</span>
+        </label>
         <select v-model="section" disabled aria-label="内容类型" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none"><option>posts</option><option>moments</option><option>chatters</option></select>
         <input v-model="meta.date" aria-label="发布日期" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="日期" />
         <input v-model="meta.tagsText" aria-label="标签，逗号分隔" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="标签，逗号分隔" />
-        <label class="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-4 py-3"><input v-model="meta.draft" type="checkbox" />草稿</label>
+        <label class="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-4 py-3"><input v-model="meta.draft" type="checkbox" />{{ meta.draft ? '当前为草稿：前台不可见' : '当前为已发布：前台可见' }}</label>
       </div>
       <textarea v-model="meta.summary" rows="2" aria-label="文章摘要" class="mt-4 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="摘要"></textarea>
       <input v-model="meta.cover" aria-label="封面 URL" class="mt-4 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="封面 URL" />
