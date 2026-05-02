@@ -5,10 +5,12 @@ import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import ImageUploader from '@/components/ImageUploader.vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { adminApi } from '@/api/admin'
+import { usePendingStore } from '@/stores/pending'
 import { useUiStore } from '@/stores/ui'
 import type { ContentItem } from '@/types'
 
 const route = useRoute(); const router = useRouter(); const ui = useUiStore()
+const pendingStore = usePendingStore()
 const section = ref((route.params.section as 'posts' | 'moments' | 'chatters') || 'posts')
 const oldSlug = ref(route.params.slug ? String(route.params.slug) : '')
 const content = ref('# 新内容\n')
@@ -16,38 +18,104 @@ const meta = reactive({ title: '未命名', date: new Date().toISOString().slice
 const slug = ref(`post-${Date.now()}`)
 const saving = ref(false)
 const error = ref('')
+const success = ref('')
+const slugPattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$/
 
 onMounted(async () => {
   if (!oldSlug.value) return
-  const item = await adminApi.detail(section.value, oldSlug.value)
-  slug.value = item.slug
-  content.value = item.content
-  meta.title = item.meta.title
-  meta.date = item.meta.date
-  meta.tagsText = item.meta.tags.join(',')
-  meta.draft = item.meta.draft
-  meta.cover = item.meta.cover || ''
-  meta.summary = item.meta.summary || ''
+  try {
+    const item = await adminApi.detail(section.value, oldSlug.value)
+    slug.value = item.slug
+    content.value = item.content
+    meta.title = item.meta.title
+    meta.date = item.meta.date
+    meta.tagsText = item.meta.tags.join(',')
+    meta.draft = item.meta.draft
+    meta.cover = item.meta.cover || ''
+    meta.summary = item.meta.summary || ''
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '文章加载失败'
+  }
 })
 
-async function save(){
+function validateForm() {
   error.value = ''
+  success.value = ''
   if (!meta.title.trim()) {
     error.value = '标题不能为空。'
-    return
+    return false
   }
-  saving.value = true
-  const payload: ContentItem = {
+  if (!slug.value.trim()) {
+    error.value = 'slug 不能为空。'
+    return false
+  }
+  if (!slugPattern.test(slug.value.trim())) {
+    error.value = 'slug 只能包含字母、数字、下划线和连字符，并且必须以字母或数字开头。'
+    return false
+  }
+  return true
+}
+
+function buildPayload(draftOverride?: boolean): ContentItem | null {
+  if (!validateForm()) return null
+  return {
     slug: slug.value.trim(),
-    meta: { title: meta.title.trim(), date: meta.date, tags: meta.tagsText.split(',').map(s => s.trim()).filter(Boolean), draft: meta.draft, cover: meta.cover, summary: meta.summary },
+    meta: { title: meta.title.trim(), date: meta.date, tags: meta.tagsText.split(',').map(s => s.trim()).filter(Boolean), draft: draftOverride ?? meta.draft, cover: meta.cover, summary: meta.summary },
     content: content.value
   }
+}
+
+async function save(){
+  const payload = buildPayload()
+  if (!payload) return
+  saving.value = true
   try {
     const saved = await adminApi.save(section.value, payload, oldSlug.value || undefined)
+    oldSlug.value = saved.slug
+    slug.value = saved.slug
+    meta.draft = saved.meta.draft
+    success.value = '保存成功，已写入后端文件。'
     ui.show('已保存到后端文件')
     router.replace(`/editor/${section.value}/${saved.slug}`)
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '保存失败'
+  } finally {
+    saving.value = false
+  }
+}
+function stage(draftOverride?: boolean) {
+  if (section.value !== 'posts') {
+    error.value = 'pendingOperations 第一阶段只覆盖文章新建、编辑、删除和草稿发布。'
+    return
+  }
+  const payload = buildPayload(draftOverride)
+  if (!payload) return
+  const isPublish = Boolean(oldSlug.value && meta.draft && draftOverride === false)
+  pendingStore.add({
+    kind: isPublish ? 'publishDraft' : oldSlug.value ? 'editPost' : 'createPost',
+    section: section.value,
+    title: payload.meta.title,
+    slug: payload.slug,
+    oldSlug: oldSlug.value || undefined,
+    payload
+  })
+  success.value = isPublish ? '草稿发布已加入暂存队列，点击右侧应用后才会写入。' : '操作已加入暂存队列，点击右侧应用后才会写入。'
+  ui.show('已加入暂存队列')
+}
+async function publishNow() {
+  const payload = buildPayload(false)
+  if (!payload) return
+  saving.value = true
+  try {
+    const saved = await adminApi.save(section.value, payload, oldSlug.value || undefined)
+    oldSlug.value = saved.slug
+    slug.value = saved.slug
+    meta.draft = false
+    success.value = '发布成功，前台文章列表现在可见。'
+    ui.show('草稿已发布')
+    router.replace(`/editor/${section.value}/${saved.slug}`)
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '发布失败'
   } finally {
     saving.value = false
   }
@@ -57,7 +125,7 @@ function insertImage(url: string){ content.value += `\n![图片](${url})\n` }
 <template>
   <section class="grid gap-5">
     <GlassCard>
-      <p class="mb-4 text-sm leading-6 text-amber-100/75">当前保存按钮会直接持久化写入后端 Markdown 文件；pendingOperations 暂存队列尚未实现。</p>
+      <p class="mb-4 text-sm leading-6 text-amber-100/75">“保存”会直接持久化写入后端 Markdown 文件；“加入暂存”只进入本地 pendingOperations，刷新页面会丢失，点击右侧“应用”后才会写后端。</p>
       <div class="grid gap-4 md:grid-cols-3">
         <input v-model="meta.title" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="标题" />
         <input v-model="slug" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="slug" />
@@ -70,8 +138,12 @@ function insertImage(url: string){ content.value += `\n![图片](${url})\n` }
       <input v-model="meta.cover" class="mt-4 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="封面 URL" />
       <div class="mt-4 flex flex-wrap items-center gap-3">
         <button :disabled="saving" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:opacity-50" @click="save">{{ saving ? '保存中...' : '保存' }}</button>
+        <button :disabled="saving" class="rounded-2xl border border-cyan-200/25 px-5 py-3 font-bold text-cyan-100 disabled:opacity-50" @click="stage()">加入暂存</button>
+        <button v-if="meta.draft" :disabled="saving" class="rounded-2xl bg-emerald-300 px-5 py-3 font-bold text-slate-950 disabled:opacity-50" @click="publishNow">立即发布</button>
+        <button v-if="meta.draft" :disabled="saving" class="rounded-2xl border border-emerald-200/25 px-5 py-3 font-bold text-emerald-100 disabled:opacity-50" @click="stage(false)">发布加入暂存</button>
         <RouterLink to="/posts" class="rounded-2xl border border-white/10 px-5 py-3 text-white/70">返回列表</RouterLink>
         <span v-if="error" class="text-sm text-red-200/80">{{ error }}</span>
+        <span v-if="success" class="text-sm text-emerald-200/80">{{ success }}</span>
       </div>
     </GlassCard>
     <ImageUploader @uploaded="insertImage" />

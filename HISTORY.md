@@ -565,3 +565,64 @@ API 实测结果：
 
 - 需要用户人工确认 4 篇文章时第 4 张卡确实换到第二行第一列。
 - 首页继续保持 `进行中`，不得标记为 `已完成`，直到用户确认没有任何 section 再撑宽整个首页。
+
+## 2026-05-02 - 后台写作闭环 / 草稿 / 暂存队列第一阶段
+
+本轮目标：
+
+- 完善后台文章管理、草稿发布、写作保存错误提示和本地 pendingOperations 第一阶段。
+- 证明文章可以创建为草稿、发布、编辑、删除，并与前台公开列表和详情联动。
+- 不新增 P2 视觉特效，不重构 Markdown 预览和评论管理主流程。
+
+前台变更：
+
+- 本轮未修改前台页面代码。
+- 通过 API 验证 `draft=true` 文章不会出现在公开 `GET /api/posts` 列表中；发布为 `draft=false` 后公开列表可见，删除后公开列表移除且详情返回 404。
+
+后台变更：
+
+- 新增 `admin/src/stores/pending.ts`，提供本地 pendingOperations 队列，状态包含 `editing`、`pending`、`applied`、`failed`。
+- 后台右侧“操作暂存区”改为显示真实本地队列，支持应用、重试和移除，并明确提示刷新页面会丢失，图片上传、Secret 修改、评论管理不进入本队列。
+- `/admin/posts` 文章管理页补齐标题、slug、日期、标签、draft 状态、编辑、删除、前台预览，并支持全部/已发布/草稿筛选。
+- 文章删除支持“立即删除”和“暂存删除”；立即删除会调用真实后端 DELETE，暂存删除只有点击暂存区“应用”后才写后端。
+- 写作页保留“保存”直接持久化，同时新增“加入暂存”“立即发布”“发布加入暂存”，并对空标题、空 slug、非法 slug、保存失败和保存成功显示 UI 提示。
+- 草稿页改为列出 draft=true 文章，支持继续编辑、立即发布和发布暂存。
+- 管理端登录页移除默认密码填充，避免默认管理员密码进入 admin 构建产物。
+
+后端/API 变更：
+
+- 本轮未新增后端接口。
+- 继续复用既有 `POST /api/posts`、`PUT /api/posts/{slug}`、`DELETE /api/posts/{slug}`。
+- 写入和删除仍走 `MarkdownStore` -> `safe_write_text` / `backup_file`，未新增业务路由直接 `open(..., "w")` 写文件。
+
+文档变更：
+
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，同步后台写作、草稿和暂存队列第一阶段进展，状态保持 `进行中`。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，补充后台文章管理、草稿、删除、暂存队列第一阶段验收项。
+- `docs/API_CONTRACT.md` 本轮无接口变化，未调整契约。
+- `docs/SECURITY_NOTES.md` 已有 pendingOperations 范围和写入安全规则，本轮未新增安全规则。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动后端到 `127.0.0.1:8033` 并访问 `/api/health`，返回 `health=True`。
+- 通过：新建草稿 `draft-loop-20260502183231`，`backend/data/posts/draft-loop-20260502183231.md` 真实创建。
+- 通过：草稿创建后公开 `GET /api/posts` 不包含该 slug。
+- 通过：发布草稿为 `draft=false` 后，公开 `GET /api/posts` 包含该 slug，`GET /api/posts/draft-loop-20260502183231` 可读取详情。
+- 通过：编辑文章后标题变为 `Edited Draft Loop Test`。
+- 通过：非法 slug 返回 400。
+- 通过：空标题返回 400。
+- 通过：重复 slug 返回 409。
+- 通过：删除文章后源文件不存在，公开详情返回 404，公开列表不再包含该 slug。
+- 通过：删除前备份验证，`backend/data/posts/.backups` 中该 slug 匹配备份数从 2 增加到 3。
+- 通过：构建产物静态搜索未匹配到 `clientSecret`、`accessKeySecret`、`api_key`、`jwt_secret`、`admin_password`、`please-change-this-secret`、`change-me`。
+- 已清理：测试文章正文文件已通过 DELETE API 删除；删除产生的备份文件保留为本轮写入/备份验证痕迹。
+
+遗留问题：
+
+- 后台写作、草稿和暂存队列第一阶段仍需用户在浏览器中人工验收：列表筛选、编辑跳转、UI 错误提示、暂存区应用/失败状态、刷新丢失提示。
+- 暂存队列当前为前端内存态，刷新页面会丢失；第二阶段才做服务端持久化。
+- settings 修改未纳入本轮 pendingOperations；图片上传、Secret 修改、评论管理按计划不进入本地 pendingOperations。
+- 不得把“后台写作”“草稿”“暂存队列”标记为 `已完成`，直到浏览器人工验收通过。

@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 const router = useRouter()
 const auth = useAuthStore()
-const form = reactive({ username: 'admin', password: 'change-me' })
+const form = reactive({ username: 'admin', password: '' })
 const error = ref('')
 const loading = ref(false)
 async function submit(){

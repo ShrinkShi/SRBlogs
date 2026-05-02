@@ -2,8 +2,10 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { usePendingStore } from '@/stores/pending'
 
 const auth = useAuthStore()
+const pendingStore = usePendingStore()
 const route = useRoute()
 const queueOpen = ref(true)
 const links = [
@@ -12,7 +14,6 @@ const links = [
   ['音乐','/music','歌单'], ['照片墙','/photos','图片'], ['项目','/projects','展示'], ['关于','/about','页面'],
   ['AI助手','/chat','双线'], ['设置','/settings','配置']
 ]
-const pending = ref(['暂存队列尚未实现', '内容保存后直接写入 FastAPI 数据目录', '部署同步接口预留'])
 const active = computed(() => route.path)
 function logout(){ auth.logout(); location.href = '/admin/login' }
 </script>
@@ -35,10 +36,27 @@ function logout(){ auth.logout(); location.href = '/admin/login' }
         <div class="glass sticky top-6 rounded-[32px] p-5">
           <div class="relative z-[1] flex items-center justify-between"><h2 class="font-black text-white">操作暂存区</h2><button class="text-xs text-white/45" @click="queueOpen = !queueOpen">{{ queueOpen ? '收起' : '展开' }}</button></div>
           <div v-if="queueOpen" class="relative z-[1] mt-4 grid gap-3">
-            <div v-for="item in pending" :key="item" class="rounded-2xl border border-white/10 bg-white/[0.07] p-3 text-sm text-white/62">{{ item }}</div>
-            <button class="admin-btn admin-btn-primary">更新本地</button>
-            <button class="admin-btn admin-btn-ghost">同步 Blog</button>
-            <p class="text-xs leading-5 text-white/36">当前仍以 FastAPI 直接持久化为主，pendingOperations 队列未实现。</p>
+            <p class="rounded-2xl border border-amber-200/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-50/72">
+              第一阶段为前端本地 pendingOperations，刷新页面会丢失。图片上传、Secret 修改、评论管理不进入本队列。
+            </p>
+            <div v-if="!pendingStore.operations.length" class="rounded-2xl border border-white/10 bg-white/[0.07] p-3 text-sm text-white/52">暂无暂存操作。</div>
+            <div v-for="item in pendingStore.operations" :key="item.id" class="rounded-2xl border border-white/10 bg-white/[0.07] p-3 text-sm">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <b class="block text-white">{{ pendingStore.label(item.kind) }}</b>
+                  <p class="mt-1 truncate text-white/58">{{ item.title }}</p>
+                  <p class="mt-1 truncate font-mono text-xs text-cyan-100/45">{{ item.slug }}</p>
+                </div>
+                <span class="shrink-0 rounded-full px-2 py-1 text-[10px]" :class="item.status === 'applied' ? 'bg-emerald-300/15 text-emerald-100' : item.status === 'failed' ? 'bg-red-300/15 text-red-100' : 'bg-cyan-300/15 text-cyan-100'">{{ item.status }}</span>
+              </div>
+              <p class="mt-2 text-xs text-white/35">{{ item.createdAt }}</p>
+              <p v-if="item.error" class="mt-2 text-xs text-red-100/80">{{ item.error }}</p>
+              <div class="mt-3 flex flex-wrap gap-2">
+                <button v-if="item.status === 'pending'" class="rounded-xl bg-cyan-300 px-3 py-1.5 text-xs font-bold text-slate-950" @click="pendingStore.apply(item.id)">应用</button>
+                <button v-if="item.status === 'failed'" class="rounded-xl bg-amber-300/20 px-3 py-1.5 text-xs text-amber-100" @click="pendingStore.retry(item.id)">重试</button>
+                <button class="rounded-xl border border-white/10 px-3 py-1.5 text-xs text-white/62" @click="pendingStore.remove(item.id)">移除</button>
+              </div>
+            </div>
           </div>
         </div>
       </aside>
