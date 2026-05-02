@@ -78,7 +78,7 @@
   "avatar": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=500&auto=format&fit=crop",
   "description": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
   "socialLinks": {
-    "github": "https://github.com/yourname",
+    "github": "https://github.com/ShrinkShi",
     "gitee": "https://gitee.com/yourname",
     "email": "you@example.com",
     "qq": "100002",
@@ -95,6 +95,36 @@
       "repo": "",
       "owner": "",
       "admin": []
+    }
+  },
+  "themeConfig": {
+    "fontFamily": "",
+    "fontScale": "medium",
+    "day": {
+      "bgPage": "#eaf3f8",
+      "bgCard": "rgba(255,255,255,.68)",
+      "bgCardElevated": "rgba(255,255,255,.82)",
+      "borderGlass": "rgba(14,116,144,.16)",
+      "textPrimary": "rgba(15,23,42,.94)",
+      "textSecondary": "rgba(30,41,59,.72)",
+      "accent": "#0891b2",
+      "accentSoft": "rgba(8,145,178,.12)",
+      "navBg": "rgba(255,255,255,.72)",
+      "homePanelBg": "rgba(255,255,255,.72)",
+      "shadowGlow": "rgba(8,145,178,.2)"
+    },
+    "night": {
+      "bgPage": "#050713",
+      "bgCard": "rgba(255,255,255,.105)",
+      "bgCardElevated": "rgba(255,255,255,.16)",
+      "borderGlass": "rgba(255,255,255,.2)",
+      "textPrimary": "rgba(247,251,255,.96)",
+      "textSecondary": "rgba(247,251,255,.74)",
+      "accent": "#67e8f9",
+      "accentSoft": "rgba(103,232,249,.16)",
+      "navBg": "rgba(7,12,28,.64)",
+      "homePanelBg": "rgba(255,255,255,.105)",
+      "shadowGlow": "rgba(34,211,238,.42)"
     }
   }
 }

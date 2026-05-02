@@ -1,5 +1,7 @@
 # SRBlogs
 
+> 当前进度：P0 100%，P1 100%，P2 约 72%。P2 本轮重点收口首页三组轮播、唱片式音乐播放器、名片结构、居中歌词、顶部导航慢动画和 hover 动效规则；仍需浏览器人工验收后继续推进。
+
 SRBlogs 是一个基于 **Vue 3 + Vite + TypeScript + Tailwind CSS + FastAPI** 的个人博客系统。当前工程是对标 XinghuisamaBlogs 产品方向的 Vue3/FastAPI 重制版，不复制原项目源码、图片、文案或私有素材。
 
 ## 技术栈

@@ -141,10 +141,11 @@ body::before {
 
 .sr-card-hover {
   transition: transform .24s var(--motion-ease), border-color .24s var(--motion-ease), box-shadow .24s var(--motion-ease), background .24s var(--motion-ease);
+  transform-origin: center;
 }
 
 .sr-card-hover:hover {
-  transform: translateY(-3px);
+  transform: scale(1.018);
   border-color: rgba(103,232,249,.42);
   box-shadow: 0 26px 82px rgba(0,0,0,.36), 0 0 42px rgba(34,211,238,.13), inset 0 1px 0 rgba(255,255,255,.16);
 }
@@ -198,7 +199,7 @@ body::before {
 
 .sr-button-primary:hover,
 .sr-button-ghost:hover {
-  transform: translateY(-1px);
+  transform: scale(1.02);
 }
 
 .sr-status-success { color: var(--status-success); }
@@ -223,7 +224,7 @@ body::before {
   backdrop-filter: blur(22px) saturate(150%);
   -webkit-backdrop-filter: blur(22px) saturate(150%);
   box-shadow: 0 18px 55px rgba(0,0,0,.2);
-  transition: transform .28s var(--motion-ease), background .28s ease, border-color .28s ease;
+  transition: transform .56s cubic-bezier(.16, 1, .3, 1), background .32s ease, border-color .32s ease;
 }
 
 .app-topbar-hidden {
@@ -238,13 +239,9 @@ body::before {
 
 .home-feature-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(16rem, .75fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(1rem, 2vw, 1.5rem);
   align-items: stretch;
-}
-
-.home-feature-grid > .wide {
-  grid-row: span 2;
 }
 
 .home-status-grid {
@@ -257,6 +254,10 @@ body::before {
   overflow: hidden;
 }
 
+.home-image-zoom.sr-card-hover:hover {
+  transform: none;
+}
+
 .home-image-zoom img,
 .home-image-zoom .image-layer {
   transition: transform .32s var(--motion-ease), opacity .32s var(--motion-ease);
@@ -265,6 +266,84 @@ body::before {
 .home-image-zoom:hover img,
 .home-image-zoom:hover .image-layer {
   transform: scale(1.045);
+}
+
+.home-carousel-card {
+  min-height: 24rem;
+}
+
+.home-carousel-slide {
+  transition: opacity .45s var(--motion-ease), transform .45s var(--motion-ease);
+}
+
+.carousel-dot {
+  width: .55rem;
+  height: .55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,255,255,.16);
+  transition: width .24s var(--motion-ease), background .24s var(--motion-ease), border-color .24s var(--motion-ease), transform .24s var(--motion-ease);
+}
+
+.carousel-dot:hover {
+  transform: scale(1.12);
+  border-color: rgba(103,232,249,.48);
+}
+
+.carousel-dot-active {
+  width: 1.65rem;
+  background: linear-gradient(90deg, #67e8f9, #c084fc);
+  border-color: rgba(103,232,249,.72);
+}
+
+.icon-button {
+  display: inline-grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 1.15rem;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.78);
+  transition: transform .22s var(--motion-ease), border-color .22s var(--motion-ease), background .22s var(--motion-ease), box-shadow .22s var(--motion-ease);
+}
+
+.icon-button:hover {
+  transform: scale(1.035);
+  border-color: rgba(103,232,249,.42);
+  background: rgba(103,232,249,.13);
+}
+
+.icon-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: currentColor;
+}
+
+.icon-button-main {
+  width: 3.45rem;
+  height: 3.45rem;
+  background: linear-gradient(135deg, #67e8f9, #c084fc);
+  color: #06111f;
+  box-shadow: 0 16px 38px rgba(34,211,238,.22);
+}
+
+.record-disc {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,.92) 0 6%, rgba(15,23,42,.95) 7% 12%, transparent 13%),
+    repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.14) 0 2px, rgba(255,255,255,.02) 3px 7px),
+    var(--record-cover, linear-gradient(135deg, rgba(103,232,249,.38), rgba(192,132,252,.38)));
+  background-size: cover;
+  background-position: center;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 24px 70px rgba(0,0,0,.32);
+}
+
+.record-disc.playing {
+  animation: record-spin 8s linear infinite;
+}
+
+@keyframes record-spin {
+  to { transform: rotate(360deg); }
 }
 
 .mode-orb {
@@ -304,7 +383,7 @@ body::before {
 }
 .glass-hover { transition: transform .24s var(--motion-ease), border-color .24s var(--motion-ease), box-shadow .24s var(--motion-ease), background .24s var(--motion-ease); }
 .glass-hover:hover {
-  transform: translateY(-3px);
+  transform: scale(1.018);
   border-color: rgba(103,232,249,.42);
   box-shadow: 0 32px 90px rgba(0,0,0,.38), 0 0 54px rgba(34,211,238,.16), inset 0 1px 0 rgba(255,255,255,.18);
 }
@@ -359,9 +438,6 @@ body::before {
   .home-asymmetric-grid,
   .home-feature-grid {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .home-feature-grid > .wide {
-    grid-row: auto;
   }
 }
 
