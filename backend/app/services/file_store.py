@@ -49,7 +49,7 @@ def backup_file(path: Path) -> Path | None:
         return None
     backup_dir = path.parent / ".backups"
     backup_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    stamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
     backup_path = backup_dir / f"{path.name}.{stamp}.bak"
     shutil.copy2(path, backup_path)
     return backup_path

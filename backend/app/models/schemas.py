@@ -1,3 +1,4 @@
+import re
 from typing import Any, Optional
 
 from pydantic import BaseModel, Field, field_validator
@@ -56,6 +57,14 @@ class CommentCreate(BaseModel):
         if not value or not value.strip():
             raise ValueError("field cannot be blank")
         return value.strip()
+
+    @field_validator("email")
+    @classmethod
+    def email_format_optional(cls, value: Optional[str]) -> str:
+        text = (value or "").strip()
+        if text and not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", text):
+            raise ValueError("email format is invalid")
+        return text
 
 
 class CommentItem(BaseModel):

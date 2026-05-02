@@ -11,6 +11,7 @@ const router = createRouter({
     { path: '/posts', component: () => import('@/views/PostsManage.vue') },
     { path: '/moments', component: () => import('@/views/MomentsManage.vue') },
     { path: '/chatters', component: () => import('@/views/ChatterManage.vue') },
+    { path: '/comments', component: () => import('@/views/CommentsManage.vue') },
     { path: '/friends', component: () => import('@/views/FriendsManage.vue') },
     { path: '/music', component: () => import('@/views/MusicManage.vue') },
     { path: '/photos', component: () => import('@/views/PhotowallManage.vue') },

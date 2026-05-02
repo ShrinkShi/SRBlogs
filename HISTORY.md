@@ -165,3 +165,62 @@ API 实测结果：
 - 文章列表、文章详情、评论、Markdown 编辑器仍保持 `进行中`，因为完整浏览器手动验收和长期回归尚未完成，不能标记为 `已完成`。
 - 评论删除、审核、分页、Gitalk/OAuth 不在本轮范围内。
 - 暂存队列仍未实现，后台写作当前为直接持久化。
+
+## 2026-05-02 - 文章详情与评论管理回归推进
+
+本轮目标：
+
+- 推进文章详情和评论区从 API 可用到浏览器可用。
+- 新增后台本地评论管理最小版。
+- 不新增樱花、弹幕、CyberCat、动态背景等 P2 装饰功能。
+
+前台变更：
+
+- 评论表单增加邮箱格式校验，邮箱仍为可选。
+- 评论区已有加载、空、错误、提交中、成功/失败反馈；长评论使用 `whitespace-pre-wrap` 和 `break-words` 展示。
+- 前台评论继续使用文本插值展示，不渲染危险 HTML。
+
+后台变更：
+
+- 新增 `admin/src/views/CommentsManage.vue`。
+- 后台新增 `/admin/comments` 路由。
+- 管理侧导航新增“评论”入口。
+- 评论管理最小版支持按 `resource/slug` 加载评论列表和删除评论。
+- 隐藏/恢复评论本轮未实现，当前仅支持删除。
+
+后端/API 变更：
+
+- 新增 `DELETE /api/comments/{resource}/{slug}/{comment_id}`，需要管理员 JWT。
+- 删除不存在的评论返回 404。
+- 删除评论写回 JSON 时继续走 `JsonStore.write` -> `safe_write_json`，删除前会备份原评论 JSON。
+- `backup_file` 备份文件名改为微秒级时间戳，避免同一秒多次写入覆盖备份。
+- 评论 email 增加后端可选格式校验，非法邮箱返回 400。
+
+文档变更：
+
+- 更新 `docs/API_CONTRACT.md`，补充删除评论 API。
+- 更新 `docs/SECURITY_NOTES.md`，补充后台删除评论安全规则。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，同步评论管理进展和剩余差距。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：`GET /api/posts/srblogs-p0-20260502130609` 返回标题 `SRBlogs P0 Content Loop`，Markdown content 长度 120。
+- 通过：`GET /api/comments/posts/srblogs-p0-20260502130609` 返回 2 条评论。
+- 通过：非法邮箱评论提交返回 400。
+- 通过：创建临时评论后调用 `DELETE /api/comments/posts/srblogs-p0-20260502130609/{comment_id}`，返回 `ok=True`。
+- 通过：删除后 `GET /api/comments/posts/srblogs-p0-20260502130609` 仍返回 2 条，说明临时评论已从列表移除。
+- 通过：删除前评论文件大小 574 bytes，删除后 365 bytes，`backend/data/comments` 实际文件发生变化。
+- 通过：删除前备份验证，`.backups` 中匹配备份数从 3 增加到 4。
+- 通过：删除不存在评论返回 404。
+- 阻塞：尝试用 `Start-Process` 启动前台/后台 Vite dev server 时，Vite 在当前 shell 环境报 `spawn EPERM`，因此本轮无法由工具完成 390px 移动端和完整浏览器交互验收。
+- 已知：上一轮已有前台文章详情地址 `http://127.0.0.1:5173/posts/srblogs-p0-20260502130609` 返回 200；本轮未继续等待 `npm run dev` 常驻命令退出。
+
+遗留问题：
+
+- 文章详情浏览器完整人工回归仍未完成：TOC 点击滚动、代码块视觉高亮、分享按钮浏览器交互、390px 移动端可读性仍需在可用浏览器环境中确认。
+- 后台评论管理浏览器完整人工回归未完成，但 build 和 API 删除闭环已通过。
+- 后台写作浏览器人工回归未完成，本轮未新增写作保存数据。
+- 文章列表、文章详情、评论、Markdown 编辑器继续保持 `进行中`，不得标记为 `已完成`。

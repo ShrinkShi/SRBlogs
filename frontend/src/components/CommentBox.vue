@@ -31,6 +31,10 @@ async function submit() {
     error.value = '昵称和评论内容不能为空。'
     return
   }
+  if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+    error.value = '邮箱格式不正确。'
+    return
+  }
   submitting.value = true
   try {
     const item = await contentApi.createComment(props.resource, props.slug, { ...form })

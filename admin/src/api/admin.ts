@@ -1,5 +1,5 @@
 import { http } from './http'
-import type { ContentItem, Stats } from '@/types'
+import type { CommentItem, ContentItem, Stats } from '@/types'
 
 export const adminApi = {
   login: async (username: string, password: string) => {
@@ -26,6 +26,14 @@ export const adminApi = {
   },
   remove: async (section: 'posts' | 'moments' | 'chatters', slug: string) => {
     const { data } = await http.delete(`/${section}/${slug}`)
+    return data
+  },
+  comments: async (resource: 'posts' | 'moments' | 'chatters', slug: string) => {
+    const { data } = await http.get<CommentItem[]>(`/comments/${resource}/${slug}`)
+    return data
+  },
+  deleteComment: async (resource: 'posts' | 'moments' | 'chatters', slug: string, commentId: string) => {
+    const { data } = await http.delete(`/comments/${resource}/${slug}/${commentId}`)
     return data
   },
   json: async <T>(path: string) => {

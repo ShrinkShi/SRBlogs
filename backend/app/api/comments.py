@@ -2,10 +2,11 @@ from datetime import datetime
 from uuid import uuid4
 
 import bleach
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.config import get_settings
 from app.models.schemas import CommentCreate, CommentItem
+from app.services.auth_service import require_admin
 from app.services.file_store import FileStoreError, validate_slug
 from app.services.json_service import JsonStore
 
@@ -42,3 +43,14 @@ def create_comment(resource: str, slug: str, payload: CommentCreate):
     comments.append(item)
     store.write(comments)
     return item
+
+
+@router.delete("/{resource}/{slug}/{comment_id}", dependencies=[Depends(require_admin)])
+def delete_comment(resource: str, slug: str, comment_id: str):
+    store = _store(resource, slug)
+    comments = store.read()
+    next_comments = [item for item in comments if item.get("id") != comment_id]
+    if len(next_comments) == len(comments):
+        raise HTTPException(status_code=404, detail="comment not found")
+    store.write(next_comments)
+    return {"ok": True}

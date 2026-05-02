@@ -2,14 +2,17 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+
 const auth = useAuthStore()
 const route = useRoute()
 const queueOpen = ref(true)
 const links = [
-  ['仪表盘','/','总览'], ['写作','/editor/posts','Markdown'], ['文章','/posts','发布'], ['草稿','/drafts','暂存'], ['瞬间','/moments','动态'], ['碎碎念','/chatters','长记'],
-  ['友链','/friends','链接'], ['音乐','/music','歌单'], ['照片墙','/photos','图片'], ['项目','/projects','展示'], ['关于','/about','页面'], ['AI助手','/chat','双线'], ['设置','/settings','配置']
+  ['仪表盘','/','总览'], ['写作','/editor/posts','Markdown'], ['文章','/posts','发布'], ['草稿','/drafts','暂存'],
+  ['动态','/moments','短记'], ['杂谈','/chatters','长记'], ['评论','/comments','本地'], ['友链','/friends','链接'],
+  ['音乐','/music','歌单'], ['照片墙','/photos','图片'], ['项目','/projects','展示'], ['关于','/about','页面'],
+  ['AI助手','/chat','双线'], ['设置','/settings','配置']
 ]
-const pending = ref(['修改暂存区机制已就绪', '内容保存后直接写入 FastAPI 数据目录', '部署同步接口预留'])
+const pending = ref(['暂存队列尚未实现', '内容保存后直接写入 FastAPI 数据目录', '部署同步接口预留'])
 const active = computed(() => route.path)
 function logout(){ auth.logout(); location.href = '/admin/login' }
 </script>
@@ -35,7 +38,7 @@ function logout(){ auth.logout(); location.href = '/admin/login' }
             <div v-for="item in pending" :key="item" class="rounded-2xl border border-white/10 bg-white/[0.07] p-3 text-sm text-white/62">{{ item }}</div>
             <button class="admin-btn admin-btn-primary">更新本地</button>
             <button class="admin-btn admin-btn-ghost">同步 Blog</button>
-            <p class="text-xs leading-5 text-white/36">此处仿照原项目的“暂存队列 -> 更新本地 -> 同步Blog”工作流，但当前实现仍以 FastAPI 直接持久化为主。</p>
+            <p class="text-xs leading-5 text-white/36">当前仍以 FastAPI 直接持久化为主，pendingOperations 队列未实现。</p>
           </div>
         </div>
       </aside>

@@ -12,3 +12,11 @@ export interface ContentItem {
   content: string
 }
 export interface Stats { posts: number; moments: number; chatters: number; photos: number }
+
+export interface CommentItem {
+  id: string
+  author: string
+  email?: string
+  content: string
+  created_at: string
+}

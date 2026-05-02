@@ -209,6 +209,21 @@ Base path: `/api`
 
 提交内容必须用 bleach 清洗。
 
+### DELETE `/comments/{resource}/{slug}/{comment_id}`
+
+后台 JWT。删除本地评论。删除前 `JsonStore.write` 必须通过 `safe_write_json` 备份原评论 JSON。
+
+响应：
+
+```json
+{ "ok": true }
+```
+
+错误：
+
+- `401`：未登录或 token 缺失/失效。
+- `404`：评论 ID 不存在。
+
 ## Dashboard API
 
 ### GET `/dashboard/stats`
