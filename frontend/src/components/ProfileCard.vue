@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import GlassCard from '@/components/GlassCard.vue'
 import type { SiteSettings } from '@/types'
+import SafeImage from './SafeImage.vue'
 
 const props = defineProps<{ settings?: SiteSettings | null; posts?: number; moments?: number; projects?: number }>()
 const socialKeys = ['github', 'gitee', 'email', 'qq', 'wechat']
@@ -15,7 +16,7 @@ const social = () => props.settings?.socialLinks || props.settings?.social
     <div class="flex min-w-0 flex-col items-center text-center">
       <div class="relative">
         <div class="absolute inset-0 rounded-[34px] bg-cyan-300/30 blur-2xl"></div>
-        <img v-if="avatar()" :src="avatar()" class="relative h-28 w-28 rounded-[34px] border border-white/20 object-cover shadow-2xl" />
+        <SafeImage v-if="avatar()" :src="avatar()" :alt="author()" eager img-class="relative h-28 w-28 rounded-[34px] border border-white/20 object-cover shadow-2xl" />
         <div v-else class="relative grid h-28 w-28 place-items-center rounded-[34px] border border-white/20 bg-white/[0.12] text-4xl font-black text-white">SR</div>
       </div>
       <h2 class="mt-5 text-2xl font-black text-white">{{ author() }}</h2>

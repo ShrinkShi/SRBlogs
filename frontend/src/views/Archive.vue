@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
+import StateBlock from '@/components/StateBlock.vue'
 import { contentApi } from '@/api/content'
 import type { ArchiveResponse } from '@/types'
 import { useSeo } from '@/composables/useSeo'
@@ -33,11 +34,8 @@ onMounted(load)
       <h1 class="mt-2 text-4xl font-black text-white">内容归档</h1>
       <p class="mt-3 text-white/56">按年月聚合公开文章、瞬间和杂谈。</p>
     </GlassCard>
-    <GlassCard v-if="loading"><p class="text-white/60">归档加载中...</p></GlassCard>
-    <GlassCard v-else-if="error">
-      <p class="text-red-200/85">{{ error }}</p>
-      <button class="mt-4 rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/70" @click="load">重试</button>
-    </GlassCard>
+    <StateBlock v-if="loading" message="归档加载中..." />
+    <StateBlock v-else-if="error" title="归档加载失败" :message="error" @retry="load" />
     <GlassCard v-else-if="!archive.years.length"><p class="text-white/60">暂无归档内容。</p></GlassCard>
     <div v-else class="grid gap-5">
       <GlassCard v-for="year in archive.years" :key="year.year">

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import CloudPlayer from '@/components/CloudPlayer.vue'
 import GlassCard from '@/components/GlassCard.vue'
+import SafeImage from '@/components/SafeImage.vue'
 import { contentApi } from '@/api/content'
 import type { MusicItem, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
@@ -58,7 +59,7 @@ onMounted(load)
         <GlassCard v-for="item in sortedTracks" :key="`${item.id || item.url}-${item.title}`">
           <div class="flex min-w-0 gap-4">
             <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/10">
-              <img v-if="item.cover" :src="item.cover" :alt="item.title" loading="lazy" class="h-full w-full object-cover" />
+              <SafeImage v-if="item.cover" :src="item.cover" :alt="item.title" img-class="h-full w-full object-cover" />
               <span v-else class="text-white/50">♪</span>
             </div>
             <div class="min-w-0">

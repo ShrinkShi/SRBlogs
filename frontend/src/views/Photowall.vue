@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
+import SafeImage from '@/components/SafeImage.vue'
 import { contentApi } from '@/api/content'
 import type { PhotoItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
@@ -46,8 +47,15 @@ onMounted(load)
     </GlassCard>
 
     <div v-else class="columns-1 gap-5 md:columns-2 xl:columns-3">
-      <button v-for="item in photos" :key="item.url" class="glass glass-hover mb-5 block w-full break-inside-avoid overflow-hidden rounded-[30px] text-left" @click="active = item">
-        <img :src="item.url" :alt="item.title || 'photo'" loading="lazy" class="relative z-[1] w-full object-cover" />
+      <button
+        v-for="item in photos"
+        :key="item.url"
+        type="button"
+        class="glass glass-hover mb-5 block w-full break-inside-avoid overflow-hidden rounded-[30px] text-left"
+        :aria-label="`预览照片：${item.title || item.url}`"
+        @click="active = item"
+      >
+        <SafeImage :src="item.url" :alt="item.title || 'photo'" img-class="relative z-[1] w-full object-cover" />
         <div class="relative z-[1] p-4">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h3 class="break-words font-bold text-white">{{ item.title || '未命名照片' }}</h3>
@@ -61,9 +69,24 @@ onMounted(load)
       </button>
     </div>
 
-    <div v-if="active" class="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm" @click="active = null">
-      <div class="max-w-5xl" @click.stop>
-        <img :src="active.url" :alt="active.title || 'photo'" class="max-h-[82vh] max-w-[92vw] rounded-3xl border border-white/15 object-contain" />
+    <div
+      v-if="active"
+      class="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      @click="active = null"
+      @keydown.esc.window="active = null"
+    >
+      <div class="relative max-w-5xl" @click.stop>
+        <button
+          type="button"
+          class="absolute right-3 top-3 z-10 rounded-full border border-white/15 bg-black/45 px-3 py-2 text-sm text-white hover:bg-black/70"
+          aria-label="关闭照片预览"
+          @click="active = null"
+        >
+          关闭
+        </button>
+        <SafeImage :src="active.url" :alt="active.title || 'photo'" img-class="max-h-[82vh] max-w-[92vw] rounded-3xl border border-white/15 object-contain" />
         <p class="mt-3 text-center text-white/70">{{ active.title }}</p>
       </div>
     </div>

@@ -283,7 +283,18 @@ Windows 本地启动命令：
 - 文章列表和关于页新增 RSS 入口；文章详情分享复制链接增加失败提示。
 - `cd frontend && npm run build`、`cd admin && npm run build`、`python -m compileall backend\app`：通过。
 - TestClient 验证 RSS、Sitemap、robots 均返回 200，不包含 `demo-draft` 草稿和 Secret pattern；robots 包含 `Disallow: /admin`。
-- 结论：SEO/订阅/分享代码和 API 已落地，但动态 meta 与分享复制仍需浏览器人工验收，相关项保持 `进行中`。
+- 结论：SEO/订阅/分享已通过用户人工验收，RSS、Sitemap、robots、文章分享相关项可标记为 `已完成`。
+
+2026-05-02 性能、可访问性与体验稳定轮当前结果：
+
+- 新增前台 `SafeImage` 图片组件，统一懒加载、alt 和加载失败兜底；文章封面、个人头像、项目/友链/音乐/照片墙图片均已接入。
+- 新增前台 `StateBlock` 通用状态块，并在文章列表、搜索、归档等页面复用加载/错误状态。
+- 照片墙预览增加 dialog 语义、关闭按钮和 Esc 关闭；评论表单补齐 label、提交中禁用和错误/成功可读反馈。
+- 前台导航、背景控制、播放器、分享按钮补齐按钮类型或 aria-label；移动端背景光效降低为桌面端启用。
+- 后台主布局修复为 `minmax(0,1fr)` 内容列，侧栏窄屏可滚动；暂存区按钮补齐类型和展开状态；登录/写作输入补齐 autocomplete/aria-label。
+- 构建体积检查：前台 dist 约 1.23 MB，后台 dist 约 1.70 MB；MarkdownRenderer 与 MarkdownEditor chunk 仍超过 500 kB，但位于文章详情/编辑器懒加载路径，未引入大型新依赖。
+- 构建、后端编译、主要前后台路由 HTTP 探测、RSS/Sitemap/Search 回归、真实 Secret 值静态扫描均通过。
+- 当前工具环境未提供可用 headless browser，因此 390px 真实视觉回归、Tab 顺序和图片失败视觉兜底仍需用户浏览器人工确认；相关模块不因本轮自动标记完成。
 
 ## Matrix
 
@@ -310,4 +321,5 @@ Windows 本地启动命令：
 | AI 设置 | Gemini/兼容模型配置和后台助手 | 设置中心已提供 provider、baseUrl、model、enableChat、aiKeyConfigured 和新 API Key 输入；后台不回显 API Key 明文；构建产物 Secret 搜索通过 | P1 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮 AI 设置浏览器验收和真实大模型联调；不得标记完成 |
 | 评论设置 | GitHub OAuth/Gitalk 配置面板 | 设置中心已提供评论开关、邮箱要求、最大长度、邮箱显示、本地评论开关和 Gitalk/GitHub 占位字段；前台评论区已尊重 enabled/localEnabled，关闭后隐藏提交框 | P1 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮评论开关浏览器人工验收；不得标记完成 |
 | 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`；`WINDOWS_START.md` 已记录固定地址、strictPort、端口占用 PID 和设置中心提示；新增 `docs/DEPLOYMENT.md`，包含 Nginx、systemd、backend/data 权限、生产 `.env`、HTTPS 和生产前检查 | P0 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮服务器部署文档完整实操核验；不得标记完成 |
-| SEO/订阅/分享 | Meta、OpenGraph、RSS、Sitemap、robots、分享 | 已新增统一 SEO meta 工具；主要前台页面接入 title/description/OG/Twitter Card；后端新增 RSS、Sitemap、robots；前台新增 RSS 入口；分享复制增加成功/失败提示 | P1 | SEO、订阅与分享增强轮 | 进行中 | 剩余差距：需要浏览器人工确认文章详情动态 meta/og 随文章变化、RSS 入口可见、复制链接可用 |
+| SEO/订阅/分享 | Meta、OpenGraph、RSS、Sitemap、robots、分享 | 已新增统一 SEO meta 工具；主要前台页面接入 title/description/OG/Twitter Card；后端新增 RSS、Sitemap、robots；前台新增 RSS 入口；分享复制增加成功/失败提示；已通过用户人工验收 | P1 | SEO、订阅与分享增强轮 | 已完成 | RSS、Sitemap、robots、动态 meta、RSS 入口和分享复制均已通过人工验收 |
+| 性能/可访问性/体验稳定 | 图片性能、移动端可读性、错误兜底、键盘可访问性、构建体积可控 | 已补 SafeImage 图片懒加载/兜底、StateBlock 通用状态、照片预览关闭能力、评论表单 label、前台导航/播放器/背景控制 aria、后台侧栏窄屏滚动和输入 aria；构建体积已记录，Markdown 相关 chunk 仍需后续观察 | P1 | 性能、可访问性与体验稳定轮 | 进行中 | 剩余差距：390px 真实浏览器视觉回归、键盘 Tab 顺序、图片失败视觉兜底、后台窄屏表单操作仍需人工确认；不得在人工验收前标记完成 |

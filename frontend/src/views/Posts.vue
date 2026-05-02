@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import PostList from '@/components/PostList.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import GlassCard from '@/components/GlassCard.vue'
+import StateBlock from '@/components/StateBlock.vue'
 import { contentApi } from '@/api/content'
 import type { ContentItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
@@ -51,12 +52,8 @@ onMounted(load)
         <button v-for="tag in tags" :key="tag" class="rounded-full border px-3 py-1 text-sm transition" :class="activeTag === tag ? 'border-cyan-200/40 bg-cyan-200/[0.15] text-cyan-100' : 'border-white/10 bg-white/[0.06] text-white/54 hover:bg-white/10'" @click="activeTag = tag">{{ tag }}</button>
       </div>
     </GlassCard>
-    <GlassCard v-if="loading"><p class="text-white/60">文章加载中...</p></GlassCard>
-    <GlassCard v-else-if="error">
-      <h2 class="text-xl font-black text-white">文章加载失败</h2>
-      <p class="mt-2 text-white/60">{{ error }}</p>
-      <button class="mt-4 rounded-2xl bg-cyan-300 px-4 py-2 font-bold text-slate-950" @click="load">重试</button>
-    </GlassCard>
+    <StateBlock v-if="loading" message="文章加载中..." />
+    <StateBlock v-else-if="error" title="文章加载失败" :message="error" @retry="load" />
     <PostList v-else :items="filtered" base="/posts" empty-text="暂无公开文章。" />
   </section>
 </template>

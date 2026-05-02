@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import type { ContentItem } from '@/types'
 import GlassCard from './GlassCard.vue'
+import SafeImage from './SafeImage.vue'
 import { formatDate } from '@/utils/date'
 
 withDefaults(defineProps<{ items: ContentItem[]; base: string; emptyText?: string }>(), {
@@ -9,15 +9,6 @@ withDefaults(defineProps<{ items: ContentItem[]; base: string; emptyText?: strin
 })
 
 const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop'
-const failedCovers = ref<Set<string>>(new Set())
-
-function coverFor(item: ContentItem) {
-  return failedCovers.value.has(item.slug) ? fallbackCover : item.meta.cover || fallbackCover
-}
-
-function markCoverFailed(slug: string) {
-  failedCovers.value = new Set([...failedCovers.value, slug])
-}
 </script>
 <template>
   <div class="grid gap-5 md:grid-cols-2">
@@ -25,7 +16,7 @@ function markCoverFailed(slug: string) {
       <GlassCard hover class="h-full">
         <div class="flex h-full flex-col gap-4">
           <div class="relative h-44 overflow-hidden rounded-[24px] bg-slate-900/60">
-            <img :src="coverFor(item)" :alt="item.meta.title" class="h-full w-full object-cover opacity-85" @error="markCoverFailed(item.slug)" />
+            <SafeImage :src="item.meta.cover" :fallback="fallbackCover" :alt="item.meta.title" img-class="h-full w-full object-cover opacity-85" />
             <div class="absolute inset-0 bg-gradient-to-b from-black/5 to-black/50"></div>
           </div>
           <div class="flex items-center justify-between gap-3 text-xs text-white/45"><span>{{ formatDate(item.meta.date) }}</span><span>{{ item.content.length }} chars</span></div>

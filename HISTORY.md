@@ -1,5 +1,62 @@
 # HISTORY
 
+## 2026-05-02 - 性能、可访问性与体验稳定轮
+
+本轮目标：
+
+- 提升前台和后台加载体验、图片性能、错误兜底、移动端可读性和基础键盘可访问性。
+- 不新增 P2 视觉特效，不重构已通过验收的搜索、标签、归档、媒体、评论、Markdown、SEO/RSS/Sitemap/robots 模块。
+
+前台变更：
+
+- 新增 `frontend/src/components/SafeImage.vue`，统一处理图片懒加载、`alt`、解码和加载失败兜底。
+- 文章列表、文章详情、ProfileCard、友链、项目、音乐、照片墙图片接入 SafeImage，降低失效图片破坏布局的风险。
+- 新增 `frontend/src/components/StateBlock.vue`，文章列表、搜索、归档页面开始复用统一加载/错误状态。
+- 照片墙放大预览增加 `dialog` 语义、关闭按钮和 Esc 关闭，缩小移动端误阻塞风险。
+- 评论表单补齐 label、autocomplete、提交中禁用、成功/失败可读反馈；继续使用文本插值展示评论，不渲染危险 HTML。
+- 前台导航、背景控制、悬浮播放器、CloudPlayer、分享按钮补齐 `type` 或 `aria-label`；移动端不再启用鼠标跟随大光效。
+
+后台变更：
+
+- 后台主布局改为 `xl:grid-cols-[260px_minmax(0,1fr)_300px]`，避免内容列被撑破。
+- 后台侧栏在窄屏和高内容场景下可滚动，减少遮挡主内容的风险。
+- 暂存区按钮补齐 `type`、展开状态和可读文案；不改变 pendingOperations 行为。
+- 登录表单、写作页标题/slug/日期/标签/摘要/封面输入补齐 autocomplete 或 `aria-label`。
+
+后端/API 变更：
+
+- 本轮未新增后端业务接口。
+- 使用 TestClient 回归 `GET /api/search?q=vue`、`GET /api/rss.xml`、`GET /api/sitemap.xml`、`GET /robots.txt` 和不存在文章 slug 的 404。
+
+文档变更：
+
+- `docs/XINGHUI_PARITY_MATRIX.md` 标记 SEO/订阅/分享已完成，并新增性能/可访问性/体验稳定项为 `进行中`。
+- `docs/MANUAL_QA_CHECKLIST.md` 增加性能、移动端、图片兜底和可访问性验收项。
+- `docs/RELEASE_CHECKLIST.md` 增加性能与可访问性发布前检查。
+- `README.md` 增加性能与可访问性说明。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：当前 8000 后端 `/api/health` 返回 `{"ok":true,"app":"SRBlogs API"}`。
+- 通过：已有 5173 服务对 `/`、`/posts`、`/search`、`/tags`、`/archive`、`/friends`、`/projects`、`/music`、`/photowall`、`/about`、`/posts/no-such-slug` 均返回 200 SPA 壳。
+- 通过：已有 5174 服务对 `/admin/`、`/admin/editor`、`/admin/posts`、`/admin/comments`、`/admin/friends`、`/admin/projects`、`/admin/music`、`/admin/photos`、`/admin/settings` 均返回 200 SPA 壳。
+- 通过：TestClient `GET /api/search?q=vue` 返回 200，`total=4`。
+- 通过：TestClient `GET /api/rss.xml` 返回 200，content-type 为 `application/rss+xml`。
+- 通过：TestClient `GET /api/sitemap.xml` 返回 200，content-type 为 `application/xml`。
+- 通过：TestClient `GET /robots.txt` 返回 200，并包含 `Disallow: /admin`。
+- 通过：TestClient `GET /api/posts/no-such-slug` 返回 404。
+- 通过：构建产物 Secret 真实值扫描，检查 `backend/.env` 中 2 个敏感值，未在 `frontend/dist` 或 `admin/dist` 命中。
+- 记录：`frontend/dist` 总大小约 1.23 MB，`admin/dist` 总大小约 1.70 MB；`MarkdownRenderer` 和 `MarkdownEditor` chunk 超过 500 kB，但位于懒加载路径。
+
+遗留问题：
+
+- 当前工具环境没有可用 headless browser，390px 真实视觉回归、Tab 顺序、图片失败视觉兜底和后台窄屏表单操作仍需用户浏览器人工确认。
+- 性能/可访问性/体验稳定项保持 `进行中`，不得在人工验收前标记完成。
+- 设置中心此前跳过的空 Secret 不覆盖、评论开关、图床设置与上传、AI 设置、部署文档实操核验继续保持 `延期/未验收`。
+
 ## 2026-05-02 - 安全备份与契约基础轮
 
 本轮目标：

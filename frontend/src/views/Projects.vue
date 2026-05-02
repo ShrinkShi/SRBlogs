@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
+import SafeImage from '@/components/SafeImage.vue'
 import { contentApi } from '@/api/content'
 import type { ProjectItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
@@ -47,7 +48,7 @@ onMounted(load)
     <div v-else class="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
       <GlassCard v-for="item in projects" :key="item.name" hover>
         <div v-if="item.cover" class="mb-4 h-36 overflow-hidden rounded-[24px] bg-white/10">
-          <img :src="item.cover" :alt="item.name" loading="lazy" class="h-full w-full object-cover" />
+          <SafeImage :src="item.cover" :alt="item.name" img-class="h-full w-full object-cover" />
         </div>
         <div class="flex min-w-0 items-start justify-between gap-3">
           <h2 class="min-w-0 break-words text-2xl font-black text-white">{{ item.name }}</h2>

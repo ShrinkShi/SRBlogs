@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
+import SafeImage from '@/components/SafeImage.vue'
 import { contentApi } from '@/api/content'
 import type { FriendItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
@@ -49,7 +50,7 @@ onMounted(load)
         <a :href="item.url" target="_blank" rel="noopener noreferrer" class="block min-w-0">
           <div class="flex min-w-0 items-center gap-4">
             <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[24px] border border-white/12 bg-white/10">
-              <img v-if="item.avatar" :src="item.avatar" :alt="item.name" loading="lazy" class="h-full w-full object-cover" />
+              <SafeImage v-if="item.avatar" :src="item.avatar" :alt="item.name" img-class="h-full w-full object-cover" />
               <span v-else class="text-xl font-black text-cyan-100">{{ item.name?.slice(0, 1) || '?' }}</span>
             </div>
             <div class="min-w-0">

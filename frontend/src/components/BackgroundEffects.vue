@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useUiStore } from '@/stores/ui'
 import type { SiteSettings } from '@/types'
 const props = defineProps<{ settings?: SiteSettings | null }>()
@@ -13,11 +13,22 @@ const cls = computed(() => {
   if (ui.theme === 'cyber') return 'from-slate-950 via-violet-950 to-black'
   return 'from-slate-950 via-indigo-950 to-black'
 })
+let removePointer: (() => void) | null = null
+
 onMounted(() => {
-  window.addEventListener('pointermove', (e) => {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const isFinePointer = window.matchMedia('(pointer: fine) and (min-width: 768px)').matches
+  if (reduceMotion || !isFinePointer) return
+  const handler = (e: PointerEvent) => {
     cursorX.value = (e.clientX / window.innerWidth) * 100
     cursorY.value = (e.clientY / window.innerHeight) * 100
-  }, { passive: true })
+  }
+  window.addEventListener('pointermove', handler, { passive: true })
+  removePointer = () => window.removeEventListener('pointermove', handler)
+})
+
+onUnmounted(() => {
+  removePointer?.()
 })
 </script>
 
@@ -25,7 +36,7 @@ onMounted(() => {
   <div class="fixed inset-0 -z-10 bg-gradient-to-br" :class="cls"></div>
   <div v-if="bgImage" class="fixed inset-0 -z-10 bg-cover bg-center opacity-[0.34] blur-[1px] scale-[1.02]" :style="{ backgroundImage: `url(${bgImage})` }"></div>
   <div class="pointer-events-none fixed inset-0 -z-10 bg-cyber-radial opacity-95"></div>
-  <div class="pointer-events-none fixed -z-10 h-[520px] w-[520px] rounded-full bg-cyan-300/[0.12] blur-3xl transition-transform duration-300" :style="{ left: cursorX + '%', top: cursorY + '%', transform: 'translate(-50%,-50%)' }"></div>
-  <div class="pointer-events-none fixed left-[8%] top-[16%] -z-10 h-40 w-40 rounded-full bg-fuchsia-400/16 blur-3xl" style="animation: float-slow 8s ease-in-out infinite"></div>
-  <div class="pointer-events-none fixed bottom-[6%] right-[10%] -z-10 h-52 w-52 rounded-full bg-emerald-300/10 blur-3xl" style="animation: float-slow 11s ease-in-out infinite reverse"></div>
+  <div class="pointer-events-none fixed -z-10 hidden h-[520px] w-[520px] rounded-full bg-cyan-300/[0.12] blur-3xl transition-transform duration-300 md:block" :style="{ left: cursorX + '%', top: cursorY + '%', transform: 'translate(-50%,-50%)' }"></div>
+  <div class="pointer-events-none fixed left-[8%] top-[16%] -z-10 hidden h-40 w-40 rounded-full bg-fuchsia-400/16 blur-3xl md:block" style="animation: float-slow 8s ease-in-out infinite"></div>
+  <div class="pointer-events-none fixed bottom-[6%] right-[10%] -z-10 hidden h-52 w-52 rounded-full bg-emerald-300/10 blur-3xl md:block" style="animation: float-slow 11s ease-in-out infinite reverse"></div>
 </template>

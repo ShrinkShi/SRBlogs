@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import GlassCard from '@/components/GlassCard.vue'
+import StateBlock from '@/components/StateBlock.vue'
 import DiscoveryResultCard from '@/components/DiscoveryResultCard.vue'
 import { contentApi } from '@/api/content'
 import type { DiscoveryType, SearchResponse, TagItem } from '@/types'
@@ -84,8 +85,8 @@ onMounted(async () => {
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">search</p>
       <h1 class="mt-2 text-4xl font-black text-white">全站搜索</h1>
       <form class="mt-5 grid gap-3 lg:grid-cols-[1fr_auto]" @submit.prevent="syncQuery(); load()">
-        <input v-model="q" class="min-w-0 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 text-white outline-none placeholder:text-white/35" placeholder="搜索文章、瞬间、项目、音乐..." />
-        <button class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950">搜索</button>
+        <input v-model="q" aria-label="搜索关键词" class="min-w-0 rounded-2xl border border-white/10 bg-white/[0.08] px-4 py-3 text-white outline-none placeholder:text-white/35" placeholder="搜索文章、瞬间、项目、音乐..." />
+        <button type="submit" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950">搜索</button>
       </form>
       <div class="mt-4 flex flex-wrap gap-2">
         <button v-for="option in typeOptions" :key="option.value" class="rounded-full border px-3 py-1 text-sm" :class="type === option.value ? 'border-cyan-200/50 bg-cyan-200/[0.16] text-cyan-100' : 'border-white/10 text-white/55 hover:bg-white/10'" @click="type = option.value; syncQuery(); load()">{{ option.label }}</button>
@@ -95,11 +96,8 @@ onMounted(async () => {
       </div>
     </GlassCard>
 
-    <GlassCard v-if="loading"><p class="text-white/60">搜索中...</p></GlassCard>
-    <GlassCard v-else-if="error">
-      <p class="text-red-200/85">{{ error }}</p>
-      <button class="mt-4 rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/70" @click="load">重试</button>
-    </GlassCard>
+    <StateBlock v-if="loading" message="搜索中..." />
+    <StateBlock v-else-if="error" title="搜索失败" :message="error" @retry="load" />
     <GlassCard v-else-if="!result.items.length">
       <h2 class="text-xl font-black text-white">没有匹配内容</h2>
       <p class="mt-2 text-white/58">换一个关键词、类型或标签再试试。</p>

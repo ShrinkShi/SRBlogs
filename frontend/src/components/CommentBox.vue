@@ -81,10 +81,13 @@ watch(() => props.slug, load)
     <p v-if="showDebug" class="mt-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-mono text-xs text-cyan-100/55">
       DEV comments target: {{ props.resource }}/{{ props.slug }}
     </p>
-    <p v-if="loading" class="mt-4 text-white/50">评论加载中...</p>
+    <p v-if="loading" class="mt-4 text-white/50" role="status" aria-live="polite">评论加载中...</p>
     <div v-else class="mt-4 grid gap-3">
       <div v-for="item in comments" :key="item.id" class="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div class="flex items-center justify-between gap-3 text-sm"><b>{{ item.author }}</b><span class="text-white/45">{{ item.created_at }}</span></div>
+        <div class="flex items-center justify-between gap-3 text-sm">
+          <b>{{ item.author }}</b>
+          <span class="text-white/45">{{ item.created_at }}</span>
+        </div>
         <p class="mt-2 whitespace-pre-wrap break-words text-white/70">{{ item.content }}</p>
       </div>
       <p v-if="!comments.length" class="text-white/50">暂无评论。</p>
@@ -92,14 +95,23 @@ watch(() => props.slug, load)
     <div v-if="!commentsEnabled()" class="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-white/58">评论已关闭。</div>
     <form v-else class="mt-5 grid gap-3" @submit.prevent="submit">
       <div class="grid gap-3 md:grid-cols-2">
-        <input v-model="form.author" required maxlength="40" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none focus:border-cyan-300/60" placeholder="昵称" />
-        <input v-model="form.email" :required="emailRequired()" maxlength="120" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none focus:border-cyan-300/60" :placeholder="emailRequired() ? '邮箱' : '邮箱，可选'" />
+        <label class="grid gap-2 text-sm text-white/60">
+          <span>昵称</span>
+          <input v-model="form.author" required maxlength="40" autocomplete="name" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-cyan-300/60" placeholder="昵称" />
+        </label>
+        <label class="grid gap-2 text-sm text-white/60">
+          <span>{{ emailRequired() ? '邮箱' : '邮箱，可选' }}</span>
+          <input v-model="form.email" :required="emailRequired()" maxlength="120" autocomplete="email" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-cyan-300/60" :placeholder="emailRequired() ? '邮箱' : '邮箱，可选'" />
+        </label>
       </div>
-      <textarea v-model="form.content" required :maxlength="maxLength()" rows="4" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none focus:border-cyan-300/60" placeholder="写下评论，HTML 会被后端清洗"></textarea>
+      <label class="grid gap-2 text-sm text-white/60">
+        <span>评论内容</span>
+        <textarea v-model="form.content" required :maxlength="maxLength()" rows="4" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-white outline-none focus:border-cyan-300/60" placeholder="写下评论，HTML 会被后端清洗"></textarea>
+      </label>
       <div class="flex flex-wrap items-center gap-3">
-        <button :disabled="submitting" class="w-fit rounded-2xl bg-cyan-300 px-5 py-2 font-bold text-slate-950 disabled:opacity-50">{{ submitting ? '提交中...' : '发表评论' }}</button>
-        <span v-if="success" class="text-sm text-emerald-200/80">{{ success }}</span>
-        <span v-if="error" class="text-sm text-red-200/80">{{ error }}</span>
+        <button type="submit" :disabled="submitting" class="w-fit rounded-2xl bg-cyan-300 px-5 py-2 font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">{{ submitting ? '提交中...' : '发表评论' }}</button>
+        <span v-if="success" class="text-sm text-emerald-200/80" role="status">{{ success }}</span>
+        <span v-if="error" class="text-sm text-red-200/80" role="alert">{{ error }}</span>
       </div>
     </form>
   </GlassCard>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import GlassCard from './GlassCard.vue'
+import SafeImage from './SafeImage.vue'
 import type { MusicItem } from '@/types'
 
 const props = defineProps<{ tracks: MusicItem[] }>()
@@ -46,7 +47,7 @@ watch(track, () => {
   <GlassCard>
     <div v-if="track" class="flex flex-col gap-5 md:flex-row md:items-center">
       <div class="h-24 w-24 shrink-0 overflow-hidden rounded-3xl border border-white/15 bg-white/10">
-        <img v-if="track.cover" :src="track.cover" :alt="track.title" class="h-full w-full object-cover" />
+        <SafeImage v-if="track.cover" :src="track.cover" :alt="track.title" img-class="h-full w-full object-cover" />
       </div>
       <div class="min-w-0 flex-1">
         <h3 class="break-words text-2xl font-black text-white">{{ track.title }}</h3>
@@ -57,9 +58,9 @@ watch(track, () => {
         </div>
       </div>
       <div class="flex flex-wrap gap-3">
-        <button class="rounded-2xl bg-white/10 px-4 py-2" @click="prev">上一首</button>
-        <button class="rounded-2xl bg-cyan-300 px-5 py-2 font-bold text-slate-950" @click="toggle">{{ playing ? '暂停' : '播放' }}</button>
-        <button class="rounded-2xl bg-white/10 px-4 py-2" @click="next">下一首</button>
+        <button type="button" class="rounded-2xl bg-white/10 px-4 py-2" @click="prev">上一首</button>
+        <button type="button" class="rounded-2xl bg-cyan-300 px-5 py-2 font-bold text-slate-950" @click="toggle">{{ playing ? '暂停' : '播放' }}</button>
+        <button type="button" class="rounded-2xl bg-white/10 px-4 py-2" @click="next">下一首</button>
       </div>
       <audio v-if="track.url" ref="audio" :src="track.url" preload="none" @ended="next"></audio>
     </div>

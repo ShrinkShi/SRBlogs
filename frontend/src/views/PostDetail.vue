@@ -7,6 +7,7 @@ import GlassCard from '@/components/GlassCard.vue'
 import BackButton from '@/components/BackButton.vue'
 import ShareButtons from '@/components/ShareButtons.vue'
 import CommentBox from '@/components/CommentBox.vue'
+import SafeImage from '@/components/SafeImage.vue'
 import type { ContentItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 
@@ -15,10 +16,9 @@ const route = useRoute()
 const item = ref<ContentItem | null>(null)
 const loading = ref(true)
 const error = ref('')
-const coverFailed = ref(false)
 const slug = computed(() => String(route.params.slug))
 const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop'
-const coverUrl = computed(() => (coverFailed.value ? fallbackCover : item.value?.meta.cover || fallbackCover))
+const coverUrl = computed(() => item.value?.meta.cover || fallbackCover)
 
 useSeo({
   title: () => error.value ? '404 内容不存在' : item.value?.meta.title || '内容加载中',
@@ -32,7 +32,6 @@ async function load(){
   loading.value = true
   error.value = ''
   item.value = null
-  coverFailed.value = false
   try {
     item.value = await contentApi.detail(props.section, slug.value)
   } catch (exc) {
@@ -57,7 +56,7 @@ watch(() => route.params.slug, load)
     </GlassCard>
     <GlassCard v-else-if="item" class="overflow-hidden">
       <div class="-mx-5 -mt-5 mb-8 h-[260px] overflow-hidden bg-slate-900/70 md:-mx-6 md:-mt-6 md:h-[360px]">
-        <img :src="coverUrl" :alt="item.meta.title" class="h-full w-full object-cover opacity-85" @error="coverFailed = true" />
+        <SafeImage :src="coverUrl" :fallback="fallbackCover" :alt="item.meta.title" eager img-class="h-full w-full object-cover opacity-85" />
       </div>
       <p class="text-sm text-cyan-100/60">{{ item.meta.date }}</p>
       <h1 class="cyber-title mt-3 text-4xl font-black md:text-6xl">{{ item.meta.title }}</h1>
