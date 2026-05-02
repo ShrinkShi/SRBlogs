@@ -72,7 +72,7 @@ body::before {
 @keyframes title-flow { 0%,100% { background-position: 0 50%; } 50% { background-position: 100% 50%; } }
 
 .prose-sr { color: rgba(247, 251, 255, .9); }
-.prose-sr h1,.prose-sr h2,.prose-sr h3 { color: white; scroll-margin-top: 110px; font-weight: 900; }
+.prose-sr h1,.prose-sr h2,.prose-sr h3 { color: white; scroll-margin-top: 150px; font-weight: 900; }
 .prose-sr h2 { margin-top: 2.2em; font-size: 1.65rem; }
 .prose-sr h3 { margin-top: 1.7em; font-size: 1.25rem; }
 .prose-sr p { margin: 1em 0; color: rgba(247,251,255,.78); }

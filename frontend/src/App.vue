@@ -31,7 +31,7 @@ onMounted(async () => {
     <AppNav />
     <BackgroundSlider :settings="settings" />
     <CyberCat />
-    <main class="mx-auto w-full max-w-7xl px-4 pb-24 pt-28 md:px-6">
+    <main class="mx-auto w-full max-w-7xl px-4 pb-24 pt-32 md:px-6 md:pt-36">
       <RouterView v-slot="{ Component }">
         <Transition name="fade-slide" mode="out-in">
           <component :is="Component" />

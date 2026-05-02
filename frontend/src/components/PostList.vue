@@ -1,15 +1,33 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { ContentItem } from '@/types'
 import GlassCard from './GlassCard.vue'
 import { formatDate } from '@/utils/date'
-defineProps<{ items: ContentItem[]; base: string }>()
+
+withDefaults(defineProps<{ items: ContentItem[]; base: string; emptyText?: string }>(), {
+  emptyText: '没有匹配内容。'
+})
+
+const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop'
+const failedCovers = ref<Set<string>>(new Set())
+
+function coverFor(item: ContentItem) {
+  return failedCovers.value.has(item.slug) ? fallbackCover : item.meta.cover || fallbackCover
+}
+
+function markCoverFailed(slug: string) {
+  failedCovers.value = new Set([...failedCovers.value, slug])
+}
 </script>
 <template>
   <div class="grid gap-5 md:grid-cols-2">
     <RouterLink v-for="item in items" :key="item.slug" :to="`${base}/${item.slug}`" class="block">
       <GlassCard hover class="h-full">
         <div class="flex h-full flex-col gap-4">
-          <div v-if="item.meta.cover" class="h-44 rounded-[24px] bg-cover bg-center" :style="{ backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,.08), rgba(0,0,0,.45)), url(${item.meta.cover})` }"></div>
+          <div class="relative h-44 overflow-hidden rounded-[24px] bg-slate-900/60">
+            <img :src="coverFor(item)" :alt="item.meta.title" class="h-full w-full object-cover opacity-85" @error="markCoverFailed(item.slug)" />
+            <div class="absolute inset-0 bg-gradient-to-b from-black/5 to-black/50"></div>
+          </div>
           <div class="flex items-center justify-between gap-3 text-xs text-white/45"><span>{{ formatDate(item.meta.date) }}</span><span>{{ item.content.length }} chars</span></div>
           <h2 class="line-clamp-2 text-2xl font-black text-white">{{ item.meta.title }}</h2>
           <p class="line-clamp-3 flex-1 text-sm leading-7 text-white/58">{{ item.meta.summary || item.content.slice(0, 120) }}</p>
@@ -17,6 +35,6 @@ defineProps<{ items: ContentItem[]; base: string }>()
         </div>
       </GlassCard>
     </RouterLink>
-    <GlassCard v-if="!items.length"><p class="text-white/55">没有匹配内容。</p></GlassCard>
+    <GlassCard v-if="!items.length"><p class="text-white/55">{{ emptyText }}</p></GlassCard>
   </div>
 </template>

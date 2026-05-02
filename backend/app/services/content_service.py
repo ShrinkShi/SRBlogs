@@ -44,6 +44,9 @@ class MarkdownStore:
     def _file(self, slug: str) -> Path:
         return self.path / f"{ensure_slug(slug)}.md"
 
+    def exists(self, slug: str) -> bool:
+        return self._file(slug).exists()
+
     def list(self, include_drafts: bool = False) -> list[ContentItem]:
         items: list[ContentItem] = []
         for file in sorted(self.path.glob("*.md")):
@@ -66,11 +69,15 @@ class MarkdownStore:
 
     def save(self, payload: ContentWrite, old_slug: str | None = None) -> ContentItem:
         slug = ensure_slug(payload.slug)
+        if not payload.meta.title.strip():
+            raise ContentError("title is required")
         if not payload.meta.date:
             payload.meta.date = datetime.now().strftime("%Y-%m-%d %H:%M")
         target = self._file(slug)
         if old_slug and ensure_slug(old_slug) != slug:
             old = self._file(old_slug)
+            if target.exists():
+                raise ContentError("slug already exists")
             if old.exists():
                 backup_file(old)
                 old.unlink()

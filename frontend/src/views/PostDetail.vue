@@ -12,8 +12,26 @@ import type { ContentItem } from '@/types'
 const props = withDefaults(defineProps<{ section?: 'posts' | 'moments' | 'chatters' }>(), { section: 'posts' })
 const route = useRoute()
 const item = ref<ContentItem | null>(null)
+const loading = ref(true)
+const error = ref('')
+const coverFailed = ref(false)
 const slug = computed(() => String(route.params.slug))
-async function load(){ item.value = await contentApi.detail(props.section, slug.value) }
+const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop'
+const coverUrl = computed(() => (coverFailed.value ? fallbackCover : item.value?.meta.cover || fallbackCover))
+
+async function load(){
+  loading.value = true
+  error.value = ''
+  item.value = null
+  coverFailed.value = false
+  try {
+    item.value = await contentApi.detail(props.section, slug.value)
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '内容不存在或加载失败'
+  } finally {
+    loading.value = false
+  }
+}
 onMounted(load)
 watch(() => route.params.slug, load)
 </script>
@@ -21,8 +39,17 @@ watch(() => route.params.slug, load)
 <template>
   <section class="grid gap-5">
     <BackButton />
-    <GlassCard v-if="item" class="overflow-hidden">
-      <div v-if="item.meta.cover" class="-mx-5 -mt-5 mb-8 h-[260px] bg-cover bg-center md:-mx-6 md:-mt-6 md:h-[360px]" :style="{ backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,.12), rgba(5,7,19,.86)), url(${item.meta.cover})` }"></div>
+    <GlassCard v-if="loading"><p class="text-white/60">文章加载中...</p></GlassCard>
+    <GlassCard v-else-if="error">
+      <p class="text-sm font-bold uppercase tracking-[.3em] text-red-200/70">404 / error</p>
+      <h1 class="mt-3 text-3xl font-black text-white">内容无法打开</h1>
+      <p class="mt-3 text-white/60">{{ error }}</p>
+      <RouterLink to="/posts" class="mt-5 inline-flex rounded-2xl bg-cyan-300 px-4 py-2 font-bold text-slate-950">返回文章列表</RouterLink>
+    </GlassCard>
+    <GlassCard v-else-if="item" class="overflow-hidden">
+      <div class="-mx-5 -mt-5 mb-8 h-[260px] overflow-hidden bg-slate-900/70 md:-mx-6 md:-mt-6 md:h-[360px]">
+        <img :src="coverUrl" :alt="item.meta.title" class="h-full w-full object-cover opacity-85" @error="coverFailed = true" />
+      </div>
       <p class="text-sm text-cyan-100/60">{{ item.meta.date }}</p>
       <h1 class="cyber-title mt-3 text-4xl font-black md:text-6xl">{{ item.meta.title }}</h1>
       <p v-if="item.meta.summary" class="mt-4 max-w-3xl text-lg leading-8 text-white/58">{{ item.meta.summary }}</p>
