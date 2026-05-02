@@ -354,6 +354,12 @@ Sitemap: https://example.com/api/sitemap.xml
 
 公开读取。`resource` 仅允许 `posts`、`moments`、`chatters`，`slug` 必须通过 `validate_slug`。
 
+响应会读取公开评论配置：
+
+- `comments.showEmail=false` 时，公开响应中的 `email` 固定为空字符串。
+- `comments.showEmail=true` 时，公开响应中的 `email` 只返回脱敏邮箱，例如 `r***r@example.com`。
+- 后端仍在评论 JSON 文件中保存原始邮箱，供后续治理使用；前台不得直接渲染危险 HTML。
+
 ### POST `/comments/{resource}/{slug}`
 
 公开提交。请求体：
@@ -374,7 +380,13 @@ Sitemap: https://example.com/api/sitemap.xml
 }
 ```
 
-提交内容必须用 bleach 清洗。
+提交规则：
+
+- `comments.enabled=false` 或 `comments.localEnabled=false` 时返回 `403`，不得继续提交。
+- `comments.requireEmail=true` 时邮箱必填；非法邮箱返回 `400`。
+- `comments.maxLength` 动态限制评论长度，超过返回 `400`。
+- 提交内容必须用 bleach 清洗。
+- 响应中的 `email` 仍按 `showEmail` 规则隐藏或脱敏。
 
 ### DELETE `/comments/{resource}/{slug}/{comment_id}`
 

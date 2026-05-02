@@ -1,0 +1,30 @@
+[
+  {
+    "id": "0789a1fbb4cc4941a955ca8279db021d",
+    "author": "Tester",
+    "email": "",
+    "content": "alert(1)Hello",
+    "created_at": "2026-05-02 13:06"
+  },
+  {
+    "id": "8baeb5e6bb11450ca9a2d173b0fa2d39",
+    "author": "Tester2",
+    "email": "test@example.com",
+    "content": "Second comment",
+    "created_at": "2026-05-02 13:06"
+  },
+  {
+    "id": "bb59c0e5cc3348f6b65a2623e2cfc8bc",
+    "author": "1",
+    "email": "",
+    "content": "你好",
+    "created_at": "2026-05-02 14:01"
+  },
+  {
+    "id": "d6560d28883146438b810f27a6f85fa8",
+    "author": "qa",
+    "email": "",
+    "content": "short ok",
+    "created_at": "2026-05-02 22:30"
+  }
+]

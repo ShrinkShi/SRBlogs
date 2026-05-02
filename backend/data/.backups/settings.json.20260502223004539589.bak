@@ -1,0 +1,102 @@
+{
+  "title": "SRBlogs の 宝藏之地",
+  "authorName": "Shrink",
+  "bio": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
+  "avatarUrl": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=500&auto=format&fit=crop",
+  "defaultPostCover": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop",
+  "photoWallImage": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
+  "bgImages": [
+    "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=1600&auto=format&fit=crop"
+  ],
+  "themeColors": [
+    "#a18cd1",
+    "#fbc2eb",
+    "#a1c4fd",
+    "#c2e9fb"
+  ],
+  "cloudMusicIds": [
+    "1809646618",
+    "3361076230",
+    "1859390262"
+  ],
+  "danmakuList": [
+    "今天写博客了吗？",
+    "FastAPI 正在工作",
+    "Vue3 组件热更新中",
+    "Markdown 是最稳的内容格式",
+    "图床配置别把密钥提交 Git",
+    "文章标题要短而准",
+    "后台不是摆设，要能真的写入数据",
+    "先跑通，再美化",
+    "别迷信一比一复刻",
+    "代码要能部署才算完成"
+  ],
+  "social": {
+    "github": "https://github.com/yourname",
+    "gitee": "https://gitee.com/yourname",
+    "email": "you@example.com",
+    "qq": "10000",
+    "wechat": "srblogs"
+  },
+  "counts": {
+    "photos": 12
+  },
+  "chatterTitle": "云端杂谈",
+  "chatterDescription": "代码、课程、项目、游戏与临时想法的碎片记录。",
+  "gitalkConfig": {
+    "clientID": "qa-client",
+    "repo": "qa-repo",
+    "owner": "qa-owner",
+    "admin": [
+      "admin"
+    ],
+    "clientSecret": "SRB_QA_GITHUB_SECRET_1777732204516"
+  },
+  "buildDate": "2026-03-23T00:00:00",
+  "theme": "nebula",
+  "imageBed": {
+    "driver": "local",
+    "provider": "local",
+    "publicBaseUrl": "http://127.0.0.1:8000/uploads",
+    "bucket": "qa-bucket",
+    "region": "qa-region",
+    "endpoint": "https://oss.example.invalid",
+    "accessKeyId": "SRB_QA_ACCESS_1777732204516",
+    "accessKeySecret": "SRB_QA_OSS_SECRET_1777732204516"
+  },
+  "ai": {
+    "active": "a",
+    "provider": "a",
+    "baseUrl": "https://example.invalid/v1",
+    "model": "qa-model",
+    "enableChat": true,
+    "apiKey": "SRB_QA_AI_KEY_1777732204516"
+  },
+  "siteTitle": "SRBlogs の 宝藏之地",
+  "subtitle": "",
+  "author": "Shrink",
+  "avatar": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=500&auto=format&fit=crop",
+  "description": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
+  "socialLinks": {
+    "github": "https://github.com/yourname",
+    "gitee": "https://gitee.com/yourname",
+    "email": "you@example.com",
+    "qq": "100002",
+    "wechat": "srblogs"
+  },
+  "comments": {
+    "enabled": true,
+    "requireEmail": false,
+    "maxLength": 1000,
+    "showEmail": false,
+    "localEnabled": true,
+    "gitalk": {
+      "clientID": "",
+      "repo": "",
+      "owner": "",
+      "admin": []
+    }
+  }
+}

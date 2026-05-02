@@ -48,13 +48,58 @@ def _comment_file_to_key(file: Path) -> tuple[str, str] | None:
         return None
 
 
+def _comment_options() -> dict:
+    data = JsonStore(get_settings().data_path, "settings.json", {}).read()
+    comments = data.get("comments") if isinstance(data, dict) else {}
+    return comments if isinstance(comments, dict) else {}
+
+
+def _comments_enabled(options: dict) -> bool:
+    return options.get("enabled", True) is not False and options.get("localEnabled", True) is not False
+
+
+def _max_comment_length(options: dict) -> int:
+    try:
+        value = int(options.get("maxLength", 1000))
+    except (TypeError, ValueError):
+        value = 1000
+    return max(1, min(value, 5000))
+
+
+def _mask_email(email: str) -> str:
+    if not email or "@" not in email:
+        return ""
+    name, domain = email.split("@", 1)
+    if len(name) <= 2:
+        masked_name = name[:1] + "*"
+    else:
+        masked_name = name[:1] + "***" + name[-1:]
+    return f"{masked_name}@{domain}"
+
+
+def _public_comment(comment: dict, options: dict) -> dict:
+    item = dict(comment)
+    email = str(item.get("email") or "")
+    item["email"] = _mask_email(email) if options.get("showEmail") is True else ""
+    return item
+
+
 @router.get("/{resource}/{slug}", response_model=list[CommentItem])
 def list_comments(resource: str, slug: str):
-    return _store(resource, slug).read()
+    options = _comment_options()
+    return [_public_comment(item, options) for item in _store(resource, slug).read()]
 
 
 @router.post("/{resource}/{slug}", response_model=CommentItem)
 def create_comment(resource: str, slug: str, payload: CommentCreate):
+    options = _comment_options()
+    if not _comments_enabled(options):
+        raise HTTPException(status_code=403, detail="Comments are closed")
+    if options.get("requireEmail") is True and not (payload.email or "").strip():
+        raise HTTPException(status_code=400, detail="Email is required")
+    max_length = _max_comment_length(options)
+    if len(payload.content.strip()) > max_length:
+        raise HTTPException(status_code=400, detail=f"Comment content must be at most {max_length} characters")
     store = _store(resource, slug)
     comments = store.read()
     item = {
@@ -67,7 +112,7 @@ def create_comment(resource: str, slug: str, payload: CommentCreate):
     comments.append(item)
     store.write(comments)
     write_audit(actor=item["author"], action="comment.create", resource=resource, target=slug, result="success", message="Comment created", detail={"commentId": item["id"]})
-    return item
+    return _public_comment(item, options)
 
 
 @router.delete("/{resource}/{slug}/{comment_id}", dependencies=[Depends(require_admin)])
