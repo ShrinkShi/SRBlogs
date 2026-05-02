@@ -224,6 +224,31 @@ Base path: `/api`
 - `401`：未登录或 token 缺失/失效。
 - `404`：评论 ID 不存在。
 
+### GET `/admin/comments/index`
+
+后台 JWT。返回已有评论的内容索引，供后台评论管理默认列表使用。扫描 `backend/data/comments` 下的评论 JSON 文件；目录不存在或没有评论时返回空数组，不返回 500。
+
+响应：
+
+```json
+[
+  {
+    "resource": "posts",
+    "slug": "srblogs-p0-20260502130609",
+    "count": 3,
+    "updatedAt": "2026-05-02 14:01",
+    "title": "SRBlogs P0 Content Loop"
+  }
+]
+```
+
+说明：
+
+- 文件名形如 `posts-srblogs-p0-20260502130609.json` 时，反推 `resource=posts`、`slug=srblogs-p0-20260502130609`。
+- `resource` 仅允许 `posts`、`moments`、`chatters`。
+- `title` 优先读取对应内容 Markdown Front Matter 的 `meta.title`；内容文件不存在时回退为 `slug`。
+- 只返回后台评论索引需要的信息，不返回邮箱之外的额外评论详情，也不返回任何 Secret。
+
 ## Dashboard API
 
 ### GET `/dashboard/stats`

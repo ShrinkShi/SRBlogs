@@ -9,8 +9,6 @@ class JsonStore:
         self.file = resolve_data_path(Path(filename))
         self.default = default
         self.file.parent.mkdir(parents=True, exist_ok=True)
-        if not self.file.exists():
-            self.write(default)
 
     def read(self) -> Any:
         return safe_read_json(self.file, self.default)

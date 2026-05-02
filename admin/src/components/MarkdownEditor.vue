@@ -5,6 +5,7 @@ import { EditorView, keymap } from '@codemirror/view'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { markdown } from '@codemirror/lang-markdown'
 import MarkdownPreview from './MarkdownPreview.vue'
+import { markdownPreviewSample } from '@/constants/markdownSample'
 
 const model = defineModel<string>({ required: true })
 const host = ref<HTMLDivElement | null>(null)
@@ -40,11 +41,26 @@ watch(model, (value) => {
 })
 
 onBeforeUnmount(() => view?.destroy())
+
+function insertSample() {
+  model.value = markdownPreviewSample
+}
 </script>
 
 <template>
-  <div class="grid gap-4 xl:grid-cols-2">
-    <div class="glass overflow-hidden rounded-[28px] p-2"><div ref="host"></div></div>
-    <div class="glass max-h-[620px] overflow-auto rounded-[28px] p-6"><MarkdownPreview :content="model" /></div>
+  <div class="grid gap-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <p class="text-sm font-bold uppercase tracking-[.24em] text-cyan-100/45">Markdown</p>
+        <p class="mt-1 text-sm text-white/52">右侧预览会经过 DOMPurify 清洗，样式与前台文章详情保持一致但更紧凑。</p>
+      </div>
+      <button class="rounded-2xl border border-white/12 bg-white/8 px-4 py-2 text-sm font-bold text-white/72 hover:bg-white/12" type="button" @click="insertSample">
+        插入预览测试样例
+      </button>
+    </div>
+    <div class="grid gap-4 xl:grid-cols-2">
+      <div class="glass min-w-0 overflow-hidden rounded-[28px] p-2"><div ref="host"></div></div>
+      <div class="glass min-w-0 max-h-[620px] overflow-auto rounded-[28px] p-6"><MarkdownPreview :content="model" /></div>
+    </div>
   </div>
 </template>

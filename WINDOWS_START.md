@@ -32,7 +32,7 @@
 .\start-admin.cmd
 ```
 
-前台和后台脚本显式使用 `npm.cmd run dev -- --host 127.0.0.1 --port <port> --strictPort`。
+前台和后台脚本显式使用 `npm.cmd run dev`。固定端口和 `--strictPort` 由各自 `package.json` 的 `dev` 脚本统一管理。
 
 ## 端口占用
 

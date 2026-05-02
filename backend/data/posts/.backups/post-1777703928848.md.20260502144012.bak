@@ -1,0 +1,42 @@
+---
+title: 测试
+date: 2026-05-02 06:38
+tags: []
+draft: false
+cover: ''
+summary: 测试样例
+---
+
+# Markdown 预览测试
+
+## 用来测试 Markdown 编辑器
+
+这是一段普通段落，包含 [前台首页](/) 链接和 `inline code`。
+
+### 无序列表
+
+- 标题层级需要明显
+- 无序列表需要显示项目符号
+- 长文本需要自动换行，不能撑破预览区域
+
+### 有序列表
+
+1. 第一项需要显示编号
+2. 第二项需要显示编号
+3. 第三项需要显示编号
+
+> 这是一段引用内容，用来确认 blockquote 的边框、背景和文本层级。
+
+```ts
+const title = 'SRBlogs'
+function renderMarkdown(markdown: string) {
+  return markdown.trim()
+}
+```
+
+| 模块 | 状态 | 说明 |
+| --- | --- | --- |
+| Markdown | 进行中 | 预览需要真实渲染 |
+| 评论 | 进行中 | 后台需要索引入口 |
+
+![图片兜底测试](/missing-markdown-preview-image.png)

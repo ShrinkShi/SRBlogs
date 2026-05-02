@@ -75,6 +75,14 @@ class CommentItem(BaseModel):
     created_at: str
 
 
+class CommentIndexItem(BaseModel):
+    resource: str
+    slug: str
+    count: int
+    updatedAt: str = ""
+    title: str = ""
+
+
 class ChatMessage(BaseModel):
     role: str
     content: str

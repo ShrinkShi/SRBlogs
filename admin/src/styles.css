@@ -19,6 +19,24 @@ body::before { content: ''; position: fixed; inset: 0; pointer-events: none; bac
 .admin-btn-primary { background: #67e8f9; color: #07111f; }
 .admin-btn-ghost { border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.7); background: rgba(255,255,255,.06); }
 .admin-btn:hover { transform: translateY(-1px); }
-.prose-preview h1,.prose-preview h2,.prose-preview h3 { color: white; font-weight: 900; }
-.prose-preview p { color: rgba(255,255,255,.72); line-height: 1.8; }
-.prose-preview pre { border-radius: 18px; background: rgba(2,6,23,.8); padding: 16px; overflow: auto; }
+.prose-sr { color: rgba(247,251,255,.88); overflow-wrap: anywhere; }
+.prose-sr h1,.prose-sr h2,.prose-sr h3 { color: white; font-weight: 900; line-height: 1.25; }
+.prose-sr h1 { margin: 0 0 1rem; font-size: 2rem; }
+.prose-sr h2 { margin: 1.8rem 0 .8rem; font-size: 1.5rem; }
+.prose-sr h3 { margin: 1.4rem 0 .65rem; font-size: 1.18rem; }
+.prose-sr p { margin: .9rem 0; color: rgba(247,251,255,.74); line-height: 1.8; }
+.prose-sr ul,.prose-sr ol { margin: .9rem 0 .9rem 1.4rem; padding-left: 1.1rem; color: rgba(247,251,255,.78); line-height: 1.8; }
+.prose-sr ul { list-style: disc; }
+.prose-sr ol { list-style: decimal; }
+.prose-sr li { padding-left: .25rem; }
+.prose-sr li::marker { color: #67e8f9; font-weight: 800; }
+.prose-sr blockquote { margin: 1rem 0; border-left: 3px solid rgba(103,232,249,.65); border-radius: 0 16px 16px 0; background: rgba(255,255,255,.06); padding: .75rem 1rem; color: rgba(255,255,255,.72); }
+.prose-sr a { color: #67e8f9; text-decoration: none; border-bottom: 1px dashed rgba(103,232,249,.45); }
+.prose-sr pre { max-width: 100%; overflow: auto; border-radius: 18px; border: 1px solid rgba(255,255,255,.14); background: rgba(2,6,23,.82); padding: 16px; }
+.prose-sr code { color: #bae6fd; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+.prose-sr :not(pre) > code { border: 1px solid rgba(255,255,255,.12); border-radius: .5rem; background: rgba(255,255,255,.08); padding: .1rem .35rem; }
+.prose-sr table { display: block; width: 100%; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 1rem 0; white-space: nowrap; }
+.prose-sr th,.prose-sr td { border: 1px solid rgba(255,255,255,.14); padding: .55rem .7rem; text-align: left; }
+.prose-sr th { background: rgba(255,255,255,.08); color: white; }
+.prose-sr img { max-width: 100%; height: auto; border-radius: 18px; border: 1px solid rgba(255,255,255,.16); }
+.prose-sr-admin { font-size: .95rem; }

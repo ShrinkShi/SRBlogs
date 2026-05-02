@@ -23,4 +23,4 @@ if not exist "node_modules" (
 )
 
 echo [START] http://127.0.0.1:%PORT%
-call npm.cmd run dev -- --host 127.0.0.1 --port %PORT% --strictPort
+call npm.cmd run dev

@@ -12,12 +12,5 @@
     "email": "test@example.com",
     "content": "Second comment",
     "created_at": "2026-05-02 13:06"
-  },
-  {
-    "id": "bb59c0e5cc3348f6b65a2623e2cfc8bc",
-    "author": "1",
-    "email": "",
-    "content": "你好",
-    "created_at": "2026-05-02 14:01"
   }
 ]

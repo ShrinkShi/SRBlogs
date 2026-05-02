@@ -274,3 +274,72 @@ API 实测结果：
 - 需要用户在普通 Windows 终端或双击脚本方式启动 `start-all.cmd` 后，按 `docs/MANUAL_QA_CHECKLIST.md` 完成浏览器人工验收。
 - 文章详情、评论、Markdown 编辑器、后台评论管理仍保持 `进行中`，不得标记为 `已完成`。
 - 暂存队列仍未实现，后台写作仍为直接持久化。
+
+## 2026-05-02 - Markdown 预览与评论索引主流程轮
+
+本轮目标：
+
+- 修复后台 Markdown 编辑器预览接近纯文本的问题。
+- 后台评论管理从手动输入 `resource/slug` 调整为默认展示“有评论的内容索引”。
+- 保持当前技术栈和 FastAPI + `backend/data` 文件存储方案。
+- 不新增樱花、弹幕、CyberCat、动态背景等 P2 装饰功能，不进入媒体互动轮。
+
+前台变更：
+
+- 补齐前台 `.prose-sr` 的 Markdown 列表、表格、h1、图片自适应样式，避免 Tailwind reset 导致列表符号和有序编号不可见。
+- 前台评论区在开发环境显示当前 `resource/slug` 调试信息，生产环境不显示，用于确认前后台评论使用同一 slug。
+
+后台变更：
+
+- `MarkdownPreview.vue` 继续使用 `marked + DOMPurify`，并明确输出到 `.prose-sr prose-sr-admin`。
+- 后台 Markdown 预览补齐 h1/h2/h3、段落、无序列表、有序列表、引用、inline code、代码块、表格、链接、图片样式。
+- 新增 `admin/src/constants/markdownSample.ts`，提供包含标题、列表、代码块、引用、表格、链接和图片的测试样例。
+- `MarkdownEditor.vue` 新增“插入预览测试样例”按钮。
+- `CommentsManage.vue` 重构为默认加载评论索引；点击索引项后查看评论。
+- 后台评论管理显示标题、resource、slug、评论数、最近更新时间和当前请求的 `resource/slug`。
+- 手动 `resource/slug` 加载移动到“高级加载”折叠区。
+- 删除评论前增加确认；删除成功后自动刷新评论列表和评论索引；删除失败会在 UI 中显示错误。
+- 评论管理继续不进入 `pendingOperations`，删除为直接持久化操作。
+
+后端/API 变更：
+
+- 新增 `GET /api/admin/comments/index`，需要管理员 JWT。
+- 评论索引扫描 `backend/data/comments`，从 `posts-slug.json` 等文件名反推 `resource/slug`。
+- 评论索引返回 `resource`、`slug`、`count`、`updatedAt`、`title`。
+- `title` 优先读取对应 Markdown Front Matter 的标题，内容文件不存在时回退为 slug。
+- comments 目录不存在或没有评论时返回 `[]`，不返回 500。
+- `JsonStore` 不再在构造时创建默认 JSON 文件，避免 GET/高级加载等只读操作产生空文件；真实写入仍走 `safe_write_json`。
+
+文档变更：
+
+- 更新 `docs/API_CONTRACT.md`，补充 `GET /api/admin/comments/index`。
+- 更新 `docs/SECURITY_NOTES.md`，补充后台评论索引和评论管理直接持久化规则。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，补充 Markdown 预览和“后台评论管理不需要手动输入 slug”的验收项。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，同步 Markdown 编辑器与评论管理当前进展。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动后端到 `127.0.0.1:8020` 并访问 `/api/health`，返回 `health=True`。
+- 通过：后台登录获取 JWT。
+- 通过：`GET /api/admin/comments/index` 返回评论索引，包含 `posts/srblogs-p0-20260502130609`，原始响应中 `count=3`、`title=SRBlogs P0 Content Loop`。
+- 通过：comments 目录不存在或无评论的临时 `DATA_DIR` 下，`GET /api/admin/comments/index` 返回 `[]`。
+- 通过：前台 `POST /api/comments/posts/srblogs-p0-20260502130609` 创建临时评论后，后台评论索引可刷新到该内容记录；随后 DELETE 删除临时评论成功。
+- 通过：删除不存在评论返回 404。
+- 通过：非法邮箱评论提交返回 400。
+- 通过：空昵称/空内容评论提交返回 400。
+- 通过：删除评论前备份验证，`.backups` 中匹配备份数从 9 增加到 11。
+- 通过：构建产物静态搜索未匹配到 `clientSecret`、`accessKeySecret`、`api_key`、`jwt_secret`、`admin_password`。
+- 通过：当前端口探测时 `8000`、`5173`、`5174` 均无监听进程，没有遗留常驻 dev server。
+- 阻塞：本轮再次使用独立 `cmd.exe` 调用 `start-admin.cmd` 探测 Vite dev server，5174 未监听，仍复现 `spawn EPERM`。
+- 修正：`start-frontend.cmd` 和 `start-admin.cmd` 改为只调用 `npm.cmd run dev`，固定端口和 `--strictPort` 由各自 `package.json` 统一管理，避免命令参数重复。
+- 代码级确认：后台和前台 Markdown 渲染入口仍调用 `DOMPurify.sanitize`；后台/前台 `.prose-sr` 已显式包含列表编号、项目符号、表格横向滚动、代码块背景和图片自适应样式。
+
+遗留问题：
+
+- 本轮没有在 Codex 工具环境完成浏览器人工回归；Markdown 预览和后台评论管理仍需用户按 `docs/MANUAL_QA_CHECKLIST.md` 在浏览器确认。
+- 文章详情、评论、Markdown 编辑器继续保持 `进行中`，不得标记为 `已完成`。
+- 评论隐藏/恢复、审核、分页仍未实现，不在本轮范围。
+- 暂存队列仍未实现，评论管理也不进入 pendingOperations。

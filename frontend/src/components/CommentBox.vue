@@ -11,6 +11,7 @@ const submitting = ref(false)
 const error = ref('')
 const success = ref('')
 const form = reactive({ author: '', email: '', content: '' })
+const showDebug = import.meta.env.DEV
 
 async function load() {
   loading.value = true
@@ -58,6 +59,9 @@ watch(() => props.slug, load)
       <h3 class="text-xl font-black text-white">评论</h3>
       <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/50">{{ comments.length }} 条</span>
     </div>
+    <p v-if="showDebug" class="mt-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 font-mono text-xs text-cyan-100/55">
+      DEV comments target: {{ props.resource }}/{{ props.slug }}
+    </p>
     <p v-if="loading" class="mt-4 text-white/50">评论加载中...</p>
     <div v-else class="mt-4 grid gap-3">
       <div v-for="item in comments" :key="item.id" class="rounded-2xl border border-white/10 bg-white/5 p-4">

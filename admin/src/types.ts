@@ -20,3 +20,11 @@ export interface CommentItem {
   content: string
   created_at: string
 }
+
+export interface CommentIndexItem {
+  resource: 'posts' | 'moments' | 'chatters'
+  slug: string
+  count: number
+  updatedAt: string
+  title: string
+}

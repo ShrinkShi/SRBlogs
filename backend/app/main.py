@@ -11,6 +11,7 @@ from app.api.auth import router as auth_router
 from app.api.content_routes import make_content_router
 from app.api.json_routes import make_json_router
 from app.api.about import router as about_router
+from app.api.comments import admin_router as comments_admin_router
 from app.api.comments import router as comments_router
 from app.api.upload import router as upload_router
 from app.api.chat import router as chat_router
@@ -74,6 +75,7 @@ app.include_router(make_json_router("music", "music.json", "music"), prefix="/ap
 app.include_router(make_json_router("photos", "photos/photos.json", "photos"), prefix="/api")
 app.include_router(settings_router, prefix="/api")
 app.include_router(comments_router, prefix="/api")
+app.include_router(comments_admin_router, prefix="/api")
 app.include_router(upload_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")

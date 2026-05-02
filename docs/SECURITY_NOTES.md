@@ -28,8 +28,10 @@
 - 评论提交内容必须由后端清洗后保存。
 - Markdown 内容允许用户输入，但渲染时不得直接插入未经清洗的 HTML。
 - 后台删除评论必须要求管理员 JWT。
+- 后台评论索引 `GET /api/admin/comments/index` 必须要求管理员 JWT，只返回 `resource`、`slug`、`count`、`updatedAt`、`title` 等管理索引字段。
 - 删除评论前必须备份对应评论 JSON 文件。
 - 删除不存在的评论必须返回 404，不允许静默成功。
+- 评论管理不进入第一阶段本地 `pendingOperations`，删除操作当前为管理员确认后直接持久化写回后端 JSON。
 
 ## JSON And Markdown Writes
 

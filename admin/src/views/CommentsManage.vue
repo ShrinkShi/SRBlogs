@@ -1,86 +1,220 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
-import type { CommentItem } from '@/types'
+import type { CommentIndexItem, CommentItem } from '@/types'
 
 const ui = useUiStore()
-const resource = ref<'posts' | 'moments' | 'chatters'>('posts')
-const slug = ref('vue-fastapi-blog')
+const indexItems = ref<CommentIndexItem[]>([])
+const selected = ref<CommentIndexItem | null>(null)
 const comments = ref<CommentItem[]>([])
-const loading = ref(false)
+const loadingIndex = ref(false)
+const loadingComments = ref(false)
 const deleting = ref('')
-const error = ref('')
+const indexError = ref('')
+const commentsError = ref('')
+const advancedResource = ref<'posts' | 'moments' | 'chatters'>('posts')
+const advancedSlug = ref('')
 
-async function load() {
-  error.value = ''
-  comments.value = []
-  if (!slug.value.trim()) {
-    error.value = 'slug 不能为空。'
-    return
-  }
-  loading.value = true
+async function loadIndex(keepSelection = true) {
+  indexError.value = ''
+  loadingIndex.value = true
   try {
-    comments.value = await adminApi.comments(resource.value, slug.value.trim())
+    const next = await adminApi.commentsIndex()
+    indexItems.value = next
+    if (!next.length) {
+      selected.value = null
+      comments.value = []
+      return
+    }
+
+    const current = keepSelection && selected.value
+      ? next.find((item) => item.resource === selected.value?.resource && item.slug === selected.value?.slug)
+      : null
+    if (current) {
+      selected.value = current
+    } else if (!selected.value) {
+      await selectItem(next[0])
+    } else {
+      selected.value = null
+      comments.value = []
+    }
   } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '评论加载失败'
+    indexError.value = exc instanceof Error ? exc.message : '评论索引加载失败'
   } finally {
-    loading.value = false
+    loadingIndex.value = false
   }
 }
 
-async function remove(item: CommentItem) {
-  error.value = ''
-  deleting.value = item.id
+async function loadComments(resource: 'posts' | 'moments' | 'chatters', slug: string) {
+  commentsError.value = ''
+  comments.value = []
+  loadingComments.value = true
   try {
-    await adminApi.deleteComment(resource.value, slug.value.trim(), item.id)
-    comments.value = comments.value.filter((comment) => comment.id !== item.id)
+    comments.value = await adminApi.comments(resource, slug)
+  } catch (exc) {
+    commentsError.value = exc instanceof Error ? exc.message : '评论加载失败'
+  } finally {
+    loadingComments.value = false
+  }
+}
+
+async function selectItem(item: CommentIndexItem) {
+  selected.value = item
+  advancedResource.value = item.resource
+  advancedSlug.value = item.slug
+  await loadComments(item.resource, item.slug)
+}
+
+async function advancedLoad() {
+  const slug = advancedSlug.value.trim()
+  if (!slug) {
+    commentsError.value = 'slug 不能为空。'
+    return
+  }
+  const item: CommentIndexItem = {
+    resource: advancedResource.value,
+    slug,
+    count: 0,
+    updatedAt: '',
+    title: slug
+  }
+  selected.value = item
+  await loadComments(item.resource, item.slug)
+}
+
+async function remove(item: CommentItem) {
+  if (!selected.value) return
+  if (!window.confirm(`确认删除 ${item.author} 的这条评论？`)) return
+
+  commentsError.value = ''
+  deleting.value = item.id
+  const target = selected.value
+  try {
+    await adminApi.deleteComment(target.resource, target.slug, item.id)
+    await loadComments(target.resource, target.slug)
+    await loadIndex(true)
     ui.show('评论已删除')
   } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '评论删除失败'
+    commentsError.value = exc instanceof Error ? exc.message : '评论删除失败'
   } finally {
     deleting.value = ''
   }
 }
+
+async function deleteMissingForCheck() {
+  if (!selected.value) {
+    commentsError.value = '请先选择一个评论目标。'
+    return
+  }
+  commentsError.value = ''
+  try {
+    await adminApi.deleteComment(selected.value.resource, selected.value.slug, 'missing-comment-id')
+  } catch (exc) {
+    commentsError.value = exc instanceof Error ? exc.message : '评论删除失败'
+  }
+}
+
+onMounted(() => loadIndex(false))
 </script>
 
 <template>
   <section class="grid gap-5">
     <GlassCard>
-      <p class="text-sm font-bold uppercase tracking-[.32em] text-cyan-100/45">comments</p>
-      <h1 class="mt-2 text-4xl font-black text-white">评论管理</h1>
-      <p class="mt-3 text-white/56">本地评论管理最小版。当前支持按 resource/slug 查看和删除评论；隐藏/恢复后续再做。</p>
-      <div class="mt-5 grid gap-3 md:grid-cols-[180px_1fr_auto]">
-        <select v-model="resource" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none">
-          <option value="posts">posts</option>
-          <option value="moments">moments</option>
-          <option value="chatters">chatters</option>
-        </select>
-        <input v-model="slug" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="slug" @keyup.enter="load" />
-        <button :disabled="loading" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:opacity-50" @click="load">{{ loading ? '加载中...' : '加载评论' }}</button>
+      <div class="relative z-[1] flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p class="text-sm font-bold uppercase tracking-[.32em] text-cyan-100/45">comments</p>
+          <h1 class="mt-2 text-4xl font-black text-white">评论管理</h1>
+          <p class="mt-3 max-w-3xl text-white/56">默认展示已有评论的内容索引。评论管理暂不进入 pendingOperations，删除会直接写回后端 JSON 并在覆盖前备份。</p>
+        </div>
+        <button :disabled="loadingIndex" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:opacity-50" @click="loadIndex(true)">
+          {{ loadingIndex ? '刷新中...' : '刷新索引' }}
+        </button>
       </div>
-      <p v-if="error" class="mt-3 text-sm text-red-200/80">{{ error }}</p>
+      <p v-if="indexError" class="relative z-[1] mt-3 text-sm text-red-200/80">{{ indexError }}</p>
     </GlassCard>
 
-    <GlassCard v-if="loading"><p class="text-white/60">评论加载中...</p></GlassCard>
-    <GlassCard v-else-if="!comments.length"><p class="text-white/60">暂无评论。</p></GlassCard>
-    <div v-else class="grid gap-3">
-      <GlassCard v-for="item in comments" :key="item.id">
-        <div class="relative z-[1] flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div class="flex flex-wrap items-center gap-2 text-sm">
-              <b class="text-white">{{ item.author }}</b>
-              <span v-if="item.email" class="text-white/40">{{ item.email }}</span>
-              <span class="text-white/40">{{ item.created_at }}</span>
+    <div class="grid gap-5 xl:grid-cols-[380px_1fr]">
+      <GlassCard class="min-w-0">
+        <div class="relative z-[1] flex items-center justify-between gap-3">
+          <h2 class="text-lg font-black text-white">有评论的内容</h2>
+          <span class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/50">{{ indexItems.length }} 项</span>
+        </div>
+
+        <p v-if="loadingIndex" class="relative z-[1] mt-5 text-white/55">评论索引加载中...</p>
+        <p v-else-if="!indexItems.length" class="relative z-[1] mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-white/55">暂无任何评论。</p>
+        <div v-else class="relative z-[1] mt-5 grid gap-3">
+          <button
+            v-for="item in indexItems"
+            :key="`${item.resource}/${item.slug}`"
+            type="button"
+            class="rounded-2xl border p-4 text-left transition"
+            :class="selected?.resource === item.resource && selected?.slug === item.slug ? 'border-cyan-200/55 bg-cyan-300/12' : 'border-white/10 bg-white/5 hover:border-white/22 hover:bg-white/8'"
+            @click="selectItem(item)"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate font-bold text-white">{{ item.title || item.slug }}</p>
+                <p class="mt-1 truncate font-mono text-xs text-cyan-100/50">{{ item.resource }}/{{ item.slug }}</p>
+              </div>
+              <span class="shrink-0 rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-white/68">{{ item.count }}</span>
             </div>
-            <p class="mt-3 whitespace-pre-wrap break-words text-white/70">{{ item.content }}</p>
-          </div>
-          <button :disabled="deleting === item.id" class="rounded-2xl border border-red-200/25 px-4 py-2 text-sm text-red-100 hover:bg-red-300/10 disabled:opacity-50" @click="remove(item)">
-            {{ deleting === item.id ? '删除中...' : '删除' }}
+            <p class="mt-3 text-xs text-white/42">最近更新：{{ item.updatedAt || '未知' }}</p>
           </button>
         </div>
       </GlassCard>
+
+      <div class="grid min-w-0 gap-4">
+        <GlassCard>
+          <div class="relative z-[1] flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-black text-white">评论列表</h2>
+            <p v-if="selected" class="mt-2 font-mono text-xs text-cyan-100/55">当前请求：{{ selected.resource }}/{{ selected.slug }}</p>
+            <p v-else class="mt-2 text-sm text-white/52">请从左侧选择一项。</p>
+          </div>
+        </div>
+          <p v-if="commentsError" class="relative z-[1] mt-3 text-sm text-red-200/80">{{ commentsError }}</p>
+
+          <details class="relative z-[1] mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
+            <summary class="cursor-pointer text-sm font-bold text-white/68">高级加载</summary>
+            <div class="mt-4 grid gap-3 md:grid-cols-[160px_1fr_auto]">
+              <select v-model="advancedResource" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none">
+                <option value="posts">posts</option>
+                <option value="moments">moments</option>
+                <option value="chatters">chatters</option>
+              </select>
+              <input v-model="advancedSlug" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="slug" @keyup.enter="advancedLoad" />
+              <button :disabled="loadingComments" class="rounded-2xl border border-white/12 px-5 py-3 font-bold text-white/72 disabled:opacity-50" @click="advancedLoad">
+                {{ loadingComments ? '加载中...' : '加载' }}
+              </button>
+            </div>
+            <button v-if="selected" class="mt-3 rounded-2xl border border-white/12 px-4 py-2 text-sm font-bold text-white/68 hover:bg-white/8" type="button" @click="deleteMissingForCheck">
+              验证删除不存在评论的错误提示
+            </button>
+          </details>
+        </GlassCard>
+
+        <GlassCard v-if="loadingComments"><p class="relative z-[1] text-white/60">评论加载中...</p></GlassCard>
+        <GlassCard v-else-if="selected && !comments.length"><p class="relative z-[1] text-white/60">该内容当前没有评论。</p></GlassCard>
+        <div v-else-if="comments.length" class="grid gap-3">
+          <GlassCard v-for="item in comments" :key="item.id">
+            <div class="relative z-[1] flex flex-wrap items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2 text-sm">
+                  <b class="text-white">{{ item.author }}</b>
+                  <span v-if="item.email" class="break-all text-white/40">{{ item.email }}</span>
+                  <span class="text-white/40">{{ item.created_at }}</span>
+                </div>
+                <p class="mt-3 whitespace-pre-wrap break-words text-white/70">{{ item.content }}</p>
+              </div>
+              <button :disabled="deleting === item.id" class="rounded-2xl border border-red-200/25 px-4 py-2 text-sm text-red-100 hover:bg-red-300/10 disabled:opacity-50" @click="remove(item)">
+                {{ deleting === item.id ? '删除中...' : '删除' }}
+              </button>
+            </div>
+          </GlassCard>
+        </div>
+      </div>
     </div>
   </section>
 </template>

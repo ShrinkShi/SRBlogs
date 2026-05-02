@@ -1,5 +1,5 @@
 import { http } from './http'
-import type { CommentItem, ContentItem, Stats } from '@/types'
+import type { CommentIndexItem, CommentItem, ContentItem, Stats } from '@/types'
 
 export const adminApi = {
   login: async (username: string, password: string) => {
@@ -30,6 +30,10 @@ export const adminApi = {
   },
   comments: async (resource: 'posts' | 'moments' | 'chatters', slug: string) => {
     const { data } = await http.get<CommentItem[]>(`/comments/${resource}/${slug}`)
+    return data
+  },
+  commentsIndex: async () => {
+    const { data } = await http.get<CommentIndexItem[]>('/admin/comments/index')
     return data
   },
   deleteComment: async (resource: 'posts' | 'moments' | 'chatters', slug: string, commentId: string) => {
