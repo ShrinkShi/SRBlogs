@@ -6,7 +6,7 @@
 - `P1`：关键体验，包括编辑器预览、草稿、暂存队列、搜索/标签、响应式、后台表单化设置、错误状态。
 - `P2`：视觉增强和装饰特效，包括樱花、萤火、弹幕、动态背景细节、悬浮音乐细节、卡片动效和主题装饰。
 
-状态定义：`未开始`、`进行中`、`已完成`、`延期`。只有满足本轮 Definition of Done 后才能标记为 `已完成`。
+状态定义：`未开始`、`进行中`、`已完成`、`延期/未验收`。只有满足本轮 Definition of Done 后才能标记为 `已完成`。
 
 ## Definition of Done
 
@@ -255,15 +255,15 @@ Windows 本地启动命令：
 - 后台 settings 表单支持加载状态、保存中状态、保存成功和保存失败提示；高级 JSON 作为折叠兜底。
 - `GET /api/settings/public` 调整为只返回公开站点字段和公开评论显示选项：`siteTitle`、`subtitle`、`author`、`avatar`、`description`、`socialLinks`、`theme`、`bgImages`、`cloudMusicIds`、`comments`。
 - `GET /api/admin/settings` 继续要求 JWT，Secret 不回显明文，只返回 configured 布尔值。
-- `PUT /api/admin/settings` 已验证空 Secret 不覆盖旧值；只有传入明确新值时才覆盖。
-- 前台评论区会读取公开评论设置；关闭评论后显示“评论已关闭”并隐藏提交框，重新开启后恢复表单。
+- `PUT /api/admin/settings` 已完成代码与 API 级验证：空 Secret 不覆盖旧值；浏览器人工验收由用户决定跳过，记录为未验收。
+- 前台评论区会读取公开评论设置；关闭评论后显示“评论已关闭”并隐藏提交框，重新开启后恢复表单；浏览器人工验收由用户决定跳过，记录为未验收。
 - 新增 `docs/DEPLOYMENT.md`，补充后端 FastAPI、前端/后台 build、Nginx、systemd、backend/data 权限、生产 `.env`、HTTPS 和生产前检查。
 - `cd frontend && npm run build`：通过。
 - `cd admin && npm run build`：通过。
 - `python -m compileall backend\app`：通过。
 - TestClient `/api/health`：通过；当前 `127.0.0.1:8000` 未监听，因此固定端口 health 需用户启动后复测。
 - 构建产物 Secret 搜索通过。
-- 结论：设置中心与生产化代码和 API 验证已推进，但仍需浏览器人工验收，不得标记为已完成。
+- 结论：设置中心与生产化代码和 API 验证已推进；空 Secret 不覆盖旧值、评论开关、图床设置与上传流程、AI 设置、部署文档完整实操核验均为用户主动跳过的延期/未验收项，不得标记为已完成。
 
 ## Matrix
 
@@ -272,9 +272,9 @@ Windows 本地启动命令：
 | 首页 | 毛玻璃首页、个人资料、最新内容、动态氛围组件 | 已有首页、ProfileCard、站点统计、最新文章/杂谈/动态组件；浏览器可打开，统计数据源已修复为非零；已移除首页父级裁切，Hero/ProfileCard 和 SiteDashboard 改为 auto-fit 响应式网格；最新文章从横向滚动轨道改为 1/2/3 列响应式网格，4 篇文章应换到第二行 | P1 | 3 视觉首页轮 | 进行中 | 剩余差距：需要用户人工确认 4 篇文章时正确换行、页面左右边距恢复正常、没有任何 section 再撑宽整个首页；通过前不得标记完成 |
 | 文章列表 | 文章卡片、标签、摘要、封面、列表浏览 | Posts 页面真实读取 `/api/posts`，已补加载、空、错误状态、封面兜底、标签、日期、摘要和详情跳转；公开列表默认不含草稿，本轮已通过 API 验证草稿隐藏、发布后可见、删除后移除 | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：需要完成更完整的浏览器人工回归、移动端检查和后台草稿发布/删除后的前台浏览器联动确认，满足 Definition of Done 后才能完成 |
 | 文章详情 | Markdown 详情、代码高亮、评论、分享 | PostDetail 真实读取 `/api/posts/{slug}`，已补加载、404/错误状态、封面兜底、元信息展示、分享和评论挂载；MarkdownRenderer 继续使用 DOMPurify；前台 Markdown 样式已补齐列表编号、项目符号、表格滚动和图片自适应；人工回归项已写入 `docs/MANUAL_QA_CHECKLIST.md` | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：TOC 点击滚动、代码块视觉高亮、分享按钮交互、390px 移动端仍需浏览器人工验收 |
-| 动态 | 类朋友圈短内容流和轻量评论 | 已有 Moments 页面和 moments Markdown 数据 | P1 | 6 媒体互动轮 | 未开始 | 动态列表、详情、评论、时间展示和移动端密度达到可用 |
-| 杂谈 | 云端杂谈/碎片化文章卡片 | 已有 Chatter、ChatterDetail、LatestChatterCarousel | P1 | 6 媒体互动轮 | 未开始 | 杂谈列表和详情可读写，首页聚合展示正常 |
-| 时间线 | 内容按时间汇总展示 | 已有 Timeline 页面 | P1 | 6 媒体互动轮 | 未开始 | 文章、动态、杂谈按时间排序，空数据有提示 |
+| 动态 | 类朋友圈短内容流和轻量评论 | Moments 页面真实读取 `/api/moments`，本轮补齐加载、空、错误状态；详情复用 PostDetail | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：动态详情、评论和 390px 移动端仍需浏览器人工回归 |
+| 杂谈 | 云端杂谈/碎片化文章卡片 | Chatter 页面真实读取 `/api/chatters`，本轮公开路由统一为 `/chatters` 和 `/chatters/:slug`，旧 `/chatter` 保留重定向；已补加载、空、错误状态 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：杂谈详情、首页聚合跳转和移动端仍需浏览器人工回归 |
+| 时间线 | 内容按时间汇总展示 | Timeline 页面真实读取 `/api/moments`，本轮补齐加载、空、错误状态 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：跨文章/动态/杂谈汇总排序尚未完成，当前仍是 moments 时间线 |
 | 照片墙 | 图片墙、封面、图集浏览 | 前台 Photowall 动态读取 `/api/photos`，已有加载/空/错误状态、懒加载、点击放大预览、标题/描述/日期/标签展示；后台照片管理已改为表单化主流程，支持上传接口填入 URL，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 照片墙懒加载、点击放大、上传填 URL、后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
 | 音乐 | 网易云 ID 配置和悬浮/页面播放器 | 前台 Music 动态读取 `/api/music`，已有加载/空/错误状态、歌曲列表和 CloudPlayer 数据绑定；CloudPlayer 在歌曲存在 URL 时支持原生 audio 播放/暂停；后台歌单管理已改为表单化主流程，支持标题、艺术家、封面、URL/云音乐 ID、排序，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 音乐播放、后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
 | 友链 | 友链卡片和头像展示 | 前台 Friends 动态读取 `/api/friends`，已有加载/空/错误状态、头像兜底、标签和新标签外链；后台友链管理已改为表单化主流程，支持新增/编辑/删除名称、URL、描述、头像/图标、标签，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 友链后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
@@ -284,7 +284,7 @@ Windows 本地启动命令：
 | Markdown 编辑器 | 沉浸式写作、预览、发布 | 已有 Editor、MarkdownEditor、MarkdownPreview；预览继续使用 `marked + DOMPurify`，并已补齐标题层级、段落、无序/有序列表、引用、inline code、代码块、表格、链接、图片样式；已新增 Markdown 测试样例；写作页支持直接保存、加入暂存、立即发布、发布加入暂存，并显示空标题、空 slug、非法 slug、保存成功/失败提示 | P0 | 5 后台写作轮 | 进行中 | 剩余差距：仍需从后台浏览器确认错误提示、直接保存、暂存应用和保存后前台文章详情表现一致；不满足人工验收前不得完成 |
 | 草稿 | 草稿管理和发布 | Drafts 页面可列出 draft=true 文章，支持继续编辑、立即发布和发布暂存；API 验证草稿真实写入、公开列表隐藏、发布后公开列表可见且详情可读 | P1 | 5 后台写作轮 | 进行中 | 剩余差距：需要浏览器人工确认草稿入口、筛选、编辑、发布后前台联动和 UI 提示 |
 | 暂存队列 | 操作暂存后统一应用 | 已实现第一阶段本地 pendingOperations，覆盖文章新建、文章编辑、文章删除、草稿发布；状态为 `editing`、`pending`、`applied`、`failed`；点击“应用”才调用真实后端 API；刷新页面会丢失并已在 UI 中提示；图片上传、Secret 修改、评论管理不进入本队列 | P1 | 5 后台写作轮 | 进行中 | 剩余差距：需要浏览器人工确认加入暂存不写后端、应用后才写入、失败后显示错误并可重试/移除；settings 修改未纳入本轮 |
-| 图床 | 图床配置、上传、Token 测试 | 设置中心已提供 provider、publicBaseUrl、bucket、region、endpoint、AccessKey configured、Secret configured 和新密钥输入；后台不回显密钥明文；本地上传测试通过；上传接口继续校验类型、MIME 和大小 | P0 | 7 设置中心与生产化轮 | 进行中 | 剩余差距：需要浏览器人工确认图床表单保存、空 Secret 保留旧值和测试按钮提示 |
-| AI 设置 | Gemini/兼容模型配置和后台助手 | 设置中心已提供 provider、baseUrl、model、enableChat、apiKeyConfigured 和新 API Key 输入；后台不回显 API Key 明文；构建产物 Secret 搜索通过 | P1 | 7 设置中心与生产化轮 | 进行中 | 剩余差距：需要浏览器人工确认 AI 设置保存和后台聊天读取服务端配置 |
-| 评论设置 | GitHub OAuth/Gitalk 配置面板 | 设置中心已提供评论开关、邮箱要求、最大长度、邮箱显示、本地评论开关和 Gitalk/GitHub 占位字段；前台评论区已尊重 enabled/localEnabled，关闭后隐藏提交框 | P1 | 7 设置中心与生产化轮 | 进行中 | 剩余差距：需要浏览器人工确认关闭/开启评论后的文章详情表现 |
-| 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`；`WINDOWS_START.md` 已记录固定地址、strictPort、端口占用 PID 和设置中心提示；新增 `docs/DEPLOYMENT.md`，包含 Nginx、systemd、backend/data 权限、生产 `.env`、HTTPS 和生产前检查 | P0 | 7 设置中心与生产化轮 | 进行中 | 剩余差距：需要用户按文档完成普通 Windows 终端和服务器部署路径人工验收后才能标记完成 |
+| 图床 | 图床配置、上传、Token 测试 | 设置中心已提供 provider、publicBaseUrl、bucket、region、endpoint、AccessKey configured、Secret configured 和新密钥输入；后台不回显密钥明文；本地上传 API 测试通过；上传接口继续校验类型、MIME 和大小 | P0 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮图床表单、上传流程和空 Secret 保留旧值的浏览器人工验收；不得标记完成 |
+| AI 设置 | Gemini/兼容模型配置和后台助手 | 设置中心已提供 provider、baseUrl、model、enableChat、aiKeyConfigured 和新 API Key 输入；后台不回显 API Key 明文；构建产物 Secret 搜索通过 | P1 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮 AI 设置浏览器验收和真实大模型联调；不得标记完成 |
+| 评论设置 | GitHub OAuth/Gitalk 配置面板 | 设置中心已提供评论开关、邮箱要求、最大长度、邮箱显示、本地评论开关和 Gitalk/GitHub 占位字段；前台评论区已尊重 enabled/localEnabled，关闭后隐藏提交框 | P1 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮评论开关浏览器人工验收；不得标记完成 |
+| 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`；`WINDOWS_START.md` 已记录固定地址、strictPort、端口占用 PID 和设置中心提示；新增 `docs/DEPLOYMENT.md`，包含 Nginx、systemd、backend/data 权限、生产 `.env`、HTTPS 和生产前检查 | P0 | 7 设置中心与生产化轮 | 延期/未验收 | 原因：用户决定跳过本轮服务器部署文档完整实操核验；不得标记完成 |

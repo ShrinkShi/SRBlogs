@@ -1,214 +1,193 @@
 # SRBlogs
 
-SRBlogs 是一个基于 **Vue 3 + Vite + TypeScript + Tailwind CSS + FastAPI** 的个人博客系统，包含两个独立 SPA：
+SRBlogs 是一个基于 **Vue 3 + Vite + TypeScript + Tailwind CSS + FastAPI** 的个人博客系统。当前工程是对标 XinghuisamaBlogs 产品方向的 Vue3/FastAPI 重制版，不复制原项目源码、图片、文案或私有素材。
 
-- `frontend/`：面向读者的前端博客展示站点
-- `admin/`：Web 后台管理控制台
-- `backend/`：统一 RESTful API 服务，负责 Markdown/JSON 数据读写、鉴权、上传、AI 聊天代理
+## 技术栈
 
-整体设计采用 Glassmorphism / Cyberpunk 视觉语言，前后端分离，适合部署到阿里云轻量应用服务器。
+- 前台：Vue 3、Vite、TypeScript、Tailwind CSS 3.4
+- 后台：Vue 3、Vite、TypeScript、Tailwind CSS 3.4
+- 后端：FastAPI、JWT、Markdown Front Matter、JSON 文件存储
+- 数据：`backend/data` 中的 Markdown、JSON、评论、上传文件和备份
 
-> 当前工程是可运行的完整骨架：包含前台页面、后台页面、FastAPI 路由、JWT 登录、Markdown Front Matter 存储、评论、上传、Nginx/Systemd/一键部署脚本。复杂生产能力如 OSS SDK 深度接入、Webhook 自动部署、完整权限分级已预留接口和配置位。
-
----
-
-## 目录结构
+## 项目结构
 
 ```text
 SRBlogs/
-├── frontend/       # 读者端博客 SPA
-├── admin/          # 后台管理 SPA
-├── backend/        # FastAPI 后端
-├── deploy/         # Nginx、Systemd、部署脚本
-└── README.md
+├── frontend/               # 读者端博客 SPA
+├── admin/                  # 后台管理 SPA
+├── backend/                # FastAPI 后端
+│   ├── app/                # API、服务和配置
+│   └── data/               # Markdown、JSON、评论、上传和备份
+├── docs/                   # 契约、安全、验收、部署和发布文档
+├── start-backend.cmd       # Windows 后端启动
+├── start-frontend.cmd      # Windows 前台启动
+├── start-admin.cmd         # Windows 后台启动
+├── start-all.cmd           # Windows 三端启动
+└── WINDOWS_START.md
 ```
 
----
+## Windows 本地启动
 
-## 本地开发
+推荐直接运行：
 
-### 1. 后端
+```powershell
+.\start-all.cmd
+```
 
-```bash
+固定访问地址：
+
+- 前台：`http://127.0.0.1:5173`
+- 后台：`http://127.0.0.1:5174/admin/`
+- 后端文档：`http://127.0.0.1:8000/docs`
+- 健康检查：`http://127.0.0.1:8000/api/health`
+
+也可以分别启动：
+
+```powershell
+.\start-backend.cmd
+.\start-frontend.cmd
+.\start-admin.cmd
+```
+
+前台和后台脚本固定端口并使用 `--strictPort`。如果端口被占用，脚本会输出占用 PID 和 `taskkill` 处理建议。
+
+## 手动启动
+
+后端：
+
+```powershell
 cd backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-默认后台账号：
+前台：
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+后台：
+
+```powershell
+cd admin
+npm install
+npm run dev
+```
+
+`npm run dev` 是常驻开发服务，不会自然退出。
+
+## 默认后台账号
 
 ```text
 用户名：admin
 密码：change-me
 ```
 
-请在生产环境修改 `.env` 中的 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
+默认账号仅用于本地开发。生产前必须修改 `backend/.env` 中的 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
 
-### 2. 前端博客
+## API 文档
 
-```bash
+启动后端后访问：
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+详细接口契约见 [docs/API_CONTRACT.md](docs/API_CONTRACT.md)。
+
+## 数据目录
+
+`backend/data` 是当前文件存储根目录：
+
+- `posts/*.md`：文章
+- `moments/*.md`：动态
+- `chatters/*.md`：杂谈
+- `comments/*.json`：评论
+- `friends.json`、`projects.json`、`music.json`：结构化内容
+- `photos/photos.json`：照片墙数据
+- `uploads/`：本地上传文件
+- `.backups/`：覆盖写入或删除前的备份
+
+所有 JSON/Markdown 写入必须通过后端安全写入封装，禁止业务路由直接 `open(..., "w")` 写文件。
+
+## 构建
+
+```powershell
 cd frontend
-npm install
-npm run dev
+npm run build
 ```
 
-默认请求 `/api`。本地开发时可创建 `.env.development`：
-
-```env
-VITE_API_BASE_URL=http://127.0.0.1:8000/api
-```
-
-### 3. 后台管理
-
-```bash
+```powershell
 cd admin
-npm install
-npm run dev
+npm run build
 ```
 
-本地开发时同样可设置：
-
-```env
-VITE_API_BASE_URL=http://127.0.0.1:8000/api
-```
-
----
-
-## 构建部署
-
-```bash
-cd frontend && npm run build
-cd ../admin && npm run build
+```powershell
+python -m compileall backend\app
 ```
 
 构建产物：
 
-- `frontend/dist/` → `/var/www/srblogs-frontend`
-- `admin/dist/` → `/var/www/srblogs-admin`
+- `frontend/dist`
+- `admin/dist`
 
-后端使用 Systemd 守护，Nginx 代理 `/api` 到 `127.0.0.1:8000`。
+## 部署
 
-参考：
+服务器部署说明见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)，包含：
 
-- `deploy/nginx/srblogs.conf`
-- `deploy/systemd/srblogs.service`
-- `deploy/setup.sh`
+- FastAPI 启动
+- 前台/后台 build
+- Nginx 反向代理示例
+- systemd 服务示例
+- `backend/data` 权限
+- 生产 `.env`
+- HTTPS 和生产前检查
 
----
+## 常见问题
 
-## 架构图
+### Tailwind v3/v4 问题
 
-```mermaid
-flowchart LR
-    Visitor[读者浏览器] --> FE[frontend Vue3 SPA]
-    Admin[管理员浏览器] --> AD[admin Vue3 SPA]
-    FE --> API[FastAPI /api]
-    AD --> API
-    API --> MD[backend/data/*.md]
-    API --> JSON[backend/data/*.json]
-    API --> Upload[本地上传目录或第三方图床]
-    API --> AI[AI A/B 端点]
-    Nginx[Nginx] --> FE
-    Nginx --> AD
-    Nginx --> API
+本项目当前固定使用 Tailwind CSS `3.4.17`。不要直接升级到 Tailwind v4，否则现有配置和样式入口可能不兼容。
+
+### `pydantic_core` 安装损坏
+
+重新创建后端虚拟环境：
+
+```powershell
+cd backend
+Remove-Item -Recurse -Force .venv
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
----
+### Vite 端口跳转和 CORS
 
-## 关键 API
+前台固定 `5173`，后台固定 `5174`，并启用 `--strictPort`。如果端口被占用，先释放端口，不要让 Vite 自动跳端口，否则可能触发 CORS 或回调地址不一致。
 
-### 公开内容
+### `npm run dev` 一直不退出
 
-```text
-GET /api/posts
-GET /api/posts/{slug}
-GET /api/moments
-GET /api/moments/{slug}
-GET /api/chatters
-GET /api/chatters/{slug}
-GET /api/about
-GET /api/friends
-GET /api/projects
-GET /api/music
-GET /api/photos
-GET /api/comments/{resource}/{slug}
-POST /api/comments/{resource}/{slug}
+这是正常行为。Vite dev server 是常驻进程。需要停止时在对应终端按 `Ctrl+C`。
+
+### 8000 端口占用或权限问题
+
+检查占用：
+
+```powershell
+netstat -ano | findstr :8000
 ```
 
-### 后台管理，需 JWT
+确认进程可以停止后再执行：
 
-```text
-POST /api/auth/login
-POST /api/posts
-PUT /api/posts/{slug}
-DELETE /api/posts/{slug}
-POST /api/moments
-PUT /api/moments/{slug}
-DELETE /api/moments/{slug}
-POST /api/chatters
-PUT /api/chatters/{slug}
-DELETE /api/chatters/{slug}
-PUT /api/about
-PUT /api/friends
-PUT /api/projects
-PUT /api/music
-PUT /api/photos
-POST /api/upload
-POST /api/chat
-GET /api/dashboard/stats
+```powershell
+taskkill /PID <PID> /F
 ```
 
----
+## 当前交付状态
 
-## 内容格式
-
-文章存放在 `backend/data/posts/*.md`，Front Matter 示例：
-
-```yaml
----
-title: "标题"
-date: "2025-01-01 12:00"
-tags: ["标签1"]
-draft: false
-cover: ""
-summary: "文章摘要"
----
-
-正文 Markdown 内容。
-```
-
----
-
-## 安全注意
-
-1. 生产环境必须修改默认账号密码和 JWT Secret。
-2. 后台管理建议放在 `/admin` 并启用 HTTPS。
-3. 如后台只给自己使用，建议在 Nginx 增加 IP 白名单。
-4. 评论和 Markdown 前端使用 DOMPurify 清洗，后端也会对评论字段做基础清洗。
-5. 上传接口当前支持本地文件保存；OSS 接入位于 `backend/app/services/upload_service.py`。
-
----
-
-## 阿里云轻量服务器建议
-
-2 核 2G 能跑这个系统，但不要过度堆功能：
-
-- FastAPI worker 保持 1 个即可
-- 前端静态资源交给 Nginx
-- 图片尽量走 OSS/CDN，不要全压在 40G SSD 上
-- AI 聊天只做 API 转发，不要本机部署大模型
-
-
-
-## XH 风格增强版说明
-
-本版本参考 XinghuisamaBlogs 的产品方向做了 Vue3 + FastAPI 版本的重新实现，重点增强：
-
-- 前台：个人资料卡、站点仪表盘、动态背景、弹幕层、萤火虫/樱花装饰、文章横向轮播、云端杂谈卡片、浮动音乐挂件、增强照片墙。
-- 后台：更接近控制台的左侧导航、右侧操作暂存区、发布流程提示、强化仪表盘。
-- 数据：`backend/data/settings.json` 新增站点配置、背景图、社交链接、弹幕、网易云歌曲 ID 等字段。
-
-注意：这不是对 XinghuisamaBlogs 源码的直接复制，而是在保留 Vue3 + FastAPI 技术栈的前提下，按类似信息架构和视觉方向重写。
+- 友链、项目、音乐、照片墙已通过人工验收并在矩阵中标记为 `已完成`。
+- 设置中心与生产化已有基础实现，但空 Secret 保留、评论开关、图床设置/上传、AI 设置、部署文档实操核验仍按用户决定标记为延期/未验收。
+- 发布前总检查见 [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)。

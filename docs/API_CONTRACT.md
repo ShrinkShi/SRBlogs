@@ -89,37 +89,38 @@ Base path: `/api`
 
 ### GET `/settings/public`
 
-前台公开读取。只返回公开站点配置：
+前台公开读取。只返回公开站点配置和公开评论显示选项：
 
 ```json
 {
-  "title": "SRBlogs",
-  "authorName": "Author",
-  "bio": "",
-  "avatarUrl": "",
-  "defaultPostCover": "",
-  "photoWallImage": "",
-  "bgImages": [],
-  "themeColors": [],
-  "cloudMusicIds": [],
-  "danmakuList": [],
-  "social": {},
-  "counts": {},
-  "chatterTitle": "",
-  "chatterDescription": "",
-  "buildDate": "",
+  "siteTitle": "SRBlogs",
+  "subtitle": "副标题",
+  "author": "Author",
+  "avatar": "https://example.com/avatar.png",
+  "description": "站点简介",
+  "socialLinks": {
+    "github": "https://github.com/example"
+  },
   "theme": "nebula",
-  "gitalkConfig": {
-    "clientID": "",
-    "repo": "",
-    "owner": "",
-    "admin": [],
-    "clientSecretConfigured": false
+  "bgImages": [],
+  "cloudMusicIds": [],
+  "comments": {
+    "enabled": true,
+    "requireEmail": false,
+    "maxLength": 1000,
+    "showEmail": false,
+    "localEnabled": true,
+    "gitalk": {
+      "clientID": "",
+      "repo": "",
+      "owner": "",
+      "admin": []
+    }
   }
 }
 ```
 
-不得返回 `clientSecret`、AI Key、OSS Key、JWT Secret、管理员密码。
+不得返回 GitHub OAuth Secret、AI Key、OSS Key、JWT Secret、管理员密码，也不得返回后台私有字段。
 
 ### GET `/admin/settings`
 
@@ -127,20 +128,22 @@ Base path: `/api`
 
 ```json
 {
-  "title": "SRBlogs",
+  "siteTitle": "SRBlogs",
   "gitalkConfig": {
     "clientID": "",
     "repo": "",
     "owner": "",
     "admin": [],
-    "clientSecretConfigured": true
+    "githubOAuthSecretConfigured": true
   },
   "imageBed": {
-    "driver": "local",
+    "provider": "local",
+    "accessKeyConfigured": false,
+    "secretKeyConfigured": false,
     "ossKeyConfigured": false
   },
   "ai": {
-    "active": "a",
+    "provider": "a",
     "aiKeyConfigured": false
   },
   "serverSecrets": {
@@ -161,42 +164,7 @@ Base path: `/api`
 { "data": { "title": "SRBlogs", "theme": "nebula" } }
 ```
 
-保存到 `backend/data/settings.json`，写入必须走 `safe_write_json`。如果请求未提供已有 Secret，服务端保留旧值。
-
-### Settings Contract Update - 2026-05-02
-
-`GET /api/settings/public` 当前只暴露公开字段和公开评论显示选项：
-
-```json
-{
-  "siteTitle": "SRBlogs",
-  "subtitle": "副标题",
-  "author": "Author",
-  "avatar": "https://example.com/avatar.png",
-  "description": "站点简介",
-  "socialLinks": { "github": "https://github.com/example" },
-  "theme": "nebula",
-  "bgImages": [],
-  "cloudMusicIds": [],
-  "comments": {
-    "enabled": true,
-    "requireEmail": false,
-    "maxLength": 1000,
-    "showEmail": false,
-    "localEnabled": true,
-    "gitalk": {
-      "clientID": "",
-      "repo": "",
-      "owner": "",
-      "admin": []
-    }
-  }
-}
-```
-
-`GET /api/admin/settings` 需要 JWT。后台也不得返回 Secret 明文，只能返回 configured 布尔值，例如 `aiKeyConfigured`、`accessKeyConfigured`、`secretKeyConfigured`、`githubOAuthSecretConfigured`。
-
-`PUT /api/admin/settings` 中 Secret 字段为空字符串、`null` 或未传时，后端必须保留旧值；只有传入明确新值时才覆盖。保存后响应仍不得回显 Secret 明文。
+保存到 `backend/data/settings.json`，写入必须走 `safe_write_json`。`PUT /api/admin/settings` 中 Secret 字段为空字符串、`null` 或未传时，后端必须保留旧值；只有传入明确新值时才覆盖。保存后响应仍不得回显 Secret 明文。
 
 ## Structured JSON APIs
 

@@ -754,3 +754,59 @@ API 实测结果：
 - 设置中心与生产化仍需用户在浏览器中人工验收：设置分区、保存状态、站点信息同步、评论开关表现、图床测试按钮、AI 设置保存、部署文档可执行性。
 - 由于固定端口 8000 当前未启动，本轮只记录 TestClient 级 health 通过，不把设置中心与生产化标记为 `已完成`。
 - Secret 修改不进入本地 pendingOperations；图片上传、评论删除仍按既定计划不进入本地 pendingOperations。
+
+## 2026-05-02 - 全站回归与交付整理轮
+
+本轮目标：
+
+- 不新增大功能，不新增 P2 视觉特效。
+- 做全站路由、示例数据、启动脚本、README、发布清单和矩阵状态整理。
+- 明确设置中心与生产化中被用户主动跳过的验收项为“延期/未验收”，不得标记为已完成。
+
+前台变更：
+
+- 新增前台 404 页面 `frontend/src/views/NotFound.vue`，不存在路由不再白屏。
+- 前台路由新增 `/chatters` 和 `/chatters/:slug`，旧 `/chatter` 和 `/chatter/:slug` 保留重定向。
+- 顶部导航和首页杂谈聚合链接统一改为 `/chatters`。
+- `Moments.vue`、`Chatter.vue`、`Timeline.vue`、`About.vue` 补齐加载状态、空状态和错误状态。
+- `Chatter.vue` 列表详情跳转改为 `/chatters/{slug}`。
+
+后台变更：
+
+- 后台路由新增 catch-all 重定向到 `/admin/`，避免未知后台路径白屏。
+- 未改动已通过人工验收的评论管理、Markdown 编辑器、媒体管理和暂存队列主流程。
+
+后端/API 变更：
+
+- 新增 `backend/data/posts/demo-draft.md` 作为最小示例草稿，保证演示数据至少包含 1 篇 `draft=true` 文章。
+- 本轮未新增后端接口。
+
+文档变更：
+
+- 重写 `README.md` 作为项目总入口，包含项目简介、技术栈、项目结构、Windows 启动、三端手动启动、默认账号、API 文档、数据目录、部署链接和常见问题。
+- 新增 `docs/RELEASE_CHECKLIST.md`，覆盖本地启动、前台页面、后台页面、内容写入、评论、媒体管理、设置中心、Secret、构建、部署前检查和已知延期项。
+- 更新 `docs/API_CONTRACT.md`，移除旧 settings 示例，统一为当前 `/api/settings/public` 和 `/api/admin/settings` 字段边界。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，新增全站前台路由和后台路由回归检查项。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，动态、杂谈、时间线从未开始调整为进行中；图床、AI 设置、评论设置、部署文档标记为 `延期/未验收`，并写明原因为用户决定跳过本轮验收。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动后端到 `127.0.0.1:8000` 并访问 `/api/health`，返回 `{"ok":true,"app":"SRBlogs API"}`；验证后已关闭该临时进程。
+- 通过：TestClient `GET /api/posts` 返回 4 篇公开文章。
+- 通过：TestClient `GET /api/settings/public` 返回 200。
+- 通过：TestClient `GET /api/friends` 返回 3 条。
+- 通过：TestClient `GET /api/projects` 返回 3 条。
+- 通过：TestClient `GET /api/music` 返回 3 条。
+- 通过：TestClient `GET /api/photos` 返回 6 条。
+- 通过：示例数据检查：posts 共 5 篇，其中公开 4 篇、草稿 1 篇；moments 2 条；chatters 2 条；friends 3 条；projects 3 条；music 3 首；photos 6 张；`about.md` 存在。
+- 通过：`frontend/dist/index.html` 和 `admin/dist/index.html` 均已生成。
+- 通过：构建产物静态搜索未匹配到 `clientSecret`、`accessKeySecret`、`secretKey`、`apiKey`、`jwt_secret`、`admin_password`、`please-change-this-secret`、`change-me` 或本轮临时 Secret 值。
+
+遗留问题：
+
+- 本轮没有做真实浏览器全站人工回归；新增的路由与状态仍需按 `docs/MANUAL_QA_CHECKLIST.md` 和 `docs/RELEASE_CHECKLIST.md` 逐项确认。
+- 设置中心跳过项保持 `延期/未验收`：空 Secret 不覆盖旧值、评论开关、图床设置与上传流程、AI 设置、部署文档完整实操核验。
+- 不得把设置中心与生产化整体标记为已完成。
