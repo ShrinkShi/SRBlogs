@@ -65,7 +65,8 @@ class MarkdownStore:
         meta_dict, content = _split_front_matter(raw)
         if not meta_dict.get("date"):
             meta_dict["date"] = datetime.fromtimestamp(file.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
-        return ContentItem(slug=file.stem, meta=ContentMeta(**meta_dict), content=content)
+        updated_at = datetime.fromtimestamp(file.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+        return ContentItem(slug=file.stem, meta=ContentMeta(**meta_dict), content=content, updatedAt=updated_at)
 
     def save(self, payload: ContentWrite, old_slug: str | None = None) -> ContentItem:
         slug = ensure_slug(payload.slug)

@@ -58,6 +58,8 @@
 - 所有 JSON/Markdown 读写必须走 `backend/app/services/file_store.py`。
 - 写入必须使用临时文件 + 原子替换。
 - 覆盖或删除已有文件前必须调用 `backup_file`。
+- 公开内容接口不得返回 `draft=true` 内容；`include_drafts=true` 只能在管理员 JWT 下使用。
+- 文章发布、撤回发布、编辑和删除必须写审计日志；删除 Markdown 前必须备份原文件。
 - 禁止业务路由或业务 service 直接 `open(..., "w")` 写 JSON/Markdown。
 - friends/projects/music/photos 的表单化管理和高级 JSON 编辑都必须通过 `JsonStore.write` 写入，不允许前端绕过 API 直接改文件。
 - 高级 JSON 编辑只作为兜底入口，保存前必须校验 JSON 格式且根节点必须为数组。

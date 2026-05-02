@@ -74,6 +74,14 @@ function logout() {
             <p class="rounded-2xl border border-amber-200/20 bg-amber-300/10 p-3 text-xs leading-5 text-amber-50/72">
               第一阶段为前端本地 pendingOperations，刷新页面会丢失。图片上传、Secret 修改、评论管理不进入本地队列。
             </p>
+            <button
+              v-if="pendingStore.pendingCount"
+              type="button"
+              class="rounded-2xl bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950"
+              @click="pendingStore.applyAll()"
+            >
+              一键应用全部 {{ pendingStore.pendingCount }} 项
+            </button>
             <div v-if="!pendingStore.operations.length" class="rounded-2xl border border-white/10 bg-white/[0.07] p-3 text-sm text-white/52">暂无暂存操作。</div>
             <div v-for="item in pendingStore.operations" :key="item.id" class="rounded-2xl border border-white/10 bg-white/[0.07] p-3 text-sm">
               <div class="flex items-start justify-between gap-2">

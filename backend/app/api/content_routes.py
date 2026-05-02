@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.config import get_settings
 from app.models.schemas import ContentItem, ContentWrite
 from app.services.audit_service import write_audit
-from app.services.auth_service import require_admin
+from app.services.auth_service import optional_admin, require_admin
 from app.services.content_service import ContentError, MarkdownStore
 
 
@@ -14,13 +14,20 @@ def make_content_router(section: str, tag: str) -> APIRouter:
         return MarkdownStore(get_settings().data_path, section)
 
     @router.get("", response_model=list[ContentItem])
-    def list_items(include_drafts: bool = Query(False)):
+    def list_items(include_drafts: bool = Query(False), actor: str | None = Depends(optional_admin)):
+        if include_drafts and not actor:
+            raise HTTPException(status_code=401, detail="admin token required")
         return store().list(include_drafts=include_drafts)
 
     @router.get("/{slug}", response_model=ContentItem)
-    def get_item(slug: str):
+    def get_item(slug: str, include_drafts: bool = Query(False), actor: str | None = Depends(optional_admin)):
+        if include_drafts and not actor:
+            raise HTTPException(status_code=401, detail="admin token required")
         try:
-            return store().read(slug)
+            item = store().read(slug)
+            if item.meta.draft and not include_drafts:
+                raise FileNotFoundError(slug)
+            return item
         except ContentError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except FileNotFoundError:

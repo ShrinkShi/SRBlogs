@@ -34,6 +34,7 @@ class ContentItem(BaseModel):
     slug: str
     meta: ContentMeta
     content: str = ""
+    updatedAt: str = ""
 
 
 class ContentWrite(BaseModel):

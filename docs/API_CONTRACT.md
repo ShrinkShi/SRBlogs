@@ -27,7 +27,7 @@ Base path: `/api`
 
 ### GET `/{section}`
 
-公开读取。后台可传 `include_drafts=true` 查看草稿。
+公开读取已发布内容，默认不返回 `draft=true`。后台携带管理员 JWT 可传 `include_drafts=true` 查看草稿；未登录传 `include_drafts=true` 返回 `401`。
 
 响应：
 
@@ -43,14 +43,15 @@ Base path: `/api`
       "cover": "",
       "summary": ""
     },
-    "content": "Markdown 正文"
+    "content": "Markdown 正文",
+    "updatedAt": "2026-05-02 12:30"
   }
 ]
 ```
 
 ### GET `/{section}/{slug}`
 
-公开读取单条内容。`slug` 必须通过 `validate_slug`，禁止路径穿越。
+公开读取单条已发布内容。`slug` 必须通过 `validate_slug`，禁止路径穿越。`draft=true` 内容在公开详情中返回 `404`；后台携带管理员 JWT 可传 `include_drafts=true` 读取草稿详情，未登录传该参数返回 `401`。
 
 ### POST `/{section}`
 
@@ -71,15 +72,15 @@ Base path: `/api`
 }
 ```
 
-响应为保存后的 `ContentItem`。
+响应为保存后的 `ContentItem`。重复 slug 返回 `409`，非法 slug 返回 `400`。
 
 ### PUT `/{section}/{slug}`
 
-后台 JWT。请求体同 POST。允许通过 body 中的新 `slug` 重命名，旧文件删除前必须备份。
+后台 JWT。请求体同 POST。允许通过 body 中的新 `slug` 重命名，旧文件删除前必须备份。更新不存在内容返回 `404`；重命名到已有 slug 返回 `409`。`draft=true -> false` 记为发布，`draft=false -> true` 记为撤回发布，并写入审计日志。
 
 ### DELETE `/{section}/{slug}`
 
-后台 JWT。删除前必须备份。响应：
+后台 JWT。删除前必须备份并写审计日志；删除不存在内容返回 `404`。响应：
 
 ```json
 { "ok": true }

@@ -2,11 +2,13 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
+import { usePendingStore } from '@/stores/pending'
 
 type SettingsTab = 'site' | 'theme' | 'comments' | 'image' | 'ai' | 'deploy'
 type AnySettings = Record<string, any>
 
 const ui = useUiStore()
+const pendingStore = usePendingStore()
 const active = ref<SettingsTab>('site')
 const loading = ref(false)
 const saving = ref(false)
@@ -212,6 +214,23 @@ async function save(payload = buildPayload()) {
     saving.value = false
   }
 }
+function stageSettings() {
+  error.value = ''
+  success.value = ''
+  if (secretInputs.githubOAuthSecret || secretInputs.accessKeyId || secretInputs.ossSecretInput || secretInputs.aiKeyInput) {
+    error.value = 'Secret 修改不进入本地 pendingOperations，请直接保存。'
+    return
+  }
+  const payload = buildPayload()
+  pendingStore.add({
+    kind: 'updateSettings',
+    title: '设置修改',
+    slug: 'settings.json',
+    settingsPayload: payload
+  })
+  success.value = '设置修改已加入暂存队列，刷新页面会丢失；点击右侧应用后才写入后端。'
+  ui.show('设置修改已加入暂存队列')
+}
 
 async function saveAdvancedJson() {
   jsonError.value = ''
@@ -349,6 +368,7 @@ onMounted(load)
 
           <div class="flex flex-wrap gap-3">
             <button :disabled="saving" class="admin-btn admin-btn-primary" @click="save()">{{ saving ? '保存中...' : '保存设置' }}</button>
+            <button :disabled="saving" class="admin-btn admin-btn-ghost" @click="stageSettings">加入暂存（非 Secret）</button>
             <button class="admin-btn admin-btn-ghost" @click="load">取消未保存修改</button>
           </div>
         </div>

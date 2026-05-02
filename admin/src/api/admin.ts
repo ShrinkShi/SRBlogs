@@ -15,7 +15,7 @@ export const adminApi = {
     return data
   },
   detail: async (section: 'posts' | 'moments' | 'chatters', slug: string) => {
-    const { data } = await http.get<ContentItem>(`/${section}/${slug}`)
+    const { data } = await http.get<ContentItem>(`/${section}/${slug}`, { params: { include_drafts: true } })
     return data
   },
   save: async (section: 'posts' | 'moments' | 'chatters', payload: ContentItem, oldSlug?: string) => {

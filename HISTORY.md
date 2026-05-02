@@ -1,5 +1,77 @@
 # HISTORY
 
+## 2026-05-02 - 后台写作、草稿与暂存队列最终收口轮
+
+本轮目标：
+
+- 冻结 P2，继续收口 P0/P1。
+- 补齐后台文章管理、写作页、草稿发布/撤回、文章删除和 pendingOperations 第一阶段的验收缺口。
+- 不新增业务模块，不新增视觉特效，不重构已通过验收的媒体、评论、搜索、SEO、审计和备份恢复模块。
+
+当前进度估算：
+
+- P0：约 98%。
+- P1：约 92%。
+- P2：40%，冻结。
+
+前台变更：
+
+- 未新增前台页面或视觉特效。
+- 公开文章详情现在不会返回 `draft=true` 内容；草稿详情公开访问返回 404。
+
+后台变更：
+
+- `/admin/posts` 文章管理补齐标题/slug 搜索、更新时间展示、发布、设为草稿、暂存发布、暂存删除、删除错误提示和草稿不可公开预览提示。
+- `/admin/editor` 保存前新增 Markdown 内容不能为空校验。
+- `pendingOperations` 新增“一键应用全部”。
+- `pendingOperations` 第一阶段新增非 Secret 设置修改暂存；Secret 修改、图片上传、评论管理仍明确不进入本地暂存队列。
+- 后台详情读取草稿时显式传 `include_drafts=true` 并依赖管理员 JWT。
+
+后端/API 变更：
+
+- `ContentItem` 增加 `updatedAt` 字段，来自 Markdown 文件 mtime。
+- `GET /api/posts`、`/api/moments`、`/api/chatters` 的 `include_drafts=true` 现在必须携带管理员 JWT；未登录返回 401。
+- `GET /api/posts/{slug}` 等详情接口默认只返回已发布内容；草稿公开详情返回 404。
+- 管理端可携带 JWT 并传 `include_drafts=true` 读取草稿详情。
+- 发布、撤回发布、编辑、删除继续写审计日志；删除前继续备份 Markdown 文件。
+
+文档变更：
+
+- 更新 `docs/API_CONTRACT.md`，补充 `include_drafts=true` 的管理员 JWT 要求、草稿公开 404、`updatedAt`、重复 slug 409、非法 slug 400、更新/删除不存在 404、发布/撤回审计说明。
+- 更新 `docs/SECURITY_NOTES.md`，补充公开接口不得返回草稿、`include_drafts=true` 必须管理员 JWT、文章发布/撤回/删除审计和删除前备份规则。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，补充文章列表搜索、更新时间、撤回发布、一键应用全部和非 Secret 设置暂存验收项。
+- 更新 `docs/RELEASE_CHECKLIST.md`，补充草稿保护、状态切换、错误码、审计和 pendingOperations 检查项。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，同步当前进度估算；后台写作、草稿、暂存队列保持 `进行中`，等待用户最终人工验收后再标记完成。
+- 更新 `README.md`，同步设置中心剩余项已通过、后台写作/草稿/暂存队列等待最终人工验收的状态。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：TestClient `GET /api/health` 返回 200，`{"ok": true, "app": "SRBlogs API"}`。
+- 通过：后台新建草稿文章，`backend/data/posts/{slug}.md` 实际生成。
+- 通过：前台 `GET /api/posts` 不显示草稿。
+- 通过：公开 `GET /api/posts/{slug}` 对草稿返回 404。
+- 通过：未登录传 `include_drafts=true` 返回 401；管理员 JWT 下列表和详情可读取草稿。
+- 通过：后台发布草稿后，前台 `/api/posts` 显示文章，公开详情可读取正文。
+- 通过：后台编辑已发布文章后，公开详情正文更新。
+- 通过：后台撤回发布后，前台 `/api/posts` 不显示文章，公开详情返回 404。
+- 通过：后台删除文章后，前台列表不显示，公开详情返回 404。
+- 通过：删除文章前 `backend/data/posts/.backups` 生成备份，本轮验证备份增量为 1。
+- 通过：重复 slug 返回 409。
+- 通过：非法 slug 返回 400。
+- 通过：删除不存在文章返回 404。
+- 通过：审计日志包含 `posts.create`、`posts.publish`、`posts.update`、`posts.unpublish`、`posts.delete`，并包含重复创建和删除不存在的 failed 记录。
+- 通过：源码/构建检查确认 pendingOperations 覆盖 `createPost`、`editPost`、`deletePost`、`publishDraft`、`updateSettings`，支持单项应用、移除、失败重试和一键应用全部。
+- 通过：构建产物 Secret 值静态搜索，未发现 `backend/.env` 中非空 Secret 值进入 `frontend/dist` 或 `admin/dist`。
+
+遗留问题：
+
+- 本轮没有启动浏览器人工验收；后台写作、草稿、暂存队列在 `docs/XINGHUI_PARITY_MATRIX.md` 中保持 `进行中`。
+- pendingOperations 是第一阶段前端本地队列，刷新页面会丢失；服务端持久化队列仍不在本轮范围。
+- 本轮验证生成了文章删除备份和审计日志，作为写入/备份/审计验收痕迹保留。
+
 ## 2026-05-02 - 发布候选与部署演练轮
 
 本轮目标：

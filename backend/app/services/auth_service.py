@@ -26,3 +26,9 @@ def require_admin(credentials: HTTPAuthorizationCredentials | None = Depends(sec
     if sub != settings.admin_username:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="权限不足")
     return sub
+
+
+def optional_admin(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> str | None:
+    if credentials is None:
+        return None
+    return require_admin(credentials)

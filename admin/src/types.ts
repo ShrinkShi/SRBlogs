@@ -10,6 +10,7 @@ export interface ContentItem {
   slug: string
   meta: ContentMeta
   content: string
+  updatedAt?: string
 }
 export interface Stats { posts: number; moments: number; chatters: number; photos: number }
 

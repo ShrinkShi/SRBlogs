@@ -3,12 +3,12 @@ import { adminApi } from '@/api/admin'
 import type { ContentItem } from '@/types'
 
 export type PendingStatus = 'editing' | 'pending' | 'applied' | 'failed'
-export type PendingKind = 'createPost' | 'editPost' | 'deletePost' | 'publishDraft'
+export type PendingKind = 'createPost' | 'editPost' | 'deletePost' | 'publishDraft' | 'updateSettings'
 
 export interface PendingOperation {
   id: string
   kind: PendingKind
-  section: 'posts' | 'moments' | 'chatters'
+  section?: 'posts' | 'moments' | 'chatters'
   title: string
   slug: string
   oldSlug?: string
@@ -16,6 +16,7 @@ export interface PendingOperation {
   createdAt: string
   error?: string
   payload?: ContentItem
+  settingsPayload?: Record<string, unknown>
 }
 
 function nowText() {
@@ -27,7 +28,8 @@ function labelFor(kind: PendingKind) {
     createPost: '文章新建',
     editPost: '文章编辑',
     deletePost: '文章删除',
-    publishDraft: '草稿发布'
+    publishDraft: '草稿发布',
+    updateSettings: '设置修改'
   }[kind]
 }
 
@@ -57,8 +59,12 @@ export const usePendingStore = defineStore('pending', {
       item.error = ''
       try {
         if (item.kind === 'deletePost') {
+          if (!item.section) throw new Error('暂存操作缺少 section')
           await adminApi.remove(item.section, item.slug)
+        } else if (item.kind === 'updateSettings' && item.settingsPayload) {
+          await adminApi.putJson('/admin/settings', item.settingsPayload)
         } else if (item.payload) {
+          if (!item.section) throw new Error('暂存操作缺少 section')
           await adminApi.save(item.section, item.payload, item.oldSlug)
         } else {
           throw new Error('暂存操作缺少 payload')
@@ -74,6 +80,12 @@ export const usePendingStore = defineStore('pending', {
       if (item && item.status === 'failed') {
         item.status = 'pending'
         item.error = ''
+      }
+    },
+    async applyAll() {
+      const pending = [...this.operations].reverse().filter((item) => item.status === 'pending')
+      for (const item of pending) {
+        await this.apply(item.id)
       }
     }
   }

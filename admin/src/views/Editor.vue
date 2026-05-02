@@ -53,6 +53,10 @@ function validateForm() {
     error.value = 'slug 只能包含字母、数字、下划线和连字符，并且必须以字母或数字开头。'
     return false
   }
+  if (!content.value.trim()) {
+    error.value = 'Markdown 内容不能为空。'
+    return false
+  }
   return true
 }
 
