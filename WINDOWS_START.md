@@ -1,46 +1,52 @@
-# SRBlogs Windows 本地启动修正版
+# SRBlogs Windows 本地启动
 
-## 后端
+推荐使用仓库根目录下的专用脚本启动。脚本会固定端口并检查占用，不会让 Vite 自动跳端口。
 
-```powershell
-cd C:\Users\ASUS\Desktop\SRBlogs\backend
-py -3.10 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -U pip
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-Copy-Item .env.example .env -Force
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
+## 固定地址
 
-访问 http://127.0.0.1:8000/docs。
+- 后端文档：`http://127.0.0.1:8000/docs`
+- 健康检查：`http://127.0.0.1:8000/api/health`
+- 前台：`http://127.0.0.1:5173`
+- 后台：`http://127.0.0.1:5174/admin/`
+- 默认后台账号：`admin / change-me`
 
-## 前端
+## 一键启动
 
-```powershell
-cd C:\Users\ASUS\Desktop\SRBlogs\frontend
-Copy-Item .env.development.example .env.development -Force
-Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
-Remove-Item -Force package-lock.json -ErrorAction SilentlyContinue
-npm install
-npm run dev
-```
-
-访问 http://127.0.0.1:5173。
-
-## 后台
+双击或在 PowerShell 中运行：
 
 ```powershell
-cd C:\Users\ASUS\Desktop\SRBlogs\admin
-Copy-Item .env.development.example .env.development -Force
-Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
-Remove-Item -Force package-lock.json -ErrorAction SilentlyContinue
-npm install
-npm run dev
+.\start-all.cmd
 ```
 
-访问 http://127.0.0.1:5174/admin/。
+该脚本会打开三个独立窗口：
 
-默认账号：admin / change-me。
+- `start-backend.cmd`
+- `start-frontend.cmd`
+- `start-admin.cmd`
 
-## 修正点
+## 单独启动
 
-原包使用 tailwindcss latest，会安装 Tailwind v4；但项目配置是 Tailwind v3 写法。现在已固定为 tailwindcss 3.4.17。
+```powershell
+.\start-backend.cmd
+.\start-frontend.cmd
+.\start-admin.cmd
+```
+
+前台和后台脚本显式使用 `npm.cmd run dev -- --host 127.0.0.1 --port <port> --strictPort`。
+
+## 端口占用
+
+如果 8000、5173 或 5174 已被占用，脚本会输出占用 PID，例如：
+
+```text
+[ERROR] Port 5173 is already in use by PID 12345.
+Stop it with: taskkill /PID 12345 /F
+```
+
+请确认该进程确实可以停止后再执行 `taskkill`。
+
+## 说明
+
+- 不要等待 `npm run dev` 自然退出；它是常驻开发服务。
+- 如果页面刚打开时报错，等待对应终端完成编译后刷新。
+- 本项目固定 Tailwind CSS `3.4.17`，避免 Tailwind v4 与现有配置不兼容。

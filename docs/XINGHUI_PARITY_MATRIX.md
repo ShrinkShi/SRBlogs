@@ -25,22 +25,15 @@
 Windows 本地启动命令：
 
 ```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+.\start-backend.cmd
+.\start-frontend.cmd
+.\start-admin.cmd
 ```
 
-```powershell
-cd frontend
-npm install
-npm run dev -- --host 127.0.0.1
-```
+或一次启动三个独立窗口：
 
 ```powershell
-cd admin
-npm install
-npm run dev -- --host 127.0.0.1
+.\start-all.cmd
 ```
 
 固定访问地址：
@@ -49,6 +42,8 @@ npm run dev -- --host 127.0.0.1
 - admin: `http://127.0.0.1:5174/admin/`
 - backend docs: `http://127.0.0.1:8000/docs`
 - health: `http://127.0.0.1:8000/api/health`
+
+前台和后台启动脚本必须使用 `npm.cmd`，并带 `--strictPort`。端口被占用时脚本输出占用 PID 和 `taskkill /PID <pid> /F` 处理建议，不允许 Vite 静默跳端口。
 
 ## Current Round Verification
 
@@ -117,13 +112,32 @@ npm run dev -- --host 127.0.0.1
 - 阻塞：当前 shell 环境启动 Vite dev server 报 `spawn EPERM`，因此 390px 移动端、TOC 点击滚动、分享按钮浏览器交互、后台评论管理浏览器交互未完成。
 - 结论：评论管理 API 和构建已完成最小闭环，但完整浏览器人工回归未满足 Definition of Done，相关项保持 `进行中`。
 
+2026-05-02 本地开发启动与浏览器回归修复轮当前结果：
+
+- 新增 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`。
+- 前台 `dev` 脚本固定为 `vite --host 127.0.0.1 --port 5173 --strictPort`。
+- 后台 `dev` 脚本固定为 `vite --host 127.0.0.1 --port 5174 --strictPort`。
+- 前台和后台启动脚本显式使用 `npm.cmd run dev`，避免直接调用 `npm`。
+- 启动脚本会检查 8000、5173、5174 端口占用；被占用时输出 PID 和处理建议，不静默换端口。
+- 新增 `docs/MANUAL_QA_CHECKLIST.md`，浏览器人工回归项已落地。
+- `cd frontend && npm run build`：通过。
+- `cd admin && npm run build`：通过。
+- `python -m compileall backend\app`：通过。
+- 临时后端 `/api/health`：通过。
+- `GET /api/posts/srblogs-p0-20260502130609`：通过，返回标题 `SRBlogs P0 Content Loop`。
+- `GET /api/comments/posts/srblogs-p0-20260502130609`：通过，返回 2 条评论。
+- 删除评论 API：通过，临时评论删除成功，删除前备份数从 5 增加到 6。
+- 端口探测：本轮探测时 8000、5173、5174 均无监听进程。
+- 阻塞：Codex 工具 shell 环境中通过 `Start-Process` 和 `npm.cmd` 启动 Vite 仍报 `spawn EPERM`，完整浏览器人工回归需在普通 Windows 终端或双击脚本环境继续执行。
+- 结论：本轮完成启动规避方案和自动化验证记录，但文章详情、评论、Markdown 编辑器、后台评论管理仍未满足浏览器人工回归要求，保持 `进行中`。
+
 ## Matrix
 
 | 模块 | 原项目能力 | SRBlogs 当前状态 | 差距等级 | 实现轮次 | 状态 | 验收标准 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 首页 | 毛玻璃首页、个人资料、最新内容、动态氛围组件 | 已有首页、ProfileCard、站点统计、最新文章/杂谈/动态组件；浏览器可打开，统计数据源已修复为非零 | P1 | 3 视觉首页轮 | 进行中 | 剩余差距：文章/评论 P0 闭环未完成，首页聚合模块仍需跟随真实内容状态做空状态、加载失败和移动端细节验收 |
 | 文章列表 | 文章卡片、标签、摘要、封面、列表浏览 | Posts 页面真实读取 `/api/posts`，已补加载、空、错误状态、封面兜底、标签、日期、摘要和详情跳转；公开列表默认不含草稿 | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：需要完成更完整的浏览器人工回归、移动端检查和草稿公开性回归，满足 Definition of Done 后才能完成 |
-| 文章详情 | Markdown 详情、代码高亮、评论、分享 | PostDetail 真实读取 `/api/posts/{slug}`，已补加载、404/错误状态、封面兜底、元信息展示、分享和评论挂载；MarkdownRenderer 继续使用 DOMPurify | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：Vite dev server 在当前 shell 环境 `spawn EPERM`，TOC 点击滚动、代码块视觉高亮、分享按钮交互、390px 移动端仍需浏览器人工验收 |
+| 文章详情 | Markdown 详情、代码高亮、评论、分享 | PostDetail 真实读取 `/api/posts/{slug}`，已补加载、404/错误状态、封面兜底、元信息展示、分享和评论挂载；MarkdownRenderer 继续使用 DOMPurify；人工回归项已写入 `docs/MANUAL_QA_CHECKLIST.md` | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：Vite dev server 在当前 shell 环境 `spawn EPERM`，TOC 点击滚动、代码块视觉高亮、分享按钮交互、390px 移动端仍需浏览器人工验收 |
 | 动态 | 类朋友圈短内容流和轻量评论 | 已有 Moments 页面和 moments Markdown 数据 | P1 | 6 媒体互动轮 | 未开始 | 动态列表、详情、评论、时间展示和移动端密度达到可用 |
 | 杂谈 | 云端杂谈/碎片化文章卡片 | 已有 Chatter、ChatterDetail、LatestChatterCarousel | P1 | 6 媒体互动轮 | 未开始 | 杂谈列表和详情可读写，首页聚合展示正常 |
 | 时间线 | 内容按时间汇总展示 | 已有 Timeline 页面 | P1 | 6 媒体互动轮 | 未开始 | 文章、动态、杂谈按时间排序，空数据有提示 |
@@ -131,7 +145,7 @@ npm run dev -- --host 127.0.0.1
 | 音乐 | 网易云 ID 配置和悬浮/页面播放器 | 已有 Music 页面、CloudPlayer、FloatingPlayer | P1 | 6 媒体互动轮 | 未开始 | 音乐列表和悬浮播放器不阻塞页面，设置项可控制歌曲 ID |
 | 友链 | 友链卡片和头像展示 | 已有 Friends 页面和 friends JSON | P1 | 6 媒体互动轮 | 未开始 | 友链增删改后前台展示一致，外链安全打开 |
 | 项目 | 项目展示卡片、标签、状态 | 已有 Projects 页面和 projects JSON | P1 | 6 媒体互动轮 | 未开始 | 项目卡片支持封面、标签、状态和链接 |
-| 评论 | Gitalk 风格评论，Issues/OAuth 配置 | 当前为本地 JSON 评论；GET/POST/DELETE 已验证，表单有昵称、邮箱、内容、提交中、成功/失败反馈；后端限制长度、拒绝空内容、校验可选邮箱并清洗 XSS；覆盖和删除评论文件会备份；后台已有本地评论管理最小版 | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：隐藏/恢复、审核、分页、Gitalk OAuth 不在本轮范围；后台评论管理浏览器交互未完成，不能标记完成 |
+| 评论 | Gitalk 风格评论，Issues/OAuth 配置 | 当前为本地 JSON 评论；GET/POST/DELETE 已验证，表单有昵称、邮箱、内容、提交中、成功/失败反馈；后端限制长度、拒绝空内容、校验可选邮箱并清洗 XSS；覆盖和删除评论文件会备份；后台已有本地评论管理最小版；人工回归项已写入 `docs/MANUAL_QA_CHECKLIST.md` | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：隐藏/恢复、审核、分页、Gitalk OAuth 不在本轮范围；后台评论管理浏览器交互未完成，不能标记完成 |
 | 后台仪表盘 | 管理入口、统计、发布流程提示 | 已有 Dashboard 和 stats API；浏览器可打开，登录可成功，stats 已返回非零数据；本轮后端内容闭环验证通过 | P1 | 3 视觉首页轮 | 进行中 | 剩余差距：发布流程提示仍需与后台写作/暂存队列真实状态联动，核心页面还需完成完整手动验收记录 |
 | Markdown 编辑器 | 沉浸式写作、预览、发布 | 已有 Editor、MarkdownEditor、MarkdownPreview；已验证后台 API 新建非草稿文章真实写入 `backend/data/posts`，后台页面已标注当前直接持久化、pendingOperations 未实现 | P0 | 5 后台写作轮 | 进行中 | 剩余差距：Vite dev server 在当前 shell 环境 `spawn EPERM`，仍需从后台浏览器操作完整保存一次并验收编辑器预览一致性；暂存队列仍未实现 |
 | 草稿 | 草稿管理和发布 | 已有 Drafts 页面和 draft 字段 | P1 | 5 后台写作轮 | 未开始 | 草稿可创建、保存、发布，发布后前台可见 |
@@ -139,4 +153,4 @@ npm run dev -- --host 127.0.0.1
 | 图床 | 图床配置、上传、Token 测试 | 已有本地上传接口；OSS 预留 | P0 | 6 媒体互动轮 | 进行中 | 上传限制扩展名、MIME、大小；密钥只在后端配置；上传结果可用于内容 |
 | AI 设置 | Gemini/兼容模型配置和后台助手 | 已有 `/api/chat` 后端代理和 ChatAssistant | P1 | 7 设置中心与生产化轮 | 进行中 | AI Key 只从后端环境读取，后台仅显示 configured 布尔值 |
 | 评论设置 | GitHub OAuth/Gitalk 配置面板 | settings 中有 gitalkConfig；后台接口已隐藏 Secret 明文 | P1 | 7 设置中心与生产化轮 | 进行中 | Secret 不出现在前台 public settings 和后台响应中，只显示 configured 布尔值 |
-| 部署文档 | Windows 启动、Vercel/GitHub 说明 | 当前保留服务器部署路线和 WINDOWS_START.md | P0 | 7 设置中心与生产化轮 | 未开始 | 文档包含 Windows 启动命令、固定访问地址、Nginx/Systemd 生产部署路径 |
+| 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`；`WINDOWS_START.md` 已记录固定地址、strictPort、端口占用 PID 提示；生产部署路线仍待补全 | P0 | 7 设置中心与生产化轮 | 进行中 | 剩余差距：需要补齐 Nginx/Systemd 或等价生产部署路径，并由普通 Windows 终端完成启动脚本人工验收后才能标记完成 |

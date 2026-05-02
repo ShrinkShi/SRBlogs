@@ -224,3 +224,53 @@ API 实测结果：
 - 后台评论管理浏览器完整人工回归未完成，但 build 和 API 删除闭环已通过。
 - 后台写作浏览器人工回归未完成，本轮未新增写作保存数据。
 - 文章列表、文章详情、评论、Markdown 编辑器继续保持 `进行中`，不得标记为 `已完成`。
+
+## 2026-05-02 - 本地开发启动与浏览器回归修复轮
+
+本轮目标：
+
+- 修复或规避当前工具 shell 环境中 Vite dev server 的 `spawn EPERM` 阻塞。
+- 落地 Windows 专用启动脚本和固定端口检查，避免 Vite 自动跳端口。
+- 建立文章详情、评论区、后台评论管理、后台写作的浏览器人工回归清单。
+- 不新增樱花、弹幕、CyberCat、动态背景等 P2 装饰功能。
+
+前台变更：
+
+- `frontend/package.json` 的 `dev` 脚本固定为 `vite --host 127.0.0.1 --port 5173 --strictPort`。
+- 新增 `start-frontend.cmd`，显式使用 `npm.cmd run dev` 启动前台，并在端口 5173 被占用时输出占用 PID 和处理建议。
+
+后台变更：
+
+- `admin/package.json` 的 `dev` 脚本固定为 `vite --host 127.0.0.1 --port 5174 --strictPort`。
+- 新增 `start-admin.cmd`，显式使用 `npm.cmd run dev` 启动后台，并在端口 5174 被占用时输出占用 PID 和处理建议。
+
+后端/API 变更：
+
+- 新增 `start-backend.cmd`，固定启动 `127.0.0.1:8000`，并在端口 8000 被占用时输出占用 PID 和处理建议。
+- 新增 `start-all.cmd`，通过独立窗口分别启动后端、前台和后台。
+- 本轮未新增业务 API，保留上一轮评论删除 API 和内容读写闭环。
+
+文档变更：
+
+- 新增 `docs/MANUAL_QA_CHECKLIST.md`，覆盖前台文章详情、前台评论区、后台评论管理和后台写作人工回归项。
+- 更新 `WINDOWS_START.md`，改为推荐使用 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`，并记录固定访问地址、strictPort、端口占用 PID 提示。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，同步本轮验证结果和剩余阻塞。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动后端到 `127.0.0.1:8015` 并访问 `/api/health`，返回 `health=True`。
+- 通过：`GET /api/posts/srblogs-p0-20260502130609` 返回标题 `SRBlogs P0 Content Loop`。
+- 通过：`GET /api/comments/posts/srblogs-p0-20260502130609` 返回 2 条评论。
+- 通过：创建临时评论后调用 `DELETE /api/comments/posts/srblogs-p0-20260502130609/{comment_id}`，返回 `ok=True`。
+- 通过：删除评论前备份验证，`.backups` 中匹配备份数从 5 增加到 6。
+- 通过：本轮端口探测时 `8000`、`5173`、`5174` 均无监听进程，说明没有遗留常驻 dev server。
+- 阻塞：在当前 Codex 工具 shell 环境中，即使通过 `Start-Process` 和 `npm.cmd` 启动前台/后台 Vite dev server，仍会报 `spawn EPERM`；因此未完成浏览器人工回归。
+
+遗留问题：
+
+- 需要用户在普通 Windows 终端或双击脚本方式启动 `start-all.cmd` 后，按 `docs/MANUAL_QA_CHECKLIST.md` 完成浏览器人工验收。
+- 文章详情、评论、Markdown 编辑器、后台评论管理仍保持 `进行中`，不得标记为 `已完成`。
+- 暂存队列仍未实现，后台写作仍为直接持久化。
