@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 const open = ref(false)
 const route = useRoute()
 const links = [
-  ['首页', '/'], ['文章', '/posts'], ['时间线', '/timeline'], ['碎碎念', '/chatters'],
+  ['首页', '/'], ['文章', '/posts'], ['搜索', '/search'], ['归档', '/archive'], ['碎碎念', '/chatters'],
   ['友链', '/friends'], ['音乐', '/music'], ['照片墙', '/photowall'], ['项目', '/projects'], ['关于', '/about']
 ]
 const activePath = computed(() => route.path)

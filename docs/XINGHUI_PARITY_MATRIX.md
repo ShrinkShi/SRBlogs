@@ -265,6 +265,16 @@ Windows 本地启动命令：
 - 构建产物 Secret 搜索通过。
 - 结论：设置中心与生产化代码和 API 验证已推进；空 Secret 不覆盖旧值、评论开关、图床设置与上传流程、AI 设置、部署文档完整实操核验均为用户主动跳过的延期/未验收项，不得标记为已完成。
 
+2026-05-02 内容发现与归档扩张轮当前结果：
+
+- 新增 `GET /api/search`，支持 `q`、`type`、`tag`、`limit`、`offset`，覆盖 posts/moments/chatters/projects/photos/friends/music；公开结果排除 draft。
+- 新增 `GET /api/tags`，合并 posts/moments/chatters/projects 标签。
+- 新增 `GET /api/archive`，按年月聚合 posts/moments/chatters。
+- 前台新增 `/search`、`/tags`、`/tags/:tag`、`/archive`；首页新增轻量内容发现入口。
+- `cd frontend && npm run build`、`cd admin && npm run build`、`python -m compileall backend\app`：通过。
+- API 验证：`/api/search?q=vue`、`/api/search?q=vue&type=posts`、`/api/search?tag=Vue`、`/api/tags`、`/api/archive` 均返回 200。
+- 结论：内容发现代码和 API 已落地，但新增页面仍需浏览器人工验收，相关项保持 `进行中`。
+
 ## Matrix
 
 | 模块 | 原项目能力 | SRBlogs 当前状态 | 差距等级 | 实现轮次 | 状态 | 验收标准 |
@@ -274,7 +284,7 @@ Windows 本地启动命令：
 | 文章详情 | Markdown 详情、代码高亮、评论、分享 | PostDetail 真实读取 `/api/posts/{slug}`，已补加载、404/错误状态、封面兜底、元信息展示、分享和评论挂载；MarkdownRenderer 继续使用 DOMPurify；前台 Markdown 样式已补齐列表编号、项目符号、表格滚动和图片自适应；人工回归项已写入 `docs/MANUAL_QA_CHECKLIST.md` | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：TOC 点击滚动、代码块视觉高亮、分享按钮交互、390px 移动端仍需浏览器人工验收 |
 | 动态 | 类朋友圈短内容流和轻量评论 | Moments 页面真实读取 `/api/moments`，本轮补齐加载、空、错误状态；详情复用 PostDetail | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：动态详情、评论和 390px 移动端仍需浏览器人工回归 |
 | 杂谈 | 云端杂谈/碎片化文章卡片 | Chatter 页面真实读取 `/api/chatters`，本轮公开路由统一为 `/chatters` 和 `/chatters/:slug`，旧 `/chatter` 保留重定向；已补加载、空、错误状态 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：杂谈详情、首页聚合跳转和移动端仍需浏览器人工回归 |
-| 时间线 | 内容按时间汇总展示 | Timeline 页面真实读取 `/api/moments`，本轮补齐加载、空、错误状态 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：跨文章/动态/杂谈汇总排序尚未完成，当前仍是 moments 时间线 |
+| 时间线 | 内容按时间汇总展示 | Timeline 页面真实读取 `/api/moments`，已补齐加载、空、错误状态；新增 `/archive` 使用 `/api/archive` 聚合 posts/moments/chatters 按年月浏览 | P1 | 6 媒体互动轮 / 内容发现轮 | 进行中 | 剩余差距：新增 `/archive` 页面仍需浏览器人工验收；`/timeline` 保留为视觉时间线，不破坏既有页面 |
 | 照片墙 | 图片墙、封面、图集浏览 | 前台 Photowall 动态读取 `/api/photos`，已有加载/空/错误状态、懒加载、点击放大预览、标题/描述/日期/标签展示；后台照片管理已改为表单化主流程，支持上传接口填入 URL，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 照片墙懒加载、点击放大、上传填 URL、后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
 | 音乐 | 网易云 ID 配置和悬浮/页面播放器 | 前台 Music 动态读取 `/api/music`，已有加载/空/错误状态、歌曲列表和 CloudPlayer 数据绑定；CloudPlayer 在歌曲存在 URL 时支持原生 audio 播放/暂停；后台歌单管理已改为表单化主流程，支持标题、艺术家、封面、URL/云音乐 ID、排序，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 音乐播放、后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
 | 友链 | 友链卡片和头像展示 | 前台 Friends 动态读取 `/api/friends`，已有加载/空/错误状态、头像兜底、标签和新标签外链；后台友链管理已改为表单化主流程，支持新增/编辑/删除名称、URL、描述、头像/图标、标签，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 友链后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |

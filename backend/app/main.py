@@ -17,6 +17,7 @@ from app.api.upload import router as upload_router
 from app.api.chat import router as chat_router
 from app.api.dashboard import router as dashboard_router
 from app.api.settings import router as settings_router
+from app.api.discovery import router as discovery_router
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name)
@@ -79,6 +80,7 @@ app.include_router(comments_admin_router, prefix="/api")
 app.include_router(upload_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
+app.include_router(discovery_router, prefix="/api")
 
 
 @app.get("/api/health")

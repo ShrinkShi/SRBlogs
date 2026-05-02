@@ -96,3 +96,53 @@ export interface SiteSettings {
     gitalk?: Record<string, unknown>
   }
 }
+
+export type DiscoveryType = 'all' | 'posts' | 'moments' | 'chatters' | 'projects' | 'photos' | 'friends' | 'music'
+
+export interface SearchResultItem {
+  type: Exclude<DiscoveryType, 'all'>
+  title: string
+  slug?: string
+  summary?: string
+  url: string
+  tags: string[]
+  date?: string
+  score: number
+}
+
+export interface SearchResponse {
+  items: SearchResultItem[]
+  total: number
+  limit: number
+  offset: number
+}
+
+export interface TagItem {
+  tag: string
+  count: number
+  types: string[]
+  latestDate?: string
+}
+
+export interface ArchiveItem {
+  type: 'posts' | 'moments' | 'chatters'
+  title: string
+  slug: string
+  url: string
+  date: string
+  tags: string[]
+}
+
+export interface ArchiveMonth {
+  month: string
+  items: ArchiveItem[]
+}
+
+export interface ArchiveYear {
+  year: string
+  months: ArchiveMonth[]
+}
+
+export interface ArchiveResponse {
+  years: ArchiveYear[]
+}

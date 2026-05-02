@@ -810,3 +810,66 @@ API 实测结果：
 - 本轮没有做真实浏览器全站人工回归；新增的路由与状态仍需按 `docs/MANUAL_QA_CHECKLIST.md` 和 `docs/RELEASE_CHECKLIST.md` 逐项确认。
 - 设置中心跳过项保持 `延期/未验收`：空 Secret 不覆盖旧值、评论开关、图床设置与上传流程、AI 设置、部署文档完整实操核验。
 - 不得把设置中心与生产化整体标记为已完成。
+
+## 2026-05-02 - 内容发现与归档扩张轮
+
+本轮目标：
+
+- 增强内容发现能力，新增全站搜索、标签页、标签筛选、内容归档和首页发现入口。
+- 不新增 P2 视觉特效，不重构已通过验收的媒体、评论、Markdown、设置中心基础结构。
+- 所有数据读取继续通过 FastAPI API，前端不直接读取 `backend/data` 文件。
+
+前台变更：
+
+- 新增 `/search` 页面，支持关键词、类型筛选、标签快捷筛选、URL query 同步、加载/空/错误状态和结果跳转。
+- 新增 `/tags` 页面，显示标签列表、数量、类型和最近日期。
+- 新增 `/tags/:tag` 页面，展示该标签下的内容，并支持按类型筛选；不存在标签显示空状态。
+- 新增 `/archive` 页面，按年份和月份展示 posts/moments/chatters，记录项可跳转详情页。
+- 首页新增轻量“内容发现”入口，提供搜索、标签、归档和最近更新链接，没有重做首页布局。
+- 前台导航增加搜索和归档入口。
+- 新增 `DiscoveryResultCard.vue` 作为搜索和标签结果卡片复用组件。
+
+后台变更：
+
+- 本轮未修改后台主流程；未扩展后台搜索管理，避免影响前台主任务。
+
+后端/API 变更：
+
+- 新增 `backend/app/api/discovery.py` 并注册到 FastAPI。
+- 新增 `GET /api/search`，支持 `q`、`type`、`tag`、`limit`、`offset`。
+- 搜索覆盖 posts、moments、chatters、projects、photos、friends、music；公开结果排除 `draft=true`。
+- `q` 和 `tag` 都为空时返回最近公开内容；无匹配时返回空列表。
+- 标签筛选为大小写不敏感包含匹配，因此 `tag=Vue` 可匹配 `Vue3`。
+- 新增 `GET /api/tags`，合并 posts、moments、chatters、projects 的标签统计。
+- 新增 `GET /api/archive`，按年月聚合 posts、moments、chatters；时间解析失败会放入 unknown 分组，不应导致 500。
+
+文档变更：
+
+- 更新 `docs/API_CONTRACT.md`，补充 `/api/search`、`/api/tags`、`/api/archive` 契约。
+- 更新 `README.md`，补充前台主要路由。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，新增内容发现与归档人工验收项。
+- 更新 `docs/RELEASE_CHECKLIST.md`，补充搜索、标签、归档发布前检查。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，记录内容发现轮当前结果；新增页面未人工验收前保持 `进行中`。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：临时启动后端到 `127.0.0.1:8000` 并访问 `/api/health`，返回 200。
+- 通过：`GET /api/search?q=vue` 返回 200，匹配 4 条。
+- 通过：`GET /api/search?q=vue&type=posts` 返回 200，匹配 2 条。
+- 通过：`GET /api/search?tag=Vue` 返回 200，匹配 3 条。
+- 通过：`GET /api/tags` 返回 200，当前 17 个标签。
+- 通过：`GET /api/archive` 返回 200，当前 2 个年份分组。
+- 通过：搜索不存在关键词 `definitely-no-match-xyz` 返回 200 和空结果。
+- 通过：构建产物静态搜索未匹配到 `clientSecret`、`accessKeySecret`、`secretKey`、`apiKey`、`jwt_secret`、`admin_password`、`please-change-this-secret`、`change-me` 或本轮临时 Secret 值。
+- 通过：用构建产物和临时 SPA fallback 静态服务器探测 `/search`、`/tags`、`/tags/Vue3`、`/archive`，均返回 200 且包含 SPA 根节点。
+- 已尝试但未通过：`vite preview` 在当前工具 shell 环境继续触发 `spawn EPERM`，因此页面响应检查改用构建产物静态服务器完成。
+- 已尝试但未执行：本机 Python 环境未安装 Playwright，无法在工具内完成 390px 移动端渲染自动检查；该项保留为浏览器人工验收。
+
+遗留问题：
+
+- `/search`、`/tags`、`/tags/:tag`、`/archive` 仍需用户浏览器人工验收，包括 390px 移动端检查、搜索空状态、不存在标签空状态和结果跳转。
+- 本轮未做全文索引数据库、AI 搜索、后台搜索管理增强、真实 OSS/Gitalk/OAuth 或设置中心延期项。
+- 内容发现相关矩阵项保持 `进行中`，不得标记为 `已完成`。

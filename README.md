@@ -99,6 +99,18 @@ http://127.0.0.1:8000/docs
 
 详细接口契约见 [docs/API_CONTRACT.md](docs/API_CONTRACT.md)。
 
+## 前台主要路由
+
+- `/`：首页
+- `/posts`、`/posts/:slug`：文章列表和详情
+- `/search`：全站搜索
+- `/tags`、`/tags/:tag`：标签索引和标签内容
+- `/archive`：内容归档
+- `/moments`、`/moments/:slug`：动态
+- `/chatters`、`/chatters/:slug`：杂谈
+- `/friends`、`/projects`、`/music`、`/photowall`：结构化内容
+- `/about`、`/timeline`：关于和视觉时间线
+
 ## 数据目录
 
 `backend/data` 是当前文件存储根目录：

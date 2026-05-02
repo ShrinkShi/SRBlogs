@@ -209,6 +209,100 @@ Base path: `/api`
 
 ## Upload API
 
+## Discovery APIs
+
+### GET `/search`
+
+公开轻量搜索。数据来自后端 Markdown/JSON 读取，不使用前端直读文件，不接入全文索引数据库。
+
+Query 参数：
+
+- `q`：关键词，默认空字符串。
+- `type`：`all`、`posts`、`moments`、`chatters`、`projects`、`photos`、`friends`、`music`，默认 `all`。
+- `tag`：标签筛选，大小写不敏感，当前支持包含匹配，例如 `Vue` 可匹配 `Vue3`。
+- `limit`：默认 20，范围 1-100。
+- `offset`：默认 0。
+
+搜索范围：
+
+- `posts`、`moments`、`chatters`：`title`、`summary`、`tags`、`content`。
+- `projects`：`name`、`description`、`tags`。
+- `photos`：`title`、`description`。
+- `friends`：`name`、`description`、`url`。
+- `music`：`title`、`artist`。
+
+`draft=true` 的内容不得进入公开搜索。`q` 和 `tag` 都为空时，接口返回最近公开内容；没有匹配结果时返回空数组，不返回 500。
+
+响应：
+
+```json
+{
+  "items": [
+    {
+      "type": "posts",
+      "title": "文章标题",
+      "slug": "post-slug",
+      "summary": "摘要",
+      "url": "/posts/post-slug",
+      "tags": ["Vue", "FastAPI"],
+      "date": "2026-05-02",
+      "score": 10
+    }
+  ],
+  "total": 1,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+### GET `/tags`
+
+公开标签统计。合并 `posts`、`moments`、`chatters`、`projects` 的 `tags`，草稿不进入统计。
+
+响应：
+
+```json
+[
+  {
+    "tag": "Vue3",
+    "count": 2,
+    "types": ["posts", "projects"],
+    "latestDate": "2026-05-02"
+  }
+]
+```
+
+### GET `/archive`
+
+公开归档。按年月聚合 `posts`、`moments`、`chatters`，草稿不进入归档。时间解析失败的数据放入 `unknown` 分组，不应导致 500。
+
+响应：
+
+```json
+{
+  "years": [
+    {
+      "year": "2026",
+      "months": [
+        {
+          "month": "05",
+          "items": [
+            {
+              "type": "posts",
+              "title": "标题",
+              "slug": "slug",
+              "url": "/posts/slug",
+              "date": "2026-05-02",
+              "tags": ["Vue3"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
 ### POST `/upload`
 
 后台 JWT。`multipart/form-data` 字段：`file`。
