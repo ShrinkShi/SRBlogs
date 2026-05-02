@@ -38,6 +38,29 @@ export interface MusicItem {
   cover?: string
   id?: string
   sort?: number
+  lyrics?: string
+}
+
+export interface ThemeTokens {
+  bgPage?: string
+  bgCard?: string
+  bgCardElevated?: string
+  borderGlass?: string
+  textPrimary?: string
+  textSecondary?: string
+  accent?: string
+  accentSoft?: string
+  navBg?: string
+  homePanelBg?: string
+  shadowGlow?: string
+}
+
+export interface ThemeConfig {
+  mode?: 'day' | 'night'
+  fontFamily?: string
+  fontScale?: 'small' | 'medium' | 'large'
+  day?: ThemeTokens
+  night?: ThemeTokens
 }
 
 export interface PhotoItem {
@@ -79,6 +102,7 @@ export interface SiteSettings {
   chatterTitle?: string
   chatterDescription?: string
   theme?: string
+  themeConfig?: ThemeConfig
   gitalkConfig?: {
     clientID?: string
     repo?: string

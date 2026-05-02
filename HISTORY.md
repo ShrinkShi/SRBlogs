@@ -1,5 +1,61 @@
 # HISTORY
 
+## 2026-05-03 - P2 第二阶段：首页结构追平与昼夜主题系统轮
+
+本轮目标：
+
+- 将首页从基础视觉统一推进到更接近目标的结构：铺满式顶栏、名片 + 音乐播放器、歌词区、不对称内容模块、昼夜模式卡和底部状态区。
+- 建立昼夜模式 CSS token 体系，并让设置中心支持核心主题 token、字体和字号配置。
+- 保持 P0/P1 已验收功能不回退，不新增复杂后端系统，不引入大型动画库或 3D。
+
+当前进度估算：
+
+- P0：100%。
+- P1：100%。
+- P2：约 74%。
+
+前台变更：
+
+- `AppNav` 改为铺满式玻璃顶栏，内部与 `sr-page-shell` 对齐；支持向下滚动隐藏、向上滚动显示、鼠标移到顶部区域显示。
+- `Home` 重组为：第一排 ProfileCard + 首页音乐播放器，第二排歌词/播放状态区，第三排最新文章 + 最新更新内容 + 昼夜模式卡片，随后保留内容发现、站点统计、最新文章/杂谈、动态和底部状态区。
+- 首页“最新更新内容”复用公开 `posts`、`moments`、`chatters` 聚合并按日期排序；公开 API 默认排除草稿。
+- 首页底部新增北京时间实时显示、网站运行时间和技术栈展示。
+- 新增昼夜模式本地偏好 `sr-color-mode`，首页模式卡可一键切换日间/夜间。
+- `App.vue` 根据公开 `themeConfig` 和当前昼夜模式写入 CSS 变量，支持字体族和字号档位。
+
+后台变更：
+
+- `/admin/settings` 的“主题与背景”分区新增字体族、字号档位、日间 token、夜间 token 表单。
+- 主题 token 作为公开视觉配置保存，不进入 Secret 体系；Secret 输入和保留规则不变。
+
+后端/API 变更：
+
+- `GET /api/settings/public` 新增公开字段 `themeConfig`，只包含颜色、字体和字号等非敏感 token。
+- 未新增复杂后端接口；首页最新更新流由前端复用现有公开 API 聚合。
+
+文档变更：
+
+- 更新 `docs/API_CONTRACT.md`，补充 `themeConfig` 公开契约。
+- 更新 `docs/UI_STYLE_GUIDE.md`，补充铺满式顶栏、首页结构、昼夜 token 体系。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`、`docs/RELEASE_CHECKLIST.md`，补充首页结构、顶栏滚动、昼夜模式和主题配置验收项。
+- 更新 `docs/USER_GUIDE.md`，补充主题与昼夜模式配置说明。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，同步 P2 约 74% 和主题配置矩阵项。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient 访问 `/api/health` 返回 200 和 `ok=true`。
+- 通过：`GET /api/settings/public` 返回 200，且包含 `themeConfig`。
+- 通过：构建产物 Secret 静态搜索未匹配 `clientSecret`、`accessKeySecret`、`secretKey`、`apiKey`、`jwt_secret`、`admin_password`、`please-change-this-secret`、`change-me`。
+
+遗留问题：
+
+- 首页结构、昼夜模式、顶部导航滚动隐藏/显示、后台设置页主题配置、390px 移动端仍需浏览器人工验收。
+- 当前昼夜模式为 CSS token 体系，少量旧页面仍存在历史 Tailwind 颜色类，后续 P2 可继续做全站 token 化细化。
+- 未做真实歌词解析；无歌词字段时歌词区展示当前歌曲信息和播放状态。
+
 ## 2026-05-02 - P2 视觉统一与氛围增强轮
 
 本轮目标：

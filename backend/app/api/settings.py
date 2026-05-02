@@ -51,6 +51,7 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "description": data.get("description") or data.get("bio", ""),
         "socialLinks": deepcopy(data.get("socialLinks") or data.get("social") or {}),
         "theme": data.get("theme", "nebula"),
+        "themeConfig": deepcopy(data.get("themeConfig") or {}),
         "bgImages": deepcopy(data.get("bgImages") or []),
         "cloudMusicIds": deepcopy(data.get("cloudMusicIds") or []),
         "comments": public_comments,

@@ -38,6 +38,36 @@ const form = reactive({
   description: '',
   socialLinks: { github: '', gitee: '', email: '', qq: '', wechat: '' } as Record<string, string>,
   theme: 'nebula',
+  themeConfig: {
+    fontFamily: '',
+    fontScale: 'medium',
+    day: {
+      bgPage: '#eaf3f8',
+      bgCard: 'rgba(255,255,255,.68)',
+      bgCardElevated: 'rgba(255,255,255,.82)',
+      borderGlass: 'rgba(14,116,144,.16)',
+      textPrimary: 'rgba(15,23,42,.94)',
+      textSecondary: 'rgba(30,41,59,.72)',
+      accent: '#0891b2',
+      accentSoft: 'rgba(8,145,178,.12)',
+      navBg: 'rgba(255,255,255,.72)',
+      homePanelBg: 'rgba(255,255,255,.72)',
+      shadowGlow: 'rgba(8,145,178,.2)'
+    },
+    night: {
+      bgPage: '#050713',
+      bgCard: 'rgba(255,255,255,.105)',
+      bgCardElevated: 'rgba(255,255,255,.16)',
+      borderGlass: 'rgba(255,255,255,.2)',
+      textPrimary: 'rgba(247,251,255,.96)',
+      textSecondary: 'rgba(247,251,255,.74)',
+      accent: '#67e8f9',
+      accentSoft: 'rgba(103,232,249,.16)',
+      navBg: 'rgba(7,12,28,.64)',
+      homePanelBg: 'rgba(255,255,255,.105)',
+      shadowGlow: 'rgba(34,211,238,.42)'
+    }
+  },
   bgImagesText: '',
   cloudMusicIdsText: '',
   comments: {
@@ -95,6 +125,11 @@ function applySettings(data: AnySettings) {
   form.description = data.description || data.bio || ''
   form.socialLinks = { github: '', gitee: '', email: '', qq: '', wechat: '', ...(data.socialLinks || data.social || {}) }
   form.theme = data.theme || 'nebula'
+  const themeConfig = data.themeConfig || {}
+  form.themeConfig.fontFamily = themeConfig.fontFamily || ''
+  form.themeConfig.fontScale = themeConfig.fontScale || 'medium'
+  form.themeConfig.day = { ...form.themeConfig.day, ...(themeConfig.day || {}) }
+  form.themeConfig.night = { ...form.themeConfig.night, ...(themeConfig.night || {}) }
   form.bgImagesText = Array.isArray(data.bgImages) ? data.bgImages.join('\n') : ''
   form.cloudMusicIdsText = Array.isArray(data.cloudMusicIds) ? data.cloudMusicIds.join(', ') : ''
   const comments = data.comments || {}
@@ -151,6 +186,12 @@ function buildPayload() {
     description: form.description,
     socialLinks: { ...form.socialLinks },
     theme: form.theme,
+    themeConfig: {
+      fontFamily: form.themeConfig.fontFamily,
+      fontScale: form.themeConfig.fontScale,
+      day: { ...form.themeConfig.day },
+      night: { ...form.themeConfig.night }
+    },
     bgImages: linesToArray(form.bgImagesText),
     cloudMusicIds: commaToArray(form.cloudMusicIdsText),
     comments: {
@@ -312,6 +353,25 @@ onMounted(load)
 
           <template v-else-if="active === 'theme'">
             <label class="grid gap-2 text-sm text-white/65">主题<select v-model="form.theme" class="admin-input"><option>nebula</option><option>sakura</option><option>aurora</option><option>cyber</option></select></label>
+            <div class="grid gap-3 md:grid-cols-2">
+              <label class="grid gap-2 text-sm text-white/65">字体族<input v-model="form.themeConfig.fontFamily" class="admin-input" placeholder="留空使用默认字体" /></label>
+              <label class="grid gap-2 text-sm text-white/65">字号档位<select v-model="form.themeConfig.fontScale" class="admin-input"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></label>
+            </div>
+            <div class="grid gap-4 xl:grid-cols-2">
+              <div class="rounded-[24px] border border-white/10 bg-white/[0.06] p-4">
+                <h3 class="font-black text-white">日间模式核心 token</h3>
+                <div class="mt-4 grid gap-3 md:grid-cols-2">
+                  <label v-for="(_, key) in form.themeConfig.day" :key="String(key)" class="grid gap-2 text-xs text-white/58">{{ key }}<input v-model="form.themeConfig.day[key]" class="admin-input" /></label>
+                </div>
+              </div>
+              <div class="rounded-[24px] border border-white/10 bg-white/[0.06] p-4">
+                <h3 class="font-black text-white">夜间模式核心 token</h3>
+                <div class="mt-4 grid gap-3 md:grid-cols-2">
+                  <label v-for="(_, key) in form.themeConfig.night" :key="String(key)" class="grid gap-2 text-xs text-white/58">{{ key }}<input v-model="form.themeConfig.night[key]" class="admin-input" /></label>
+                </div>
+              </div>
+            </div>
+            <p class="text-sm leading-6 text-white/50">这些 token 会进入公开站点配置，用于前台昼夜模式、顶部导航、卡片、首页模块和文字层级；不要在这里填写任何 Secret。</p>
             <label class="grid gap-2 text-sm text-white/65">背景图列表，每行一个 URL<textarea v-model="form.bgImagesText" rows="6" class="admin-input"></textarea></label>
             <label class="admin-btn admin-btn-ghost w-fit cursor-pointer">上传背景图并追加 URL<input type="file" accept="image/*" class="hidden" @change="uploadInto('bg', ($event.target as HTMLInputElement).files)" /></label>
             <label class="grid gap-2 text-sm text-white/65">公开音乐 ID，逗号分隔<input v-model="form.cloudMusicIdsText" class="admin-input" /></label>

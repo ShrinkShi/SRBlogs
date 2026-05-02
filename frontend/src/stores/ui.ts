@@ -6,6 +6,7 @@ export type ThemeName = (typeof themes)[number]
 export const useUiStore = defineStore('ui', {
   state: () => ({
     theme: (localStorage.getItem('sr-theme') || 'nebula') as ThemeName,
+    colorMode: (localStorage.getItem('sr-color-mode') || 'night') as 'day' | 'night',
     bgIndex: Number(localStorage.getItem('sr-bg-index') || '0'),
     danmaku: localStorage.getItem('sr-danmaku') !== 'off',
     ambience: localStorage.getItem('sr-ambience') !== 'off',
@@ -19,6 +20,13 @@ export const useUiStore = defineStore('ui', {
     nextTheme() {
       const i = themes.indexOf(this.theme as ThemeName)
       this.setTheme(themes[(i + 1) % themes.length])
+    },
+    setColorMode(mode: 'day' | 'night') {
+      this.colorMode = mode
+      localStorage.setItem('sr-color-mode', mode)
+    },
+    toggleColorMode() {
+      this.setColorMode(this.colorMode === 'night' ? 'day' : 'night')
     },
     setBgIndex(index: number) {
       this.bgIndex = index

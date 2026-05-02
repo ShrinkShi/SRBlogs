@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import AppNav from '@/components/AppNav.vue'
 import BackgroundEffects from '@/components/BackgroundEffects.vue'
 import BackgroundSlider from '@/components/BackgroundSlider.vue'
@@ -12,13 +12,46 @@ import Fireflies from '@/components/Fireflies.vue'
 import FloatingPlayer from '@/components/FloatingPlayer.vue'
 import { contentApi } from '@/api/content'
 import type { MusicItem, SiteSettings } from '@/types'
+import { useUiStore } from '@/stores/ui'
 
 const settings = ref<SiteSettings | null>(null)
 const tracks = ref<MusicItem[]>([])
+const ui = useUiStore()
+
+function applyTheme() {
+  const root = document.documentElement
+  const config = settings.value?.themeConfig || {}
+  const mode = ui.colorMode || config.mode || 'night'
+  const tokens = mode === 'day' ? config.day : config.night
+  root.dataset.colorMode = mode
+  const scale = config.fontScale === 'small' ? '15px' : config.fontScale === 'large' ? '17px' : '16px'
+  root.style.setProperty('--app-font-size', scale)
+  if (config.fontFamily) root.style.setProperty('--app-font-family', config.fontFamily)
+  const map: Record<string, string | undefined> = {
+    '--bg-page': tokens?.bgPage,
+    '--bg-card': tokens?.bgCard,
+    '--bg-card-elevated': tokens?.bgCardElevated,
+    '--border-glass': tokens?.borderGlass,
+    '--text-primary': tokens?.textPrimary,
+    '--text-secondary': tokens?.textSecondary,
+    '--accent': tokens?.accent,
+    '--accent-soft': tokens?.accentSoft,
+    '--nav-bg': tokens?.navBg,
+    '--home-panel-bg': tokens?.homePanelBg,
+    '--shadow-glow': tokens?.shadowGlow
+  }
+  Object.entries(map).forEach(([key, value]) => {
+    if (value) root.style.setProperty(key, value)
+    else root.style.removeProperty(key)
+  })
+}
+
 onMounted(async () => {
   try { settings.value = await contentApi.json<SiteSettings>('/settings/public') } catch { settings.value = null }
   try { tracks.value = await contentApi.json<MusicItem[]>('/music') } catch { tracks.value = [] }
+  applyTheme()
 })
+watch([settings, () => ui.colorMode], applyTheme)
 </script>
 
 <template>

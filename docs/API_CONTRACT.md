@@ -103,6 +103,36 @@ Base path: `/api`
     "github": "https://github.com/example"
   },
   "theme": "nebula",
+  "themeConfig": {
+    "fontFamily": "",
+    "fontScale": "medium",
+    "day": {
+      "bgPage": "#eaf3f8",
+      "bgCard": "rgba(255,255,255,.68)",
+      "bgCardElevated": "rgba(255,255,255,.82)",
+      "borderGlass": "rgba(14,116,144,.16)",
+      "textPrimary": "rgba(15,23,42,.94)",
+      "textSecondary": "rgba(30,41,59,.72)",
+      "accent": "#0891b2",
+      "accentSoft": "rgba(8,145,178,.12)",
+      "navBg": "rgba(255,255,255,.72)",
+      "homePanelBg": "rgba(255,255,255,.72)",
+      "shadowGlow": "rgba(8,145,178,.2)"
+    },
+    "night": {
+      "bgPage": "#050713",
+      "bgCard": "rgba(255,255,255,.105)",
+      "bgCardElevated": "rgba(255,255,255,.16)",
+      "borderGlass": "rgba(255,255,255,.2)",
+      "textPrimary": "rgba(247,251,255,.96)",
+      "textSecondary": "rgba(247,251,255,.74)",
+      "accent": "#67e8f9",
+      "accentSoft": "rgba(103,232,249,.16)",
+      "navBg": "rgba(7,12,28,.64)",
+      "homePanelBg": "rgba(255,255,255,.105)",
+      "shadowGlow": "rgba(34,211,238,.42)"
+    }
+  },
   "bgImages": [],
   "cloudMusicIds": [],
   "comments": {
@@ -121,7 +151,7 @@ Base path: `/api`
 }
 ```
 
-不得返回 GitHub OAuth Secret、AI Key、OSS Key、JWT Secret、管理员密码，也不得返回后台私有字段。
+`themeConfig` 是公开视觉配置，只允许包含颜色、字体和字号档位等非敏感 token。不得返回 GitHub OAuth Secret、AI Key、OSS Key、JWT Secret、管理员密码，也不得返回后台私有字段。
 
 ### GET `/admin/settings`
 
@@ -130,6 +160,12 @@ Base path: `/api`
 ```json
 {
   "siteTitle": "SRBlogs",
+  "themeConfig": {
+    "fontFamily": "",
+    "fontScale": "medium",
+    "day": {},
+    "night": {}
+  },
   "gitalkConfig": {
     "clientID": "",
     "repo": "",
