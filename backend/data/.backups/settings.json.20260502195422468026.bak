@@ -49,52 +49,33 @@
     "clientID": "",
     "repo": "",
     "owner": "",
-    "admin": [],
-    "clientSecret": ""
+    "admin": [
+      ""
+    ],
+    "clientSecret": "temporary-github-secret"
   },
   "buildDate": "2026-03-23T00:00:00",
   "theme": "nebula",
   "imageBed": {
     "driver": "local",
     "provider": "local",
-    "publicBaseUrl": "",
-    "bucket": "",
-    "region": "",
-    "endpoint": "",
-    "accessKeyId": "",
-    "accessKeySecret": ""
+    "accessKeyId": "temporary-access-key",
+    "accessKeySecret": "temporary-oss-secret"
   },
   "ai": {
     "active": "a",
     "provider": "a",
-    "baseUrl": "",
-    "model": "",
+    "baseUrl": "https://example.com/ai",
+    "model": "qa-model",
     "enableChat": true,
-    "apiKey": ""
+    "apiKey": "temporary-ai-key"
   },
-  "siteTitle": "SRBlogs の 宝藏之地",
-  "subtitle": "",
-  "author": "Shrink",
-  "avatar": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=500&auto=format&fit=crop",
-  "description": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
-  "socialLinks": {
-    "github": "https://github.com/yourname",
-    "gitee": "https://gitee.com/yourname",
-    "email": "you@example.com",
-    "qq": "100002",
-    "wechat": "srblogs"
-  },
+  "siteTitle": "SRBlogs Settings QA 20260502195422",
+  "subtitle": "settings sync check",
   "comments": {
-    "enabled": true,
-    "requireEmail": false,
-    "maxLength": 1000,
-    "showEmail": false,
+    "enabled": false,
     "localEnabled": true,
-    "gitalk": {
-      "clientID": "",
-      "repo": "",
-      "owner": "",
-      "admin": []
-    }
+    "requireEmail": true,
+    "maxLength": 321
   }
 }

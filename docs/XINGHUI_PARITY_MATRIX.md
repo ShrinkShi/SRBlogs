@@ -249,6 +249,22 @@ Windows 本地启动命令：
 - `http://127.0.0.1:8000/api/health`：通过。
 - 结论：媒体结构化内容的代码和 API 闭环已完成，但仍需用户浏览器人工验收四个后台表单页和四个前台页面，相关模块保持 `进行中`。
 
+2026-05-02 设置中心与生产化轮当前结果：
+
+- `/admin/settings` 已拆分为站点公开信息、主题与背景、评论设置、图床设置、AI 设置、部署与安全提示六个分区。
+- 后台 settings 表单支持加载状态、保存中状态、保存成功和保存失败提示；高级 JSON 作为折叠兜底。
+- `GET /api/settings/public` 调整为只返回公开站点字段和公开评论显示选项：`siteTitle`、`subtitle`、`author`、`avatar`、`description`、`socialLinks`、`theme`、`bgImages`、`cloudMusicIds`、`comments`。
+- `GET /api/admin/settings` 继续要求 JWT，Secret 不回显明文，只返回 configured 布尔值。
+- `PUT /api/admin/settings` 已验证空 Secret 不覆盖旧值；只有传入明确新值时才覆盖。
+- 前台评论区会读取公开评论设置；关闭评论后显示“评论已关闭”并隐藏提交框，重新开启后恢复表单。
+- 新增 `docs/DEPLOYMENT.md`，补充后端 FastAPI、前端/后台 build、Nginx、systemd、backend/data 权限、生产 `.env`、HTTPS 和生产前检查。
+- `cd frontend && npm run build`：通过。
+- `cd admin && npm run build`：通过。
+- `python -m compileall backend\app`：通过。
+- TestClient `/api/health`：通过；当前 `127.0.0.1:8000` 未监听，因此固定端口 health 需用户启动后复测。
+- 构建产物 Secret 搜索通过。
+- 结论：设置中心与生产化代码和 API 验证已推进，但仍需浏览器人工验收，不得标记为已完成。
+
 ## Matrix
 
 | 模块 | 原项目能力 | SRBlogs 当前状态 | 差距等级 | 实现轮次 | 状态 | 验收标准 |
@@ -259,16 +275,16 @@ Windows 本地启动命令：
 | 动态 | 类朋友圈短内容流和轻量评论 | 已有 Moments 页面和 moments Markdown 数据 | P1 | 6 媒体互动轮 | 未开始 | 动态列表、详情、评论、时间展示和移动端密度达到可用 |
 | 杂谈 | 云端杂谈/碎片化文章卡片 | 已有 Chatter、ChatterDetail、LatestChatterCarousel | P1 | 6 媒体互动轮 | 未开始 | 杂谈列表和详情可读写，首页聚合展示正常 |
 | 时间线 | 内容按时间汇总展示 | 已有 Timeline 页面 | P1 | 6 媒体互动轮 | 未开始 | 文章、动态、杂谈按时间排序，空数据有提示 |
-| 照片墙 | 图片墙、封面、图集浏览 | 前台 Photowall 动态读取 `/api/photos`，已有加载/空/错误状态、懒加载、点击放大预览、标题/描述/日期/标签展示；后台照片管理已改为表单化主流程，支持上传接口填入 URL，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：需要浏览器人工确认上传填 URL、表单新增/编辑/删除、前台同步展示和高级 JSON 错误提示 |
-| 音乐 | 网易云 ID 配置和悬浮/页面播放器 | 前台 Music 动态读取 `/api/music`，已有加载/空/错误状态、歌曲列表和 CloudPlayer 数据绑定；CloudPlayer 在歌曲存在 URL 时支持原生 audio 播放/暂停；后台歌单管理已改为表单化主流程，支持标题、艺术家、封面、URL/云音乐 ID、排序，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：需要浏览器人工确认页面播放器/悬浮播放器读取更新后歌单和基础播放交互 |
-| 友链 | 友链卡片和头像展示 | 前台 Friends 动态读取 `/api/friends`，已有加载/空/错误状态、头像兜底、标签和新标签外链；后台友链管理已改为表单化主流程，支持新增/编辑/删除名称、URL、描述、头像/图标、标签，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：需要浏览器人工确认后台表单操作和前台同步展示 |
-| 项目 | 项目展示卡片、标签、状态 | 前台 Projects 动态读取 `/api/projects`，已有加载/空/错误状态、封面、描述、技术栈、状态、项目链接、仓库链接；后台项目管理已改为表单化主流程，支持新增/编辑/删除并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：需要浏览器人工确认后台表单操作、前台同步展示和高级 JSON 错误提示 |
+| 照片墙 | 图片墙、封面、图集浏览 | 前台 Photowall 动态读取 `/api/photos`，已有加载/空/错误状态、懒加载、点击放大预览、标题/描述/日期/标签展示；后台照片管理已改为表单化主流程，支持上传接口填入 URL，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 照片墙懒加载、点击放大、上传填 URL、后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
+| 音乐 | 网易云 ID 配置和悬浮/页面播放器 | 前台 Music 动态读取 `/api/music`，已有加载/空/错误状态、歌曲列表和 CloudPlayer 数据绑定；CloudPlayer 在歌曲存在 URL 时支持原生 audio 播放/暂停；后台歌单管理已改为表单化主流程，支持标题、艺术家、封面、URL/云音乐 ID、排序，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 音乐播放、后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
+| 友链 | 友链卡片和头像展示 | 前台 Friends 动态读取 `/api/friends`，已有加载/空/错误状态、头像兜底、标签和新标签外链；后台友链管理已改为表单化主流程，支持新增/编辑/删除名称、URL、描述、头像/图标、标签，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 友链后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
+| 项目 | 项目展示卡片、标签、状态 | 前台 Projects 动态读取 `/api/projects`，已有加载/空/错误状态、封面、描述、技术栈、状态、项目链接、仓库链接；后台项目管理已改为表单化主流程，支持新增/编辑/删除并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 项目后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
 | 评论 | Gitalk 风格评论，Issues/OAuth 配置 | 当前为本地 JSON 评论；GET/POST/DELETE 已验证；新增 `GET /api/admin/comments/index`；后台 `/admin/comments` 默认展示有评论的内容索引，点击后查看和删除评论，手动 slug 加载已移入“高级加载”；后端限制长度、拒绝空内容、校验可选邮箱并清洗 XSS；覆盖和删除评论文件会备份；人工回归项已写入 `docs/MANUAL_QA_CHECKLIST.md` | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：隐藏/恢复、审核、分页、Gitalk OAuth 不在本轮范围；后台评论管理浏览器交互和前后台同步人工回归仍需完成，不能标记完成 |
 | 后台仪表盘 | 管理入口、统计、发布流程提示 | 已有 Dashboard 和 stats API；浏览器可打开，登录可成功，stats 已返回非零数据；右侧暂存区已接入本地 pendingOperations 队列并显示应用/重试/移除操作 | P1 | 3 视觉首页轮 | 进行中 | 剩余差距：暂存区仍需浏览器人工验收；核心页面还需完成完整手动验收记录 |
 | Markdown 编辑器 | 沉浸式写作、预览、发布 | 已有 Editor、MarkdownEditor、MarkdownPreview；预览继续使用 `marked + DOMPurify`，并已补齐标题层级、段落、无序/有序列表、引用、inline code、代码块、表格、链接、图片样式；已新增 Markdown 测试样例；写作页支持直接保存、加入暂存、立即发布、发布加入暂存，并显示空标题、空 slug、非法 slug、保存成功/失败提示 | P0 | 5 后台写作轮 | 进行中 | 剩余差距：仍需从后台浏览器确认错误提示、直接保存、暂存应用和保存后前台文章详情表现一致；不满足人工验收前不得完成 |
 | 草稿 | 草稿管理和发布 | Drafts 页面可列出 draft=true 文章，支持继续编辑、立即发布和发布暂存；API 验证草稿真实写入、公开列表隐藏、发布后公开列表可见且详情可读 | P1 | 5 后台写作轮 | 进行中 | 剩余差距：需要浏览器人工确认草稿入口、筛选、编辑、发布后前台联动和 UI 提示 |
 | 暂存队列 | 操作暂存后统一应用 | 已实现第一阶段本地 pendingOperations，覆盖文章新建、文章编辑、文章删除、草稿发布；状态为 `editing`、`pending`、`applied`、`failed`；点击“应用”才调用真实后端 API；刷新页面会丢失并已在 UI 中提示；图片上传、Secret 修改、评论管理不进入本队列 | P1 | 5 后台写作轮 | 进行中 | 剩余差距：需要浏览器人工确认加入暂存不写后端、应用后才写入、失败后显示错误并可重试/移除；settings 修改未纳入本轮 |
-| 图床 | 图床配置、上传、Token 测试 | 已有本地上传接口；OSS 预留 | P0 | 6 媒体互动轮 | 进行中 | 上传限制扩展名、MIME、大小；密钥只在后端配置；上传结果可用于内容 |
-| AI 设置 | Gemini/兼容模型配置和后台助手 | 已有 `/api/chat` 后端代理和 ChatAssistant | P1 | 7 设置中心与生产化轮 | 进行中 | AI Key 只从后端环境读取，后台仅显示 configured 布尔值 |
-| 评论设置 | GitHub OAuth/Gitalk 配置面板 | settings 中有 gitalkConfig；后台接口已隐藏 Secret 明文 | P1 | 7 设置中心与生产化轮 | 进行中 | Secret 不出现在前台 public settings 和后台响应中，只显示 configured 布尔值 |
-| 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`；`WINDOWS_START.md` 已记录固定地址、strictPort、端口占用 PID 提示；生产部署路线仍待补全 | P0 | 7 设置中心与生产化轮 | 进行中 | 剩余差距：需要补齐 Nginx/Systemd 或等价生产部署路径，并由普通 Windows 终端完成启动脚本人工验收后才能标记完成 |
+| 图床 | 图床配置、上传、Token 测试 | 设置中心已提供 provider、publicBaseUrl、bucket、region、endpoint、AccessKey configured、Secret configured 和新密钥输入；后台不回显密钥明文；本地上传测试通过；上传接口继续校验类型、MIME 和大小 | P0 | 7 设置中心与生产化轮 | 进行中 | 剩余差距：需要浏览器人工确认图床表单保存、空 Secret 保留旧值和测试按钮提示 |
+| AI 设置 | Gemini/兼容模型配置和后台助手 | 设置中心已提供 provider、baseUrl、model、enableChat、apiKeyConfigured 和新 API Key 输入；后台不回显 API Key 明文；构建产物 Secret 搜索通过 | P1 | 7 设置中心与生产化轮 | 进行中 | 剩余差距：需要浏览器人工确认 AI 设置保存和后台聊天读取服务端配置 |
+| 评论设置 | GitHub OAuth/Gitalk 配置面板 | 设置中心已提供评论开关、邮箱要求、最大长度、邮箱显示、本地评论开关和 Gitalk/GitHub 占位字段；前台评论区已尊重 enabled/localEnabled，关闭后隐藏提交框 | P1 | 7 设置中心与生产化轮 | 进行中 | 剩余差距：需要浏览器人工确认关闭/开启评论后的文章详情表现 |
+| 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本 `start-backend.cmd`、`start-frontend.cmd`、`start-admin.cmd`、`start-all.cmd`；`WINDOWS_START.md` 已记录固定地址、strictPort、端口占用 PID 和设置中心提示；新增 `docs/DEPLOYMENT.md`，包含 Nginx、systemd、backend/data 权限、生产 `.env`、HTTPS 和生产前检查 | P0 | 7 设置中心与生产化轮 | 进行中 | 剩余差距：需要用户按文档完成普通 Windows 终端和服务器部署路径人工验收后才能标记完成 |

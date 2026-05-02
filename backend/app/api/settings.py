@@ -12,26 +12,6 @@ from app.services.json_service import JsonStore
 
 router = APIRouter(tags=["settings"])
 
-PUBLIC_KEYS = {
-    "title",
-    "authorName",
-    "bio",
-    "avatarUrl",
-    "defaultPostCover",
-    "photoWallImage",
-    "bgImages",
-    "themeColors",
-    "cloudMusicIds",
-    "danmakuList",
-    "social",
-    "counts",
-    "chatterTitle",
-    "chatterDescription",
-    "buildDate",
-    "theme",
-}
-
-
 def _store() -> JsonStore:
     return JsonStore(get_settings().data_path, "settings.json", {})
 
@@ -47,17 +27,33 @@ def _configured(value: Any) -> bool:
 
 
 def public_settings(data: dict[str, Any]) -> dict[str, Any]:
-    public = {key: deepcopy(data[key]) for key in PUBLIC_KEYS if key in data}
-    gitalk = data.get("gitalkConfig")
-    if isinstance(gitalk, dict):
-        public["gitalkConfig"] = {
+    comments = deepcopy(data.get("comments") or {})
+    gitalk = deepcopy(data.get("gitalkConfig") or comments.get("gitalk") or {})
+    public_comments = {
+        "enabled": comments.get("enabled", True),
+        "requireEmail": comments.get("requireEmail", False),
+        "maxLength": comments.get("maxLength", 1000),
+        "showEmail": comments.get("showEmail", False),
+        "localEnabled": comments.get("localEnabled", True),
+        "gitalk": {
             "clientID": gitalk.get("clientID", ""),
             "repo": gitalk.get("repo", ""),
             "owner": gitalk.get("owner", ""),
             "admin": gitalk.get("admin", []),
-            "clientSecretConfigured": _configured(gitalk.get("clientSecret", "")),
-        }
-    return public
+        },
+    }
+    return {
+        "siteTitle": data.get("siteTitle") or data.get("title", "SRBlogs"),
+        "subtitle": data.get("subtitle", ""),
+        "author": data.get("author") or data.get("authorName", ""),
+        "avatar": data.get("avatar") or data.get("avatarUrl", ""),
+        "description": data.get("description") or data.get("bio", ""),
+        "socialLinks": deepcopy(data.get("socialLinks") or data.get("social") or {}),
+        "theme": data.get("theme", "nebula"),
+        "bgImages": deepcopy(data.get("bgImages") or []),
+        "cloudMusicIds": deepcopy(data.get("cloudMusicIds") or []),
+        "comments": public_comments,
+    }
 
 
 def admin_settings(data: dict[str, Any]) -> dict[str, Any]:
@@ -67,14 +63,19 @@ def admin_settings(data: dict[str, Any]) -> dict[str, Any]:
         gitalk["clientSecretConfigured"] = _configured(gitalk.pop("clientSecret", ""))
     image_bed = result.get("imageBed")
     if isinstance(image_bed, dict):
-        token = image_bed.pop("token", "") or image_bed.pop("accessKeySecret", "")
-        image_bed["ossKeyConfigured"] = _configured(token)
+        access_key = image_bed.pop("accessKeyId", "") or image_bed.pop("accessKey", "")
+        secret_key = image_bed.pop("token", "") or image_bed.pop("accessKeySecret", "") or image_bed.pop("secretKey", "")
+        image_bed["accessKeyConfigured"] = _configured(access_key)
+        image_bed["secretKeyConfigured"] = _configured(secret_key)
+        image_bed["ossKeyConfigured"] = _configured(access_key or secret_key)
     ai = result.get("ai")
     if isinstance(ai, dict):
+        stored_ai_key = ""
         for key in list(ai.keys()):
             if "key" in key.lower() or "secret" in key.lower() or "token" in key.lower():
+                stored_ai_key = stored_ai_key or ai.get(key, "")
                 ai.pop(key, None)
-        ai["aiKeyConfigured"] = bool(get_settings().ai_a_api_key or get_settings().ai_b_api_key)
+        ai["aiKeyConfigured"] = _configured(stored_ai_key or get_settings().ai_a_api_key or get_settings().ai_b_api_key)
     else:
         result["ai"] = {"aiKeyConfigured": bool(get_settings().ai_a_api_key or get_settings().ai_b_api_key)}
     result["serverSecrets"] = {
@@ -96,6 +97,8 @@ def _strip_computed_fields(data: dict[str, Any]) -> dict[str, Any]:
     image_bed = cleaned.get("imageBed")
     if isinstance(image_bed, dict):
         image_bed.pop("ossKeyConfigured", None)
+        image_bed.pop("accessKeyConfigured", None)
+        image_bed.pop("secretKeyConfigured", None)
     ai = cleaned.get("ai")
     if isinstance(ai, dict):
         ai.pop("aiKeyConfigured", None)
@@ -118,12 +121,20 @@ def write_admin_settings(payload: JsonWrite):
     incoming = _strip_computed_fields(payload.data) if isinstance(payload.data, dict) else {}
     for secret_section, secret_key in (
         ("gitalkConfig", "clientSecret"),
+        ("imageBed", "accessKeyId"),
+        ("imageBed", "accessKey"),
         ("imageBed", "token"),
         ("imageBed", "accessKeySecret"),
+        ("imageBed", "secretKey"),
+        ("ai", "apiKey"),
+        ("ai", "key"),
     ):
-        if isinstance(current.get(secret_section), dict) and isinstance(incoming.get(secret_section), dict):
-            value = current[secret_section].get(secret_key)
-            if value and not incoming[secret_section].get(secret_key):
-                incoming[secret_section][secret_key] = value
+        current_section = current.get(secret_section)
+        incoming_section = incoming.get(secret_section)
+        if isinstance(current_section, dict) and isinstance(incoming_section, dict):
+            current_value = current_section.get(secret_key)
+            incoming_value = incoming_section.get(secret_key)
+            if current_value and (incoming_value is None or incoming_value == ""):
+                incoming_section[secret_key] = current_value
     _store().write(incoming)
     return admin_settings(incoming)

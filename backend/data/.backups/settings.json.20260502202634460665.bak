@@ -47,54 +47,19 @@
   "chatterDescription": "代码、课程、项目、游戏与临时想法的碎片记录。",
   "gitalkConfig": {
     "clientID": "",
+    "clientSecret": "",
     "repo": "",
     "owner": "",
-    "admin": [],
-    "clientSecret": ""
+    "admin": [
+      ""
+    ]
   },
   "buildDate": "2026-03-23T00:00:00",
   "theme": "nebula",
   "imageBed": {
-    "driver": "local",
-    "provider": "local",
-    "publicBaseUrl": "",
-    "bucket": "",
-    "region": "",
-    "endpoint": "",
-    "accessKeyId": "",
-    "accessKeySecret": ""
+    "driver": "local"
   },
   "ai": {
-    "active": "a",
-    "provider": "a",
-    "baseUrl": "",
-    "model": "",
-    "enableChat": true,
-    "apiKey": ""
-  },
-  "siteTitle": "SRBlogs の 宝藏之地",
-  "subtitle": "",
-  "author": "Shrink",
-  "avatar": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=500&auto=format&fit=crop",
-  "description": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
-  "socialLinks": {
-    "github": "https://github.com/yourname",
-    "gitee": "https://gitee.com/yourname",
-    "email": "you@example.com",
-    "qq": "100002",
-    "wechat": "srblogs"
-  },
-  "comments": {
-    "enabled": true,
-    "requireEmail": false,
-    "maxLength": 1000,
-    "showEmail": false,
-    "localEnabled": true,
-    "gitalk": {
-      "clientID": "",
-      "repo": "",
-      "owner": "",
-      "admin": []
-    }
+    "active": "a"
   }
 }

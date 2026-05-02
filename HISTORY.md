@@ -689,3 +689,68 @@ API 实测结果：
 - 本轮完成代码和 API 验证，但 friends/projects/music/photos 的后台表单页和前台页面仍需用户浏览器人工验收。
 - 媒体与结构化内容管理模块保持 `进行中`，不得标记为 `已完成`。
 - 图片上传、Secret 修改、评论删除继续不进入本地 pendingOperations。
+
+## 2026-05-02 - 设置中心与生产化轮
+
+本轮目标：
+
+- 根据用户人工验收结果，将媒体与结构化内容管理相关矩阵项标记为 `已完成`。
+- 完善 `/admin/settings`，补齐站点公开信息、主题与背景、评论设置、图床设置、AI 设置、部署与安全提示。
+- 固化公开/私有配置边界：前台只读公开配置，后台不回显 Secret 明文，空 Secret 不覆盖旧值。
+- 补充 Windows/服务器部署文档和生产前检查。
+- 不新增 P2 视觉特效，不改动已通过人工验收的媒体模块。
+
+前台变更：
+
+- 前台首页兼容 `siteTitle`、`author`、`avatar`、`description`、`socialLinks` 等公开设置字段。
+- `ProfileCard` 兼容新版公开站点信息字段，同时保留旧字段兜底。
+- `CommentBox` 改为读取 `/api/settings/public` 的公开评论设置。
+- 评论关闭时，文章详情显示“评论已关闭。”并隐藏提交表单；重新开启后恢复本地评论表单。
+- 评论最大长度、是否要求邮箱等校验改为优先跟随公开评论设置。
+
+后台变更：
+
+- `/admin/settings` 从单一 JSON 编辑升级为分区表单主流程。
+- 设置中心分区包括：站点公开信息、主题与背景、评论设置、图床设置、AI 设置、部署与安全提示。
+- 支持编辑站点标题、副标题、作者、头像、简介、社交链接、背景图、主题、公开音乐 ID、评论开关、图床配置和 AI 配置。
+- 后台仅展示 `aiKeyConfigured`、`accessKeyConfigured`、`secretKeyConfigured`、`ossKeyConfigured`、`githubOAuthSecretConfigured` 等布尔状态，不展示 Secret 明文。
+- Secret 输入框为空时表示保持原值；只有输入明确新值时才提交覆盖。
+- 高级 JSON 编辑保留为折叠兜底入口，保存前要求根节点为对象。
+
+后端/API 变更：
+
+- `GET /api/settings/public` 明确只返回前台需要的公开字段：站点信息、主题、背景、公开音乐配置和公开评论显示选项。
+- `GET /api/admin/settings` 继续要求管理员 JWT，返回后台配置和 Secret configured 布尔值，但不回显 Secret 明文。
+- `PUT /api/admin/settings` 继续要求管理员 JWT，并实现空字符串、`null` 或未传 Secret 时保留原值。
+- 设置写入继续走 `safe_write_json`，覆盖前生成 `backend/data/.backups/settings.json.*.bak`。
+
+文档变更：
+
+- 媒体与结构化内容管理经用户浏览器人工验收通过后，`docs/XINGHUI_PARITY_MATRIX.md` 中照片墙、音乐、友链、项目已标记为 `已完成`。
+- 新增 `docs/DEPLOYMENT.md`，包含后端 FastAPI 启动、前端/后台 build、Nginx 示例、systemd 示例、`backend/data` 权限、生产 `.env`、HTTPS 和生产前检查。
+- 更新 `WINDOWS_START.md`，补充设置中心地址、公开/后台 settings 接口、Secret 不回显说明和生产前必须修改默认密码/JWT Secret。
+- 更新 `docs/API_CONTRACT.md`，补充 settings 公开/后台字段边界、Secret preserve 语义和配置布尔字段。
+- 更新 `docs/SECURITY_NOTES.md`，补充 settings Secret 边界、空 Secret 保留旧值、构建产物 Secret 检查和评论配置规则。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`，补充设置中心与生产化人工验收项。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient 访问 `/api/health` 返回 200 且 `ok=true`。
+- 通过：`GET /api/settings/public` 不包含 Secret 字段和值。
+- 通过：登录后 `GET /api/admin/settings` 不回显 GitHub OAuth Secret、OSS Secret、AI Key 明文。
+- 通过：`PUT /api/admin/settings` 写入临时 Secret 后，后台只返回 configured 布尔值，不返回明文。
+- 通过：再次 `PUT /api/admin/settings` 传空 Secret 后，configured 布尔值保持为 true，验证空 Secret 不覆盖旧值。
+- 通过：修改站点标题后，`GET /api/settings/public` 可读取新标题；验证结束后已恢复原 `backend/data/settings.json` 内容。
+- 通过：关闭评论后，公开设置中 `comments.enabled=false`；重新开启后恢复为 true。
+- 通过：上传接口最小验证，`POST /api/upload` 返回 200、URL 和 size；测试上传文件随后已清理。
+- 通过：构建产物静态搜索未匹配到 `clientSecret`、`accessKeySecret`、`secretKey`、`apiKey`、`jwt_secret`、`admin_password`、`please-change-this-secret`、`change-me` 或本轮临时 Secret 值。
+- 未通过固定端口探测：当前 `127.0.0.1:8000` 未监听，直接访问 `http://127.0.0.1:8000/api/health` 连接失败；本轮未强行保留常驻后端进程。
+
+遗留问题：
+
+- 设置中心与生产化仍需用户在浏览器中人工验收：设置分区、保存状态、站点信息同步、评论开关表现、图床测试按钮、AI 设置保存、部署文档可执行性。
+- 由于固定端口 8000 当前未启动，本轮只记录 TestClient 级 health 通过，不把设置中心与生产化标记为 `已完成`。
+- Secret 修改不进入本地 pendingOperations；图片上传、评论删除仍按既定计划不进入本地 pendingOperations。

@@ -7,6 +7,15 @@
 - 后台 settings 接口也不得返回 Secret 明文，只能返回 `xxxConfigured` 布尔值。
 - 不得把 Secret 写入 `frontend/`、`admin/` 或任何会进入构建产物的文件。
 
+## Settings Boundary
+
+- `GET /api/settings/public` 只能返回站点标题、副标题、作者、头像、简介、社交链接、主题、背景图、公开音乐配置和公开评论显示选项。
+- `GET /api/admin/settings` 必须要求管理员 JWT，且不得回显 AI Key、OSS Key、GitHub OAuth Secret 明文。
+- 后台配置只能通过 `aiKeyConfigured`、`accessKeyConfigured`、`secretKeyConfigured`、`ossKeyConfigured`、`githubOAuthSecretConfigured` 等布尔值表达 Secret 是否已配置。
+- `PUT /api/admin/settings` 中 Secret 字段为空字符串、`null` 或未传时，必须保持旧值；只有传入明确新值时才允许覆盖。
+- GitHub OAuth Secret 仅作为服务端配置或后台写入字段存在，前台评论区只允许读取公开显示配置，不接入或暴露真实 OAuth Secret。
+- 每次发布前必须对 `frontend/dist` 和 `admin/dist` 做静态搜索，确认没有默认密码、JWT Secret、AI Key、OSS Key、GitHub OAuth Secret 或真实 Secret 值。
+
 ## Uploads
 
 - 上传接口必须要求管理员 JWT。

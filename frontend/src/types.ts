@@ -57,6 +57,12 @@ export interface CommentItem {
 }
 
 export interface SiteSettings {
+  siteTitle?: string
+  subtitle?: string
+  author?: string
+  avatar?: string
+  description?: string
+  socialLinks?: Record<string, string>
   title?: string
   authorName?: string
   bio?: string
@@ -78,8 +84,15 @@ export interface SiteSettings {
     repo?: string
     owner?: string
     admin?: string[]
-    clientSecretConfigured?: boolean
   }
   imageBed?: Record<string, unknown>
   ai?: Record<string, unknown>
+  comments?: {
+    enabled?: boolean
+    requireEmail?: boolean
+    maxLength?: number
+    showEmail?: boolean
+    localEnabled?: boolean
+    gitalk?: Record<string, unknown>
+  }
 }

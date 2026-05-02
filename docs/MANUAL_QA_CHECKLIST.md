@@ -145,3 +145,31 @@
 - [ ] 每次覆盖写入前对应 `.backups` 目录生成备份。
 - [ ] 高级 JSON 编辑在折叠区内，格式错误或根节点不是数组时阻止保存并显示错误。
 - [ ] 图片上传、Secret 修改、评论删除没有进入本地 pendingOperations。
+
+## 设置中心与生产化
+
+- [ ] `/admin/settings` 可进入。
+- [ ] 设置中心默认是分区表单主流程，不是单一 JSON 文本框。
+- [ ] 页面包含站点公开信息、主题与背景、评论设置、图床设置、AI 设置、部署与安全提示。
+- [ ] 加载状态、保存中状态、保存成功提示、保存失败提示均可见。
+- [ ] 修改站点标题后保存，刷新前台首页能看到同步变化。
+- [ ] 修改作者、头像 URL、站点简介、社交链接后，前台资料卡能同步变化或有兜底。
+- [ ] 背景图列表保存后前台能读取；空 URL 或失效图片不导致白屏。
+- [ ] `GET /api/settings/public` 只包含公开站点配置，不包含 AI Key、OSS Key、GitHub OAuth Secret、JWT、管理员密码。
+- [ ] `GET /api/admin/settings` 需要登录 JWT。
+- [ ] 后台设置接口只显示 `xxxConfigured` 布尔值，不回显 Secret 明文。
+- [ ] Secret 输入框留空保存时，旧 Secret 不被覆盖。
+- [ ] 输入新 Secret 保存后，重新读取只看到 configured=true，不看到明文。
+- [ ] 关闭评论后，前台文章详情显示“评论已关闭。”且不显示提交框。
+- [ ] 重新开启评论后，前台文章详情评论提交框恢复。
+- [ ] 评论最大长度、是否要求邮箱等前台校验跟随公开评论设置。
+- [ ] 图床 provider、publicBaseUrl、bucket、region、endpoint 可保存。
+- [ ] 图床 AccessKey/Secret 不回显明文。
+- [ ] 图床“测试配置”按钮有可读结果；本地上传接口仍校验类型、MIME 和大小。
+- [ ] AI provider、baseUrl、model、enableChat 可保存。
+- [ ] AI API Key 不回显明文；前台永远拿不到 AI Key。
+- [ ] 高级 JSON 编辑只在折叠区内，JSON 非对象时阻止保存并显示错误。
+- [ ] `docs/DEPLOYMENT.md` 包含 FastAPI 启动、前端 build、后台 build、Nginx、systemd、`backend/data` 权限、`.env`、HTTPS 和生产前检查。
+- [ ] Windows 启动文档中的固定地址、设置中心地址和 Secret 边界说明可执行。
+- [ ] 生产前检查完成：`ADMIN_PASSWORD` 已修改、`JWT_SECRET` 已修改、CORS 白名单已收紧、开发端口不暴露、构建产物不含 Secret、`backend/data` 已备份、上传大小限制有效。
+- [ ] `frontend/dist` 和 `admin/dist` 静态搜索不包含 Secret 字段名、默认密码或真实 Secret 值。

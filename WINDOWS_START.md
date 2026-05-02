@@ -50,3 +50,12 @@ Stop it with: taskkill /PID 12345 /F
 - 不要等待 `npm run dev` 自然退出；它是常驻开发服务。
 - 如果页面刚打开时报错，等待对应终端完成编译后刷新。
 - 本项目固定 Tailwind CSS `3.4.17`，避免 Tailwind v4 与现有配置不兼容。
+
+## 设置中心与生产提示
+
+- 本地后台设置页：`http://127.0.0.1:5174/admin/settings`
+- 公开设置接口：`http://127.0.0.1:8000/api/settings/public`
+- 后台设置接口需要登录 JWT：`GET/PUT http://127.0.0.1:8000/api/admin/settings`
+- 后台不会回显 AI Key、OSS Key、GitHub OAuth Secret 等 Secret 明文，只显示 `xxxConfigured` 布尔值。
+- 默认账号 `admin / change-me` 仅用于本地开发；生产前必须修改 `backend/.env` 中的 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
+- 服务器部署、Nginx、systemd、`.env` 和生产前检查见 `docs/DEPLOYMENT.md`。
