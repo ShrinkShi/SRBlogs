@@ -10,11 +10,11 @@
 
 ## 当前进度估算
 
-2026-05-02 P1 最终微调与真实使用清单轮后：
+2026-05-02 P2 视觉统一与氛围增强轮后：
 
 - `P0`：约 100%。内容读取/写入、登录鉴权、公开草稿保护、评论、媒体管理、设置边界、安全写入、审计日志、备份恢复、构建运行和 Secret 扫描均已通过验证；真实服务器部署实操单独标记为待执行。
 - `P1`：约 100%。搜索、标签、归档、SEO/RSS/Sitemap、后台写作、草稿、pendingOperations 第一阶段、设置中心表单化、错误状态、操作反馈、真实使用手册和发布准备均已收口；后续仅保留长期优化。
-- `P2`：约 40%，冻结/未开始系统化增强。本阶段暂停樱花、弹幕、CyberCat、动态背景等视觉增强，不继续推进。
+- `P2`：约 62%。已从冻结转入系统化推进，完成视觉 token、统一卡片/按钮/标签、首页与文章详情层级、氛围动效开关和后台控制台基础质感整理；仍需浏览器人工回归后继续推进。
 
 ## Definition of Done
 
@@ -279,7 +279,7 @@ Windows 本地启动命令：
 - 新增 `GET /api/tags`，合并 posts/moments/chatters/projects 标签。
 - 新增 `GET /api/archive`，按年月聚合 posts/moments/chatters。
 - 前台新增 `/search`、`/tags`、`/tags/:tag`、`/archive`；首页新增轻量内容发现入口。
-- `cd frontend && npm run build`、`cd admin && npm run build`、`python -m compileall backend\app`：通过。
+- `cd frontend && npm run build`、`cd admin && npm run build`、`python -m compileall backend\app`、TestClient `/api/health`：通过。
 - API 验证：`/api/search?q=vue`、`/api/search?q=vue&type=posts`、`/api/search?tag=Vue`、`/api/tags`、`/api/archive` 均返回 200。
 - 结论：内容发现与归档扩张轮已通过用户人工验收，搜索、标签、归档相关项可标记为 `已完成`。
 
@@ -355,13 +355,24 @@ Windows 本地启动命令：
 - `.gitignore` 已补充运行时备份、`.backups`、审计日志、上传缓存和 TypeScript build info 忽略规则，降低误提交运行时垃圾的风险。
 - 本轮进度估算：P0 约 100%，P1 约 100%，P2 约 40% 且冻结；P1 后续仅保留长期优化。
 
+2026-05-02 P2 视觉统一与氛围增强轮当前结果：
+
+- 前台新增统一视觉 token 和工具类：`sr-card`、`sr-card-hover`、`sr-hero-panel`、`sr-chip`、`sr-button-primary`、`sr-button-ghost`、状态色和 reduced-motion 规则。
+- 首页 Hero、ProfileCard、SiteDashboard、内容发现入口和最新文章卡片已接入统一卡片/按钮/hover 体系，继续保持响应式容器和不撑宽约束。
+- 文章详情标题区与 Markdown 正文阅读区增加层级分隔，标签样式统一；Markdown 渲染、DOMPurify、TOC、评论和分享逻辑未改动。
+- 背景控制新增“氛围”开关，樱花、萤火、CyberCat、点击光效均尊重本地开关；移动端默认降低装饰密度。
+- 后台样式新增控制台 token、`admin-card-hover`、状态色、危险按钮、输入 focus 和侧边栏 active 强化。
+- `cd frontend && npm run build`、`cd admin && npm run build`、`python -m compileall backend\app`：通过。
+- 构建产物 Secret 静态搜索：通过，未匹配敏感字段名或默认 Secret 占位。
+- 本轮进度估算：P0 约 100%，P1 约 100%，P2 约 62%；P2 继续保持进行中，需浏览器人工回归确认首页、文章阅读页、后台控制台、390px 和关闭动效状态。
+
 ## Matrix
 
 | 模块 | 原项目能力 | SRBlogs 当前状态 | 差距等级 | 实现轮次 | 状态 | 验收标准 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 首页 | 毛玻璃首页、个人资料、最新内容、动态氛围组件 | 已有首页、ProfileCard、站点统计、最新文章/杂谈/动态组件；浏览器可打开，统计数据源已修复为非零；Hero/ProfileCard、SiteDashboard 和最新文章均已改为真实响应式布局；首页响应式布局已通过用户人工验收 | P1 | 3 视觉首页轮 | 已完成 | 首页主要内容、ProfileCard、统计卡片、最新文章换行和左右边距均已通过人工验收；P2 装饰特效冻结 |
+| 首页 | 毛玻璃首页、个人资料、最新内容、动态氛围组件 | 已有首页、ProfileCard、站点统计、最新文章/杂谈/动态组件；浏览器可打开，统计数据源已修复为非零；Hero/ProfileCard、SiteDashboard 和最新文章均已改为真实响应式布局；首页响应式布局已通过用户人工验收；本轮补充统一 hero panel、按钮、标签和卡片 hover | P1/P2 | 3 视觉首页轮 / P2 视觉统一轮 | 已完成 / P2 进行中 | 首页主要内容、ProfileCard、统计卡片、最新文章换行和左右边距均已通过人工验收；P2 视觉增强仍需本轮浏览器回归确认 |
 | 文章列表 | 文章卡片、标签、摘要、封面、列表浏览 | Posts 页面真实读取 `/api/posts`，已补加载、空、错误状态、封面兜底、标签、日期、摘要和详情跳转；公开列表默认不含草稿；后台草稿发布/撤回/删除后的公开列表联动已通过 API 与人工验收 | P0 | 4 文章与评论轮 / 最终总回归轮 | 已完成 | 公开列表隐藏草稿、发布后可见、撤回/删除后消失、构建与回归验证均通过 |
-| 文章详情 | Markdown 详情、代码高亮、评论、分享 | PostDetail 真实读取 `/api/posts/{slug}`，已补加载、404/错误状态、封面兜底、元信息展示、分享和评论挂载；MarkdownRenderer 继续使用 DOMPurify；Markdown 显示、TOC、分享和移动端基础可读性已通过用户人工验收 | P0 | 4 文章与评论轮 / 最终总回归轮 | 已完成 | 已发布文章详情可打开，草稿/删除后公开详情返回 404，Markdown/TOC/分享/评论区基础体验通过验收 |
+| 文章详情 | Markdown 详情、代码高亮、评论、分享 | PostDetail 真实读取 `/api/posts/{slug}`，已补加载、404/错误状态、封面兜底、元信息展示、分享和评论挂载；MarkdownRenderer 继续使用 DOMPurify；Markdown 显示、TOC、分享和移动端基础可读性已通过用户人工验收；本轮增强标题区、标签和正文阅读区层次 | P0/P2 | 4 文章与评论轮 / 最终总回归轮 / P2 视觉统一轮 | 已完成 / P2 进行中 | 已发布文章详情可打开，草稿/删除后公开详情返回 404，Markdown/TOC/分享/评论区基础体验通过验收；P2 阅读体验仍需浏览器人工回归 |
 | 动态 | 类朋友圈短内容流和轻量评论 | Moments 页面真实读取 `/api/moments`，本轮补齐加载、空、错误状态；详情复用 PostDetail | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：动态详情、评论和 390px 移动端仍需浏览器人工回归 |
 | 杂谈 | 云端杂谈/碎片化文章卡片 | Chatter 页面真实读取 `/api/chatters`，本轮公开路由统一为 `/chatters` 和 `/chatters/:slug`，旧 `/chatter` 保留重定向；已补加载、空、错误状态 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：杂谈详情、首页聚合跳转和移动端仍需浏览器人工回归 |
 | 时间线 | 内容按时间汇总展示 | Timeline 页面真实读取 `/api/moments`，已补齐加载、空、错误状态；新增 `/archive` 使用 `/api/archive` 聚合 posts/moments/chatters 按年月浏览；归档页面已通过人工验收 | P1 | 6 媒体互动轮 / 内容发现轮 | 已完成 | `/archive` 按年月展示公开内容、跳转详情、空/加载/错误状态和首页入口均已通过人工验收；`/timeline` 保留为视觉时间线 |
@@ -383,4 +394,4 @@ Windows 本地启动命令：
 | SEO/订阅/分享 | Meta、OpenGraph、RSS、Sitemap、robots、分享 | 已新增统一 SEO meta 工具；主要前台页面接入 title/description/OG/Twitter Card；后端新增 RSS、Sitemap、robots；前台新增 RSS 入口；分享复制增加成功/失败提示；已通过用户人工验收 | P1 | SEO、订阅与分享增强轮 | 已完成 | RSS、Sitemap、robots、动态 meta、RSS 入口和分享复制均已通过人工验收 |
 | 性能/可访问性/体验稳定 | 图片性能、移动端可读性、错误兜底、键盘可访问性、构建体积可控 | 已补 SafeImage 图片懒加载/兜底、StateBlock 通用状态、照片预览关闭能力、评论表单 label、前台导航/播放器/背景控制 aria、后台侧栏窄屏滚动和输入 aria；性能稳定轮已通过验证，构建体积已记录，Markdown 相关 chunk 仍需后续观察 | P1 | 性能、可访问性与体验稳定轮 | 已完成 | 前后台主要页面稳定性、错误兜底、移动端基础适配、图片失败兜底和可访问性基础修复已通过验证；后续仅保留体积优化观察项 |
 | 审计日志与备份恢复 | 后台操作审计、数据备份、下载、恢复、导入导出 | 已新增审计日志服务、`/admin/audit`、手动备份服务、`/admin/backups`、下载、恢复、导出和导入 API；恢复前自动创建 pre-restore 备份；备份 zip 排除 `.env` 和 Secret 字段；API 级验证和用户人工验收均已通过 | P0 | 管理端审计日志与数据备份恢复轮 | 已完成 | 后台审计日志、备份列表、手动备份、下载、恢复、恢复前备份和高风险操作审计均已通过人工验收 |
-| P2 视觉增强 | 樱花、萤火、弹幕、动态背景细节、悬浮音乐细节、卡片动效和主题装饰 | 已有基础毛玻璃、背景和播放器氛围；按照当前策略暂停继续增强，不新增樱花、弹幕、CyberCat 或动态背景类功能 | P2 | 冻结 | 冻结/未开始系统化增强 | P0/P1 收口期间不推进 P2；后续若恢复，需要单独验收性能、可访问性和移动端遮挡风险 |
+| P2 视觉增强 | 樱花、萤火、弹幕、动态背景细节、悬浮音乐细节、卡片动效和主题装饰 | 已有基础毛玻璃、背景和播放器氛围；本轮开始系统化整理视觉 token、统一卡片/按钮/标签动效、文章阅读层次、后台控制台样式，并新增“氛围”开关控制已有装饰动效 | P2 | P2 视觉统一与氛围增强轮 | 进行中 | 当前 P2 约 62%；需继续完成首页、文章详情、媒体页、后台主要页面、390px 和关闭动效的浏览器人工回归，确认不遮挡、不撑宽、不影响 P0/P1 |

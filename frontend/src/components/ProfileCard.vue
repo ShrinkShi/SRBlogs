@@ -12,7 +12,7 @@ const social = () => props.settings?.socialLinks || props.settings?.social
 </script>
 
 <template>
-  <GlassCard class="min-h-full min-w-0 max-w-full">
+  <GlassCard hover class="min-h-full min-w-0 max-w-full">
     <div class="flex min-w-0 flex-col items-center text-center">
       <div class="relative">
         <div class="absolute inset-0 rounded-[34px] bg-cyan-300/30 blur-2xl"></div>
@@ -22,9 +22,9 @@ const social = () => props.settings?.socialLinks || props.settings?.social
       <h2 class="mt-5 text-2xl font-black text-white">{{ author() }}</h2>
       <p class="mt-2 max-w-sm break-words text-sm leading-7 text-white/62">{{ description() }}</p>
       <div class="mt-5 grid w-full min-w-0 max-w-full grid-cols-[repeat(auto-fit,minmax(min(100%,5.5rem),1fr))] gap-2">
-        <div class="min-w-0 rounded-2xl bg-white/[0.08] p-3"><b class="block break-words text-2xl text-white">{{ props.posts || 0 }}</b><span class="text-xs text-white/42">文章</span></div>
-        <div class="min-w-0 rounded-2xl bg-white/[0.08] p-3"><b class="block break-words text-2xl text-white">{{ props.moments || 0 }}</b><span class="text-xs text-white/42">瞬间</span></div>
-        <div class="min-w-0 rounded-2xl bg-white/[0.08] p-3"><b class="block break-words text-2xl text-white">{{ props.projects || 0 }}</b><span class="text-xs text-white/42">项目</span></div>
+        <div class="sr-card-hover min-w-0 rounded-2xl border border-white/10 bg-white/[0.08] p-3"><b class="block break-words text-2xl text-white">{{ props.posts || 0 }}</b><span class="text-xs text-white/42">文章</span></div>
+        <div class="sr-card-hover min-w-0 rounded-2xl border border-white/10 bg-white/[0.08] p-3"><b class="block break-words text-2xl text-white">{{ props.moments || 0 }}</b><span class="text-xs text-white/42">瞬间</span></div>
+        <div class="sr-card-hover min-w-0 rounded-2xl border border-white/10 bg-white/[0.08] p-3"><b class="block break-words text-2xl text-white">{{ props.projects || 0 }}</b><span class="text-xs text-white/42">项目</span></div>
       </div>
       <div v-if="social()" class="mt-5 flex max-w-full flex-wrap justify-center gap-2">
         <a
@@ -34,7 +34,7 @@ const social = () => props.settings?.socialLinks || props.settings?.social
           :href="key === 'email' ? `mailto:${social()?.[key]}` : social()?.[key]"
           target="_blank"
           rel="noopener noreferrer"
-          class="rounded-full border border-white/12 bg-white/[0.08] px-3 py-1 text-xs text-white/60 hover:bg-white/[0.14] hover:text-white"
+          class="sr-chip px-3 py-1 text-xs hover:bg-white/[0.14] hover:text-white"
         >{{ key }}</a>
       </div>
     </div>

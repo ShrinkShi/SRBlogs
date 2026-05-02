@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from 'vue'
+import { useUiStore } from '@/stores/ui'
+
+const ui = useUiStore()
 
 function click(e: MouseEvent) {
+  if (!ui.ambience) return
   const node = document.createElement('span')
   node.className = 'click-spark'
   node.style.left = `${e.clientX}px`

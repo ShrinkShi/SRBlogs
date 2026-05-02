@@ -8,6 +8,7 @@ export const useUiStore = defineStore('ui', {
     theme: (localStorage.getItem('sr-theme') || 'nebula') as ThemeName,
     bgIndex: Number(localStorage.getItem('sr-bg-index') || '0'),
     danmaku: localStorage.getItem('sr-danmaku') !== 'off',
+    ambience: localStorage.getItem('sr-ambience') !== 'off',
     toast: ''
   }),
   actions: {
@@ -26,6 +27,10 @@ export const useUiStore = defineStore('ui', {
     toggleDanmaku() {
       this.danmaku = !this.danmaku
       localStorage.setItem('sr-danmaku', this.danmaku ? 'on' : 'off')
+    },
+    toggleAmbience() {
+      this.ambience = !this.ambience
+      localStorage.setItem('sr-ambience', this.ambience ? 'on' : 'off')
     },
     showToast(message: string) {
       this.toast = message

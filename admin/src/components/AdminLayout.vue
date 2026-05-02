@@ -53,7 +53,7 @@ function logout() {
             :key="link[1]"
             :to="link[1]"
             class="relative z-[1] flex items-center justify-between gap-3 rounded-2xl px-3 py-2.5 text-sm transition"
-            :class="active === link[1] ? 'bg-cyan-300/[0.16] text-cyan-100' : 'text-white/64 hover:bg-white/10 hover:text-white'"
+            :class="active === link[1] ? 'border border-cyan-200/25 bg-cyan-300/[0.16] text-cyan-100 shadow-[inset_3px_0_0_rgba(103,232,249,.75)]' : 'border border-transparent text-white/64 hover:bg-white/10 hover:text-white'"
           >
             <span>{{ link[0] }}</span>
             <span class="text-[10px] text-white/35">{{ link[2] }}</span>

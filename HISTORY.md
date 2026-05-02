@@ -1,5 +1,61 @@
 # HISTORY
 
+## 2026-05-02 - P2 视觉统一与氛围增强轮
+
+本轮目标：
+
+- 在 P0/P1 均已收口到 100% 的基础上，正式恢复 P2 推进。
+- 系统化整理前台毛玻璃 token、卡片 hover、按钮、标签、阅读页层次和现有氛围动效控制。
+- 提升后台控制台质感，但不改变后台主流程、不新增业务模块、不新增后端接口。
+
+当前进度估算：
+
+- P0：100%。
+- P1：100%。
+- P2：约 62%。
+
+前台变更：
+
+- `frontend/src/styles.css` 新增统一视觉 token 和工具类：`sr-card`、`sr-card-hover`、`sr-hero-panel`、`sr-chip`、`sr-button-primary`、`sr-button-ghost`、状态色和 reduced-motion 规则。
+- `GlassCard` 默认接入统一 `sr-card`，hover 状态改为统一 `sr-card-hover`。
+- 首页 Hero 增强为统一 hero panel，主要按钮、内容发现入口、技术栈卡、ProfileCard、SiteDashboard 和最新文章卡片接入统一动效。
+- 文章详情标题区与 Markdown 正文阅读区增加更清楚的视觉层级，标签样式统一为 `sr-chip-cyan`。
+- 背景控制增加“氛围”开关；`Sakura`、`Fireflies`、`CyberCat`、点击光效均尊重本地 `sr-ambience` 设置。
+- 移动端默认隐藏樱花、萤火等装饰层，弹幕密度降低，避免遮挡阅读区。
+
+后台变更：
+
+- `admin/src/styles.css` 增加后台视觉 token、`admin-card-hover`、状态色、危险按钮、输入 focus 和 reduced-motion 规则。
+- 后台侧边栏 active 状态增加边框和左侧高亮，强调当前控制台位置。
+- 后台继续保持工具型布局，不改变审计日志、备份恢复、评论管理、写作和设置中心主流程。
+
+后端/API 变更：
+
+- 本轮未新增后端接口。
+- 本轮未修改后端数据结构。
+
+文档变更：
+
+- 更新 `docs/UI_STYLE_GUIDE.md`，记录 P2 视觉 token、氛围开关、卡片动效、后台控制台和移动端规则。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，将 P2 从冻结调整为系统化推进中，并记录当前 P2 进度。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md` 和 `docs/RELEASE_CHECKLIST.md`，补充 P2 视觉回归、关闭/降低动效、移动端和后台控制台检查项。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient 访问 `/api/health` 返回 200 和 `ok=true`。
+- 通过：构建产物 Secret 静态搜索未匹配 `clientSecret`、`accessKeySecret`、`secretKey`、`apiKey`、`jwt_secret`、`admin_password`、`please-change-this-secret`、`change-me`。
+- 待执行：前台首页、文章详情、搜索/标签/归档、媒体页、后台主要页面和 390px 移动端浏览器人工回归。
+- 待执行：关闭/降低动效后的浏览器人工检查。
+
+遗留问题：
+
+- P2 本轮只做现有视觉系统化和氛围控制，不做新增特效库、不做 3D、不做大型动画。
+- MarkdownRenderer 与 MarkdownEditor chunk 仍较大，沿用此前记录，后续如需要再单独做体积拆分。
+- P2 不标记为完成，需用户确认首页、文章阅读页、后台控制台和移动端视觉回归后继续推进。
+
 ## 2026-05-02 - P1 最终微调与真实使用清单轮
 
 本轮目标：

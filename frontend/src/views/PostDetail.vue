@@ -58,11 +58,13 @@ watch(() => route.params.slug, load)
       <div class="-mx-5 -mt-5 mb-8 h-[260px] overflow-hidden bg-slate-900/70 md:-mx-6 md:-mt-6 md:h-[360px]">
         <SafeImage :src="coverUrl" :fallback="fallbackCover" :alt="item.meta.title" eager img-class="h-full w-full object-cover opacity-85" />
       </div>
-      <p class="text-sm text-cyan-100/60">{{ item.meta.date }}</p>
-      <h1 class="cyber-title mt-3 text-4xl font-black md:text-6xl">{{ item.meta.title }}</h1>
-      <p v-if="item.meta.summary" class="mt-4 max-w-3xl text-lg leading-8 text-white/58">{{ item.meta.summary }}</p>
-      <div class="mt-5 flex flex-wrap gap-2"><span v-for="tag in item.meta.tags" :key="tag" class="rounded-full border border-cyan-200/20 bg-cyan-200/[0.08] px-3 py-1 text-xs text-cyan-100/70"># {{ tag }}</span></div>
-      <div class="mt-10"><MarkdownRenderer :content="item.content" /></div>
+      <div class="rounded-[28px] border border-white/10 bg-white/[0.055] p-5 md:p-7">
+        <p class="text-sm font-bold uppercase tracking-[.22em] text-cyan-100/60">{{ item.meta.date }}</p>
+        <h1 class="cyber-title mt-3 text-4xl font-black leading-tight md:text-6xl">{{ item.meta.title }}</h1>
+        <p v-if="item.meta.summary" class="mt-4 max-w-3xl text-lg leading-8 text-white/64">{{ item.meta.summary }}</p>
+        <div class="mt-5 flex flex-wrap gap-2"><span v-for="tag in item.meta.tags" :key="tag" class="sr-chip sr-chip-cyan px-3 py-1 text-xs"># {{ tag }}</span></div>
+      </div>
+      <div class="mt-10 rounded-[28px] border border-white/10 bg-slate-950/20 p-4 md:p-7"><MarkdownRenderer :content="item.content" /></div>
       <ShareButtons />
     </GlassCard>
     <CommentBox v-if="item" :resource="props.section" :slug="slug" />
