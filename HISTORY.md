@@ -1,5 +1,65 @@
 # HISTORY
 
+## 2026-05-02 - 最终总回归与真实部署准备轮
+
+本轮目标：
+
+- 冻结 P2，完成 P0/P1 最终收口前的全项目总回归。
+- 验证完整内容生产演示流、数据安全、备份恢复、部署准备和文档一致性。
+- 不新增业务功能，不新增视觉特效，不重构已通过人工验收的模块。
+
+当前进度估算：
+
+- P0：约 100%。
+- P1：约 98%。
+- P2：40%，冻结。
+
+前台变更：
+
+- 未新增前台页面或 P2 视觉特效。
+- 使用当前 5173 服务对主要前台路径完成 HTTP 快速回归：`/`、`/posts`、`/posts/vue-fastapi-blog`、`/moments`、`/chatters`、`/friends`、`/projects`、`/music`、`/photowall`、`/about`、`/timeline`、`/search`、`/tags`、`/tags/Vue`、`/archive`、不存在路由均返回 SPA 壳 200。
+- API 级确认不存在文章和不存在杂谈 slug 返回 404。
+
+后台变更：
+
+- 未重构后台主流程。
+- 使用当前 5174 服务对后台路径完成 HTTP 快速回归：`/admin/`、`/admin/editor`、`/admin/posts`、`/admin/comments`、`/admin/friends`、`/admin/projects`、`/admin/music`、`/admin/photos`、`/admin/settings`、`/admin/audit`、`/admin/backups` 均返回 SPA 壳 200。
+- 根据用户人工验收结果，后台写作、草稿、发布/撤回、删除文章和 pendingOperations 第一阶段已通过，本轮同步矩阵状态。
+
+后端/API 变更：
+
+- 本轮未新增后端业务接口。
+- 完整内容生产演示流通过 TestClient 验证：登录、新建草稿、前台隐藏草稿、发布文章、公开列表/详情可见、提交评论、后台评论索引可见、删除评论、前台评论消失、编辑文章、前台详情更新、撤回发布、公开详情 404、删除文章、审计日志记录完整。
+- 备份恢复通过 TestClient 验证：创建手动备份、列表可见、下载 zip、zip 不包含 `.env`、`settings.json` 备份内容已清洗 Secret 关键字段、恢复前自动创建 `pre-restore-*.zip`、非法备份名路径穿越被拒绝。
+
+文档变更：
+
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，将文章列表、文章详情、后台仪表盘、Markdown 编辑器、草稿、暂存队列按已通过人工验收结果标记为 `已完成`。
+- 更新 `docs/XINGHUI_PARITY_MATRIX.md`，将部署文档从整体完成调整为 `部署实操待执行`：文档、脚本、Nginx、systemd、env 模板已核验，但真实服务器、域名和 HTTPS 实操不在本轮执行。
+- 更新 `README.md`、`docs/MANUAL_QA_CHECKLIST.md`、`docs/RELEASE_CHECKLIST.md`、`docs/RELEASE_NOTES.md`，同步最终回归、发布准备、P0/P1/P2 进度和部署实操待执行状态。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：TestClient `/api/health` 返回 200。
+- 通过：TestClient `/api/rss.xml`、`/api/sitemap.xml`、`/robots.txt` 返回 200；`robots.txt` 包含 `Disallow: /admin`。
+- 通过：`GET /api/settings/public` 和管理员 `GET /api/admin/settings` 不包含当前 `backend/.env` 中的非空 Secret 值。
+- 通过：`GET /api/posts`、`GET /api/search?q=vue`、`GET /api/tags`、`GET /api/archive`、`GET /api/friends`、`GET /api/projects`、`GET /api/music`、`GET /api/photos` 均返回 200。
+- 通过：完整内容生产演示流，包含草稿、发布、评论、删除评论、编辑、撤回发布、删除文章、审计日志。
+- 通过：手动备份、备份列表、下载备份、恢复备份、恢复前备份、路径穿越拒绝。
+- 通过：`frontend/dist` 和 `admin/dist` 生成成功；构建产物 Secret 值静态扫描未命中。
+- 通过：`backend/.env.production.example` 不含开发默认 Secret，明确要求生产修改 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
+- 通过：`deploy/nginx.srblogs.conf` 包含前台、后台、`/api/`、`/uploads/`、`client_max_body_size`；`deploy/srblogs-backend.service` 未包含本地 Windows 路径。
+- 已尝试但未执行：Edge headless 390px 检查受本机权限限制失败，工具侧无法完成真实浏览器像素级验证；本轮保留用户人工验收作为最终依据。
+
+遗留问题：
+
+- P2 视觉增强继续冻结，不进入系统化增强。
+- 真实服务器部署、域名和 HTTPS 实操仍标记为 `部署实操待执行`；当前完成的是部署准备、脚本和文档核验。
+- 本轮验证按要求产生了审计日志、手动备份 zip、恢复前备份 zip、评论空文件和文章删除备份，作为数据写入、备份和审计验证痕迹保留。
+
 ## 2026-05-02 - 后台写作、草稿与暂存队列最终收口轮
 
 本轮目标：

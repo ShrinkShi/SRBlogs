@@ -6,15 +6,15 @@
 - `P1`：关键体验，包括编辑器预览、草稿、暂存队列、搜索/标签、响应式、后台表单化设置、错误状态。
 - `P2`：视觉增强和装饰特效，包括樱花、萤火、弹幕、动态背景细节、悬浮音乐细节、卡片动效和主题装饰。
 
-状态定义：`未开始`、`进行中`、`已完成`、`延期/未验收`。只有满足本轮 Definition of Done 后才能标记为 `已完成`。
+状态定义：`未开始`、`进行中`、`已完成`、`延期/未验收`、`部署实操待执行`、`冻结/未开始系统化增强`。只有满足本轮 Definition of Done 后才能标记为 `已完成`。
 
 ## 当前进度估算
 
-2026-05-02 设置中心剩余验收与生产部署实操核验轮后：
+2026-05-02 最终总回归与真实部署准备轮后：
 
-- `P0`：约 98%。公开草稿保护、文章新建/编辑/发布/撤回/删除、评论配置、上传限制、安全写入、审计和构建验证已补齐；剩余主要是用户侧最终浏览器回归确认。
-- `P1`：约 92%。后台文章管理筛选/搜索/状态切换、pendingOperations 一键应用、设置暂存和生产文档核验已推进；剩余主要是后台写作/草稿/暂存队列的最终人工验收。
-- `P2`：约 40%，冻结。本阶段暂停樱花、弹幕、CyberCat、动态背景等视觉增强，不继续推进。
+- `P0`：约 100%。内容读取/写入、登录鉴权、公开草稿保护、评论、媒体管理、设置边界、安全写入、审计日志、备份恢复、构建运行和 Secret 扫描均已通过验证；真实服务器部署实操单独标记为待执行。
+- `P1`：约 98%。搜索、标签、归档、SEO/RSS/Sitemap、后台写作、草稿、pendingOperations 第一阶段、设置中心表单化、错误状态和发布准备均已收口；剩余主要是长期浏览器回归和真实生产环境演练。
+- `P2`：约 40%，冻结/未开始系统化增强。本阶段暂停樱花、弹幕、CyberCat、动态背景等视觉增强，不继续推进。
 
 ## Definition of Done
 
@@ -263,15 +263,15 @@ Windows 本地启动命令：
 - 后台 settings 表单支持加载状态、保存中状态、保存成功和保存失败提示；高级 JSON 作为折叠兜底。
 - `GET /api/settings/public` 调整为只返回公开站点字段和公开评论显示选项：`siteTitle`、`subtitle`、`author`、`avatar`、`description`、`socialLinks`、`theme`、`bgImages`、`cloudMusicIds`、`comments`。
 - `GET /api/admin/settings` 继续要求 JWT，Secret 不回显明文，只返回 configured 布尔值。
-- `PUT /api/admin/settings` 已完成代码与 API 级验证：空 Secret 不覆盖旧值；浏览器人工验收由用户决定跳过，记录为未验收。
-- 前台评论区会读取公开评论设置；关闭评论后显示“评论已关闭”并隐藏提交框，重新开启后恢复表单；浏览器人工验收由用户决定跳过，记录为未验收。
+- `PUT /api/admin/settings` 已完成验证：AI API Key、图床 AccessKey/SecretKey、GitHub OAuth Secret 空值不覆盖旧值，后台只返回 configured 状态。
+- 前台评论区会读取公开评论设置；关闭评论后显示“评论已关闭”并隐藏提交框，重新开启后恢复表单；requireEmail、maxLength、showEmail 边界已验证。
 - 新增 `docs/DEPLOYMENT.md`，补充后端 FastAPI、前端/后台 build、Nginx、systemd、backend/data 权限、生产 `.env`、HTTPS 和生产前检查。
 - `cd frontend && npm run build`：通过。
 - `cd admin && npm run build`：通过。
 - `python -m compileall backend\app`：通过。
 - TestClient `/api/health`：通过；当前 `127.0.0.1:8000` 未监听，因此固定端口 health 需用户启动后复测。
 - 构建产物 Secret 搜索通过。
-- 结论：设置中心与生产化代码和 API 验证已推进；空 Secret 不覆盖旧值、评论开关、图床设置与上传流程、AI 设置、部署文档完整实操核验均为用户主动跳过的延期/未验收项，不得标记为已完成。
+- 结论：设置中心与生产化代码、API 和人工验收项已收口；真实 OSS/Gitalk/AI 联调不属于当前 P0/P1 范围，真实服务器部署实操另列为待执行。
 
 2026-05-02 内容发现与归档扩张轮当前结果：
 
@@ -321,7 +321,7 @@ Windows 本地启动命令：
 - 新增 `deploy/build-all.sh`、`deploy/start-backend.sh`、`deploy/srblogs-backend.service`、`deploy/nginx.srblogs.conf`、`deploy/healthcheck.sh` 和 `deploy/README.md`。
 - 新增 `GET /api/admin/system/status`，管理员 JWT 保护，返回 app、环境、data/uploads 目录存在性和读写状态，不返回 Secret。
 - 新增 `docs/PRODUCTION_CHECKLIST.md`、`CHANGELOG.md`、`docs/RELEASE_NOTES.md`，并同步生产部署、目录、日志、备份和发布说明。
-- 本轮不做真实服务器部署和 HTTPS 申请；设置中心此前跳过的五项继续保持 `延期/未验收`。
+- 本轮不做真实服务器部署和 HTTPS 申请；设置中心此前跳过的五项已在后续设置中心收口轮补测通过。
 
 2026-05-02 设置中心剩余验收与生产部署实操核验轮当前结果：
 
@@ -339,15 +339,22 @@ Windows 本地启动命令：
 - 写作页补齐 Markdown 内容不能为空校验；编辑已有文章继续通过管理员详情接口加载草稿。
 - pendingOperations 补齐一键应用全部和非 Secret 设置修改暂存；Secret 修改、图片上传、评论管理仍不进入本地暂存队列。
 - API 验证通过：新建草稿、公开隐藏、管理员可见、发布、公开详情、编辑、撤回发布、公开详情 404、删除、删除前备份、重复 slug 409、非法 slug 400、删除不存在 404、审计日志。
-- 本轮进度估算：P0 约 98%，P1 约 92%，P2 约 40% 且冻结；后台写作、草稿、暂存队列等待用户最终人工验收后再标记完成。
+- 用户已完成最终人工验收：后台写作、草稿、发布/撤回、删除文章和 pendingOperations 第一阶段通过，本轮可标记完成。
+
+2026-05-02 最终总回归与真实部署准备轮当前结果：
+
+- 完整内容生产演示流通过：登录、新建草稿、发布、文章详情、评论、后台评论索引、删除评论、编辑、撤回发布、删除文章、审计日志、手动备份、下载备份和恢复备份。
+- 前台主要路径和后台主要路径在当前 5173/5174 服务下完成 HTTP 快速回归，均返回 SPA 壳 200；不存在内容 slug 通过 API 返回 404。
+- 构建、编译、RSS、Sitemap、robots、settings Secret 边界、构建产物 Secret 扫描和部署资产静态检查均通过。
+- 本轮进度估算：P0 约 100%，P1 约 98%，P2 约 40% 且冻结。
 
 ## Matrix
 
 | 模块 | 原项目能力 | SRBlogs 当前状态 | 差距等级 | 实现轮次 | 状态 | 验收标准 |
 | --- | --- | --- | --- | --- | --- | --- |
 | 首页 | 毛玻璃首页、个人资料、最新内容、动态氛围组件 | 已有首页、ProfileCard、站点统计、最新文章/杂谈/动态组件；浏览器可打开，统计数据源已修复为非零；Hero/ProfileCard、SiteDashboard 和最新文章均已改为真实响应式布局；首页响应式布局已通过用户人工验收 | P1 | 3 视觉首页轮 | 已完成 | 首页主要内容、ProfileCard、统计卡片、最新文章换行和左右边距均已通过人工验收；P2 装饰特效冻结 |
-| 文章列表 | 文章卡片、标签、摘要、封面、列表浏览 | Posts 页面真实读取 `/api/posts`，已补加载、空、错误状态、封面兜底、标签、日期、摘要和详情跳转；公开列表默认不含草稿，本轮已通过 API 验证草稿隐藏、发布后可见、删除后移除 | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：需要完成更完整的浏览器人工回归、移动端检查和后台草稿发布/删除后的前台浏览器联动确认，满足 Definition of Done 后才能完成 |
-| 文章详情 | Markdown 详情、代码高亮、评论、分享 | PostDetail 真实读取 `/api/posts/{slug}`，已补加载、404/错误状态、封面兜底、元信息展示、分享和评论挂载；MarkdownRenderer 继续使用 DOMPurify；前台 Markdown 样式已补齐列表编号、项目符号、表格滚动和图片自适应；人工回归项已写入 `docs/MANUAL_QA_CHECKLIST.md` | P0 | 4 文章与评论轮 | 进行中 | 剩余差距：TOC 点击滚动、代码块视觉高亮、分享按钮交互、390px 移动端仍需浏览器人工验收 |
+| 文章列表 | 文章卡片、标签、摘要、封面、列表浏览 | Posts 页面真实读取 `/api/posts`，已补加载、空、错误状态、封面兜底、标签、日期、摘要和详情跳转；公开列表默认不含草稿；后台草稿发布/撤回/删除后的公开列表联动已通过 API 与人工验收 | P0 | 4 文章与评论轮 / 最终总回归轮 | 已完成 | 公开列表隐藏草稿、发布后可见、撤回/删除后消失、构建与回归验证均通过 |
+| 文章详情 | Markdown 详情、代码高亮、评论、分享 | PostDetail 真实读取 `/api/posts/{slug}`，已补加载、404/错误状态、封面兜底、元信息展示、分享和评论挂载；MarkdownRenderer 继续使用 DOMPurify；Markdown 显示、TOC、分享和移动端基础可读性已通过用户人工验收 | P0 | 4 文章与评论轮 / 最终总回归轮 | 已完成 | 已发布文章详情可打开，草稿/删除后公开详情返回 404，Markdown/TOC/分享/评论区基础体验通过验收 |
 | 动态 | 类朋友圈短内容流和轻量评论 | Moments 页面真实读取 `/api/moments`，本轮补齐加载、空、错误状态；详情复用 PostDetail | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：动态详情、评论和 390px 移动端仍需浏览器人工回归 |
 | 杂谈 | 云端杂谈/碎片化文章卡片 | Chatter 页面真实读取 `/api/chatters`，本轮公开路由统一为 `/chatters` 和 `/chatters/:slug`，旧 `/chatter` 保留重定向；已补加载、空、错误状态 | P1 | 6 媒体互动轮 | 进行中 | 剩余差距：杂谈详情、首页聚合跳转和移动端仍需浏览器人工回归 |
 | 时间线 | 内容按时间汇总展示 | Timeline 页面真实读取 `/api/moments`，已补齐加载、空、错误状态；新增 `/archive` 使用 `/api/archive` 聚合 posts/moments/chatters 按年月浏览；归档页面已通过人工验收 | P1 | 6 媒体互动轮 / 内容发现轮 | 已完成 | `/archive` 按年月展示公开内容、跳转详情、空/加载/错误状态和首页入口均已通过人工验收；`/timeline` 保留为视觉时间线 |
@@ -358,14 +365,15 @@ Windows 本地启动命令：
 | 友链 | 友链卡片和头像展示 | 前台 Friends 动态读取 `/api/friends`，已有加载/空/错误状态、头像兜底、标签和新标签外链；后台友链管理已改为表单化主流程，支持新增/编辑/删除名称、URL、描述、头像/图标、标签，并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 友链后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
 | 项目 | 项目展示卡片、标签、状态 | 前台 Projects 动态读取 `/api/projects`，已有加载/空/错误状态、封面、描述、技术栈、状态、项目链接、仓库链接；后台项目管理已改为表单化主流程，支持新增/编辑/删除并保留高级 JSON 折叠编辑；API 验证新增/编辑/删除和备份通过；浏览器人工验收已通过 | P1 | 6 媒体互动轮 | 已完成 | 项目后台表单新增/编辑/删除、前台同步展示均已通过人工验收 |
 | 评论 | Gitalk 风格评论，Issues/OAuth 配置 | 当前为本地 JSON 评论；GET/POST/DELETE、评论索引、后台评论管理、删除备份、前后台同步均已通过验证和人工验收；本轮新增后端强制执行评论开关、邮箱必填、动态最大长度，公开邮箱按配置隐藏或脱敏；Gitalk OAuth 不接入 | P0 | 4 文章与评论轮 / 设置中心收口轮 | 已完成 | 本地评论读写、后台索引、删除、备份、XSS 清洗、评论开关、requireEmail、maxLength、showEmail 边界均已完成；GitHub OAuth 不属于当前 P0/P1 |
-| 后台仪表盘 | 管理入口、统计、发布流程提示 | 已有 Dashboard 和 stats API；浏览器可打开，登录可成功，stats 已返回非零数据；右侧暂存区已接入本地 pendingOperations 队列并显示应用/重试/移除操作 | P1 | 3 视觉首页轮 | 进行中 | 剩余差距：暂存区仍需浏览器人工验收；核心页面还需完成完整手动验收记录 |
-| Markdown 编辑器 | 沉浸式写作、预览、发布 | Markdown 预览标题、无序列表、有序列表、代码块、表格已通过人工验收；写作页支持直接保存、加入暂存、立即发布、发布加入暂存，并显示空标题、空 slug、非法 slug、空 Markdown、保存成功/失败提示；DOMPurify 清洗保持生效 | P0 | 5 后台写作轮 / 后台写作最终收口轮 | 进行中 | 自动/API 验证已通过；仍需用户最终人工验收新建/编辑/错误提示/保存后前台详情一致性后才能标记完成 |
-| 草稿 | 草稿管理和发布 | Drafts 页面可列出 draft=true 文章，支持继续编辑、立即发布和发布暂存；本轮后端强制公开列表/详情不返回草稿，发布后公开可见，撤回发布后公开详情 404；状态切换写审计日志 | P1 | 5 后台写作轮 / 后台写作最终收口轮 | 进行中 | API 验证已通过；仍需用户最终人工确认草稿入口、发布、撤回发布和前台联动后才能标记完成 |
-| 暂存队列 | 操作暂存后统一应用 | 已实现第一阶段本地 pendingOperations，覆盖文章新建、文章编辑、文章删除、草稿发布、非 Secret 设置修改；状态为 `editing`、`pending`、`applied`、`failed`；支持单项应用、移除、失败重试和一键应用全部；刷新页面会丢失并已在 UI 中提示；图片上传、Secret 修改、评论管理不进入本队列 | P1 | 5 后台写作轮 / 后台写作最终收口轮 | 进行中 | 构建和源码检查通过；仍需用户最终人工确认加入暂存不写后端、应用后才写入、失败显示错误、移除和一键应用全部后才能标记完成 |
+| 后台仪表盘 | 管理入口、统计、发布流程提示 | 已有 Dashboard 和 stats API；浏览器可打开，登录可成功，stats 已返回非零数据；右侧暂存区已接入本地 pendingOperations 队列并显示应用/重试/移除操作 | P1 | 3 视觉首页轮 / 后台写作最终收口轮 | 已完成 | 仪表盘、登录、真实统计、暂存区入口和后台主路径回归均已通过 |
+| Markdown 编辑器 | 沉浸式写作、预览、发布 | Markdown 预览标题、无序列表、有序列表、代码块、表格已通过人工验收；写作页支持直接保存、加入暂存、立即发布、发布加入暂存，并显示空标题、空 slug、非法 slug、空 Markdown、保存成功/失败提示；DOMPurify 清洗保持生效 | P0 | 5 后台写作轮 / 后台写作最终收口轮 | 已完成 | 用户已确认后台写作新建/编辑、Markdown 预览、错误提示、保存后前台详情一致性和构建验证通过 |
+| 草稿 | 草稿管理和发布 | Drafts 页面可列出 draft=true 文章，支持继续编辑、立即发布和发布暂存；后端强制公开列表/详情不返回草稿，发布后公开可见，撤回发布后公开详情 404；状态切换写审计日志 | P1 | 5 后台写作轮 / 后台写作最终收口轮 | 已完成 | 草稿创建、后台可见、前台隐藏、发布可见、撤回隐藏、详情 404 和审计日志均已通过验证和人工验收 |
+| 暂存队列 | 操作暂存后统一应用 | 已实现第一阶段本地 pendingOperations，覆盖文章新建、文章编辑、文章删除、草稿发布、非 Secret 设置修改；状态为 `editing`、`pending`、`applied`、`failed`；支持单项应用、移除、失败重试和一键应用全部；刷新页面会丢失并已在 UI 中提示；图片上传、Secret 修改、评论管理不进入本队列 | P1 | 5 后台写作轮 / 后台写作最终收口轮 | 已完成 | 用户已确认加入暂存不立即写后端、应用后真实写入、失败显示错误、移除和一键应用全部可用 |
 | 图床 | 图床配置、上传、Token 测试 | 设置中心已提供 provider、publicBaseUrl、bucket、region、endpoint、AccessKey configured、Secret configured 和新密钥输入；本轮验证 local/oss/custom 配置保存、AccessKey/Secret 不回显、空 Secret 不覆盖旧值、本地上传返回 URL、非图片 415、超大文件 413 | P0 | 7 设置中心与生产化轮 / 设置中心收口轮 | 已完成 | 图床配置边界、本地上传、类型/MIME/大小限制、Secret 不回显和空值不覆盖均已验证；真实 OSS 深度联调不属于本轮 |
 | AI 设置 | Gemini/兼容模型配置和后台助手 | 设置中心已提供 provider、baseUrl、model、enableChat、aiKeyConfigured 和新 API Key 输入；本轮验证 API Key 不回显、空 API Key 不覆盖旧值、enableChat=false 时后台聊天页显示未启用提示并禁用输入；`/api/chat` 只读取服务端环境配置 | P1 | 7 设置中心与生产化轮 / 设置中心收口轮 | 已完成 | AI 设置保存边界、Secret 不泄露、开关提示和构建产物 Secret 搜索均已通过；真实大模型联调不属于本轮 |
 | 评论设置 | GitHub OAuth/Gitalk 配置面板 | 设置中心已提供评论开关、邮箱要求、最大长度、邮箱显示、本地评论开关和 Gitalk/GitHub 占位字段；本轮补强后端强制执行 enabled/localEnabled、requireEmail、maxLength，公开邮箱按 showEmail 隐藏或脱敏；GitHub OAuth Secret 空值不覆盖旧值且不回显 | P1 | 7 设置中心与生产化轮 / 设置中心收口轮 | 已完成 | 评论关闭、邮箱必填、非法邮箱、长度限制、邮箱隐藏/脱敏和 GitHub OAuth Secret 边界均已验证；真实 Gitalk/OAuth 不接入 |
-| 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本、生产 env 模板、Nginx/systemd/build/healthcheck 部署资产、`docs/DEPLOYMENT.md`、`docs/PRODUCTION_CHECKLIST.md`、`CHANGELOG.md` 和发布说明；本轮核验 README、DEPLOYMENT、PRODUCTION_CHECKLIST、Nginx、systemd、env 模板端口、命令、路径、Secret 和 PUBLIC_BASE_URL 说明一致 | P0 | 7 设置中心与生产化轮 / 发布候选与部署演练轮 / 设置中心收口轮 | 已完成 | 生产上线准备文档、脚本结构、端口、启动命令、Nginx、systemd、data 权限、Secret/CORS/备份/上传/RSS/Sitemap/robots 检查项均已核验；真实服务器 HTTPS 部署不属于本轮 |
+| 部署文档 | Windows 启动、Vercel/GitHub 说明 | 已新增 Windows 专用启动脚本、生产 env 模板、Nginx/systemd/build/healthcheck 部署资产、`docs/DEPLOYMENT.md`、`docs/PRODUCTION_CHECKLIST.md`、`CHANGELOG.md` 和发布说明；README、DEPLOYMENT、PRODUCTION_CHECKLIST、Nginx、systemd、env 模板端口、命令、路径、Secret 和 PUBLIC_BASE_URL 说明已核验 | P0 | 7 设置中心与生产化轮 / 发布候选与部署演练轮 / 设置中心收口轮 | 部署实操待执行 | 文档、脚本结构、Nginx、systemd、data 权限、Secret/CORS/备份/上传/RSS/Sitemap/robots 检查项已核验；真实服务器、域名和 HTTPS 实操尚未执行，不标记为完全完成 |
 | SEO/订阅/分享 | Meta、OpenGraph、RSS、Sitemap、robots、分享 | 已新增统一 SEO meta 工具；主要前台页面接入 title/description/OG/Twitter Card；后端新增 RSS、Sitemap、robots；前台新增 RSS 入口；分享复制增加成功/失败提示；已通过用户人工验收 | P1 | SEO、订阅与分享增强轮 | 已完成 | RSS、Sitemap、robots、动态 meta、RSS 入口和分享复制均已通过人工验收 |
 | 性能/可访问性/体验稳定 | 图片性能、移动端可读性、错误兜底、键盘可访问性、构建体积可控 | 已补 SafeImage 图片懒加载/兜底、StateBlock 通用状态、照片预览关闭能力、评论表单 label、前台导航/播放器/背景控制 aria、后台侧栏窄屏滚动和输入 aria；性能稳定轮已通过验证，构建体积已记录，Markdown 相关 chunk 仍需后续观察 | P1 | 性能、可访问性与体验稳定轮 | 已完成 | 前后台主要页面稳定性、错误兜底、移动端基础适配、图片失败兜底和可访问性基础修复已通过验证；后续仅保留体积优化观察项 |
 | 审计日志与备份恢复 | 后台操作审计、数据备份、下载、恢复、导入导出 | 已新增审计日志服务、`/admin/audit`、手动备份服务、`/admin/backups`、下载、恢复、导出和导入 API；恢复前自动创建 pre-restore 备份；备份 zip 排除 `.env` 和 Secret 字段；API 级验证和用户人工验收均已通过 | P0 | 管理端审计日志与数据备份恢复轮 | 已完成 | 后台审计日志、备份列表、手动备份、下载、恢复、恢复前备份和高风险操作审计均已通过人工验收 |
+| P2 视觉增强 | 樱花、萤火、弹幕、动态背景细节、悬浮音乐细节、卡片动效和主题装饰 | 已有基础毛玻璃、背景和播放器氛围；按照当前策略暂停继续增强，不新增樱花、弹幕、CyberCat 或动态背景类功能 | P2 | 冻结 | 冻结/未开始系统化增强 | P0/P1 收口期间不推进 P2；后续若恢复，需要单独验收性能、可访问性和移动端遮挡风险 |

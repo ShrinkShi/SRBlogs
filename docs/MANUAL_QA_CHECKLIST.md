@@ -286,3 +286,17 @@
 - [ ] Windows 启动文档中的固定地址、设置中心地址和 Secret 边界说明可执行。
 - [ ] 生产前检查完成：`ADMIN_PASSWORD` 已修改、`JWT_SECRET` 已修改、CORS 白名单已收紧、开发端口不暴露、构建产物不含 Secret、`backend/data` 已备份、上传大小限制有效。
 - [ ] `frontend/dist` 和 `admin/dist` 静态搜索不包含 Secret 字段名、默认密码或真实 Secret 值。
+
+## 最终总回归与真实部署准备
+
+- [ ] 前台主路径 `/`、`/posts`、`/posts/:slug`、`/moments`、`/chatters`、`/chatters/:slug`、`/friends`、`/projects`、`/music`、`/photowall`、`/about`、`/timeline`、`/search`、`/tags`、`/tags/:tag`、`/archive` 和不存在路由均不白屏。
+- [ ] 后台主路径 `/admin/`、`/admin/editor`、`/admin/posts`、`/admin/comments`、`/admin/friends`、`/admin/projects`、`/admin/music`、`/admin/photos`、`/admin/settings`、`/admin/audit`、`/admin/backups` 均能从导航进入。
+- [ ] 完整内容生产演示流通过：登录后台、新建草稿、发布、前台详情、提交评论、后台删除评论、编辑、撤回发布、删除文章、审计日志、手动备份、下载备份。
+- [ ] 手动备份 zip 不包含 `.env`，恢复前自动创建 `pre-restore-*.zip`。
+- [ ] `GET /api/settings/public` 和 `GET /api/admin/settings` 不暴露 Secret 明文。
+- [ ] `frontend/dist` 和 `admin/dist` 构建产物不包含当前服务端 Secret 值。
+- [ ] `backend/.env.production.example` 明确要求生产修改 `ADMIN_PASSWORD` 和 `JWT_SECRET`，且不建议生产 `CORS_ORIGINS=*`。
+- [ ] `deploy/nginx.srblogs.conf` 包含前台、后台、`/api/`、`/uploads/`、`client_max_body_size`。
+- [ ] `deploy/srblogs-backend.service` 和 deploy 脚本不包含本机 Windows 绝对路径。
+- [ ] 真实服务器、域名和 HTTPS 实操如未执行，应在矩阵中标记为 `部署实操待执行`，不得标记为完全完成。
+- [ ] P2 视觉增强继续冻结，不新增樱花、弹幕、CyberCat、动态背景等功能。

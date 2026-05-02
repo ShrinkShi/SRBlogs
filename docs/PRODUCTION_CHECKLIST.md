@@ -131,8 +131,8 @@
 
 ## 16. Known Deferred Items
 
-- [ ] Settings empty Secret preservation browser test: deferred by user decision.
-- [ ] Comment switch browser test: deferred by user decision.
-- [ ] Image hosting provider deep integration: deferred by user decision.
-- [ ] AI settings real model integration: deferred by user decision.
-- [ ] Full production server hands-on deployment rehearsal: deferred by user decision.
+- [ ] Real production server hands-on deployment with domain and HTTPS remains `部署实操待执行`.
+- [ ] Real OSS/custom image hosting deep integration is not part of the current release candidate; local upload validation is covered.
+- [ ] Real AI provider model integration is not part of the current release candidate; configuration boundary and key secrecy are covered.
+- [ ] Real Gitalk/GitHub OAuth integration is not part of the current release candidate; Secret boundary is covered.
+- [ ] P2 visual enhancements remain frozen.

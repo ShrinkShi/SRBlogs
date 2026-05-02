@@ -8,13 +8,14 @@ This release candidate packages SRBlogs as a deployable Vue 3 + Vite + TypeScrip
 
 - Public blog pages: homepage, post list, post detail, moments, chatters, friends, projects, music, photowall, about, timeline.
 - Content discovery: search, tags, tag detail, archive, homepage discovery entry.
-- Writing workflow: Markdown editor, preview, drafts, publish, edit, delete, and first-stage local pending operations.
+- Writing workflow: Markdown editor, preview, drafts, publish, unpublish, edit, delete, and first-stage local pending operations.
 - Comments: local comment read/write/delete, validation, XSS cleaning, admin comment index and management.
 - Structured content: form-first admin management for friends, projects, music, and photos with advanced JSON fallback.
 - SEO and subscription: dynamic meta, OpenGraph, Twitter Card, RSS, sitemap, robots, and share link copy.
 - Stability: loading/empty/error states, mobile checks, image fallbacks, basic accessibility improvements.
 - Data safety: atomic writes, per-file backups, audit logs, manual backup list/create/download/restore, export/import.
 - Deployment readiness: production env template, Nginx example, systemd example, healthcheck script, production checklist.
+- Final regression: content production demo flow, comment sync, audit logs, manual backup, backup download, pre-restore backup, restore, RSS/sitemap/robots, and Secret scans.
 
 ## Production Notes
 
@@ -37,10 +38,10 @@ The development default account is `admin / change-me`. It is only for local dev
 
 ## Deferred Items
 
-These remain `延期/未验收` by user decision and are not release blockers for this candidate:
+These remain outside the current P0/P1 closure scope and are not release blockers for this candidate:
 
-- Empty Secret preservation browser verification in settings.
-- Comment switch browser verification in settings.
-- Image hosting provider deep integration and complete upload provider verification.
+- Real server deployment with a live domain and HTTPS certificate. Repository docs and scripts are ready; hands-on server execution is `部署实操待执行`.
+- Image hosting provider deep OSS/custom integration beyond local upload validation.
 - Real AI provider integration.
-- Full hands-on production server deployment rehearsal.
+- Real Gitalk/GitHub OAuth integration.
+- P2 visual enhancement work such as sakura, barrage, CyberCat, and dynamic-background upgrades.

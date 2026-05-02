@@ -13,6 +13,7 @@
 - SEO metadata, OpenGraph/Twitter Card runtime updates, RSS feed, sitemap, robots, and share copy feedback.
 - Audit log and manual backup/restore/export/import APIs and admin pages.
 - Production deployment assets under `deploy/`, production env template, health check script, and release checklists.
+- Final regression coverage for the complete content production flow, comment sync, audit logs, manual backup/download/restore, RSS/sitemap/robots, settings Secret boundaries, and build artifact Secret scans.
 
 ### Security
 
@@ -24,8 +25,8 @@
 
 ### Deferred
 
-- Settings empty Secret preservation browser verification.
-- Comment switch browser verification.
-- Real OSS image hosting integration.
+- Real server deployment with live domain and HTTPS remains `部署实操待执行`.
+- Real OSS image hosting integration beyond local upload validation.
 - Real AI provider integration.
-- Full hands-on production server deployment rehearsal.
+- Real Gitalk/GitHub OAuth integration.
+- P2 visual enhancements remain frozen.
