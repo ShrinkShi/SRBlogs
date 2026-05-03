@@ -139,6 +139,19 @@ body::before {
   -webkit-backdrop-filter: blur(22px) saturate(138%);
 }
 
+.page-title-block.sr-card,
+.page-title-block.glass {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.page-title-block.glass::after {
+  display: none;
+}
+
 .sr-card-hover {
   transition: transform .24s var(--motion-ease), border-color .24s var(--motion-ease), box-shadow .24s var(--motion-ease), background .24s var(--motion-ease);
   transform-origin: center;
@@ -378,7 +391,7 @@ body::before {
 
 .article-link-node {
   position: relative;
-  width: min(48%, 42rem);
+  width: min(34%, 28rem);
   min-width: 0;
 }
 
@@ -485,6 +498,20 @@ body::before {
   background: transparent;
   color: rgba(255,255,255,.9);
   box-shadow: none;
+}
+
+.volume-control {
+  display: flex;
+  width: min(100%, 18rem);
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+}
+
+.volume-slider {
+  min-width: 0;
+  flex: 1;
+  accent-color: var(--accent);
 }
 
 .record-disc {

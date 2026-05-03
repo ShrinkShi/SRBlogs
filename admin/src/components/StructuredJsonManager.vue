@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import { adminApi } from '@/api/admin'
@@ -316,9 +316,10 @@ onMounted(load)
 
       <Teleport to="body">
       <div v-if="modalOpen" class="fixed inset-0 z-[9990] grid place-items-center bg-slate-950/72 p-4 backdrop-blur-xl" @click.self="closeForm" @keydown.esc="closeForm">
-      <GlassCard class="max-h-[min(760px,calc(100vh-2rem))] w-full max-w-3xl overflow-auto">
+      <GlassCard class="flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden">
         <h2 class="text-xl font-black text-white">{{ isEditing ? '编辑' : '新增' }}{{ itemName }}</h2>
-        <div class="mt-5 grid gap-3">
+        <div class="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div class="grid gap-3">
           <label v-for="field in fields" :key="field.key" class="grid gap-2 text-sm text-white/68">
             <span>{{ field.label }}<b v-if="field.required" class="text-red-200"> *</b></span>
             <textarea
@@ -403,7 +404,8 @@ onMounted(load)
             />
           </label>
         </div>
-        <div class="mt-5 flex flex-wrap gap-2">
+        </div>
+        <div class="mt-4 flex shrink-0 flex-wrap gap-2 border-t border-white/10 pt-4">
           <button :disabled="saving" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:opacity-50" @click="saveForm">{{ saving ? '保存中...' : '保存' }}</button>
           <button class="rounded-2xl border border-white/10 px-5 py-3 text-white/70" @click="resetForm">清空</button>
           <button class="rounded-2xl border border-white/10 px-5 py-3 text-white/70" @click="closeForm">关闭</button>

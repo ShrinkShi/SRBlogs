@@ -645,3 +645,9 @@ Query：
 - 前台展示名称统一为“留言板”。接口路径仍保持 `/api/comments/...`，避免破坏既有数据和后台管理契约。
 - OAuth 未配置时，前台文案应面向访客，例如“站点暂未开启 GitHub 登录留言，请稍后再试或联系站点管理员。”，不得要求访客“配置后端”。
 - 本轮未新增接口；照片墙相册组和音乐歌词仍复用既有 `/api/photos`、`/api/music`、`/api/upload` 契约。
+
+## 2026-05-03 留言板与播放器补充
+
+- 前台留言板使用 `GET /api/auth/github/me` 判断 `{ configured, user }`。`configured=false` 时前台显示访客友好提示，不暴露 OAuth Secret 或服务端配置细节。
+- `POST /api/comments/{resource}/{slug}` 继续要求 GitHub 登录态；未登录返回 `401` 统一错误响应。
+- 首页和音乐页音量属于前端本地状态，不新增 API；音量和静音状态写入浏览器 `localStorage`。

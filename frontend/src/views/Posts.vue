@@ -51,7 +51,7 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
-    <GlassCard>
+    <GlassCard class="page-title-block">
       <div class="mx-auto max-w-3xl text-center">
         <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">archive</p>
         <h1 class="mt-2 text-4xl font-black text-white">文章归档</h1>
@@ -86,12 +86,12 @@ onMounted(load)
         :class="index % 2 === 0 ? 'article-link-left' : 'article-link-right'"
       >
         <GlassCard hover class="h-full overflow-hidden !p-0">
-          <article class="grid min-w-0 gap-4 md:grid-cols-[11rem_minmax(0,1fr)]">
-            <div class="relative h-44 overflow-hidden md:h-full">
+          <article class="flex h-full min-w-0 flex-col">
+            <div class="relative h-48 overflow-hidden">
               <SafeImage :src="item.meta.cover" :fallback="fallbackCover" :alt="item.meta.title" img-class="h-full w-full object-cover transition duration-300 hover:scale-[1.035]" />
               <div class="absolute inset-0 bg-gradient-to-b from-black/0 to-black/45"></div>
             </div>
-            <div class="flex min-h-[12rem] flex-col gap-3 p-5">
+            <div class="flex min-h-[14rem] flex-1 flex-col gap-3 p-5">
               <div class="flex flex-wrap items-center gap-2 text-xs text-white/45">
                 <span>{{ formatDate(item.meta.date) }}</span>
                 <span>{{ item.content.length }} chars</span>

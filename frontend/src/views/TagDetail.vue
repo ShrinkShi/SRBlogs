@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import GlassCard from '@/components/GlassCard.vue'
@@ -48,7 +48,7 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
-    <GlassCard class="text-center">
+    <GlassCard class="page-title-block text-center">
       <RouterLink to="/tags" class="text-sm text-cyan-100/70 hover:text-cyan-100">返回标签索引</RouterLink>
       <h1 class="mt-3 break-words text-4xl font-black text-white"># {{ tagName }}</h1>
       <div class="mt-4 flex flex-wrap justify-center gap-2">

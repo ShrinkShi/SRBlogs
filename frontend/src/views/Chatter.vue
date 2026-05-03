@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import PostList from '@/components/PostList.vue'
 import SearchBar from '@/components/SearchBar.vue'
@@ -38,7 +38,7 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
-    <GlassCard>
+    <GlassCard class="page-title-block">
       <div class="mx-auto max-w-3xl text-center">
         <p class="text-xs font-bold uppercase tracking-[.32em] text-fuchsia-100/45">chatters</p>
         <h1 class="mt-2 text-4xl font-black text-white">杂谈</h1>

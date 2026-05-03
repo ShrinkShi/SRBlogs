@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
@@ -53,7 +53,7 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
-    <GlassCard class="text-center">
+    <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-pink-100/45">photowall</p>
       <h1 class="mt-2 text-4xl font-black text-white">照片墙</h1>
       <p class="mt-3 text-white/56">图片记录从后端 JSON 动态读取，点击图片可放大预览。</p>

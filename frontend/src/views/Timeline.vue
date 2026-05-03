@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import MomentTimeline from '@/components/MomentTimeline.vue'
 import GlassCard from '@/components/GlassCard.vue'
@@ -24,7 +24,7 @@ onMounted(load)
 </script>
 <template>
   <section class="grid gap-5">
-    <GlassCard class="text-center">
+    <GlassCard class="page-title-block text-center">
       <h1 class="text-4xl font-black text-white">时间线</h1>
       <p class="mt-3 text-white/56">按时间查看公开动态。</p>
     </GlassCard>

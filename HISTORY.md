@@ -1,5 +1,50 @@
-# HISTORY
+﻿# HISTORY
 
+## 2026-05-03 - 留言板入口、标题轻量化与播放器音量收口轮
+
+本轮目标：
+- 修复前台留言板 GitHub 登录入口与访客视角未配置提示。
+- 修复照片墙相册编辑弹窗内容过长时无法滚动的问题。
+- 收口文章卡片标签沉底、中枢链路卡片比例、搜索/标题容器轻量化。
+- 为首页播放器和音乐页播放器增加共享全局音量、静音和 localStorage 持久化。
+
+当前进度估算：
+- P0：100%。
+- P1：98%，GitHub OAuth 真实授权仍需配置 Client ID/Secret 后做浏览器人工验收。
+- P2：约 93%，本轮完成列表页细节和播放器体验收口，仍需用户确认 390px 与真实浏览器视觉细节。
+
+前台变更：
+- `CommentBox` 重写为前台“留言板”组件：未登录时显示“使用 GitHub 登录后留言”，未配置 OAuth 时显示访客友好文案，不暴露后端、Secret、`.env` 等开发者信息。
+- 首页和 `/music` 播放器新增音量滑杆与静音按钮，复用 `player` 全局状态并写入 `localStorage`，切换页面后音量保持一致。
+- 搜索输入框恢复正常输入框样式，页面标题/搜索区域外层通过 `page-title-block` 取消厚重边框和背景填充。
+- 文章“中枢链路”模式卡片宽度收窄到约三分之一，并改为与矩阵网格一致的上图下文结构。
+- 文章、杂谈、搜索结果等卡片标签区使用 flex + `mt-auto` 固定靠近卡片底部。
+- 非首页主要页面标题区增加轻量化样式，不再使用大毛玻璃卡片包住标题。
+
+后台变更：
+- 结构化内容编辑弹窗改为 `max-height: 85vh`，主体内容可纵向滚动，照片墙相册组大量缩略图不会把操作按钮挤出屏幕。
+- 相册组编辑的增加、删除、拖动排序和设置封面逻辑保持不变。
+
+后端/API 变更：
+- 本轮未新增后端接口。
+- TestClient 验证：`GET /api/auth/github/me` 当前返回 `configured=false`，匿名留言提交继续返回 401。
+
+文档变更：
+- 更新 `HISTORY.md`、`docs/XINGHUI_PARITY_MATRIX.md`、`docs/UI_STYLE_GUIDE.md`、`docs/MANUAL_QA_CHECKLIST.md`、`docs/API_CONTRACT.md`、`docs/SECURITY_NOTES.md`、`docs/USER_GUIDE.md`、`README.md`。
+
+验证结果：
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`，仍有既有 chunk 体积提示。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient `GET /api/health` 返回 200。
+- 通过：FastAPI TestClient `GET /api/settings/public` 返回 200。
+- 通过：FastAPI TestClient `GET /api/auth/github/me` 返回 `{"configured":false,"user":null}`。
+- 通过：未登录 `POST /api/comments/posts/vue-fastapi-blog` 返回 401。
+- 通过：构建产物 Secret 固定字符串搜索未匹配 `change-me`、`please-change-this-secret`、`JWT_SECRET=`、`ADMIN_PASSWORD=`、`GITHUB_OAUTH_CLIENT_SECRET`、`AI_A_API_KEY`、`OSS_ACCESS_KEY_SECRET`。
+
+遗留问题：
+- 本轮未启动 dev server 做完整浏览器人工回归；前台留言板 GitHub 真实 OAuth 回跳、照片弹窗滚动、卡片沉底、中枢链路比例、标题轻量化、播放器音量控件和 390px 移动端仍需用户在浏览器中确认。
+- GitHub OAuth 真实 code flow 需要配置 Client ID/Secret 后才能完整验收。
 ## 2026-05-03 - 留言体系收口 + 相册后台编辑 + 列表页细节统一轮
 
 本轮目标：

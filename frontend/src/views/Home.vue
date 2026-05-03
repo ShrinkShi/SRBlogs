@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import ProfileCard from '@/components/ProfileCard.vue'
@@ -153,6 +153,10 @@ function formatTime(seconds: number) {
   return `${mins}:${secs}`
 }
 
+function setVolumeFromEvent(event: Event) {
+  player.setVolume(Number((event.target as HTMLInputElement).value))
+}
+
 onMounted(async () => {
   const [p, m, c, ph, s, mu] = await Promise.allSettled([
     contentApi.list('posts'),
@@ -213,16 +217,23 @@ onBeforeUnmount(() => {
               </div>
             </div>
           <div class="flex items-center justify-center gap-3">
-            <button type="button" class="icon-button" aria-label="上一首" @click="prevTrack">
+            <button type="button" class="icon-button" aria-label="previous track" @click="prevTrack">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h2v12H7zM18 6v12l-8.5-6z" /></svg>
             </button>
             <button type="button" class="icon-button icon-button-main" :aria-label="player.playing ? '暂停' : '播放'" @click="togglePlay">
               <svg v-if="player.playing" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
               <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
             </button>
-            <button type="button" class="icon-button" aria-label="下一首" @click="nextTrack">
+            <button type="button" class="icon-button" aria-label="next track" @click="nextTrack">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6h2v12h-2zM6 6l8.5 6L6 18z" /></svg>
             </button>
+          </div>
+          <div class="volume-control">
+            <button type="button" class="icon-button h-9 w-9" :aria-label="player.muted ? 'unmute' : 'mute'" @click="player.toggleMuted()">
+              <svg v-if="player.muted || player.volume <= 0" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.8 3 2.6-2.6-1.4-1.4-2.6 2.6-2.6-2.6-1.4 1.4L14 12l-2.6 2.6 1.4 1.4 2.6-2.6 2.6 2.6 1.4-1.4L16.8 12z" /></svg>
+              <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-9.2v2.1a7.5 7.5 0 0 1 0 14.2v2.1a9.5 9.5 0 0 0 0-18.4z" /></svg>
+            </button>
+            <input class="volume-slider" type="range" min="0" max="1" step="0.01" :value="player.muted ? 0 : player.volume" aria-label="volume" @input="setVolumeFromEvent" />
           </div>
           <p v-if="track && !track.url" class="text-xs text-amber-100/70">当前歌曲没有 URL，仅显示信息。</p>
           </div>

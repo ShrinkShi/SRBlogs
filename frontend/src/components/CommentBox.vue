@@ -5,6 +5,7 @@ import GlassCard from './GlassCard.vue'
 import type { CommentItem, SiteSettings } from '@/types'
 
 const props = defineProps<{ resource: 'posts' | 'moments' | 'chatters'; slug: string }>()
+
 const comments = ref<CommentItem[]>([])
 const settings = ref<SiteSettings | null>(null)
 const loading = ref(false)
@@ -12,7 +13,10 @@ const submitting = ref(false)
 const error = ref('')
 const success = ref('')
 const form = reactive({ content: '' })
-const github = ref<{ configured: boolean; user: null | { login: string; name?: string; avatar?: string; html_url?: string } }>({ configured: false, user: null })
+const github = ref<{ configured: boolean; user: null | { login: string; name?: string; avatar?: string; html_url?: string } }>({
+  configured: false,
+  user: null
+})
 const showDebug = import.meta.env.DEV
 
 const commentOptions = () => settings.value?.comments || {}
@@ -100,7 +104,7 @@ watch(() => props.slug, load)
         <div class="flex items-center justify-between gap-3 text-sm">
           <div class="flex min-w-0 items-center gap-3">
             <img v-if="item.avatar" :src="item.avatar" :alt="item.author" class="h-9 w-9 rounded-full" loading="lazy" />
-            <div v-else class="grid h-9 w-9 rounded-full bg-cyan-200/15 place-items-center text-xs font-black text-cyan-100">G</div>
+            <div v-else class="grid h-9 w-9 place-items-center rounded-full bg-cyan-200/15 text-xs font-black text-cyan-100">GH</div>
             <b class="truncate text-white/80">{{ item.githubLogin ? `@${item.githubLogin}` : item.author }}</b>
           </div>
           <span class="shrink-0 text-white/45">{{ item.created_at }}</span>
@@ -126,7 +130,7 @@ watch(() => props.slug, load)
             :maxlength="maxLength()"
             rows="4"
             class="w-full resize-none rounded-[22px] border border-white/10 bg-black/15 px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-cyan-300/60 disabled:cursor-not-allowed disabled:opacity-60"
-            placeholder="登录 GitHub 后写下留言..."
+            :placeholder="github.user ? '写下留言...' : '使用 GitHub 登录后留言...'"
           ></textarea>
           <div class="mt-2 flex flex-wrap items-center gap-3 text-xs">
             <span class="text-white/38">{{ form.content.length }} / {{ maxLength() }}</span>
@@ -137,10 +141,10 @@ watch(() => props.slug, load)
 
         <div class="grid gap-2">
           <div v-if="!github.configured" class="max-w-[16rem] rounded-2xl border border-amber-200/20 bg-amber-300/10 p-3 text-sm leading-6 text-amber-50/82">
-            站点暂未开启 GitHub 登录留言，请稍后再试或联系站点管理员。
+            站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。
           </div>
           <button v-else-if="!github.user" type="button" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950" @click="loginWithGithub">
-            使用 GitHub 登录
+            使用 GitHub 登录后留言
           </button>
           <template v-else>
             <button type="submit" :disabled="submitting" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">

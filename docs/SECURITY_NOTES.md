@@ -123,3 +123,10 @@
 - 前台只能读取 `/api/auth/github/me` 的 configured 状态和 GitHub 公开用户信息；OAuth Secret、access token、管理员 JWT 不得进入前端构建产物。
 - 留言板只是前台展示名称，后端仍使用既有 comments 存储；不得为了文案变化新增匿名提交旁路。
 - 音乐页和首页共享全局播放状态不应保存任何 Secret；歌词文件上传仍按文本类安全限制处理。
+
+## 2026-05-03 GitHub 留言与前台文案边界
+
+- 前台未配置 GitHub 留言时，只能提示访客“站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。”
+- 前台不得出现 `Secret`、`Client Secret`、`.env`、后端配置路径等开发者文案。
+- GitHub OAuth Client Secret 仍只能保存在后端 `.env` 或服务端配置中，构建产物不得包含该值。
+- 播放器音量设置仅保存在浏览器 localStorage，不属于敏感配置。
