@@ -67,7 +67,7 @@ onBeforeUnmount(() => {
         菜单
       </button>
 
-      <div class="hidden min-w-0 items-center gap-1 lg:flex">
+      <div class="hidden min-w-0 items-center gap-4 lg:flex xl:gap-7">
         <RouterLink
           v-for="link in links"
           :key="link[1]"

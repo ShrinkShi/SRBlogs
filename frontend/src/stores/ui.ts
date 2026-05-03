@@ -13,6 +13,8 @@ export const useUiStore = defineStore('ui', {
     clickSound: localStorage.getItem('sr-click-sound') !== 'off',
     clickSoundVolume: Number(localStorage.getItem('sr-click-volume') || '0.05'),
     clickSoundUrl: localStorage.getItem('sr-click-url') || '',
+    clickEffectAllowed: true,
+    clickEffect: localStorage.getItem('sr-click-effect') !== 'off',
     fontScale: (localStorage.getItem('sr-font-scale') || 'medium') as 'small' | 'medium' | 'large',
     toast: '',
     toastKind: 'info' as 'info' | 'success' | 'error'
@@ -49,14 +51,27 @@ export const useUiStore = defineStore('ui', {
       this.clickSound = !this.clickSound
       localStorage.setItem('sr-click-sound', this.clickSound ? 'on' : 'off')
     },
-    applyInteraction(config?: { clickSoundEnabled?: boolean; clickSoundVolume?: number; clickSoundUrl?: string }) {
+    toggleClickEffect() {
+      if (!this.clickEffectAllowed) return
+      this.clickEffect = !this.clickEffect
+      localStorage.setItem('sr-click-effect', this.clickEffect ? 'on' : 'off')
+    },
+    setClickEffect(enabled: boolean) {
+      if (!this.clickEffectAllowed && enabled) return
+      this.clickEffect = enabled
+      localStorage.setItem('sr-click-effect', enabled ? 'on' : 'off')
+    },
+    applyInteraction(config?: { clickSoundEnabled?: boolean; clickSoundVolume?: number; clickSoundUrl?: string; clickEffectEnabled?: boolean }) {
       if (!config) return
       this.clickSound = config.clickSoundEnabled !== false
       this.clickSoundVolume = Math.max(0, Math.min(1, Number(config.clickSoundVolume ?? 0.05)))
       this.clickSoundUrl = config.clickSoundUrl || ''
+      this.clickEffectAllowed = config.clickEffectEnabled !== false
+      this.clickEffect = this.clickEffectAllowed ? localStorage.getItem('sr-click-effect') !== 'off' : false
       localStorage.setItem('sr-click-sound', this.clickSound ? 'on' : 'off')
       localStorage.setItem('sr-click-volume', String(this.clickSoundVolume))
       localStorage.setItem('sr-click-url', this.clickSoundUrl)
+      localStorage.setItem('sr-click-effect', this.clickEffect ? 'on' : 'off')
     },
     setClickSoundVolume(volume: number) {
       this.clickSoundVolume = Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : this.clickSoundVolume))

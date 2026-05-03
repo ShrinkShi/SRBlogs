@@ -73,3 +73,10 @@
 - GitHub and QQ login flows must validate CSRF `state` before creating the visitor session cookie.
 - `POST /api/comments/{resource}/{slug}` must reject anonymous requests with `401`; anonymous local message submission must not be restored.
 - Visitor-facing unavailable-provider text must not mention `.env`, Secret, Client Secret, backend configuration, or internal deployment details.
+## 2026-05-03 Interaction And Page Layout Security
+
+- `/api/settings/public` 可以公开 `interaction.clickEffectEnabled`，但只能作为布尔站点开关，不得携带 Secret、管理员配置或调试信息。
+- 点击音效 URL 属于公开前台资源地址；如果使用上传资源，仍必须经过上传类型、MIME 和大小限制。
+- 页面编辑第一阶段保存的 `pageLayouts` 只能保存页面标题、副标题、说明和预览布局坐标，不得保存脚本、HTML 片段、Secret 或服务端路径。
+- 页面布局配置通过后台 settings 写入，仍需管理员 JWT；前台游客只能读取公开效果，不能写入布局配置。
+- 鼠标点击视觉特效只在前端渲染临时节点，不应记录用户点击内容，也不应向后端发送点击轨迹。

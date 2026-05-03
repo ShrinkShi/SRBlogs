@@ -1,3 +1,41 @@
+## 2026-05-03 Interaction And Page Layout Addendum
+
+`GET /api/settings/public` 的公开 `interaction` 字段包含：
+
+```json
+{
+  "interaction": {
+    "clickSoundEnabled": true,
+    "clickSoundVolume": 0.05,
+    "clickSoundUrl": "",
+    "clickEffectEnabled": true
+  }
+}
+```
+
+- `clickEffectEnabled` 只表示站点是否允许前台鼠标点击视觉特效。
+- 公开接口不得返回点击音效以外的私有配置，也不得返回任何 Secret。
+- 游客本地开关存储在浏览器 localStorage；站点级 `clickEffectEnabled=false` 时前端必须禁用游客覆盖。
+
+后台页面编辑第一阶段通过 `PUT /api/admin/settings` 保存 `pageLayouts` 配置，例如：
+
+```json
+{
+  "pageLayouts": {
+    "home": {
+      "title": "首页页面",
+      "subtitle": "首页页面的标题、副标题和预览布局。",
+      "note": "编辑首页名片和核心模块说明",
+      "blocks": [
+        { "id": "hero", "label": "标题区域", "x": 6, "y": 8, "w": 88, "h": 18 }
+      ]
+    }
+  }
+}
+```
+
+`pageLayouts` 属于后台页面编辑配置，不应包含 Secret，不替代文章、图片、音乐等业务数据。
+
 # API Contract
 
 ## 2026-05-03 工具箱与整合页 API 复用说明

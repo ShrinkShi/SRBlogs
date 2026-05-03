@@ -125,7 +125,8 @@ const form = reactive({
   interaction: {
     clickSoundEnabled: true,
     clickSoundVolume: 0.05,
-    clickSoundUrl: ''
+    clickSoundUrl: '',
+    clickEffectEnabled: true
   }
 })
 
@@ -208,6 +209,7 @@ function applySettings(data: AnySettings) {
   form.interaction.clickSoundEnabled = interaction.clickSoundEnabled !== false
   form.interaction.clickSoundVolume = Number(interaction.clickSoundVolume ?? 0.05)
   form.interaction.clickSoundUrl = interaction.clickSoundUrl || ''
+  form.interaction.clickEffectEnabled = interaction.clickEffectEnabled !== false
 
   jsonText.value = JSON.stringify(data, null, 2)
   secretInputs.githubOAuthSecret = ''
@@ -302,7 +304,8 @@ function buildPayload() {
     interaction: {
       clickSoundEnabled: form.interaction.clickSoundEnabled,
       clickSoundVolume: Number(form.interaction.clickSoundVolume || 0.05),
-      clickSoundUrl: form.interaction.clickSoundUrl
+      clickSoundUrl: form.interaction.clickSoundUrl,
+      clickEffectEnabled: form.interaction.clickEffectEnabled
     }
   }
 }
@@ -434,6 +437,7 @@ onMounted(load)
             <h3 class="font-black text-white">交互点击音效</h3>
             <div class="mt-4 grid gap-3 md:grid-cols-3">
               <label class="setting-check"><input v-model="form.interaction.clickSoundEnabled" type="checkbox" />启用音效</label>
+              <label class="setting-check"><input v-model="form.interaction.clickEffectEnabled" type="checkbox" />启用鼠标点击特效</label>
               <label class="field">音量<input v-model.number="form.interaction.clickSoundVolume" type="number" min="0" max="1" step="0.01" class="admin-input" /></label>
               <label class="field md:col-span-3">音效 URL<div class="flex gap-2"><input v-model="form.interaction.clickSoundUrl" class="admin-input min-w-0 flex-1" /><label class="admin-btn admin-btn-ghost cursor-pointer">上传<input type="file" accept="audio/*" class="hidden" @change="uploadInto('clickSound', ($event.target as HTMLInputElement).files)" /></label></div></label>
             </div>

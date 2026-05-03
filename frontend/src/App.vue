@@ -25,8 +25,11 @@ function applyTheme() {
   const tokens = mode === 'day' ? config.day : config.night
   root.dataset.colorMode = mode
   const preferredScale = ui.fontScale || config.fontScale
-  const scale = preferredScale === 'small' ? '15px' : preferredScale === 'large' ? '17px' : '16px'
-  root.style.setProperty('--app-font-size', scale)
+  const scalePx = preferredScale === 'small' ? '14.5px' : preferredScale === 'large' ? '18px' : '16px'
+  const scale = preferredScale === 'small' ? '0.9' : preferredScale === 'large' ? '1.15' : '1'
+  root.dataset.fontScale = preferredScale || 'medium'
+  root.style.setProperty('--app-font-size', scalePx)
+  root.style.setProperty('--app-font-scale', scale)
   if (config.fontFamily) root.style.setProperty('--app-font-family', config.fontFamily)
   const map: Record<string, string | undefined> = {
     '--bg-page': tokens?.bgPage,

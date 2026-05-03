@@ -41,15 +41,14 @@ const typeOptions: { label: string; value: DiscoveryType }[] = [
 ]
 
 const bgCount = computed(() => Math.max(props.settings?.bgImages?.length || 0, themes.length))
-const modalTitle = computed(() => {
-  if (activePanel.value === 'calculator') return '计算器'
-  if (activePanel.value === 'search') return '全局搜索'
-  if (activePanel.value === 'settings') return '游客设置'
-  return ''
-})
+const modalTitle = computed(() => activePanel.value === 'search' ? '全局搜索' : activePanel.value === 'settings' ? '游客设置' : '')
 
 function closeAll() {
   menuOpen.value = false
+  activePanel.value = null
+}
+
+function closePanel() {
   activePanel.value = null
 }
 
@@ -204,7 +203,7 @@ onBeforeUnmount(() => {
   <div data-toolbox-root class="fixed bottom-5 left-5 z-40">
     <div
       v-if="menuOpen"
-      class="mb-3 grid min-w-40 gap-2 rounded-[26px] border border-white/15 bg-slate-950/72 p-3 text-sm text-white/78 shadow-2xl backdrop-blur-2xl"
+      class="mb-3 grid min-w-40 gap-2 rounded-[26px] border border-white/15 bg-slate-950/82 p-3 text-sm text-white/82 shadow-2xl backdrop-blur-2xl"
     >
       <button type="button" class="toolbox-menu-item" @click="openPanel('calculator')">计算器</button>
       <button type="button" class="toolbox-menu-item" @click="openPanel('search')">全局搜索</button>
@@ -212,7 +211,7 @@ onBeforeUnmount(() => {
     </div>
     <button
       type="button"
-      class="grid h-14 w-14 place-items-center rounded-full border border-cyan-200/25 bg-slate-950/66 text-cyan-100 shadow-[0_18px_48px_rgba(0,0,0,.35),0_0_34px_rgba(103,232,249,.18)] backdrop-blur-2xl transition hover:scale-105"
+      class="grid h-14 w-14 place-items-center rounded-full border border-cyan-200/25 bg-slate-950/72 text-cyan-100 shadow-[0_18px_48px_rgba(0,0,0,.35),0_0_34px_rgba(103,232,249,.18)] backdrop-blur-2xl transition hover:scale-105"
       :aria-expanded="menuOpen"
       aria-label="打开工具箱"
       @click.stop="menuOpen = !menuOpen"
@@ -225,43 +224,57 @@ onBeforeUnmount(() => {
   </div>
 
   <Teleport to="body">
-    <div
-      v-if="activePanel"
+    <section
+      v-if="activePanel === 'calculator'"
       data-toolbox-modal
-      class="fixed inset-0 z-[90] grid place-items-center bg-black/62 p-4 backdrop-blur-sm"
+      class="fixed bottom-24 left-5 z-[92] grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[28px] border border-white/15 bg-slate-950/92 p-4 text-white shadow-2xl backdrop-blur-2xl"
+      role="dialog"
+      aria-label="计算器"
+      @click.stop
+    >
+      <header class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[.22em] text-cyan-100/45">calculator</p>
+          <h2 class="text-xl font-black">计算器</h2>
+        </div>
+        <button type="button" class="rounded-full border border-white/12 px-3 py-1.5 text-sm text-white/70 hover:bg-white/10" @click="closePanel">关闭</button>
+      </header>
+      <div class="rounded-[22px] border border-white/12 bg-white/[0.09] p-3">
+        <p class="min-h-6 break-all text-base text-white/80">{{ calculatorExpr || '0' }}</p>
+        <p class="mt-1 min-h-8 text-2xl font-black text-cyan-100">{{ calculatorResult }}</p>
+        <p v-if="calculatorError" class="mt-2 text-sm text-red-200">{{ calculatorError }}</p>
+      </div>
+      <div class="grid grid-cols-4 gap-2">
+        <button v-for="key in ['7','8','9','/','4','5','6','*','1','2','3','-','0','.','(',')']" :key="key" type="button" class="toolbox-key" @click="appendCalc(key)">{{ key }}</button>
+        <button type="button" class="toolbox-key" @click="backspaceCalc">退格</button>
+        <button type="button" class="toolbox-key" @click="appendCalc('+')">+</button>
+        <button type="button" class="toolbox-key" @click="clearCalc">清空</button>
+        <button type="button" class="toolbox-key toolbox-key-main" @click="calculate">=</button>
+      </div>
+    </section>
+
+    <div
+      v-if="activePanel === 'search' || activePanel === 'settings'"
+      data-toolbox-modal
+      class="fixed inset-0 z-[90] grid place-items-center bg-black/48 p-4 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      @click.self="closeAll"
+      @click.self="closePanel"
     >
-      <section class="toolbox-modal max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/15 bg-slate-950/82 text-white shadow-2xl backdrop-blur-2xl">
+      <section class="toolbox-modal max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/15 bg-slate-950/94 text-white shadow-2xl backdrop-blur-2xl">
         <header class="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-[.28em] text-cyan-100/45">toolbox</p>
             <h2 class="text-2xl font-black">{{ modalTitle }}</h2>
           </div>
-          <button type="button" class="rounded-full border border-white/12 px-3 py-2 text-sm text-white/70 hover:bg-white/10" @click="closeAll">关闭</button>
+          <button type="button" class="rounded-full border border-white/12 px-3 py-2 text-sm text-white/70 hover:bg-white/10" @click="closePanel">关闭</button>
         </header>
 
         <div class="max-h-[calc(88vh-5.5rem)] overflow-y-auto p-5">
-          <div v-if="activePanel === 'calculator'" class="mx-auto grid max-w-md gap-4">
-            <div class="rounded-[24px] border border-white/12 bg-white/[0.08] p-4">
-              <p class="min-h-7 break-all text-lg text-white/80">{{ calculatorExpr || '0' }}</p>
-              <p class="mt-2 min-h-8 text-3xl font-black text-cyan-100">{{ calculatorResult }}</p>
-              <p v-if="calculatorError" class="mt-2 text-sm text-red-200">{{ calculatorError }}</p>
-            </div>
-            <div class="grid grid-cols-4 gap-2">
-              <button v-for="key in ['7','8','9','/','4','5','6','*','1','2','3','-','0','.','(',')']" :key="key" type="button" class="toolbox-key" @click="appendCalc(key)">{{ key }}</button>
-              <button type="button" class="toolbox-key" @click="backspaceCalc">退格</button>
-              <button type="button" class="toolbox-key" @click="appendCalc('+')">+</button>
-              <button type="button" class="toolbox-key" @click="clearCalc">清空</button>
-              <button type="button" class="toolbox-key toolbox-key-main" @click="calculate">=</button>
-            </div>
-          </div>
-
-          <div v-else-if="activePanel === 'search'" class="grid gap-4">
-            <form class="mx-auto flex w-full max-w-3xl items-center gap-2 rounded-[22px] border border-white/14 bg-white/[0.30] px-3 py-2" @submit.prevent="runSearch">
-              <input v-model="searchQ" class="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45" placeholder="搜索标题、标签或内容..." aria-label="全局搜索关键词" />
-              <button type="submit" class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950/88 text-cyan-100" aria-label="搜索">
+          <div v-if="activePanel === 'search'" class="grid gap-4">
+            <form class="mx-auto flex w-full max-w-3xl items-center gap-2 rounded-[22px] border border-white/14 bg-white/[0.38] px-3 py-2" @submit.prevent="runSearch">
+              <input v-model="searchQ" class="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/52" placeholder="搜索标题、标签或内容..." aria-label="全局搜索关键词" />
+              <button type="submit" class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950/90 text-cyan-100" aria-label="搜索">
                 <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <circle cx="11" cy="11" r="7" />
                   <path d="m20 20-3.6-3.6" />
@@ -269,22 +282,22 @@ onBeforeUnmount(() => {
               </button>
             </form>
             <div class="flex flex-wrap justify-center gap-2">
-              <button v-for="option in typeOptions" :key="option.value" type="button" class="rounded-full border px-3 py-1 text-sm" :class="searchType === option.value ? 'border-cyan-200/50 bg-cyan-200/[0.16] text-cyan-100' : 'border-white/10 text-white/55 hover:bg-white/10'" @click="searchType = option.value; runSearch()">{{ option.label }}</button>
+              <button v-for="option in typeOptions" :key="option.value" type="button" class="rounded-full border px-3 py-1 text-sm" :class="searchType === option.value ? 'border-cyan-200/50 bg-cyan-200/[0.16] text-cyan-100' : 'border-white/10 text-white/60 hover:bg-white/10'" @click="searchType = option.value; runSearch()">{{ option.label }}</button>
             </div>
             <div v-if="tags.length" class="flex flex-wrap justify-center gap-2">
-              <button v-for="item in tags.slice(0, 14)" :key="item.tag" type="button" class="rounded-full border px-3 py-1 text-xs" :class="searchTag === item.tag ? 'border-fuchsia-200/50 bg-fuchsia-200/[0.16] text-fuchsia-100' : 'border-white/10 text-white/50 hover:bg-white/10'" @click="searchTag = searchTag === item.tag ? '' : item.tag; runSearch()"># {{ item.tag }} · {{ item.count }}</button>
+              <button v-for="item in tags.slice(0, 14)" :key="item.tag" type="button" class="rounded-full border px-3 py-1 text-xs" :class="searchTag === item.tag ? 'border-fuchsia-200/50 bg-fuchsia-200/[0.16] text-fuchsia-100' : 'border-white/10 text-white/55 hover:bg-white/10'" @click="searchTag = searchTag === item.tag ? '' : item.tag; runSearch()"># {{ item.tag }} / {{ item.count }}</button>
             </div>
             <StateBlock v-if="searchLoading" message="搜索中..." />
             <StateBlock v-else-if="searchError" title="搜索失败" :message="searchError" @retry="runSearch" />
             <div v-else-if="searchResult.items.length" class="grid gap-4 md:grid-cols-2">
-              <div v-for="item in searchResult.items" :key="`${item.type}-${item.url}-${item.title}`" @click.capture="closeAll">
+              <div v-for="item in searchResult.items" :key="`${item.type}-${item.url}-${item.title}`" @click.capture="closePanel">
                 <DiscoveryResultCard :item="item" />
               </div>
             </div>
-            <div v-else class="rounded-[24px] border border-white/12 bg-white/[0.07] p-5 text-center text-white/60">没有匹配内容。</div>
+            <div v-else class="rounded-[24px] border border-white/12 bg-white/[0.09] p-5 text-center text-white/64">没有匹配内容。</div>
           </div>
 
-          <div v-else-if="activePanel === 'settings'" class="grid gap-5 md:grid-cols-2">
+          <div v-else class="grid gap-5 md:grid-cols-2">
             <label class="toolbox-setting">
               <span>昼夜模式</span>
               <select :value="ui.colorMode" @change="ui.setColorMode(($event.target as HTMLSelectElement).value as 'day' | 'night')">
@@ -324,6 +337,14 @@ onBeforeUnmount(() => {
               <span>点击音效</span>
               <input type="checkbox" :checked="ui.clickSound" @change="ui.toggleClickSound" />
             </label>
+            <label v-if="ui.clickEffectAllowed" class="toolbox-setting toolbox-switch">
+              <span>鼠标点击特效</span>
+              <input type="checkbox" :checked="ui.clickEffect" @change="ui.toggleClickEffect" />
+            </label>
+            <div v-else class="toolbox-setting">
+              <span>鼠标点击特效</span>
+              <p class="text-sm text-white/55">站点已关闭，游客设置不可覆盖。</p>
+            </div>
             <label class="toolbox-setting">
               <span>点击音量</span>
               <input type="range" min="0" max="1" step="0.01" :value="ui.clickSoundVolume" @input="ui.setClickSoundVolume(Number(($event.target as HTMLInputElement).value))" />
@@ -356,8 +377,8 @@ onBeforeUnmount(() => {
   transform: scale(1.02);
 }
 .toolbox-key {
-  min-height: 3rem;
-  border-radius: 1rem;
+  min-height: 2.55rem;
+  border-radius: .95rem;
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.08);
   color: rgba(255,255,255,.82);
@@ -377,17 +398,17 @@ onBeforeUnmount(() => {
   gap: .55rem;
   border-radius: 1.25rem;
   border: 1px solid rgba(255,255,255,.1);
-  background: rgba(255,255,255,.065);
+  background: rgba(255,255,255,.08);
   padding: 1rem;
-  color: rgba(255,255,255,.76);
+  color: rgba(255,255,255,.78);
   font-size: .9rem;
 }
 .toolbox-setting select,
 .toolbox-setting input[type='range'] {
   min-width: 0;
   border-radius: .9rem;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(15,23,42,.72);
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(15,23,42,.84);
   padding: .55rem .7rem;
   color: white;
 }

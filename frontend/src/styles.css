@@ -376,7 +376,7 @@ body::before {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
+  gap: clamp(2rem, 4vw, 3.2rem);
   padding: .5rem 0;
 }
 
@@ -634,6 +634,10 @@ body::before {
 
   .article-link-mode::before {
     left: .35rem;
+  }
+
+  .article-link-mode {
+    gap: 1.65rem;
   }
 
   .article-link-node {

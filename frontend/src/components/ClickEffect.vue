@@ -48,7 +48,7 @@ function playClickSound() {
 function click(e: MouseEvent) {
   if (!isInteractive(e.target)) return
   playClickSound()
-  if (ui.ambience) {
+  if (ui.clickEffectAllowed && ui.clickEffect) {
     const node = document.createElement('span')
     node.className = 'click-spark'
     node.style.left = `${e.clientX}px`

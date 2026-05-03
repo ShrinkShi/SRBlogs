@@ -29,6 +29,13 @@ def _configured(value: Any) -> bool:
 
 def public_settings(data: dict[str, Any]) -> dict[str, Any]:
     settings = get_settings()
+    interaction = {
+        "clickSoundEnabled": True,
+        "clickSoundVolume": 0.05,
+        "clickSoundUrl": "",
+        "clickEffectEnabled": True,
+        **deepcopy(data.get("interaction") or {}),
+    }
     comments = deepcopy(data.get("comments") or {})
     gitalk = deepcopy(data.get("gitalkConfig") or comments.get("gitalk") or {})
     github_client_id = settings.github_oauth_client_id or gitalk.get("clientID", "")
@@ -84,7 +91,7 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "themeConfig": deepcopy(data.get("themeConfig") or {}),
         "bgImages": deepcopy(data.get("bgImages") or []),
         "cloudMusicIds": deepcopy(data.get("cloudMusicIds") or []),
-        "interaction": deepcopy(data.get("interaction") or {"clickSoundEnabled": True, "clickSoundVolume": 0.05, "clickSoundUrl": ""}),
+        "interaction": interaction,
         "githubOAuth": {
             "configured": github_login_configured,
             "clientIdConfigured": github_client_id_configured,

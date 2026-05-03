@@ -153,6 +153,7 @@ export interface SiteSettings {
     clickSoundEnabled?: boolean
     clickSoundVolume?: number
     clickSoundUrl?: string
+    clickEffectEnabled?: boolean
   }
   githubOAuth?: {
     configured?: boolean
