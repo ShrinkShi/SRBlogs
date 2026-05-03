@@ -28,6 +28,7 @@ function applyTheme() {
   const scalePx = preferredScale === 'small' ? '14.5px' : preferredScale === 'large' ? '18px' : '16px'
   const scale = preferredScale === 'small' ? '0.9' : preferredScale === 'large' ? '1.15' : '1'
   root.dataset.fontScale = preferredScale || 'medium'
+  root.style.fontSize = scalePx
   root.style.setProperty('--app-font-size', scalePx)
   root.style.setProperty('--app-font-scale', scale)
   if (config.fontFamily) root.style.setProperty('--app-font-family', config.fontFamily)

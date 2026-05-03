@@ -92,6 +92,8 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "bgImages": deepcopy(data.get("bgImages") or []),
         "cloudMusicIds": deepcopy(data.get("cloudMusicIds") or []),
         "interaction": interaction,
+        "pageText": deepcopy(data.get("pageText") or {}),
+        "pageLayouts": deepcopy(data.get("pageLayouts") or {}),
         "githubOAuth": {
             "configured": github_login_configured,
             "clientIdConfigured": github_client_id_configured,

@@ -1,9 +1,11 @@
 [
   {
-    "title": "知我",
-    "artist": "国风堂、哦漏",
+    "title": "探故知",
+    "artist": "浅影阿",
     "cover": "",
-    "url": "http://127.0.0.1:8000/uploads/828981da7a1a4b4e94512f76c4c85b55.mp4",
+    "url": "http://127.0.0.1:8000/uploads/88095774e9e249c4943aac729596f158.mp3",
+    "lyricUrl": "http://127.0.0.1:8000/uploads/53340d7773964bfb862c493774daf805.lrc",
+    "lyrics": "",
     "id": "",
     "sort": 0
   }

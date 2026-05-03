@@ -59,7 +59,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; overflow-x: hidden; }
+html { scroll-behavior: smooth; overflow-x: hidden; font-size: var(--app-font-size, 16px); }
 body {
   margin: 0;
   min-height: 100vh;
@@ -83,6 +83,15 @@ body::before {
   z-index: 0;
 }
 #app { min-height: 100vh; }
+
+.prose-sr,
+.markdown-body,
+.comment-board,
+.toolbox-modal,
+.sr-card,
+.glass-card {
+  font-size: calc(1rem * var(--app-font-scale, 1));
+}
 
 .sr-page-shell {
   width: min(calc(100% - 3rem), 80rem);
@@ -376,7 +385,7 @@ body::before {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: clamp(2rem, 4vw, 3.2rem);
+  gap: clamp(5rem, 10vw, 8rem);
   padding: .5rem 0;
 }
 
@@ -637,7 +646,7 @@ body::before {
   }
 
   .article-link-mode {
-    gap: 1.65rem;
+    gap: 4rem;
   }
 
   .article-link-node {

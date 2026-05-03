@@ -4,7 +4,7 @@ import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import CommentBox from '@/components/CommentBox.vue'
 import { contentApi } from '@/api/content'
-import type { PhotoAlbum, PhotoItem } from '@/types'
+import type { PhotoAlbum, PhotoItem, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 
 type AlbumView = PhotoAlbum & { slug: string }
@@ -15,7 +15,10 @@ const active = ref<PhotoItem | null>(null)
 const viewMode = ref<'grid' | 'link'>('grid')
 const loading = ref(false)
 const error = ref('')
-useSeo({ title: '图片', description: 'SRBlogs 的相册、图片记录和预览。', path: '/photowall' })
+const settings = ref<SiteSettings | null>(null)
+const title = computed(() => settings.value?.pageText?.photos?.title || '图片')
+const subtitle = computed(() => settings.value?.pageText?.photos?.subtitle || '相册记录从后端 JSON 动态读取，点击封面可查看组内照片。')
+useSeo({ title: () => title.value, description: () => subtitle.value, path: '/photowall' })
 
 function slugify(value: string, fallback: string) {
   const slug = value
@@ -56,6 +59,7 @@ async function load() {
   error.value = ''
   try {
     rawPhotos.value = await contentApi.json<Array<PhotoItem | PhotoAlbum>>('/photos')
+    settings.value = await contentApi.json<SiteSettings>('/settings/public')
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '照片加载失败'
   } finally {
@@ -70,8 +74,8 @@ onMounted(load)
   <section class="grid gap-5">
     <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-pink-100/45">photowall</p>
-      <h1 class="mt-2 text-4xl font-black text-white">图片</h1>
-      <p class="mt-3 text-white/56">相册记录从后端 JSON 动态读取，点击封面可查看组内照片。</p>
+      <h1 class="mt-2 text-4xl font-black text-white">{{ title }}</h1>
+      <p class="mt-3 text-white/56">{{ subtitle }}</p>
       <div class="mt-5 inline-flex rounded-full bg-white/[0.05] p-1">
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'grid' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'grid'">矩阵网格</button>
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'link' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'link'">中枢链路</button>

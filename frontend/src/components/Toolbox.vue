@@ -256,12 +256,12 @@ onBeforeUnmount(() => {
     <div
       v-if="activePanel === 'search' || activePanel === 'settings'"
       data-toolbox-modal
-      class="fixed inset-0 z-[90] grid place-items-center bg-black/48 p-4 backdrop-blur-sm"
+      class="fixed inset-0 z-[90] grid place-items-center bg-black/68 p-4 backdrop-blur-md"
       role="dialog"
       aria-modal="true"
       @click.self="closePanel"
     >
-      <section class="toolbox-modal max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/15 bg-slate-950/94 text-white shadow-2xl backdrop-blur-2xl">
+      <section class="toolbox-modal max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/15 bg-slate-950/[0.98] text-white shadow-2xl backdrop-blur-2xl">
         <header class="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-[.28em] text-cyan-100/45">toolbox</p>
@@ -333,10 +333,14 @@ onBeforeUnmount(() => {
               <span>弹幕背景</span>
               <input type="checkbox" :checked="ui.danmaku" @change="ui.toggleDanmaku" />
             </label>
-            <label class="toolbox-setting toolbox-switch">
+            <label v-if="ui.clickSoundAllowed" class="toolbox-setting toolbox-switch">
               <span>点击音效</span>
               <input type="checkbox" :checked="ui.clickSound" @change="ui.toggleClickSound" />
             </label>
+            <div v-else class="toolbox-setting">
+              <span>点击音效</span>
+              <p class="text-sm text-white/55">站点已关闭，游客设置不可覆盖。</p>
+            </div>
             <label v-if="ui.clickEffectAllowed" class="toolbox-setting toolbox-switch">
               <span>鼠标点击特效</span>
               <input type="checkbox" :checked="ui.clickEffect" @change="ui.toggleClickEffect" />
@@ -345,7 +349,7 @@ onBeforeUnmount(() => {
               <span>鼠标点击特效</span>
               <p class="text-sm text-white/55">站点已关闭，游客设置不可覆盖。</p>
             </div>
-            <label class="toolbox-setting">
+            <label v-if="ui.clickSoundAllowed" class="toolbox-setting">
               <span>点击音量</span>
               <input type="range" min="0" max="1" step="0.01" :value="ui.clickSoundVolume" @input="ui.setClickSoundVolume(Number(($event.target as HTMLInputElement).value))" />
             </label>
@@ -398,7 +402,7 @@ onBeforeUnmount(() => {
   gap: .55rem;
   border-radius: 1.25rem;
   border: 1px solid rgba(255,255,255,.1);
-  background: rgba(255,255,255,.08);
+  background: rgba(255,255,255,.13);
   padding: 1rem;
   color: rgba(255,255,255,.78);
   font-size: .9rem;

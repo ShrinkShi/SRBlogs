@@ -16,7 +16,9 @@ const activeTab = ref<'lyrics' | 'playlist'>('lyrics')
 const lyricText = ref('')
 const player = usePlayerStore()
 
-useSeo({ title: '音乐', description: 'SRBlogs 的公开歌单和音乐播放入口。', path: '/music' })
+const pageTitle = computed(() => settings.value?.pageText?.music?.title || '音乐歌单')
+const pageSubtitle = computed(() => settings.value?.pageText?.music?.subtitle || '左侧控制播放，右侧查看歌词和歌单。')
+useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/music' })
 
 const sortedTracks = computed(() => [...tracks.value].sort((a, b) => Number(a.sort ?? 0) - Number(b.sort ?? 0)))
 const currentTrack = computed(() => player.track || sortedTracks.value[0])
@@ -99,8 +101,8 @@ onMounted(load)
     <GlassCard class="page-title-block">
       <div class="mx-auto max-w-3xl text-center">
         <p class="text-xs font-bold uppercase tracking-[.32em] text-fuchsia-100/45">music</p>
-        <h1 class="mt-2 text-4xl font-black text-white">音乐歌单</h1>
-        <p class="mt-3 text-white/56">左侧控制播放，右侧查看歌词和歌单。公开音乐配置：{{ settings?.cloudMusicIds?.join(' / ') || '未配置' }}</p>
+        <h1 class="mt-2 text-4xl font-black text-white">{{ pageTitle }}</h1>
+        <p class="mt-3 text-white/56">{{ pageSubtitle }} 公开音乐配置：{{ settings?.cloudMusicIds?.join(' / ') || '未配置' }}</p>
       </div>
     </GlassCard>
 

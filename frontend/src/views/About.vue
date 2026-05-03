@@ -1,18 +1,27 @@
 ﻿<script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { contentApi } from '@/api/content'
 import { useSeo } from '@/composables/useSeo'
+import type { SiteSettings } from '@/types'
 const content = ref('')
 const loading = ref(true)
 const error = ref('')
-useSeo({ title: '关于', description: '关于 SRBlogs 和站点作者。', path: '/about' })
+const settings = ref<SiteSettings | null>(null)
+const pageTitle = computed(() => settings.value?.pageText?.about?.title || '关于')
+const pageSubtitle = computed(() => settings.value?.pageText?.about?.subtitle || '关于 SRBlogs 与站点作者。')
+useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/about' })
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    content.value = (await contentApi.about()).content
+    const [aboutData, publicSettings] = await Promise.all([
+      contentApi.about(),
+      contentApi.json<SiteSettings>('/settings/public')
+    ])
+    content.value = aboutData.content
+    settings.value = publicSettings
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '关于页面加载失败'
   } finally {
@@ -25,8 +34,8 @@ onMounted(load)
   <section class="grid gap-5">
     <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">about</p>
-      <h1 class="mt-2 text-4xl font-black text-white">关于</h1>
-      <p class="mt-3 text-white/56">关于 SRBlogs 与站点作者。</p>
+      <h1 class="mt-2 text-4xl font-black text-white">{{ pageTitle }}</h1>
+      <p class="mt-3 text-white/56">{{ pageSubtitle }}</p>
     </GlassCard>
     <GlassCard v-if="loading"><p class="text-white/60">关于页面加载中...</p></GlassCard>
     <GlassCard v-else-if="error">

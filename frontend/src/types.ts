@@ -155,6 +155,17 @@ export interface SiteSettings {
     clickSoundUrl?: string
     clickEffectEnabled?: boolean
   }
+  pageText?: Record<string, {
+    title?: string
+    subtitle?: string
+    description?: string
+  }>
+  pageLayouts?: Record<string, {
+    title?: string
+    subtitle?: string
+    note?: string
+    blocks?: Array<{ id: string; label?: string; x: number; y: number; w: number; h: number }>
+  }>
   githubOAuth?: {
     configured?: boolean
   }

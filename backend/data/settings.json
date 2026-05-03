@@ -140,10 +140,87 @@
   "interaction": {
     "clickSoundEnabled": true,
     "clickSoundVolume": 0.05,
-    "clickSoundUrl": ""
+    "clickSoundUrl": "",
+    "clickEffectEnabled": true
   },
   "qqOAuth": {
     "appID": "1112507606",
     "appSecret": ""
+  },
+  "pageText": {
+    "home": {
+      "title": "首页",
+      "subtitle": "名片、音乐、歌词、轮播与状态区。"
+    },
+    "posts": {
+      "title": "文章归档",
+      "subtitle": "从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。"
+    },
+    "photos": {
+      "title": "图片",
+      "subtitle": "相册记录从后端 JSON 动态读取，点击封面可查看组内照片。"
+    },
+    "music": {
+      "title": "音乐歌单",
+      "subtitle": "全局播放器、歌词和歌单共享同一播放状态。"
+    },
+    "projects": {
+      "title": "项目",
+      "subtitle": "记录正在构建和已经完成的作品。"
+    },
+    "friends": {
+      "title": "友链",
+      "subtitle": "把值得长期访问的站点放在这里。"
+    },
+    "about": {
+      "title": "关于",
+      "subtitle": "关于 SRBlogs 与站点作者。"
+    }
+  },
+  "pageLayouts": {
+    "home": {
+      "blocks": [
+        {
+          "id": "profile",
+          "label": "名片",
+          "x": 4,
+          "y": 6,
+          "w": 42,
+          "h": 24
+        },
+        {
+          "id": "music",
+          "label": "音乐播放器",
+          "x": 50,
+          "y": 6,
+          "w": 46,
+          "h": 24
+        },
+        {
+          "id": "lyrics",
+          "label": "歌词区",
+          "x": 4,
+          "y": 34,
+          "w": 92,
+          "h": 14
+        },
+        {
+          "id": "carousel",
+          "label": "轮播区",
+          "x": 4.175443950452302,
+          "y": 64.57576682350853,
+          "w": 92,
+          "h": 30
+        },
+        {
+          "id": "status",
+          "label": "底部状态",
+          "x": 4.087713944284539,
+          "y": 51.606051358309664,
+          "w": 92,
+          "h": 10
+        }
+      ]
+    }
   }
 }

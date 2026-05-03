@@ -116,6 +116,16 @@ const progressPercent = computed(() => player.duration ? `${Math.min(100, (playe
 const recordStyle = computed<Record<string, string>>(() => (
   track.value?.cover ? { '--record-cover': `url(${track.value.cover})` } : {} as Record<string, string>
 ))
+const homeBlocks = computed(() => settings.value?.pageLayouts?.home?.blocks || [])
+
+function homeBlockStyle(id: string) {
+  const block = homeBlocks.value.find((item) => item.id === id)
+  if (!block) return {}
+  return {
+    order: Math.round(block.y),
+    minHeight: `${Math.max(54, block.h * 4.2)}px`
+  }
+}
 
 function setPost(index: number) {
   if (postSlides.value.length) postIndex.value = index % postSlides.value.length
@@ -193,13 +203,14 @@ onBeforeUnmount(() => {
     <div class="home-asymmetric-grid">
       <ProfileCard
         class="min-w-0 max-w-full"
+        :style="homeBlockStyle('profile')"
         :settings="settings"
         :posts="posts.length"
         :chatters="chatters.length"
         :photos="photoCount || settings?.counts?.photos || 0"
       />
 
-      <GlassCard hover class="music-compact-card min-w-0">
+      <GlassCard hover class="music-compact-card min-w-0" :style="homeBlockStyle('music')">
         <div class="music-compact-layout">
           <div class="record-disc music-compact-disc rounded-full" :class="{ playing: player.playing }" :style="recordStyle" aria-hidden="true"></div>
           <div class="grid min-w-0 content-center justify-items-center gap-4 text-center">
@@ -241,13 +252,13 @@ onBeforeUnmount(() => {
       </GlassCard>
     </div>
 
-    <GlassCard hover class="sr-hero-panel lyrics-compact">
+    <GlassCard hover class="sr-hero-panel lyrics-compact" :style="homeBlockStyle('lyrics')">
       <div class="flex min-h-[38px] flex-col items-center justify-center text-center">
         <p class="max-w-full truncate px-2 font-black leading-tight text-white/78" :style="lyricStyle">{{ lyricLine }}</p>
       </div>
     </GlassCard>
 
-    <div class="home-carousel-layout">
+    <div class="home-carousel-layout" :style="homeBlockStyle('carousel')">
       <RouterLink
         v-if="currentPost"
         :to="`/posts/${currentPost.slug}`"
@@ -304,7 +315,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <GlassCard hover>
+    <GlassCard hover :style="homeBlockStyle('status')">
       <div class="home-status-grid">
         <div class="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
           <p class="text-xs uppercase tracking-[.24em] text-white/38">beijing time</p>

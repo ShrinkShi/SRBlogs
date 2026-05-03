@@ -1,21 +1,29 @@
 ﻿<script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import { contentApi } from '@/api/content'
-import type { FriendItem } from '@/types'
+import type { FriendItem, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 
 const friends = ref<FriendItem[]>([])
 const loading = ref(false)
 const error = ref('')
-useSeo({ title: '友链', description: 'SRBlogs 的朋友站点和推荐链接。', path: '/friends' })
+const settings = ref<SiteSettings | null>(null)
+const pageTitle = computed(() => settings.value?.pageText?.friends?.title || '星际友链')
+const pageSubtitle = computed(() => settings.value?.pageText?.friends?.subtitle || '朋友站点、项目站点和个人链接会从后端 JSON 动态读取。')
+useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/friends' })
 
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    friends.value = await contentApi.json<FriendItem[]>('/friends')
+    const [friendData, publicSettings] = await Promise.all([
+      contentApi.json<FriendItem[]>('/friends'),
+      contentApi.json<SiteSettings>('/settings/public')
+    ])
+    friends.value = friendData
+    settings.value = publicSettings
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '友链加载失败'
   } finally {
@@ -30,8 +38,8 @@ onMounted(load)
   <section class="grid gap-5">
     <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">friends</p>
-      <h1 class="mt-2 text-4xl font-black text-white">星际友链</h1>
-      <p class="mt-3 text-white/56">朋友站点、项目站点和个人链接会从后端 JSON 动态读取。</p>
+      <h1 class="mt-2 text-4xl font-black text-white">{{ pageTitle }}</h1>
+      <p class="mt-3 text-white/56">{{ pageSubtitle }}</p>
     </GlassCard>
 
     <GlassCard v-if="loading">

@@ -12,7 +12,7 @@ function isInteractive(target: EventTarget | null) {
 }
 
 function playClickSound() {
-  if (!ui.clickSound) return
+  if (!ui.clickSoundAllowed || !ui.clickSound) return
   const now = performance.now()
   if (now - lastSound < 90) return
   lastSound = now
@@ -46,8 +46,7 @@ function playClickSound() {
 }
 
 function click(e: MouseEvent) {
-  if (!isInteractive(e.target)) return
-  playClickSound()
+  if (isInteractive(e.target)) playClickSound()
   if (ui.clickEffectAllowed && ui.clickEffect) {
     const node = document.createElement('span')
     node.className = 'click-spark'

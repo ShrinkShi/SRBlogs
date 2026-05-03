@@ -1,21 +1,29 @@
 ﻿<script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import { contentApi } from '@/api/content'
-import type { ProjectItem } from '@/types'
+import type { ProjectItem, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 
 const projects = ref<ProjectItem[]>([])
 const loading = ref(false)
 const error = ref('')
-useSeo({ title: '项目', description: 'SRBlogs 的项目陈列、技术栈和链接。', path: '/projects' })
+const settings = ref<SiteSettings | null>(null)
+const pageTitle = computed(() => settings.value?.pageText?.projects?.title || '项目陈列柜')
+const pageSubtitle = computed(() => settings.value?.pageText?.projects?.subtitle || '项目数据来自后端 JSON，可在后台表单化维护。')
+useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/projects' })
 
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    projects.value = await contentApi.json<ProjectItem[]>('/projects')
+    const [projectData, publicSettings] = await Promise.all([
+      contentApi.json<ProjectItem[]>('/projects'),
+      contentApi.json<SiteSettings>('/settings/public')
+    ])
+    projects.value = projectData
+    settings.value = publicSettings
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '项目加载失败'
   } finally {
@@ -30,8 +38,8 @@ onMounted(load)
   <section class="grid gap-5">
     <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">projects</p>
-      <h1 class="mt-2 text-4xl font-black text-white">项目陈列柜</h1>
-      <p class="mt-3 text-white/56">项目数据来自后端 JSON，可在后台表单化维护。</p>
+      <h1 class="mt-2 text-4xl font-black text-white">{{ pageTitle }}</h1>
+      <p class="mt-3 text-white/56">{{ pageSubtitle }}</p>
     </GlassCard>
 
     <GlassCard v-if="loading">
