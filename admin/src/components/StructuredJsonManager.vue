@@ -316,7 +316,7 @@ onMounted(load)
 
       <Teleport to="body">
       <div v-if="modalOpen" class="fixed inset-0 z-[9990] flex items-center justify-center overflow-hidden bg-slate-950/72 p-4 backdrop-blur-xl" @click.self="closeForm" @keydown.esc="closeForm">
-      <GlassCard class="flex w-full max-w-5xl flex-col overflow-hidden" style="height: 85vh; max-height: 85vh;">
+      <div class="glass flex w-full max-w-5xl flex-col overflow-hidden rounded-[30px] p-5 md:p-6" style="height: 85vh; max-height: 85vh;">
         <h2 class="shrink-0 text-xl font-black text-white">{{ isEditing ? '编辑' : '新增' }}{{ itemName }}</h2>
         <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-2">
         <div class="grid gap-3">
@@ -366,7 +366,7 @@ onMounted(load)
               <div v-if="uploadProgress[field.key]" class="h-2 rounded-full bg-white/10">
                 <div class="h-full rounded-full bg-cyan-300" :style="{ width: uploadProgress[field.key] + '%' }"></div>
               </div>
-              <div v-if="galleryItems(field.key).length" class="grid gap-2 sm:grid-cols-2">
+              <div v-if="galleryItems(field.key).length" class="grid auto-rows-max gap-3 sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]">
                 <div
                   v-for="(photo, photoIndex) in galleryItems(field.key)"
                   :key="`${photoIndex}-${photo.url}`"
@@ -376,9 +376,11 @@ onMounted(load)
                   @dragover.prevent
                   @drop="onGalleryDrop(field.key, photoIndex)"
                 >
-                  <div class="relative overflow-hidden rounded-xl">
-                    <img v-if="photo.url" :src="String(photo.url)" alt="" class="h-28 w-full object-cover" />
+                  <div class="relative overflow-hidden rounded-xl bg-slate-950/55">
+                    <img v-if="photo.url" :src="String(photo.url)" alt="" class="h-[90px] w-full object-cover" loading="lazy" />
+                    <div v-else class="grid h-[90px] place-items-center text-xs text-white/40">无图片</div>
                     <span v-if="form.cover === photo.url || (!form.cover && photoIndex === 0)" class="absolute left-2 top-2 rounded-full bg-cyan-300 px-2 py-1 text-[10px] font-bold text-slate-950">封面</span>
+                    <span class="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-1 text-[10px] text-white/72">拖动排序</span>
                   </div>
                   <input
                     :value="String(photo.url || '')"
@@ -410,7 +412,7 @@ onMounted(load)
           <button class="rounded-2xl border border-white/10 px-5 py-3 text-white/70" @click="resetForm">清空</button>
           <button class="rounded-2xl border border-white/10 px-5 py-3 text-white/70" @click="closeForm">关闭</button>
         </div>
-      </GlassCard>
+      </div>
       </div>
       </Teleport>
     </div>

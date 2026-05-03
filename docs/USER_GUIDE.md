@@ -214,3 +214,8 @@
 - 如果站点暂未开启 GitHub 留言，前台只显示“站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。”，不会向访客展示服务端配置细节。
 - 后台设置页只负责 GitHub OAuth 配置状态和 Secret 边界，不作为访客登录入口。
 - 后台评论设置里“开启留言板”控制全站留言板显示；“启用 GitHub 登录留言”和 OAuth configured 状态共同决定前台是否显示 GitHub 登录按钮。
+## 2026-05-03 Album Editing Note
+
+- In `/admin/photos`, create and edit album forms open in a viewport-constrained modal.
+- If an album has many photos, scroll the modal body to review the whole photo grid and then use the footer save/close buttons.
+- Each photo preview keeps a stable thumbnail size. Use batch upload to add photos, delete to remove one photo, drag/drop or up/down to sort, and set cover to choose the album cover.

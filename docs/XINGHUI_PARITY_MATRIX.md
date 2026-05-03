@@ -446,3 +446,8 @@ Windows 本地启动命令：
 | 性能/可访问性/体验稳定 | 图片性能、移动端可读性、错误兜底、键盘可访问性、构建体积可控 | 已补 SafeImage 图片懒加载/兜底、StateBlock 通用状态、照片预览关闭能力、评论表单 label、前台导航/播放器/背景控制 aria、后台侧栏窄屏滚动和输入 aria；性能稳定轮已通过验证，构建体积已记录，Markdown 相关 chunk 仍需后续观察 | P1 | 性能、可访问性与体验稳定轮 | 已完成 | 前后台主要页面稳定性、错误兜底、移动端基础适配、图片失败兜底和可访问性基础修复已通过验证；后续仅保留体积优化观察项 |
 | 审计日志与备份恢复 | 后台操作审计、数据备份、下载、恢复、导入导出 | 已新增审计日志服务、`/admin/audit`、手动备份服务、`/admin/backups`、下载、恢复、导出和导入 API；恢复前自动创建 pre-restore 备份；备份 zip 排除 `.env` 和 Secret 字段；API 级验证和用户人工验收均已通过 | P0 | 管理端审计日志与数据备份恢复轮 | 已完成 | 后台审计日志、备份列表、手动备份、下载、恢复、恢复前备份和高风险操作审计均已通过人工验收 |
 | P2 视觉增强 | 樱花、萤火、弹幕、动态背景细节、悬浮音乐细节、卡片动效和主题装饰 | 已有基础毛玻璃、背景和播放器氛围；已完成统一 token、卡片/按钮/标签动效、文章阅读层次、后台控制台样式、氛围开关、铺满式顶栏、首页结构追平、昼夜模式卡片、设置中心主题 token、三列列表页、音乐页双栏、文章中枢链路和留言板样式 | P2 | P2 视觉统一与氛围增强轮 / P2 首页结构追平轮 / P2 列表页统一改版轮 | 进行中 | 当前 P2 约 92%；需继续完成浏览器人工回归，确认留言板、相册编辑、文章双模式、390px 和后台设置页不影响 P0/P1 |
+## 2026-05-03 Album Modal Scroll Focused Status
+
+- Photo wall admin remains `in progress / browser QA required` for this focused visual-operability fix until the user confirms the create/edit album modal scrolls correctly.
+- Implemented: modal shell owns `85vh`; body scrolls; album photo area grows naturally; thumbnails are stable size; upload/delete/sort/cover controls are preserved.
+- Progress estimate after this fix: P0 100%, P1 99%, P2 95%.

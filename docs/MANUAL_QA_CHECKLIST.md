@@ -430,3 +430,12 @@
 - [ ] `deploy/srblogs-backend.service` 和 deploy 脚本不包含本机 Windows 绝对路径。
 - [ ] 真实服务器、域名和 HTTPS 实操如未执行，应在矩阵中标记为 `部署实操待执行`，不得标记为完全完成。
 - [ ] P2 视觉增强按本轮视觉回归清单继续推进，不引入大型动画库、不做 3D、不破坏 P0/P1。
+## 2026-05-03 Album Modal Scroll Focused QA
+
+- [ ] `/admin/photos` create album modal is constrained to the viewport and has a visible modal-body scrollbar when content is long.
+- [ ] `/admin/photos` edit album modal can scroll through all album fields and all album photos.
+- [ ] Album photos area does not have its own clipped fixed-height preview panel; the photo grid grows naturally.
+- [ ] Photo thumbnails keep stable preview size and do not let large images stretch the modal.
+- [ ] Save/clear/close controls remain reachable after scrolling.
+- [ ] Batch upload, delete photo, move/sort, drag/drop, and set cover still work.
+- [ ] 390px width can still scroll and operate the album modal.

@@ -1909,3 +1909,31 @@ API 实测结果：
 - 文章详情动态 title/meta/og 随文章变化、文章详情复制链接可用、RSS 入口可见仍需用户浏览器人工验收。
 - 本轮未做 SSR，因此搜索引擎对 SPA 运行时 meta 的抓取能力取决于爬虫是否执行 JavaScript；RSS/Sitemap/robots 已由后端直接提供。
 - SEO/订阅/分享矩阵项保持 `进行中`，不得标记为 `已完成`，直到人工验收通过。
+## 2026-05-03 - Album modal scroll focused fix
+
+Scope:
+- Focused fix for `/admin/photos` create/edit album modal only.
+- No new business module and no frontend route redesign.
+
+Progress:
+- P0: 100%.
+- P1: 99%.
+- P2: 95%.
+
+Changes:
+- Replaced the album edit modal wrapper from `GlassCard` to a direct `glass` flex container so header, scroll body, and footer are real flex children.
+- Modal height is constrained to `85vh`; the middle form body owns `overflow-y:auto`.
+- Album photo grid no longer owns a fixed clipped height. It grows naturally and scrolls through the modal body.
+- Photo thumbnails now use a stable 90px preview height with `object-cover`, a cover badge, and drag hint.
+- Batch upload, delete, move/drop sorting, cover selection, save, and close controls are preserved.
+
+Validation:
+- Passed: `cd frontend && npm run build`.
+- Passed: `cd admin && npm run build`.
+- Passed: `python -m compileall backend\app`.
+- Passed: frontend/admin dist Secret scan.
+
+Remaining manual QA:
+- Browser check for `/admin/photos` create album modal scrolling.
+- Browser check for `/admin/photos` edit album modal scrolling.
+- Browser check that all album photos are visible through the modal right-side scroll area at desktop and 390px.

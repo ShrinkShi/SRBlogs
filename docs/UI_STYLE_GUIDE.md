@@ -212,3 +212,9 @@ P2 视觉增强只有在以下检查通过后才可继续提升状态：
 - 搜索框本体保留清晰输入框样式；搜索区和页面标题区外层保持轻量，不使用厚重边框和大面积毛玻璃背景。
 - 搜索框不使用额外文字标签，右侧使用深色图标按钮；桌面端宽度应接近内容区 80%，移动端占满可用宽度。
 - 后台弹窗类编辑器应限制在视口内，头尾操作区可见，中间内容滚动，避免相册缩略图被裁切。
+## 2026-05-03 Admin Album Modal Rule
+
+- Admin create/edit modals that contain media grids should use one viewport-constrained shell, one scrollable body, and a reachable footer action row.
+- Media grid sections must grow naturally. Do not put fixed-height clipping containers around album photo previews.
+- Album thumbnails should use stable preview dimensions and `object-fit: cover`; large source images must not stretch the modal.
+- Scrolling should happen at the modal body level, not inside each small photo section.
