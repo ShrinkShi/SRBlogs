@@ -657,5 +657,26 @@ Query：
 - OAuth 未配置时该接口返回统一错误结构，不返回 Client Secret、OAuth Secret、`.env` 路径或 access token。
 - `GET /api/auth/github/me` 返回 `{ "configured": boolean, "user": null | { "login": string, "name": string, "avatar": string, "html_url": string } }`，不返回 access token。
 - `POST /api/comments/{resource}/{slug}` 必须有 GitHub 登录态；未登录返回 `401`，旧留言仍可公开读取。
+
+## 2026-05-03 留言板公开配置契约
+
+`GET /api/settings/public` 的 `comments` 字段固定为公开布尔状态，不返回 Secret：
+
+```json
+{
+  "comments": {
+    "enabled": true,
+    "provider": "github",
+    "githubLoginEnabled": true,
+    "githubLoginConfigured": true,
+    "maxLength": 1000
+  }
+}
+```
+
+- `enabled=false`：前台显示“留言板暂时关闭”。
+- `enabled=true` 且 `githubLoginConfigured=false`：前台显示“站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。”
+- `enabled=true` 且 `githubLoginConfigured=true` 且未登录：前台显示“使用 GitHub 登录后留言”按钮。
+- `githubLoginConfigured` 只能是 boolean；不得返回 OAuth Secret、access token 或服务端配置路径。
 - `POST /api/comments/{resource}/{slug}` 继续要求 GitHub 登录态；未登录返回 `401` 统一错误响应。
 - 首页和音乐页音量属于前端本地状态，不新增 API；音量和静音状态写入浏览器 `localStorage`。

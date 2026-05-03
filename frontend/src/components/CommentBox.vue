@@ -20,6 +20,8 @@ const showDebug = import.meta.env.DEV
 
 const commentOptions = () => settings.value?.comments || {}
 const boardEnabled = () => commentOptions().enabled !== false
+const githubLoginEnabled = () => commentOptions().githubLoginEnabled !== false
+const githubLoginConfigured = () => commentOptions().githubLoginConfigured === true || github.value.configured === true
 const maxLength = () => Number(commentOptions().maxLength || 1000)
 
 async function load() {
@@ -139,7 +141,7 @@ watch(() => `${props.resource}/${props.slug}`, load)
             v-model="form.content"
             :maxlength="maxLength()"
             rows="4"
-            class="w-full resize-none rounded-[22px] border border-white/10 bg-black/15 px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-cyan-300/60 disabled:cursor-not-allowed disabled:opacity-60"
+            class="w-full resize-none rounded-[22px] border border-white/10 bg-black/15 px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-cyan-300/60"
             placeholder="写下留言..."
           ></textarea>
           <div class="mt-2 flex flex-wrap items-center gap-3 text-xs">
@@ -150,13 +152,13 @@ watch(() => `${props.resource}/${props.slug}`, load)
         </form>
 
         <div v-else class="min-w-0 rounded-[22px] border border-dashed border-white/12 bg-black/10 px-4 py-5 text-sm leading-7 text-white/55">
-          <p v-if="github.configured">登录 GitHub 后即可在这里留言。</p>
+          <p v-if="githubLoginEnabled() && githubLoginConfigured()">登录 GitHub 后即可在这里留言。</p>
           <p v-else>站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。</p>
           <p v-if="error" class="mt-2 text-red-200/85" role="alert">{{ error }}</p>
         </div>
 
         <div class="grid gap-2">
-          <button v-if="!github.user && github.configured" type="button" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950" @click="loginWithGithub">
+          <button v-if="!github.user && githubLoginEnabled() && githubLoginConfigured()" type="button" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950" @click="loginWithGithub">
             使用 GitHub 登录后留言
           </button>
           <button v-else-if="!github.user" type="button" disabled class="rounded-2xl border border-white/10 px-5 py-3 text-sm text-white/40">

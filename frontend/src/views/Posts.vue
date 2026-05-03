@@ -56,7 +56,7 @@ onMounted(load)
         <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">archive</p>
         <h1 class="mt-2 text-4xl font-black text-white">文章归档</h1>
         <p class="mt-3 text-white/56">从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。</p>
-        <div class="mx-auto mt-5 w-full max-w-4xl md:w-[65%]"><SearchBar v-model="keyword" /></div>
+        <div class="mx-auto mt-5 w-full max-w-5xl md:w-[82%]"><SearchBar v-model="keyword" /></div>
         <div class="mt-4 flex flex-wrap justify-center gap-2">
           <button
             v-for="tag in tags"

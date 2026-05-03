@@ -100,6 +100,7 @@ const form = reactive({
   cloudMusicIdsText: '',
   comments: {
     enabled: true,
+    githubLoginEnabled: true,
     requireEmail: false,
     maxLength: 1000,
     showEmail: false,
@@ -168,6 +169,7 @@ function applySettings(data: AnySettings) {
   const comments = data.comments || {}
   const gitalk = data.gitalkConfig || comments.gitalk || {}
   form.comments.enabled = comments.enabled !== false
+  form.comments.githubLoginEnabled = comments.githubLoginEnabled !== false
   form.comments.requireEmail = comments.requireEmail === true
   form.comments.maxLength = Number(comments.maxLength || 1000)
   form.comments.showEmail = comments.showEmail === true
@@ -233,6 +235,8 @@ function buildPayload() {
     cloudMusicIds: commaToArray(form.cloudMusicIdsText),
     comments: {
       enabled: form.comments.enabled,
+      provider: 'github',
+      githubLoginEnabled: form.comments.githubLoginEnabled,
       requireEmail: false,
       maxLength: Number(form.comments.maxLength || 1000),
       showEmail: false,
@@ -472,7 +476,8 @@ onMounted(load)
               前台评论仅支持 GitHub 登录。GitHub OAuth Secret 只保存在后端，不会在后台响应或前台构建产物中回显。
             </div>
             <div class="grid gap-3 md:grid-cols-2">
-              <label class="setting-check"><input v-model="form.comments.enabled" type="checkbox" />开启 GitHub 登录评论</label>
+              <label class="setting-check"><input v-model="form.comments.enabled" type="checkbox" />开启留言板</label>
+              <label class="setting-check"><input v-model="form.comments.githubLoginEnabled" type="checkbox" />启用 GitHub 登录留言</label>
               <label class="grid gap-2 text-sm text-white/65">评论最大长度<input v-model.number="form.comments.maxLength" type="number" min="1" max="5000" class="admin-input" /></label>
               <label class="grid gap-2 text-sm text-white/65">GitHub Client ID<input v-model="form.comments.gitalkClientID" class="admin-input" /></label>
               <label class="grid gap-2 text-sm text-white/65">GitHub Repo<input v-model="form.comments.gitalkRepo" class="admin-input" /></label>

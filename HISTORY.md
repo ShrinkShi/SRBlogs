@@ -1,4 +1,51 @@
-﻿# HISTORY
+# HISTORY
+
+## 2026-05-03 - GitHub 留言状态、相册弹窗滚动与中枢链路修复轮
+
+本轮目标：
+- 硬修前台留言板状态判断，区分留言板开关、GitHub 登录开关、OAuth configured 状态和用户登录态。
+- 彻底修复后台照片墙相册编辑弹窗无法滚动的问题。
+- 恢复文章页中枢链路左右交替，并保持卡片贴靠中心线。
+- 放大搜索框，移除 `Search` 字样，增加深色搜索图标按钮。
+
+当前进度估算：
+- P0：100%。
+- P1：98%，留言板状态判断与未登录 401 已通过 API 验证；真实 GitHub OAuth 授权回跳仍需配置 Client ID/Secret 后人工验收。
+- P2：约 94%，中枢链路、搜索框和相册弹窗细节继续收口，仍需浏览器人工确认。
+
+前台变更：
+- `CommentBox` 改为读取公开 `comments.githubLoginEnabled` 和 `comments.githubLoginConfigured` 布尔字段，留言板全站默认开启，不再把“评论开启”和“GitHub OAuth configured”混为同一状态。
+- 未登录且 GitHub 已配置时显示“使用 GitHub 登录后留言”按钮；未配置时显示访客友好提示，不显示匿名输入框。
+- `SearchBar` 移除左侧 `Search` 字样，搜索框继续加长，右侧增加深色搜索图标按钮。
+- 文章页搜索区宽度提升到桌面内容区约 82%；搜索页同样使用更大的输入框与图标按钮。
+- 文章页中枢链路改回逐条纵向左右交替，左侧卡片右边缘贴近中心线，右侧卡片左边缘贴近中心线。
+
+后台变更：
+- 设置中心评论区增加独立“开启留言板”和“启用 GitHub 登录留言”状态，保存时写入 `comments.enabled` 与 `comments.githubLoginEnabled`。
+- 照片墙相册编辑弹窗改为 85vh 固定高度，外层不滚动裁切，中间内容区独立 `overflow-y:auto`，底部保存/关闭按钮保留在可见区域。
+
+后端/API 变更：
+- `GET /api/settings/public` 的 `comments` 增加 `provider: "github"`、`githubLoginEnabled`、`githubLoginConfigured`，其中 configured 仅为布尔值，不返回 OAuth Secret。
+- `GET /api/auth/github/login` 保持 `returnTo` 前台回跳参数，未配置时返回统一错误结构；已配置时由后端重定向到 GitHub OAuth。
+
+文档变更：
+- 更新 `HISTORY.md`、`docs/XINGHUI_PARITY_MATRIX.md`、`docs/API_CONTRACT.md`、`docs/SECURITY_NOTES.md`、`docs/USER_GUIDE.md`、`docs/MANUAL_QA_CHECKLIST.md`、`docs/UI_STYLE_GUIDE.md`、`README.md`。
+
+验证结果：
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`，仍有既有 chunk 体积提示。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient `GET /api/health` 返回 200。
+- 通过：`GET /api/settings/public` 返回 `comments.githubLoginConfigured` 布尔值，且未匹配 Secret 字段。
+- 通过：直接调用 `public_settings` 模拟 GitHub Client ID/Secret 存在时，`comments.githubLoginConfigured` 为 `true` 且未回显 Secret。
+- 通过：`GET /api/auth/github/me` 未登录状态返回 `{"configured":false,"user":null}`。
+- 通过：未登录 `POST /api/comments/posts/vue-fastapi-blog` 返回 401。
+- 通过：模拟已配置 GitHub OAuth 时，`GET /api/auth/github/login?returnTo=/posts/vue-fastapi-blog` 返回 GitHub 授权 307 并写入回跳 cookie。
+- 通过：构建产物 Secret 固定字符串搜索未匹配 `clientSecret`、`accessKeySecret`、`api_key`、`jwt_secret`、`admin_password`、`github_oauth_client_secret`、`change-me`。
+
+遗留问题：
+- 本轮未启动 dev server 做浏览器人工回归；前台 GitHub 登录按钮、照片弹窗滚动、中枢链路左右交替、搜索图标按钮和 390px 移动端仍需用户确认。
+- 真实 GitHub OAuth code flow 仍需配置有效 Client ID/Secret 后验收。
 
 ## 2026-05-03 - 留言板 GitHub 入口硬修、相册滚动与列表细节收口轮
 

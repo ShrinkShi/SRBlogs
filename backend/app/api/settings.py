@@ -33,12 +33,14 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
     gitalk = deepcopy(data.get("gitalkConfig") or comments.get("gitalk") or {})
     github_client_id = settings.github_oauth_client_id or gitalk.get("clientID", "")
     github_client_secret = settings.github_oauth_client_secret or gitalk.get("clientSecret", "")
+    github_login_configured = bool(github_client_id and github_client_secret)
+    github_login_enabled = comments.get("githubLoginEnabled", comments.get("githubEnabled", True)) is not False
     public_comments = {
         "enabled": comments.get("enabled", True),
-        "requireEmail": comments.get("requireEmail", False),
+        "provider": "github",
+        "githubLoginEnabled": github_login_enabled,
+        "githubLoginConfigured": github_login_configured,
         "maxLength": comments.get("maxLength", 1000),
-        "showEmail": comments.get("showEmail", False),
-        "localEnabled": comments.get("localEnabled", True),
         "gitalk": {
             "clientID": gitalk.get("clientID", ""),
             "repo": gitalk.get("repo", ""),
@@ -59,7 +61,7 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "cloudMusicIds": deepcopy(data.get("cloudMusicIds") or []),
         "interaction": deepcopy(data.get("interaction") or {"clickSoundEnabled": True, "clickSoundVolume": 0.05, "clickSoundUrl": ""}),
         "githubOAuth": {
-            "configured": bool(github_client_id and github_client_secret),
+            "configured": github_login_configured,
         },
         "comments": public_comments,
     }

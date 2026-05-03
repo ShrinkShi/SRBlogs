@@ -46,11 +46,13 @@
   "chatterTitle": "云端杂谈",
   "chatterDescription": "代码、课程、项目、游戏与临时想法的碎片记录。",
   "gitalkConfig": {
-    "clientID": "",
-    "repo": "",
-    "owner": "",
-    "admin": [],
-    "clientSecret": ""
+    "clientID": "Ov23li1eR4q1w8vWvbP5",
+    "repo": "SRBlogs",
+    "owner": "ShrinkShi",
+    "admin": [
+      "ShrinkShi"
+    ],
+    "clientSecret": "8c7e8066298c5b77cce75eb30ff238d659196a41"
   },
   "buildDate": "2026-03-23T00:00:00",
   "theme": "nebula",
@@ -86,15 +88,19 @@
   },
   "comments": {
     "enabled": true,
+    "provider": "github",
+    "githubLoginEnabled": true,
     "requireEmail": false,
     "maxLength": 1000,
     "showEmail": false,
     "localEnabled": true,
     "gitalk": {
-      "clientID": "",
-      "repo": "",
-      "owner": "",
-      "admin": []
+      "clientID": "Ov23li1eR4q1w8vWvbP5",
+      "repo": "SRBlogs",
+      "owner": "ShrinkShi",
+      "admin": [
+        "ShrinkShi"
+      ]
     }
   },
   "themeConfig": {
@@ -126,5 +132,10 @@
       "homePanelBg": "rgba(255,255,255,.105)",
       "shadowGlow": "rgba(34,211,238,.42)"
     }
+  },
+  "interaction": {
+    "clickSoundEnabled": true,
+    "clickSoundVolume": 0.05,
+    "clickSoundUrl": ""
   }
 }

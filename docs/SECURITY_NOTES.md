@@ -131,4 +131,5 @@
 - GitHub OAuth Client Secret 仍只能保存在后端 `.env` 或服务端配置中，构建产物不得包含该值。
 - `GET /api/auth/github/login` 使用 `returnTo` 作为前台回跳参数；后端必须限制绝对 URL 回跳来源，避免开放重定向。
 - 未登录直接调用 `POST /api/comments/{resource}/{slug}` 必须返回 401，不能保留匿名提交旁路。
+- `/api/settings/public` 只能公开 `comments.githubLoginConfigured` 这类布尔值；GitHub OAuth Secret、access token、`.env` 路径和服务端配置细节不得进入前台响应。
 - 播放器音量设置仅保存在浏览器 localStorage，不属于敏感配置。

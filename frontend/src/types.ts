@@ -125,10 +125,10 @@ export interface SiteSettings {
   ai?: Record<string, unknown>
   comments?: {
     enabled?: boolean
-    requireEmail?: boolean
+    provider?: 'github'
+    githubLoginEnabled?: boolean
+    githubLoginConfigured?: boolean
     maxLength?: number
-    showEmail?: boolean
-    localEnabled?: boolean
     gitalk?: Record<string, unknown>
   }
   interaction?: {

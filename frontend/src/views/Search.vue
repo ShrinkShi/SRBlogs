@@ -84,9 +84,14 @@ onMounted(async () => {
     <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">search</p>
       <h1 class="mt-2 text-4xl font-black text-white">全站搜索</h1>
-      <form class="mx-auto mt-5 grid w-full max-w-4xl gap-3 md:w-[65%] lg:grid-cols-[1fr_auto]" @submit.prevent="syncQuery(); load()">
-        <input v-model="q" aria-label="搜索关键词" class="min-w-0 rounded-[28px] border border-white/10 bg-white/[0.08] px-5 py-4 text-base text-white outline-none placeholder:text-white/35" placeholder="搜索文章、瞬间、项目、音乐..." />
-        <button type="submit" class="rounded-[22px] bg-cyan-300 px-6 py-4 font-bold text-slate-950">搜索</button>
+      <form class="mx-auto mt-5 flex w-full max-w-5xl items-center gap-3 rounded-[30px] border border-white/10 bg-white/[0.08] px-5 py-4 shadow-inner shadow-white/[0.03] md:w-[82%]" @submit.prevent="syncQuery(); load()">
+        <input v-model="q" aria-label="搜索关键词" class="min-w-0 flex-1 bg-transparent text-base text-white outline-none placeholder:text-white/35" placeholder="搜索文章、瞬间、项目、音乐..." />
+        <button type="submit" class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-950/72 text-cyan-100 shadow-[0_12px_28px_rgba(0,0,0,.22)] transition hover:scale-105 hover:text-white" aria-label="搜索">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.6-3.6" />
+          </svg>
+        </button>
       </form>
       <div class="mt-4 flex flex-wrap gap-2">
         <button v-for="option in typeOptions" :key="option.value" class="rounded-full border px-3 py-1 text-sm" :class="type === option.value ? 'border-cyan-200/50 bg-cyan-200/[0.16] text-cyan-100' : 'border-white/10 text-white/55 hover:bg-white/10'" @click="type = option.value; syncQuery(); load()">{{ option.label }}</button>
