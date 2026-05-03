@@ -313,7 +313,9 @@ body::before {
 }
 
 .home-theme-card {
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .home-status-grid {

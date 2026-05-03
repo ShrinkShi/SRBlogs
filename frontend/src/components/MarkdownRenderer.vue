@@ -34,7 +34,7 @@ const html = computed(() => {
     const id = String(text).replace(/<[^>]+>/g, '').toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-')
     return `<h${level} id="${id}">${text}</h${level}>`
   })
-  return DOMPurify.sanitize(withIds)
+  return DOMPurify.sanitize(withIds, { ADD_ATTR: ['style'] })
 })
 </script>
 

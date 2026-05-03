@@ -26,6 +26,8 @@ const ui = useUiStore()
 const items = ref<Record<string, unknown>[]>([])
 const form = ref<Record<string, unknown>>({})
 const editIndex = ref<number | null>(null)
+const modalOpen = ref(false)
+const dirty = ref(false)
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
@@ -48,8 +50,14 @@ function normalizeList(value: unknown): Record<string, unknown>[] {
 function resetForm() {
   form.value = clone(props.emptyItem)
   editIndex.value = null
+  dirty.value = false
   error.value = ''
   success.value = ''
+}
+
+function openCreate() {
+  resetForm()
+  modalOpen.value = true
 }
 
 async function load() {
@@ -69,8 +77,16 @@ async function load() {
 function editItem(index: number) {
   editIndex.value = index
   form.value = clone(items.value[index])
+  dirty.value = false
+  modalOpen.value = true
   error.value = ''
   success.value = ''
+}
+
+function closeForm() {
+  if (dirty.value && !confirm('当前表单有未保存内容，确认关闭？')) return
+  modalOpen.value = false
+  resetForm()
 }
 
 function valueAsText(key: string) {
@@ -80,14 +96,17 @@ function valueAsText(key: string) {
 
 function updateText(key: string, value: string) {
   form.value[key] = value
+  dirty.value = true
 }
 
 function updateTags(key: string, value: string) {
   form.value[key] = value.split(',').map((item) => item.trim()).filter(Boolean)
+  dirty.value = true
 }
 
 function updateNumber(key: string, value: string) {
   form.value[key] = value === '' ? '' : Number(value)
+  dirty.value = true
 }
 
 function validateForm() {
@@ -129,6 +148,7 @@ async function saveForm() {
     nextItems.unshift(payload)
   }
   await persist(nextItems, isEditing.value ? '已保存修改' : '已新增记录')
+  modalOpen.value = false
   resetForm()
 }
 
@@ -165,6 +185,7 @@ async function uploadForField(field: StructuredField, files: FileList | null) {
       uploadProgress.value[field.key] = percent
     })
     form.value[field.key] = data.url
+    dirty.value = true
     success.value = '上传成功，URL 已填入表单'
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '上传失败'
@@ -188,11 +209,11 @@ onMounted(load)
       <p v-if="success" class="mt-3 text-sm text-emerald-200/85">{{ success }}</p>
     </GlassCard>
 
-    <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.72fr)]">
+    <div class="grid gap-5">
       <GlassCard>
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h2 class="text-xl font-black text-white">{{ itemName }}列表</h2>
-          <button class="rounded-2xl bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950" @click="resetForm">新增{{ itemName }}</button>
+          <button class="rounded-2xl bg-cyan-300 px-4 py-2 text-sm font-bold text-slate-950" @click="openCreate">新增{{ itemName }}</button>
         </div>
         <p v-if="loading" class="mt-5 text-white/55">加载中...</p>
         <p v-else-if="!items.length" class="mt-5 rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-white/55">暂无{{ itemName }}记录。</p>
@@ -213,7 +234,9 @@ onMounted(load)
         </div>
       </GlassCard>
 
-      <GlassCard>
+      <Teleport to="body">
+      <div v-if="modalOpen" class="fixed inset-0 z-[9990] grid place-items-center bg-slate-950/72 p-4 backdrop-blur-xl" @click.self="closeForm" @keydown.esc="closeForm">
+      <GlassCard class="max-h-[min(760px,calc(100vh-2rem))] w-full max-w-3xl overflow-auto">
         <h2 class="text-xl font-black text-white">{{ isEditing ? '编辑' : '新增' }}{{ itemName }}</h2>
         <div class="mt-5 grid gap-3">
           <label v-for="field in fields" :key="field.key" class="grid gap-2 text-sm text-white/68">
@@ -264,8 +287,11 @@ onMounted(load)
         <div class="mt-5 flex flex-wrap gap-2">
           <button :disabled="saving" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:opacity-50" @click="saveForm">{{ saving ? '保存中...' : '保存' }}</button>
           <button class="rounded-2xl border border-white/10 px-5 py-3 text-white/70" @click="resetForm">清空</button>
+          <button class="rounded-2xl border border-white/10 px-5 py-3 text-white/70" @click="closeForm">关闭</button>
         </div>
       </GlassCard>
+      </div>
+      </Teleport>
     </div>
 
     <GlassCard>

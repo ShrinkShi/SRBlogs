@@ -10,6 +10,7 @@ export const useUiStore = defineStore('ui', {
     bgIndex: Number(localStorage.getItem('sr-bg-index') || '0'),
     danmaku: localStorage.getItem('sr-danmaku') !== 'off',
     ambience: localStorage.getItem('sr-ambience') !== 'off',
+    clickSound: localStorage.getItem('sr-click-sound') !== 'off',
     toast: '',
     toastKind: 'info' as 'info' | 'success' | 'error'
   }),
@@ -40,6 +41,10 @@ export const useUiStore = defineStore('ui', {
     toggleAmbience() {
       this.ambience = !this.ambience
       localStorage.setItem('sr-ambience', this.ambience ? 'on' : 'off')
+    },
+    toggleClickSound() {
+      this.clickSound = !this.clickSound
+      localStorage.setItem('sr-click-sound', this.clickSound ? 'on' : 'off')
     },
     showToast(message: string, kind: 'info' | 'success' | 'error' = 'info') {
       this.toast = message

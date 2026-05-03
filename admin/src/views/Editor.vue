@@ -19,6 +19,7 @@ const slug = ref(`post-${Date.now()}`)
 const saving = ref(false)
 const error = ref('')
 const success = ref('')
+const editorOpen = ref(false)
 const slugPattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$/
 const slugHelp = 'slug 会出现在公开 URL 中，只允许字母、数字、下划线和连字符，例如 vue-fastapi-blog。'
 
@@ -128,6 +129,11 @@ async function publishNow() {
   }
 }
 function insertImage(url: string){ content.value += `\n![图片](${url})\n` }
+
+function closeEditor() {
+  if (!confirm('确认关闭 Markdown 编辑器？未保存内容请先点击保存。')) return
+  editorOpen.value = false
+}
 </script>
 <template>
   <section class="grid gap-5">
@@ -157,6 +163,35 @@ function insertImage(url: string){ content.value += `\n![图片](${url})\n` }
       </div>
     </GlassCard>
     <ImageUploader @uploaded="insertImage" />
-    <MarkdownEditor v-model="content" />
+    <GlassCard>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-2xl font-black text-white">Markdown 正文</h2>
+          <p class="mt-2 text-sm text-white/55">点击按钮打开近全屏编辑器，左侧编辑，右侧安全预览；移动端可切换编辑/预览。</p>
+        </div>
+        <button type="button" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950" @click="editorOpen = true">打开 Markdown 编辑器</button>
+      </div>
+      <p class="mt-4 line-clamp-3 rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-sm leading-6 text-white/56">{{ content || '暂无正文内容' }}</p>
+    </GlassCard>
+
+    <Teleport to="body">
+      <div v-if="editorOpen" class="fixed inset-0 z-[9990] bg-slate-950/82 p-3 backdrop-blur-xl md:p-6">
+        <div class="mx-auto grid h-full max-w-[1500px] grid-rows-[auto_minmax(0,1fr)] gap-4 rounded-[32px] border border-white/12 bg-slate-950/88 p-4 shadow-2xl">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-xs font-bold uppercase tracking-[.24em] text-cyan-100/45">immersive markdown editor</p>
+              <h2 class="truncate text-2xl font-black text-white">{{ meta.title || '未命名文章' }}</h2>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <button :disabled="saving" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:opacity-50" @click="save">{{ saving ? '保存中...' : '保存' }}</button>
+              <button type="button" class="rounded-2xl border border-white/10 px-5 py-3 text-white/72" @click="closeEditor">关闭</button>
+            </div>
+          </div>
+          <div class="min-h-0 overflow-auto">
+            <MarkdownEditor v-model="content" />
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </section>
 </template>

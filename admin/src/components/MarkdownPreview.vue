@@ -19,7 +19,7 @@ const html = computed(() => {
   const raw = marked.parse(props.content || '') as string
   return DOMPurify.sanitize(raw, {
     USE_PROFILES: { html: true },
-    ADD_ATTR: ['target', 'rel']
+    ADD_ATTR: ['target', 'rel', 'style']
   })
 })
 </script>

@@ -338,10 +338,10 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
-    <div class="glass h-fit rounded-[30px] p-4 xl:sticky xl:top-6">
-      <div class="relative z-[1] grid gap-2">
-        <button v-for="tab in tabs" :key="tab.key" class="rounded-2xl px-4 py-3 text-left text-sm transition" :class="active === tab.key ? 'bg-cyan-300/[0.16] text-cyan-100' : 'text-white/60 hover:bg-white/10'" @click="active = tab.key">{{ tab.label }}</button>
+  <div class="grid gap-4">
+    <div class="glass rounded-[30px] p-3">
+      <div class="relative z-[1] flex flex-wrap gap-2">
+        <button v-for="tab in tabs" :key="tab.key" class="rounded-2xl px-4 py-2.5 text-left text-sm transition" :class="active === tab.key ? 'bg-cyan-300/[0.16] text-cyan-100 ring-1 ring-cyan-200/25' : 'text-white/60 hover:bg-white/10'" @click="active = tab.key">{{ tab.label }}</button>
       </div>
     </div>
 
@@ -375,31 +375,35 @@ onMounted(load)
           </template>
 
           <template v-else-if="active === 'theme'">
-            <label class="grid gap-2 text-sm text-white/65">主题<select v-model="form.theme" class="admin-input"><option>nebula</option><option>sakura</option><option>aurora</option><option>cyber</option></select></label>
-            <div class="grid gap-3 md:grid-cols-2">
-              <label class="grid gap-2 text-sm text-white/65">字体族<input v-model="form.themeConfig.fontFamily" class="admin-input" placeholder="留空使用默认字体" /></label>
-              <label class="grid gap-2 text-sm text-white/65">字号档位<select v-model="form.themeConfig.fontScale" class="admin-input"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></label>
+            <div class="rounded-[24px] border border-cyan-200/10 bg-white/[0.055] p-4">
+              <div class="grid gap-3 md:grid-cols-3">
+                <label class="grid gap-2 text-sm text-white/65">主题<select v-model="form.theme" class="admin-input"><option>nebula</option><option>sakura</option><option>aurora</option><option>cyber</option></select></label>
+                <label class="grid gap-2 text-sm text-white/65 md:col-span-2">字体族<input v-model="form.themeConfig.fontFamily" class="admin-input" placeholder="留空使用默认字体，也可填写 CSS font-family" /></label>
+                <label class="grid gap-2 text-sm text-white/65">字号档位<select v-model="form.themeConfig.fontScale" class="admin-input"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></label>
+              </div>
             </div>
             <div class="grid gap-4 xl:grid-cols-2">
-              <div class="rounded-[24px] border border-white/10 bg-white/[0.06] p-4">
+              <div class="rounded-[28px] border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.035] p-4">
                 <h3 class="font-black text-white">日间模式核心 token</h3>
-                <div class="mt-4 grid gap-3 md:grid-cols-2">
-                  <label v-for="(_, key) in form.themeConfig.day" :key="String(key)" class="grid gap-2 text-xs text-white/58">
-                    <span>{{ tokenLabel(String(key)) }} <small class="text-white/35">({{ key }})</small></span>
-                    <div class="flex gap-2">
-                      <input type="color" class="h-11 w-12 shrink-0 rounded-xl border border-white/10 bg-white/10 p-1" :value="colorPickerValue(form.themeConfig.day[key])" @input="form.themeConfig.day[key] = ($event.target as HTMLInputElement).value" />
+                <div class="mt-4 grid gap-3">
+                  <label v-for="(_, key) in form.themeConfig.day" :key="String(key)" class="theme-token-row">
+                    <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(form.themeConfig.day[key]) }"></span>
+                    <span class="min-w-0"><b>{{ tokenLabel(String(key)) }}</b><small>{{ key }}</small></span>
+                    <div class="flex min-w-0 flex-1 gap-2">
+                      <input type="color" class="theme-color-input" :value="colorPickerValue(form.themeConfig.day[key])" @input="form.themeConfig.day[key] = ($event.target as HTMLInputElement).value" />
                       <input v-model="form.themeConfig.day[key]" class="admin-input min-w-0 flex-1" />
                     </div>
                   </label>
                 </div>
               </div>
-              <div class="rounded-[24px] border border-white/10 bg-white/[0.06] p-4">
+              <div class="rounded-[28px] border border-white/10 bg-gradient-to-br from-slate-950/45 to-white/[0.035] p-4">
                 <h3 class="font-black text-white">夜间模式核心 token</h3>
-                <div class="mt-4 grid gap-3 md:grid-cols-2">
-                  <label v-for="(_, key) in form.themeConfig.night" :key="String(key)" class="grid gap-2 text-xs text-white/58">
-                    <span>{{ tokenLabel(String(key)) }} <small class="text-white/35">({{ key }})</small></span>
-                    <div class="flex gap-2">
-                      <input type="color" class="h-11 w-12 shrink-0 rounded-xl border border-white/10 bg-white/10 p-1" :value="colorPickerValue(form.themeConfig.night[key])" @input="form.themeConfig.night[key] = ($event.target as HTMLInputElement).value" />
+                <div class="mt-4 grid gap-3">
+                  <label v-for="(_, key) in form.themeConfig.night" :key="String(key)" class="theme-token-row">
+                    <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(form.themeConfig.night[key]) }"></span>
+                    <span class="min-w-0"><b>{{ tokenLabel(String(key)) }}</b><small>{{ key }}</small></span>
+                    <div class="flex min-w-0 flex-1 gap-2">
+                      <input type="color" class="theme-color-input" :value="colorPickerValue(form.themeConfig.night[key])" @input="form.themeConfig.night[key] = ($event.target as HTMLInputElement).value" />
                       <input v-model="form.themeConfig.night[key]" class="admin-input min-w-0 flex-1" />
                     </div>
                   </label>
@@ -507,5 +511,48 @@ onMounted(load)
   background: rgb(255 255 255 / 0.06);
   padding: 0.9rem 1rem;
   color: rgb(255 255 255 / 0.72);
+}
+.theme-token-row {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(7rem, 0.8fr) minmax(0, 1.4fr);
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgb(255 255 255 / 0.09);
+  background: rgb(255 255 255 / 0.055);
+  padding: 0.65rem;
+}
+.theme-token-row b {
+  display: block;
+  color: rgb(255 255 255 / 0.88);
+  font-size: 0.82rem;
+}
+.theme-token-row small {
+  display: block;
+  margin-top: 0.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgb(255 255 255 / 0.34);
+  font-size: 0.68rem;
+}
+.theme-color-preview,
+.theme-color-input {
+  height: 2.25rem;
+  width: 2.25rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgb(255 255 255 / 0.16);
+}
+.theme-color-input {
+  flex-shrink: 0;
+  background: rgb(255 255 255 / 0.1);
+  padding: 0.18rem;
+}
+@media (max-width: 720px) {
+  .theme-token-row {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+  }
+  .theme-token-row > div {
+    grid-column: 1 / -1;
+  }
 }
 </style>

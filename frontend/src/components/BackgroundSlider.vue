@@ -22,5 +22,8 @@ const count = computed(() => Math.max(props.settings?.bgImages?.length || 0, the
     <button type="button" class="glass rounded-2xl px-3 py-2 text-xs font-bold text-white/72 hover:text-white" aria-label="切换氛围动效" @click="ui.toggleAmbience">
       氛围 {{ ui.ambience ? '开' : '关' }}
     </button>
+    <button type="button" class="glass rounded-2xl px-3 py-2 text-xs font-bold text-white/72 hover:text-white" aria-label="切换点击音效" @click="ui.toggleClickSound">
+      点击音 {{ ui.clickSound ? '开' : '关' }}
+    </button>
   </div>
 </template>

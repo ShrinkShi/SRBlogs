@@ -377,7 +377,8 @@ Sitemap: https://example.com/api/sitemap.xml
 - 音频：`.mp3`、`.wav`、`.ogg`、`.m4a`
 - 视频：`.mp4`、`.webm`、`.mov`
 - MIME：`image/jpeg`、`image/png`、`image/gif`、`image/webp`、`image/svg+xml`、`audio/mpeg`、`audio/wav`、`audio/ogg`、`audio/mp4`、`video/mp4`、`video/webm`、`video/quicktime`
-- 默认大小上限：`UPLOAD_MAX_SIZE`，本地默认 5 MB。
+- 大小上限按类型分档：图片默认 10 MB，音频默认 100 MB，视频默认 200 MB；不允许无限制上传。
+- 错误信息需明确指出图片、音频或视频超过对应限制，方便后台 UI 显示可读错误。
 
 ### POST `/upload`
 
