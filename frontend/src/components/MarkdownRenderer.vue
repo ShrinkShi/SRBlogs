@@ -34,7 +34,10 @@ const html = computed(() => {
     const id = String(text).replace(/<[^>]+>/g, '').toLowerCase().replace(/[^\w\u4e00-\u9fa5]+/g, '-')
     return `<h${level} id="${id}">${text}</h${level}>`
   })
-  return DOMPurify.sanitize(withIds, { ADD_ATTR: ['style'] })
+  return DOMPurify.sanitize(withIds, { ADD_ATTR: ['style'] }).replace(/style="([^"]*)"/g, (_match, style) => {
+    const color = String(style).match(/color\s*:\s*(#[0-9a-fA-F]{6})/)
+    return color ? `style="color:${color[1]}"` : ''
+  })
 })
 </script>
 

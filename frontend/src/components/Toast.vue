@@ -4,15 +4,17 @@ const ui = useUiStore()
 </script>
 
 <template>
-  <Transition name="toast">
-    <div
-      v-if="ui.toast"
-      class="glass fixed left-1/2 top-5 z-[10000] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl px-5 py-3 text-center text-sm font-bold text-white shadow-2xl md:top-7"
-      :class="ui.toastKind === 'success' ? 'toast-success' : ui.toastKind === 'error' ? 'toast-error' : ''"
-    >
-      {{ ui.toast }}
-    </div>
-  </Transition>
+  <Teleport to="body">
+    <Transition name="toast">
+      <div
+        v-if="ui.toast"
+        class="glass fixed left-1/2 top-5 z-[10000] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl px-5 py-3 text-center text-sm font-bold text-white shadow-2xl md:top-7"
+        :class="ui.toastKind === 'success' ? 'toast-success' : ui.toastKind === 'error' ? 'toast-error' : ''"
+      >
+        {{ ui.toast }}
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>

@@ -2,7 +2,8 @@ import axios from 'axios'
 
 export const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
-  timeout: 20000
+  timeout: 20000,
+  withCredentials: true
 })
 
 http.interceptors.response.use(

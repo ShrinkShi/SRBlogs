@@ -10,11 +10,13 @@ import DanmakuBackground from '@/components/DanmakuBackground.vue'
 import Sakura from '@/components/Sakura.vue'
 import Fireflies from '@/components/Fireflies.vue'
 import { contentApi } from '@/api/content'
-import type { SiteSettings } from '@/types'
+import type { MusicItem, SiteSettings } from '@/types'
 import { useUiStore } from '@/stores/ui'
+import { usePlayerStore } from '@/stores/player'
 
 const settings = ref<SiteSettings | null>(null)
 const ui = useUiStore()
+const player = usePlayerStore()
 
 function applyTheme() {
   const root = document.documentElement
@@ -46,9 +48,14 @@ function applyTheme() {
 
 onMounted(async () => {
   try { settings.value = await contentApi.json<SiteSettings>('/settings/public') } catch { settings.value = null }
+  ui.applyInteraction(settings.value?.interaction)
+  try { player.setTracks(await contentApi.json<MusicItem[]>('/music')) } catch { player.setTracks([]) }
   applyTheme()
 })
-watch([settings, () => ui.colorMode], applyTheme)
+watch([settings, () => ui.colorMode], () => {
+  ui.applyInteraction(settings.value?.interaction)
+  applyTheme()
+})
 </script>
 
 <template>

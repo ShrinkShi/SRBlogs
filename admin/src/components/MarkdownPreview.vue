@@ -20,6 +20,9 @@ const html = computed(() => {
   return DOMPurify.sanitize(raw, {
     USE_PROFILES: { html: true },
     ADD_ATTR: ['target', 'rel', 'style']
+  }).replace(/style="([^"]*)"/g, (_match, style) => {
+    const color = String(style).match(/color\s*:\s*(#[0-9a-fA-F]{6})/)
+    return color ? `style="color:${color[1]}"` : ''
   })
 })
 </script>

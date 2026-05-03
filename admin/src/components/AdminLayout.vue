@@ -4,9 +4,16 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { usePendingStore } from '@/stores/pending'
 
+type NavItem = {
+  label: string
+  path: string
+  note?: string
+  children?: NavItem[]
+}
+
 type NavGroup = {
   title: string
-  items: { label: string; path: string; note?: string }[]
+  items: NavItem[]
 }
 
 const auth = useAuthStore()
@@ -40,7 +47,7 @@ const groups: NavGroup[] = [
   {
     title: '互动',
     items: [
-      { label: '评论', path: '/comments', note: '本地' },
+      { label: '评论', path: '/comments', note: 'GitHub' },
       { label: 'AI 助手', path: '/chat', note: '开关' }
     ]
   },
@@ -50,21 +57,34 @@ const groups: NavGroup[] = [
       { label: '友链', path: '/friends', note: '链接' },
       { label: '项目', path: '/projects', note: '展示' },
       { label: '音乐', path: '/music', note: '歌单' },
-      { label: '照片墙', path: '/photos', note: '图片' }
+      { label: '照片墙', path: '/photos', note: '相册' }
     ]
   },
   {
     title: '系统',
     items: [
-      { label: '设置中心', path: '/settings', note: '配置' }
+      {
+        label: '设置中心',
+        path: '/settings?tab=site',
+        note: '配置',
+        children: [
+          { label: '站点公开信息', path: '/settings?tab=site' },
+          { label: '主题与背景', path: '/settings?tab=theme' },
+          { label: '评论设置', path: '/settings?tab=comments' },
+          { label: '图床设置', path: '/settings?tab=image' },
+          { label: 'AI 设置', path: '/settings?tab=ai' },
+          { label: '部署与安全提示', path: '/settings?tab=deploy' }
+        ]
+      }
     ]
   }
 ]
 
 const activePath = computed(() => route.path)
+const activeTarget = computed(() => route.path === '/settings' ? `${route.path}?tab=${route.query.tab || 'site'}` : route.path)
 const layoutClass = computed(() => queueVisible.value
-  ? 'xl:grid-cols-[260px_minmax(0,1fr)_300px]'
-  : 'xl:grid-cols-[260px_minmax(0,1fr)]'
+  ? 'xl:grid-cols-[280px_minmax(0,1fr)_300px]'
+  : 'xl:grid-cols-[280px_minmax(0,1fr)]'
 )
 
 function groupKey(group: NavGroup) {
@@ -75,8 +95,18 @@ function groupKey(group: NavGroup) {
           : 'system'
 }
 
+function stripQuery(path: string) {
+  return path.split('?')[0]
+}
+
+function isItemActive(item: NavItem) {
+  if (item.children?.some(isItemActive)) return true
+  if (item.path.includes('?')) return activeTarget.value === item.path
+  return item.path === activePath.value || (item.path !== '/' && activePath.value.startsWith(item.path))
+}
+
 function isGroupActive(group: NavGroup) {
-  return group.items.some((item) => item.path === activePath.value || (item.path !== '/' && activePath.value.startsWith(item.path)))
+  return group.items.some(isItemActive)
 }
 
 function goGroup(group: NavGroup) {
@@ -91,10 +121,10 @@ function logout() {
 </script>
 
 <template>
-  <div class="min-h-screen p-3 md:p-6">
-    <div class="mx-auto grid max-w-[1500px] gap-5" :class="layoutClass">
-      <aside class="admin-sidebar h-fit max-h-[78vh] overflow-auto rounded-[24px] p-3 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)]">
-        <div class="mb-4 px-3 py-2">
+  <div class="min-h-screen">
+    <div class="grid min-h-screen gap-0" :class="layoutClass">
+      <aside class="admin-sidebar h-screen overflow-auto rounded-none border-y-0 border-l-0 p-3 xl:sticky xl:top-0">
+        <div class="mb-4 px-3 py-3">
           <div class="flex items-center gap-3">
             <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cyan-300/15 text-cyan-100">SR</span>
             <div class="min-w-0">
@@ -104,7 +134,7 @@ function logout() {
           </div>
         </div>
 
-        <nav class="relative z-[1] grid gap-2" aria-label="后台导航">
+        <nav class="relative z-[1] grid gap-1" aria-label="后台导航">
           <section v-for="group in groups" :key="group.title" class="admin-nav-group">
             <button
               type="button"
@@ -116,16 +146,27 @@ function logout() {
               <span>{{ expanded === groupKey(group) ? '收起' : '展开' }}</span>
             </button>
             <div v-if="expanded === groupKey(group) || isGroupActive(group)" class="admin-nav-children">
-              <RouterLink
-                v-for="item in group.items"
-                :key="item.path"
-                :to="item.path"
-                class="admin-nav-child"
-                :class="activePath === item.path || (item.path !== '/' && activePath.startsWith(item.path)) ? 'admin-nav-child-active' : ''"
-              >
-                <span>{{ item.label }}</span>
-                <small>{{ item.note }}</small>
-              </RouterLink>
+              <template v-for="item in group.items" :key="item.path">
+                <RouterLink
+                  :to="item.path"
+                  class="admin-nav-child"
+                  :class="isItemActive(item) ? 'admin-nav-child-active' : ''"
+                >
+                  <span>{{ item.label }}</span>
+                  <small>{{ item.note }}</small>
+                </RouterLink>
+                <div v-if="item.children && isItemActive(item)" class="ml-3 grid gap-1 border-l border-white/10 pl-3">
+                  <RouterLink
+                    v-for="child in item.children"
+                    :key="child.path"
+                    :to="child.path"
+                    class="admin-nav-child text-xs"
+                    :class="activeTarget === child.path ? 'admin-nav-child-active' : ''"
+                  >
+                    <span>{{ child.label }}</span>
+                  </RouterLink>
+                </div>
+              </template>
             </div>
           </section>
         </nav>
@@ -133,9 +174,9 @@ function logout() {
         <button type="button" class="admin-btn admin-btn-ghost relative z-[1] mt-5 w-full text-sm" @click="logout">退出登录</button>
       </aside>
 
-      <main class="min-w-0"><slot /></main>
+      <main class="min-w-0 p-4 md:p-6"><slot /></main>
 
-      <aside v-if="queueVisible" class="hidden xl:block">
+      <aside v-if="queueVisible" class="hidden p-4 xl:block">
         <div class="glass sticky top-6 rounded-[28px] p-5">
           <div class="relative z-[1] flex items-center justify-between gap-3">
             <h2 class="font-black text-white">操作暂存区</h2>

@@ -28,6 +28,7 @@ def _configured(value: Any) -> bool:
 
 
 def public_settings(data: dict[str, Any]) -> dict[str, Any]:
+    settings = get_settings()
     comments = deepcopy(data.get("comments") or {})
     gitalk = deepcopy(data.get("gitalkConfig") or comments.get("gitalk") or {})
     public_comments = {
@@ -54,6 +55,10 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "themeConfig": deepcopy(data.get("themeConfig") or {}),
         "bgImages": deepcopy(data.get("bgImages") or []),
         "cloudMusicIds": deepcopy(data.get("cloudMusicIds") or []),
+        "interaction": deepcopy(data.get("interaction") or {"clickSoundEnabled": True, "clickSoundVolume": 0.05, "clickSoundUrl": ""}),
+        "githubOAuth": {
+            "configured": bool(settings.github_oauth_client_id and settings.github_oauth_client_secret),
+        },
         "comments": public_comments,
     }
 
@@ -86,6 +91,7 @@ def admin_settings(data: dict[str, Any]) -> dict[str, Any]:
         "ossKeyConfigured": _configured(get_settings().oss_access_key_secret),
         "aiKeyConfigured": _configured(get_settings().ai_a_api_key or get_settings().ai_b_api_key),
         "githubOAuthSecretConfigured": _configured((data.get("gitalkConfig") or {}).get("clientSecret", "")),
+        "githubOAuthConfigured": _configured(get_settings().github_oauth_client_id and get_settings().github_oauth_client_secret),
     }
     return result
 
@@ -104,6 +110,9 @@ def _strip_computed_fields(data: dict[str, Any]) -> dict[str, Any]:
     ai = cleaned.get("ai")
     if isinstance(ai, dict):
         ai.pop("aiKeyConfigured", None)
+    interaction = cleaned.get("interaction")
+    if isinstance(interaction, dict):
+        interaction.pop("clickSoundConfigured", None)
     return cleaned
 
 

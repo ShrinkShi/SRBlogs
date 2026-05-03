@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     ai_b_api_key: str = ""
     ai_b_model: str = ""
 
+    github_oauth_client_id: str = ""
+    github_oauth_client_secret: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @property

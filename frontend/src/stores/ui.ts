@@ -11,6 +11,8 @@ export const useUiStore = defineStore('ui', {
     danmaku: localStorage.getItem('sr-danmaku') !== 'off',
     ambience: localStorage.getItem('sr-ambience') !== 'off',
     clickSound: localStorage.getItem('sr-click-sound') !== 'off',
+    clickSoundVolume: Number(localStorage.getItem('sr-click-volume') || '0.05'),
+    clickSoundUrl: localStorage.getItem('sr-click-url') || '',
     toast: '',
     toastKind: 'info' as 'info' | 'success' | 'error'
   }),
@@ -45,6 +47,15 @@ export const useUiStore = defineStore('ui', {
     toggleClickSound() {
       this.clickSound = !this.clickSound
       localStorage.setItem('sr-click-sound', this.clickSound ? 'on' : 'off')
+    },
+    applyInteraction(config?: { clickSoundEnabled?: boolean; clickSoundVolume?: number; clickSoundUrl?: string }) {
+      if (!config) return
+      this.clickSound = config.clickSoundEnabled !== false
+      this.clickSoundVolume = Math.max(0, Math.min(1, Number(config.clickSoundVolume ?? 0.05)))
+      this.clickSoundUrl = config.clickSoundUrl || ''
+      localStorage.setItem('sr-click-sound', this.clickSound ? 'on' : 'off')
+      localStorage.setItem('sr-click-volume', String(this.clickSoundVolume))
+      localStorage.setItem('sr-click-url', this.clickSoundUrl)
     },
     showToast(message: string, kind: 'info' | 'success' | 'error' = 'info') {
       this.toast = message

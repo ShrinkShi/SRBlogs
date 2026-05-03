@@ -227,8 +227,8 @@ Base path: `/api`
 各资源主字段：
 - `/friends`：`name`、`url`、`description`、`avatar`、`tags`
 - `/projects`：`name`、`description`、`tags`、`url`、`repo`、`cover`、`status`
-- `/music`：`title`、`artist`、`cover`、`url`、`id`、`sort`
-- `/photos`：`url`、`title`、`description`、`date`、`tags`
+- `/music`：`title`、`artist`、`cover`、`url`、`lyricUrl`、`lyrics`、`id`、`sort`
+- `/photos`：兼容旧单图 `{ url, title, description, date, tags }`；新相册组推荐 `{ title, description, cover, date, tags, photos: [{ url, title, description, date, tags }] }`，每组最多 50 张。
 
 ### PUT `/{resource}`
 
@@ -369,16 +369,17 @@ Sitemap: https://example.com/api/sitemap.xml
 
 ## Upload API
 
-2026-05-03 更新：`POST /api/upload` 继续要求管理员 JWT，但本地资源上传范围从图片扩展为图片、音频和视频。后台表单可将上传返回的 URL 回填到头像、背景、照片、封面、音乐 URL 或后续视频字段。接口仍必须同时校验扩展名、MIME 和大小；非法类型返回 `415`，超大文件返回 `413`。
+2026-05-03 更新：`POST /api/upload` 继续要求管理员 JWT，但本地资源上传范围从图片扩展为图片、音频、视频和歌词文本。后台表单可将上传返回的 URL 回填到头像、背景、照片/相册、封面、音乐 URL、歌词 URL 或后续视频字段。接口仍必须同时校验扩展名、MIME 和大小；非法类型返回 `415`，超大文件返回 `413`。
 
 当前默认允许：
 
 - 图片：`.jpg`、`.jpeg`、`.png`、`.gif`、`.webp`、`.svg`
 - 音频：`.mp3`、`.wav`、`.ogg`、`.m4a`
 - 视频：`.mp4`、`.webm`、`.mov`
+- 歌词：`.lrc`、`.txt`
 - MIME：`image/jpeg`、`image/png`、`image/gif`、`image/webp`、`image/svg+xml`、`audio/mpeg`、`audio/wav`、`audio/ogg`、`audio/mp4`、`video/mp4`、`video/webm`、`video/quicktime`
-- 大小上限按类型分档：图片默认 10 MB，音频默认 100 MB，视频默认 200 MB；不允许无限制上传。
-- 错误信息需明确指出图片、音频或视频超过对应限制，方便后台 UI 显示可读错误。
+- 大小上限按类型分档：图片默认 10 MB，音频默认 100 MB，视频默认 200 MB，歌词默认 1 MB；不允许无限制上传。
+- 错误信息需明确指出图片、音频、视频或歌词超过对应限制，方便后台 UI 显示可读错误。
 
 ### POST `/upload`
 
@@ -386,9 +387,9 @@ Sitemap: https://example.com/api/sitemap.xml
 
 限制：
 
-- 扩展名：`.jpg`、`.jpeg`、`.png`、`.gif`、`.webp`、`.svg`
-- MIME：`image/jpeg`、`image/png`、`image/gif`、`image/webp`、`image/svg+xml`
-- 大小：不超过 5 MB
+- 扩展名：图片、音频、视频和歌词文件白名单，禁止可执行文件。
+- MIME：图片/音频/视频必须匹配配置白名单；歌词仅允许 `.lrc`/`.txt` 的文本类型。
+- 大小：图片 10 MB、音频 100 MB、视频 200 MB、歌词 1 MB。
 
 响应：
 
@@ -410,10 +411,12 @@ Sitemap: https://example.com/api/sitemap.xml
 
 ### POST `/comments/{resource}/{slug}`
 
-公开提交。请求体：
+GitHub 登录后提交。新评论只允许 GitHub 登录这一种身份；后端通过 `srblogs_github_user` HttpOnly cookie 读取 GitHub 用户，不接受前端伪造作者身份。
+
+请求体：
 
 ```json
-{ "author": "name", "email": "optional@example.com", "content": "comment" }
+{ "content": "comment" }
 ```
 
 响应：
@@ -421,8 +424,10 @@ Sitemap: https://example.com/api/sitemap.xml
 ```json
 {
   "id": "uuid",
-  "author": "name",
-  "email": "optional@example.com",
+  "author": "GitHub Display Name",
+  "email": "",
+  "avatar": "https://avatars.githubusercontent.com/...",
+  "githubLogin": "github-user",
   "content": "comment",
   "created_at": "2026-05-02 12:00"
 }
@@ -431,10 +436,19 @@ Sitemap: https://example.com/api/sitemap.xml
 提交规则：
 
 - `comments.enabled=false` 或 `comments.localEnabled=false` 时返回 `403`，不得继续提交。
-- `comments.requireEmail=true` 时邮箱必填；非法邮箱返回 `400`。
+- 未登录 GitHub 时返回 `401`。
 - `comments.maxLength` 动态限制评论长度，超过返回 `400`。
 - 提交内容必须用 bleach 清洗。
 - 响应中的 `email` 仍按 `showEmail` 规则隐藏或脱敏。
+
+### GitHub Auth For Comments
+
+- `GET /auth/github/me`：返回 `{ configured, user }`。不需要 JWT，不返回 OAuth Secret。
+- `GET /auth/github/login?return_to=...`：启动 GitHub OAuth code flow，后端生成并校验 CSRF `state`。
+- `GET /auth/github/callback`：后端使用 GitHub OAuth Secret 换取 access token，读取 GitHub 公开用户信息，写入 HttpOnly 登录 cookie 后跳回 `return_to`。
+- `POST /auth/github/logout`：清除评论登录 cookie。
+
+GitHub OAuth Client Secret 只能保存在后端 `.env` 或服务端配置。未配置时，前台评论区必须显示“GitHub 登录未配置”，不能回退到匿名评论。
 
 ### DELETE `/comments/{resource}/{slug}/{comment_id}`
 

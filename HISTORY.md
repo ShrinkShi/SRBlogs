@@ -1,5 +1,67 @@
 # HISTORY
 
+## 2026-05-03 - P1/P2 混合收口：GitHub 评论、全局音乐与相册组
+
+本轮目标：
+
+- 修复顶层 Toast、后台左侧层级导航、Markdown 分栏与字体颜色弹窗。
+- 补齐点击音效设置、音乐跨页面持续播放、歌词上传、GitHub 登录评论、照片墙相册组、名片无边框化和轮播 hover 切换。
+- 不改变技术栈，不新增复杂后端系统，不破坏 P0 已验收能力。
+
+当前进度估算：
+
+- P0：100%。
+- P1：约 98%，GitHub OAuth 真实授权链路仍需配置 Client ID/Secret 后浏览器人工验收。
+- P2：约 86%，仍需用户确认 Toast、后台导航、Markdown 拖拽、全局音乐、相册组和移动端视觉回归。
+
+前台变更：
+
+- Toast 改为 `Teleport` 到 `body` 的顶部固定层，成功为绿色、失败为红色，不再挤占页面流。
+- 评论区改为 GitHub 登录后评论：未配置 OAuth 时显示未配置提示，未登录时显示 GitHub 登录按钮；匿名评论提交被后端拒绝。
+- 首页和 `/music` 页面改为共享全局播放器状态，路由切换不会销毁 audio；首页播放器保留上一首、播放/暂停、下一首，移除歌单按钮。
+- 首页歌词区优先读取当前歌曲的 `lyricUrl` 或内嵌 `lyrics`；无歌词时显示当前歌曲信息。
+- 照片墙兼容旧单图数据，并支持相册组展示：列表显示封面，点击后进入相册预览和缩略图切换。
+- 名片统计与联系方式去掉边框和填充，复制成功/失败统一走顶层 Toast。
+- 首页轮播分页点支持 hover 预选切换，点击仍保留用于移动端。
+
+后台变更：
+
+- 左侧导航改为贴最左侧、铺满视口高度的垂直控制台侧栏；设置中心分区并入“系统 > 设置中心”的子层级。
+- 设置页主体移除突兀的独立分区导航，保留当前分区内容和保存主流程。
+- Markdown 编辑器左右分栏去除间距，增加可拖动分隔条；390px 下仍使用编辑/预览切换。
+- Markdown 字体颜色改为自定义 popover，包含颜色选择器、文本输入和预设色，不再使用浏览器 `prompt`。
+- 设置中心增加点击音效配置：启用开关、音量、音效 URL 和本地音频上传回填。
+- 音乐管理增加歌词文件上传和内嵌歌词字段；照片墙管理改为相册表单，支持每组最多 50 张照片的批量上传和单张移除。
+
+后端/API 变更：
+
+- 新增 GitHub OAuth 评论登录接口：`/api/auth/github/login`、`/api/auth/github/callback`、`/api/auth/github/me`、`/api/auth/github/logout`。
+- 评论 `POST /api/comments/{resource}/{slug}` 改为需要 GitHub 登录 cookie；新评论写入 GitHub 用户名和头像，旧评论继续展示。
+- `/api/settings/public` 增加公开的 `interaction` 点击音效配置和 `githubOAuth.configured` 状态，不返回 Secret。
+- 上传服务增加 `.lrc` / `.txt` 歌词文件，限制 1 MB；图片 10 MB、音频 100 MB、视频 200 MB 继续分档限制。
+- `backend/.env.example` 增加 GitHub OAuth Client ID/Secret 占位字段，不填真实值。
+
+文档变更：
+
+- 更新本轮记录、矩阵、API 契约、安全说明、UI 风格、人工验收清单、用户手册和 README，标注 GitHub OAuth 需要服务端配置后再做真实授权验收。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`，仍有既有 chunk 体积提示。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient `GET /api/health` 返回 200。
+- 通过：`GET /api/settings/public` 返回 200，未匹配 Secret/Password/JWT/API Key 明文字段。
+- 通过：`GET /api/auth/github/me` 返回 200；当前未配置 OAuth 时 `configured=false`。
+- 通过：未登录 `POST /api/comments/posts/vue-fastapi-blog` 返回 401，匿名评论入口被后端拒绝。
+- 通过：管理员登录后上传 `.lrc` 歌词文件返回 200；非法 `.exe` 上传返回 415。测试歌词文件和本轮测试审计记录随后已清理，避免留下运行时垃圾。
+- 通过：构建产物 Secret 固定字符串搜索未匹配 `change-me`、`please-change-this-secret`、`JWT_SECRET=`、`ADMIN_PASSWORD=`、`GITHUB_OAUTH_CLIENT_SECRET`、`AI_A_API_KEY`、`OSS_ACCESS_KEY_SECRET`；`sk-*` 模式命中 CSS/高亮库的 `sk-image`、`sk-border` 等非 Secret 字符串。
+
+遗留问题：
+
+- GitHub OAuth 真实 code flow 需要配置 GitHub Client ID/Secret 后由浏览器人工验收。
+- 本轮未启动 dev server 做完整浏览器人工回归；Toast、后台三级导航、Markdown 拖拽、全局音乐、歌词显示、相册组和 390px 视觉仍需用户确认。
+
 ## 2026-05-03 - P2 交互细节与后台弹窗化收口轮
 
 本轮目标：

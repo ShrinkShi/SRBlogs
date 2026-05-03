@@ -1,46 +1,27 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import GlassCard from './GlassCard.vue'
 import SafeImage from './SafeImage.vue'
 import type { MusicItem } from '@/types'
+import { usePlayerStore } from '@/stores/player'
 
 const props = defineProps<{ tracks: MusicItem[] }>()
-const current = ref(0)
-const playing = ref(false)
-const audio = ref<HTMLAudioElement | null>(null)
-const track = computed(() => props.tracks[current.value])
+const player = usePlayerStore()
+const track = computed(() => player.track)
 
 function next() {
-  current.value = (current.value + 1) % Math.max(1, props.tracks.length)
-  playing.value = false
+  player.next()
 }
 
 function prev() {
-  current.value = (current.value - 1 + props.tracks.length) % Math.max(1, props.tracks.length)
-  playing.value = false
+  player.prev()
 }
 
 async function toggle() {
-  if (!track.value?.url || !audio.value) {
-    playing.value = !playing.value
-    return
-  }
-  if (playing.value) {
-    audio.value.pause()
-    playing.value = false
-    return
-  }
-  await audio.value.play()
-  playing.value = true
+  await player.toggle()
 }
 
-watch(track, () => {
-  if (audio.value) {
-    audio.value.pause()
-    audio.value.load()
-  }
-  playing.value = false
-})
+watch(() => props.tracks, (items) => player.setTracks(items), { immediate: true })
 </script>
 
 <template>
@@ -59,10 +40,9 @@ watch(track, () => {
       </div>
       <div class="flex flex-wrap gap-3">
         <button type="button" class="rounded-2xl bg-white/10 px-4 py-2" @click="prev">上一首</button>
-        <button type="button" class="rounded-2xl bg-cyan-300 px-5 py-2 font-bold text-slate-950" @click="toggle">{{ playing ? '暂停' : '播放' }}</button>
+        <button type="button" class="rounded-2xl bg-cyan-300 px-5 py-2 font-bold text-slate-950" @click="toggle">{{ player.playing ? '暂停' : '播放' }}</button>
         <button type="button" class="rounded-2xl bg-white/10 px-4 py-2" @click="next">下一首</button>
       </div>
-      <audio v-if="track.url" ref="audio" :src="track.url" preload="none" @ended="next"></audio>
     </div>
     <p v-else class="text-white/60">暂无歌单。</p>
   </GlassCard>

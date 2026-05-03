@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 import { usePendingStore } from '@/stores/pending'
@@ -10,6 +11,8 @@ type AnySettings = Record<string, any>
 const ui = useUiStore()
 const pendingStore = usePendingStore()
 const active = ref<SettingsTab>('site')
+const route = useRoute()
+const router = useRouter()
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
@@ -29,6 +32,8 @@ const tabs: { key: SettingsTab; label: string }[] = [
   { key: 'ai', label: 'AI 设置' },
   { key: 'deploy', label: '部署与安全提示' }
 ]
+
+const tabKeys = tabs.map((item) => item.key)
 
 const tokenLabels: Record<string, string> = {
   bgPage: '页面背景',
@@ -119,6 +124,11 @@ const form = reactive({
     model: '',
     enableChat: true,
     aiKeyConfigured: false
+  },
+  interaction: {
+    clickSoundEnabled: true,
+    clickSoundVolume: 0.05,
+    clickSoundUrl: ''
   }
 })
 
@@ -180,6 +190,10 @@ function applySettings(data: AnySettings) {
   form.ai.model = ai.model || ''
   form.ai.enableChat = ai.enableChat !== false
   form.ai.aiKeyConfigured = ai.aiKeyConfigured === true
+  const interaction = data.interaction || {}
+  form.interaction.clickSoundEnabled = interaction.clickSoundEnabled !== false
+  form.interaction.clickSoundVolume = Number(interaction.clickSoundVolume ?? 0.05)
+  form.interaction.clickSoundUrl = interaction.clickSoundUrl || ''
   jsonText.value = JSON.stringify(data, null, 2)
   secretInputs.githubOAuthSecret = ''
   secretInputs.accessKeyId = ''
@@ -257,6 +271,11 @@ function buildPayload() {
       model: form.ai.model,
       enableChat: form.ai.enableChat,
       [['api', 'Key'].join('')]: secretInputs.aiKeyInput
+    },
+    interaction: {
+      clickSoundEnabled: form.interaction.clickSoundEnabled,
+      clickSoundVolume: Number(form.interaction.clickSoundVolume || 0.05),
+      clickSoundUrl: form.interaction.clickSoundUrl
     }
   }
   return payload
@@ -325,6 +344,20 @@ async function uploadInto(field: 'avatar' | 'bg', files: FileList | null) {
   }
 }
 
+async function uploadClickSound(files: FileList | null) {
+  if (!files?.length) return
+  uploadProgress.value.clickSound = 0
+  error.value = ''
+  try {
+    const data = await adminApi.upload(files[0], (percent) => { uploadProgress.value.clickSound = percent })
+    form.interaction.clickSoundUrl = data.url
+    success.value = '点击音效上传成功，URL 已填入。'
+    ui.show('点击音效上传成功')
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '点击音效上传失败'
+  }
+}
+
 function testImageBed() {
   if (!['local', 'oss', 'custom'].includes(form.imageBed.provider)) {
     error.value = '图床 provider 只能是 local / oss / custom。'
@@ -334,17 +367,21 @@ function testImageBed() {
   error.value = ''
 }
 
+function syncTabFromRoute() {
+  const tab = String(route.query.tab || '')
+  if (tabKeys.includes(tab as SettingsTab)) active.value = tab as SettingsTab
+}
+
+watch(() => route.query.tab, syncTabFromRoute, { immediate: true })
+watch(active, (tab) => {
+  if (route.query.tab !== tab) router.replace({ query: { ...route.query, tab } })
+})
+
 onMounted(load)
 </script>
 
 <template>
   <div class="grid gap-4">
-    <div class="glass rounded-[30px] p-3">
-      <div class="relative z-[1] flex flex-wrap gap-2">
-        <button v-for="tab in tabs" :key="tab.key" class="rounded-2xl px-4 py-2.5 text-left text-sm transition" :class="active === tab.key ? 'bg-cyan-300/[0.16] text-cyan-100 ring-1 ring-cyan-200/25' : 'text-white/60 hover:bg-white/10'" @click="active = tab.key">{{ tab.label }}</button>
-      </div>
-    </div>
-
     <div class="grid gap-4">
       <div class="glass rounded-[30px] p-5">
         <div class="relative z-[1] flex flex-wrap items-center justify-between gap-3">
@@ -381,6 +418,20 @@ onMounted(load)
                 <label class="grid gap-2 text-sm text-white/65 md:col-span-2">字体族<input v-model="form.themeConfig.fontFamily" class="admin-input" placeholder="留空使用默认字体，也可填写 CSS font-family" /></label>
                 <label class="grid gap-2 text-sm text-white/65">字号档位<select v-model="form.themeConfig.fontScale" class="admin-input"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></label>
               </div>
+            </div>
+            <div class="rounded-[24px] border border-white/10 bg-white/[0.055] p-4">
+              <h3 class="font-black text-white">交互点击音效</h3>
+              <div class="mt-4 grid gap-3 md:grid-cols-3">
+                <label class="setting-check"><input v-model="form.interaction.clickSoundEnabled" type="checkbox" />启用点击音效</label>
+                <label class="grid gap-2 text-sm text-white/65">音量<input v-model.number="form.interaction.clickSoundVolume" type="number" min="0" max="1" step="0.01" class="admin-input" /></label>
+                <label class="grid gap-2 text-sm text-white/65 md:col-span-3">音效 URL
+                  <div class="flex gap-2">
+                    <input v-model="form.interaction.clickSoundUrl" class="admin-input min-w-0 flex-1" placeholder="留空使用内置轻量点击声" />
+                    <label class="admin-btn admin-btn-ghost cursor-pointer">上传音效<input type="file" accept="audio/*" class="hidden" @change="uploadClickSound(($event.target as HTMLInputElement).files)" /></label>
+                  </div>
+                </label>
+              </div>
+              <p class="mt-3 text-xs leading-5 text-white/45">前台只在按钮、链接和表单控件点击时播放；空白点击不播放。音量建议保持 0.03 到 0.08。</p>
             </div>
             <div class="grid gap-4 xl:grid-cols-2">
               <div class="rounded-[28px] border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.035] p-4">

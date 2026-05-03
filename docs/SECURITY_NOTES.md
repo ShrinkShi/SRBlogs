@@ -26,16 +26,16 @@
 
 ## Uploads
 
-- 2026-05-03 起，本地上传入口支持图片、音频和视频资源，但仍必须要求管理员 JWT，并继续执行扩展名、MIME 和大小三重校验。
-- 允许的音频/视频资源只用于本地文件托管和 URL 回填，不代表允许执行脚本或上传任意二进制文件。
-- 上传返回 URL 可写入头像、背景、照片、封面、音乐 URL 或后续视频字段；结构化 JSON 的保存仍必须走后端 API 和安全写入封装。
-- 上传大小按类型分档限制：图片默认 10 MB，音频默认 100 MB，视频默认 200 MB；禁止关闭大小限制或允许任意文件类型。
+- 2026-05-03 起，本地上传入口支持图片、音频、视频和歌词文本资源，但仍必须要求管理员 JWT，并继续执行扩展名、MIME 和大小三重校验。
+- 允许的音频/视频/歌词资源只用于本地文件托管和 URL 回填，不代表允许执行脚本或上传任意二进制文件。
+- 上传返回 URL 可写入头像、背景、相册照片、封面、音乐 URL、歌词 URL 或后续视频字段；结构化 JSON 的保存仍必须走后端 API 和安全写入封装。
+- 上传大小按类型分档限制：图片默认 10 MB，音频默认 100 MB，视频默认 200 MB，歌词 `.lrc/.txt` 默认 1 MB；禁止关闭大小限制或允许任意文件类型。
 
 - 上传接口必须要求管理员 JWT。
 - 后端必须同时校验扩展名、MIME 和大小。
-- 当前允许：`.jpg`、`.jpeg`、`.png`、`.gif`、`.webp`、`.svg`。
-- 当前允许 MIME：`image/jpeg`、`image/png`、`image/gif`、`image/webp`、`image/svg+xml`。
-- 当前大小上限：5 MB。
+- 当前允许：`.jpg`、`.jpeg`、`.png`、`.gif`、`.webp`、`.svg`、`.mp3`、`.wav`、`.ogg`、`.m4a`、`.mp4`、`.webm`、`.mov`、`.lrc`、`.txt`。
+- 当前允许 MIME：按 `UPLOAD_ALLOWED_TYPES` 配置校验图片/音频/视频；歌词文件只允许文本类型。
+- 当前大小上限：图片 10 MB、音频 100 MB、视频 200 MB、歌词 1 MB。
 
 ## Slug And Paths
 
@@ -48,6 +48,10 @@
 
 - 前台 Markdown 渲染必须经过 DOMPurify 清洗。
 - 评论提交内容必须由后端清洗后保存。
+- 新评论只允许 GitHub 登录身份提交；未登录必须返回 401，不得回退到匿名评论。
+- GitHub OAuth code flow 必须由后端完成并校验 CSRF `state`；OAuth Client Secret 只能保存在后端 `.env` 或服务端配置。
+- 前端只允许读取 `/api/auth/github/me` 返回的 configured 状态和 GitHub 公开用户信息，不能获得 OAuth access token 或 Secret。
+- 评论 JSON 不得保存 GitHub access token，只保存必要的 GitHub 登录名、头像 URL、显示名和评论内容。
 - Markdown 内容允许用户输入，但渲染时不得直接插入未经清洗的 HTML。
 - 后台删除评论必须要求管理员 JWT。
 - 后台评论索引 `GET /api/admin/comments/index` 必须要求管理员 JWT，只返回 `resource`、`slug`、`count`、`updatedAt`、`title` 等管理索引字段。

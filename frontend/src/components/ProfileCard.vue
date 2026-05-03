@@ -50,37 +50,37 @@ async function copy(value: string, label: string) {
 
       <div class="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div class="grid min-w-0 grid-cols-3 gap-2">
-          <RouterLink to="/posts" class="sr-card-hover min-w-0 rounded-2xl border border-white/10 bg-white/[0.08] p-3 text-center">
+          <RouterLink to="/posts" class="profile-plain-action min-w-0 p-3 text-center">
             <b class="block break-words text-2xl text-white">{{ props.posts || 0 }}</b>
             <span class="text-xs text-white/42">文章</span>
           </RouterLink>
-          <RouterLink to="/chatters" class="sr-card-hover min-w-0 rounded-2xl border border-white/10 bg-white/[0.08] p-3 text-center">
+          <RouterLink to="/chatters" class="profile-plain-action min-w-0 p-3 text-center">
             <b class="block break-words text-2xl text-white">{{ props.chatters || 0 }}</b>
             <span class="text-xs text-white/42">杂谈</span>
           </RouterLink>
-          <RouterLink to="/photowall" class="sr-card-hover min-w-0 rounded-2xl border border-white/10 bg-white/[0.08] p-3 text-center">
+          <RouterLink to="/photowall" class="profile-plain-action min-w-0 p-3 text-center">
             <b class="block break-words text-2xl text-white">{{ props.photos || 0 }}</b>
             <span class="text-xs text-white/42">照片</span>
           </RouterLink>
         </div>
 
         <div class="flex flex-wrap justify-center gap-2 lg:justify-end">
-          <a :href="github()" target="_blank" rel="noopener noreferrer" class="sr-card-hover grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[0.08]" aria-label="打开 GitHub">
+          <a :href="github()" target="_blank" rel="noopener noreferrer" class="profile-icon-action grid h-11 w-11 place-items-center" aria-label="打开 GitHub">
             <svg viewBox="0 0 24 24" class="h-5 w-5 fill-current text-white/72" aria-hidden="true">
               <path d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.18-3.37-1.18-.45-1.15-1.1-1.46-1.1-1.46-.9-.62.07-.6.07-.6 1 .07 1.53 1.04 1.53 1.04.88 1.51 2.32 1.08 2.88.82.09-.65.35-1.08.63-1.33-2.22-.25-4.56-1.11-4.56-4.94 0-1.1.39-1.99 1.03-2.69-.1-.25-.45-1.27.1-2.65 0 0 .84-.27 2.75 1.03A9.5 9.5 0 0 1 12 6.02c.85 0 1.7.11 2.5.34 1.9-1.3 2.74-1.03 2.74-1.03.55 1.38.2 2.4.1 2.65.64.7 1.03 1.6 1.03 2.69 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.86V21c0 .27.18.58.69.48A10 10 0 0 0 12 2Z"/>
             </svg>
           </a>
-          <button type="button" class="sr-card-hover grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[0.08]" aria-label="复制邮箱" @click="copy(email(), '邮箱')">
+          <button type="button" class="profile-icon-action grid h-11 w-11 place-items-center" aria-label="复制邮箱" @click="copy(email(), '邮箱')">
             <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current text-white/72" aria-hidden="true">
               <path stroke-width="2" d="M4 6h16v12H4z"/><path stroke-width="2" d="m4 7 8 6 8-6"/>
             </svg>
           </button>
-          <button type="button" class="sr-card-hover grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[0.08]" aria-label="复制 QQ" @click="copy(qq(), 'QQ')">
+          <button type="button" class="profile-icon-action grid h-11 w-11 place-items-center" aria-label="复制 QQ" @click="copy(qq(), 'QQ')">
             <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current text-white/72" aria-hidden="true">
               <path stroke-width="2" d="M12 3c3 0 5 2.6 5 6.6 0 2 .7 3.4 1.5 4.7.4.7-.1 1.5-.9 1.3l-1.4-.3c-.8 1.8-2.2 3-4.2 3s-3.4-1.2-4.2-3l-1.4.3c-.8.2-1.3-.6-.9-1.3C6.3 13 7 11.6 7 9.6 7 5.6 9 3 12 3Z"/><path stroke-width="2" d="M9 21c.8-.8 1.8-1.2 3-1.2s2.2.4 3 1.2"/>
             </svg>
           </button>
-          <button type="button" class="sr-card-hover grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[0.08]" aria-label="复制微信" @click="copy(wechat(), '微信')">
+          <button type="button" class="profile-icon-action grid h-11 w-11 place-items-center" aria-label="复制微信" @click="copy(wechat(), '微信')">
             <svg viewBox="0 0 24 24" class="h-5 w-5 fill-none stroke-current text-white/72" aria-hidden="true">
               <path stroke-width="2" d="M9.5 16.5c-3.6 0-6.5-2.2-6.5-5s2.9-5 6.5-5 6.5 2.2 6.5 5-2.9 5-6.5 5Z"/><path stroke-width="2" d="M14.5 10.5c3.6 0 6.5 2.2 6.5 5 0 1.2-.6 2.4-1.6 3.2l.4 2-2.3-1c-.9.5-1.9.8-3 .8-2.6 0-4.8-1.1-5.9-2.8"/><path stroke-width="2" d="M7.5 10h.01M11.5 10h.01M13.5 15h.01M17.5 15h.01"/>
             </svg>
@@ -90,3 +90,18 @@ async function copy(value: string, label: string) {
     </div>
   </GlassCard>
 </template>
+
+<style scoped>
+.profile-plain-action,
+.profile-icon-action {
+  border: 0;
+  background: transparent;
+  border-radius: 1rem;
+  transition: transform .22s var(--motion-ease), opacity .22s var(--motion-ease), color .22s var(--motion-ease);
+}
+.profile-plain-action:hover,
+.profile-icon-action:hover {
+  transform: scale(1.035);
+  opacity: .92;
+}
+</style>

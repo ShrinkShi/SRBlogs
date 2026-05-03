@@ -4,6 +4,7 @@ import { useUiStore } from '@/stores/ui'
 
 const ui = useUiStore()
 let lastSound = 0
+let customAudio: HTMLAudioElement | null = null
 
 function isInteractive(target: EventTarget | null) {
   const el = target instanceof Element ? target : null
@@ -16,6 +17,15 @@ function playClickSound() {
   if (now - lastSound < 90) return
   lastSound = now
   try {
+    if (ui.clickSoundUrl) {
+      if (!customAudio || customAudio.src !== new URL(ui.clickSoundUrl, window.location.href).href) {
+        customAudio = new Audio(ui.clickSoundUrl)
+      }
+      customAudio.currentTime = 0
+      customAudio.volume = Math.max(0, Math.min(1, ui.clickSoundVolume))
+      customAudio.play().catch(() => {})
+      return
+    }
     const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext
     const ctx = new AudioCtx()
     const gain = ctx.createGain()
@@ -23,7 +33,7 @@ function playClickSound() {
     osc.type = 'square'
     osc.frequency.value = 1250
     gain.gain.setValueAtTime(0.0001, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.055, ctx.currentTime + 0.004)
+    gain.gain.exponentialRampToValueAtTime(Math.max(0.005, Math.min(0.12, ui.clickSoundVolume)), ctx.currentTime + 0.004)
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.045)
     osc.connect(gain)
     gain.connect(ctx.destination)

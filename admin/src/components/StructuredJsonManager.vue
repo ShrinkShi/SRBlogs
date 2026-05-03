@@ -7,7 +7,7 @@ import { useUiStore } from '@/stores/ui'
 export interface StructuredField {
   key: string
   label: string
-  type?: 'text' | 'textarea' | 'tags' | 'number' | 'select' | 'upload'
+  type?: 'text' | 'textarea' | 'tags' | 'number' | 'select' | 'upload' | 'gallery'
   placeholder?: string
   required?: boolean
   options?: string[]
@@ -192,6 +192,47 @@ async function uploadForField(field: StructuredField, files: FileList | null) {
   }
 }
 
+function galleryItems(key: string) {
+  const value = form.value[key]
+  return Array.isArray(value) ? value as Record<string, unknown>[] : []
+}
+
+function removeGalleryItem(key: string, index: number) {
+  const next = galleryItems(key).filter((_, itemIndex) => itemIndex !== index)
+  form.value[key] = next
+  dirty.value = true
+}
+
+async function uploadGallery(field: StructuredField, files: FileList | null) {
+  if (!files?.length) return
+  const current = galleryItems(field.key)
+  const selected = Array.from(files).slice(0, Math.max(0, 50 - current.length))
+  if (!selected.length) {
+    error.value = '每个相册最多 50 张照片'
+    return
+  }
+  error.value = ''
+  uploadProgress.value[field.key] = 0
+  const next = [...current]
+  try {
+    for (let index = 0; index < selected.length; index += 1) {
+      const data = await adminApi.upload(selected[index], (percent) => {
+        uploadProgress.value[field.key] = Math.round(((index + percent / 100) / selected.length) * 100)
+      })
+      next.push({ url: data.url, title: selected[index].name })
+    }
+    form.value[field.key] = next
+    if (!form.value.cover && next[0]?.url) form.value.cover = next[0].url
+    dirty.value = true
+    success.value = '照片已上传并加入相册'
+    ui.show('照片已上传并加入相册')
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '照片上传失败'
+  } finally {
+    uploadProgress.value[field.key] = 0
+  }
+}
+
 onMounted(load)
 </script>
 
@@ -272,6 +313,29 @@ onMounted(load)
               </div>
               <div v-if="uploadProgress[field.key]" class="h-2 rounded-full bg-white/10">
                 <div class="h-full rounded-full bg-cyan-300" :style="{ width: uploadProgress[field.key] + '%' }"></div>
+              </div>
+            </div>
+            <div v-else-if="field.type === 'gallery'" class="grid gap-3">
+              <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-white/10 bg-white/[0.055] p-3">
+                <span class="text-xs text-white/50">当前 {{ galleryItems(field.key).length }} / 50 张</span>
+                <label class="cursor-pointer rounded-2xl border border-cyan-200/25 px-4 py-2 text-cyan-100">
+                  批量上传
+                  <input type="file" accept="image/*" multiple class="hidden" @change="uploadGallery(field, ($event.target as HTMLInputElement).files)" />
+                </label>
+              </div>
+              <div v-if="uploadProgress[field.key]" class="h-2 rounded-full bg-white/10">
+                <div class="h-full rounded-full bg-cyan-300" :style="{ width: uploadProgress[field.key] + '%' }"></div>
+              </div>
+              <div v-if="galleryItems(field.key).length" class="grid gap-2 sm:grid-cols-2">
+                <div v-for="(photo, photoIndex) in galleryItems(field.key)" :key="`${photoIndex}-${photo.url}`" class="rounded-2xl border border-white/10 bg-white/[0.055] p-2">
+                  <img v-if="photo.url" :src="String(photo.url)" alt="" class="h-28 w-full rounded-xl object-cover" />
+                  <input
+                    :value="String(photo.url || '')"
+                    class="mt-2 w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs text-white outline-none"
+                    @input="photo.url = ($event.target as HTMLInputElement).value; dirty = true"
+                  />
+                  <button type="button" class="mt-2 rounded-xl border border-red-200/20 px-3 py-1.5 text-xs text-red-100" @click="removeGalleryItem(field.key, photoIndex)">移除照片</button>
+                </div>
               </div>
             </div>
             <input

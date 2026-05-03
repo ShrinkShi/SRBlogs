@@ -39,6 +39,7 @@ export interface MusicItem {
   id?: string
   sort?: number
   lyrics?: string
+  lyricUrl?: string
 }
 
 export interface ThemeTokens {
@@ -71,12 +72,23 @@ export interface PhotoItem {
   tags?: string[]
 }
 
+export interface PhotoAlbum {
+  title: string
+  description?: string
+  cover?: string
+  date?: string
+  tags?: string[]
+  photos: PhotoItem[]
+}
+
 export interface CommentItem {
   id: string
   author: string
   email?: string
   content: string
   created_at: string
+  avatar?: string
+  githubLogin?: string
 }
 
 export interface SiteSettings {
@@ -118,6 +130,14 @@ export interface SiteSettings {
     showEmail?: boolean
     localEnabled?: boolean
     gitalk?: Record<string, unknown>
+  }
+  interaction?: {
+    clickSoundEnabled?: boolean
+    clickSoundVolume?: number
+    clickSoundUrl?: string
+  }
+  githubOAuth?: {
+    configured?: boolean
   }
 }
 

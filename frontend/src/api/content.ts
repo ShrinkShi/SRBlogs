@@ -22,8 +22,16 @@ export const contentApi = {
     const { data } = await http.get<CommentItem[]>(`/comments/${resource}/${slug}`)
     return data
   },
-  createComment: async (resource: 'posts' | 'moments' | 'chatters', slug: string, payload: { author: string; email?: string; content: string }) => {
+  createComment: async (resource: 'posts' | 'moments' | 'chatters', slug: string, payload: { author?: string; email?: string; content: string }) => {
     const { data } = await http.post<CommentItem>(`/comments/${resource}/${slug}`, payload)
+    return data
+  },
+  githubMe: async () => {
+    const { data } = await http.get<{ configured: boolean; user: null | { login: string; name?: string; avatar?: string; html_url?: string } }>('/auth/github/me')
+    return data
+  },
+  githubLogout: async () => {
+    const { data } = await http.post<{ ok: boolean }>('/auth/github/logout')
     return data
   },
   search: async (params: { q?: string; type?: DiscoveryType; tag?: string; limit?: number; offset?: number }) => {

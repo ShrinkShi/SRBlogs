@@ -6,6 +6,7 @@ import bleach
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.config import get_settings
+from app.api.auth import require_github_user
 from app.models.schemas import CommentCreate, CommentIndexItem, CommentItem
 from app.services.audit_service import write_audit
 from app.services.auth_service import require_admin
@@ -91,12 +92,10 @@ def list_comments(resource: str, slug: str):
 
 
 @router.post("/{resource}/{slug}", response_model=CommentItem)
-def create_comment(resource: str, slug: str, payload: CommentCreate):
+def create_comment(resource: str, slug: str, payload: CommentCreate, github_user: dict = Depends(require_github_user)):
     options = _comment_options()
     if not _comments_enabled(options):
         raise HTTPException(status_code=403, detail="Comments are closed")
-    if options.get("requireEmail") is True and not (payload.email or "").strip():
-        raise HTTPException(status_code=400, detail="Email is required")
     max_length = _max_comment_length(options)
     if len(payload.content.strip()) > max_length:
         raise HTTPException(status_code=400, detail=f"Comment content must be at most {max_length} characters")
@@ -104,8 +103,10 @@ def create_comment(resource: str, slug: str, payload: CommentCreate):
     comments = store.read()
     item = {
         "id": uuid4().hex,
-        "author": bleach.clean(payload.author, tags=[], strip=True),
-        "email": bleach.clean(payload.email or "", tags=[], strip=True),
+        "author": bleach.clean(str(github_user.get("name") or github_user.get("login") or "GitHub User"), tags=[], strip=True),
+        "email": "",
+        "avatar": bleach.clean(str(github_user.get("avatar") or ""), tags=[], strip=True),
+        "githubLogin": bleach.clean(str(github_user.get("login") or ""), tags=[], strip=True),
         "content": bleach.clean(payload.content, tags=[], strip=True),
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }

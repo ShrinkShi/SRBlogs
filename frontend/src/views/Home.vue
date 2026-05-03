@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import ProfileCard from '@/components/ProfileCard.vue'
 import { contentApi } from '@/api/content'
-import type { ContentItem, MusicItem, PhotoItem, SiteSettings } from '@/types'
+import type { ContentItem, MusicItem, PhotoAlbum, PhotoItem, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { useUiStore } from '@/stores/ui'
+import { usePlayerStore } from '@/stores/player'
 import { formatDate } from '@/utils/date'
 
 type UpdateItem = {
@@ -20,19 +21,17 @@ type UpdateItem = {
 const posts = ref<ContentItem[]>([])
 const moments = ref<ContentItem[]>([])
 const chatters = ref<ContentItem[]>([])
-const photos = ref<PhotoItem[]>([])
+const photos = ref<Array<PhotoItem | PhotoAlbum>>([])
 const music = ref<MusicItem[]>([])
 const settings = ref<SiteSettings | null>(null)
+const remoteLyrics = ref('')
 const currentTrack = ref(0)
 const postIndex = ref(0)
 const photoIndex = ref(0)
 const updateIndex = ref(0)
-const playing = ref(false)
-const duration = ref(0)
-const currentTime = ref(0)
-const audio = ref<HTMLAudioElement | null>(null)
 const now = ref(new Date())
 const ui = useUiStore()
+const player = usePlayerStore()
 let clockTimer = 0
 let carouselTimer = 0
 
@@ -43,9 +42,27 @@ useSeo({
   path: '/'
 })
 
-const track = computed(() => music.value[currentTrack.value])
+const track = computed(() => player.track || music.value[currentTrack.value])
 const postSlides = computed(() => posts.value.slice(0, 6))
-const photoSlides = computed(() => photos.value.slice(0, 6))
+function photoCover(item: PhotoItem | PhotoAlbum): PhotoItem {
+  if ('photos' in item && Array.isArray(item.photos)) {
+    const first = item.photos[0]
+    return {
+      url: item.cover || first?.url || '',
+      title: item.title || first?.title,
+      description: item.description || first?.description,
+      date: item.date || first?.date,
+      tags: item.tags || first?.tags
+    }
+  }
+  return item as PhotoItem
+}
+
+const photoSlides = computed(() => photos.value.map(photoCover).filter((item) => item.url).slice(0, 6))
+const photoCount = computed(() => photos.value.reduce((count, item) => {
+  if ('photos' in item && Array.isArray(item.photos)) return count + item.photos.length
+  return count + 1
+}, 0))
 const currentPost = computed(() => postSlides.value[postIndex.value] || postSlides.value[0])
 const currentPhoto = computed(() => photoSlides.value[photoIndex.value] || photoSlides.value[0])
 const latestUpdates = computed<UpdateItem[]>(() => {
@@ -66,10 +83,22 @@ const latestUpdates = computed<UpdateItem[]>(() => {
 })
 const currentUpdate = computed(() => latestUpdates.value[updateIndex.value] || latestUpdates.value[0])
 const lyricLine = computed(() => {
+  if (remoteLyrics.value) return remoteLyrics.value.split('\n').map((line) => line.replace(/^\[[^\]]+\]/, '').trim()).find(Boolean) || `${track.value?.title} - ${track.value?.artist}`
   if (track.value?.lyrics) return track.value.lyrics.split('\n').map((line) => line.trim()).find(Boolean) || `${track.value.title} - ${track.value.artist}`
-  if (track.value) return `${track.value.title} - ${track.value.artist} / ${playing.value ? '正在播放' : '等待播放'}`
+  if (track.value) return `${track.value.title} - ${track.value.artist} / ${player.playing ? '正在播放' : '等待播放'}`
   return '暂无歌词数据，添加歌曲后这里会显示当前播放信息'
 })
+
+watch(() => track.value?.lyricUrl, async (url) => {
+  remoteLyrics.value = ''
+  if (!url) return
+  try {
+    const response = await fetch(url)
+    if (response.ok) remoteLyrics.value = await response.text()
+  } catch {
+    remoteLyrics.value = ''
+  }
+}, { immediate: true })
 const lyricStyle = computed(() => {
   const len = lyricLine.value.length
   const size = len > 60 ? '1rem' : len > 42 ? '1.18rem' : len > 28 ? '1.35rem' : '1.65rem'
@@ -83,7 +112,7 @@ const runtime = computed(() => {
   const days = Math.max(1, Math.floor((Date.now() - start) / 86400000))
   return `${days} 天`
 })
-const progressPercent = computed(() => duration.value ? `${Math.min(100, (currentTime.value / duration.value) * 100)}%` : '0%')
+const progressPercent = computed(() => player.duration ? `${Math.min(100, (player.currentTime / player.duration) * 100)}%` : '0%')
 const recordStyle = computed<Record<string, string>>(() => (
   track.value?.cover ? { '--record-cover': `url(${track.value.cover})` } : {} as Record<string, string>
 ))
@@ -101,39 +130,20 @@ function setUpdate(index: number) {
 }
 
 function nextTrack() {
-  if (music.value.length) currentTrack.value = (currentTrack.value + 1) % music.value.length
+  player.next()
 }
 
 function prevTrack() {
-  if (music.value.length) currentTrack.value = (currentTrack.value - 1 + music.value.length) % music.value.length
+  player.prev()
 }
 
 async function togglePlay() {
-  if (!track.value?.url || !audio.value) {
-    playing.value = false
+  if (!track.value?.url) {
+    player.playing = false
     ui.showToast('当前歌曲没有可播放 URL', 'error')
     return
   }
-  if (playing.value) {
-    audio.value.pause()
-    playing.value = false
-    return
-  }
-  try {
-    await audio.value.play()
-    playing.value = true
-  } catch {
-    playing.value = false
-    ui.showToast('播放失败，请检查歌曲 URL', 'error')
-  }
-}
-
-function syncDuration() {
-  duration.value = audio.value?.duration && Number.isFinite(audio.value.duration) ? audio.value.duration : 0
-}
-
-function syncTime() {
-  currentTime.value = audio.value?.currentTime || 0
+  await player.toggle()
 }
 
 function formatTime(seconds: number) {
@@ -143,20 +153,12 @@ function formatTime(seconds: number) {
   return `${mins}:${secs}`
 }
 
-watch(track, async () => {
-  playing.value = false
-  duration.value = 0
-  currentTime.value = 0
-  await nextTick()
-  audio.value?.load()
-})
-
 onMounted(async () => {
   const [p, m, c, ph, s, mu] = await Promise.allSettled([
     contentApi.list('posts'),
     contentApi.list('moments'),
     contentApi.list('chatters'),
-    contentApi.json<PhotoItem[]>('/photos'),
+    contentApi.json<Array<PhotoItem | PhotoAlbum>>('/photos'),
     contentApi.json<SiteSettings>('/settings/public'),
     contentApi.json<MusicItem[]>('/music')
   ])
@@ -166,6 +168,7 @@ onMounted(async () => {
   if (ph.status === 'fulfilled') photos.value = ph.value
   if (s.status === 'fulfilled') settings.value = s.value
   if (mu.status === 'fulfilled') music.value = mu.value
+  if (mu.status === 'fulfilled') player.setTracks(mu.value)
 
   clockTimer = window.setInterval(() => { now.value = new Date() }, 1000)
   carouselTimer = window.setInterval(() => {
@@ -189,27 +192,26 @@ onBeforeUnmount(() => {
         :settings="settings"
         :posts="posts.length"
         :chatters="chatters.length"
-        :photos="photos.length || settings?.counts?.photos || 0"
+        :photos="photoCount || settings?.counts?.photos || 0"
       />
 
       <GlassCard hover class="min-w-0">
         <div class="flex min-w-0 flex-col items-center gap-5 text-center">
-          <div class="flex w-full items-start justify-between gap-4">
+          <div class="flex w-full items-start justify-center gap-4 text-center">
             <div class="min-w-0 text-left">
               <p class="text-xs font-bold uppercase tracking-[.3em] text-cyan-100/50">music player</p>
               <h2 class="mt-2 text-2xl font-black text-white">今日播放</h2>
             </div>
-            <RouterLink to="/music" class="sr-chip sr-chip-cyan shrink-0 px-3 py-1 text-xs">歌单</RouterLink>
           </div>
-          <div class="record-disc h-44 w-44 rounded-full" :class="{ playing }" :style="recordStyle" aria-hidden="true"></div>
+          <div class="record-disc h-44 w-44 rounded-full" :class="{ playing: player.playing }" :style="recordStyle" aria-hidden="true"></div>
           <div class="min-w-0">
             <h3 class="break-words text-3xl font-black text-white">{{ track?.title || '暂无歌曲' }}</h3>
             <p class="mt-2 text-sm text-white/58">{{ track?.artist || '请在后台音乐管理添加歌曲' }}</p>
           </div>
           <div class="w-full max-w-md">
             <div class="mb-2 flex items-center justify-between text-xs text-white/48">
-              <span>{{ formatTime(currentTime) }}</span>
-              <span>{{ formatTime(duration) }}</span>
+              <span>{{ formatTime(player.currentTime) }}</span>
+              <span>{{ formatTime(player.duration) }}</span>
             </div>
             <div class="h-2 overflow-hidden rounded-full border border-white/10 bg-white/10">
               <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 to-fuchsia-300 transition-all duration-300" :style="{ width: progressPercent }"></div>
@@ -219,8 +221,8 @@ onBeforeUnmount(() => {
             <button type="button" class="icon-button" aria-label="上一首" @click="prevTrack">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h2v12H7zM18 6v12l-8.5-6z" /></svg>
             </button>
-            <button type="button" class="icon-button icon-button-main" :aria-label="playing ? '暂停' : '播放'" @click="togglePlay">
-              <svg v-if="playing" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
+            <button type="button" class="icon-button icon-button-main" :aria-label="player.playing ? '暂停' : '播放'" @click="togglePlay">
+              <svg v-if="player.playing" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
               <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
             </button>
             <button type="button" class="icon-button" aria-label="下一首" @click="nextTrack">
@@ -228,7 +230,6 @@ onBeforeUnmount(() => {
             </button>
           </div>
           <p v-if="track && !track.url" class="text-xs text-amber-100/70">当前歌曲没有 URL，仅显示信息。</p>
-          <audio v-if="track?.url" ref="audio" :src="track.url" preload="metadata" @loadedmetadata="syncDuration" @timeupdate="syncTime" @ended="nextTrack"></audio>
         </div>
       </GlassCard>
     </div>
@@ -253,7 +254,7 @@ onBeforeUnmount(() => {
           <p class="mt-3 line-clamp-3 text-sm leading-6 text-white/68">{{ currentPost.meta.summary || currentPost.content.slice(0, 120) }}</p>
         </div>
         <div v-if="postSlides.length > 1" class="home-carousel-dots">
-          <button v-for="(_, index) in postSlides" :key="index" type="button" class="carousel-dot" :class="{ 'carousel-dot-active': index === postIndex }" :aria-label="`切换到第 ${index + 1} 篇文章`" @click.prevent="setPost(index)"></button>
+            <button v-for="(_, index) in postSlides" :key="index" type="button" class="carousel-dot" :class="{ 'carousel-dot-active': index === postIndex }" :aria-label="`切换到第 ${index + 1} 篇文章`" @mouseenter="setPost(index)" @click.prevent="setPost(index)"></button>
         </div>
       </RouterLink>
       <div v-else class="home-media-carousel home-carousel-tall grid place-items-center text-white/58">暂无公开文章</div>
@@ -267,7 +268,7 @@ onBeforeUnmount(() => {
             <p class="mt-3 line-clamp-2 text-sm leading-6 text-white/68">{{ currentPhoto.description || '记录生活里的片段和场景。' }}</p>
           </div>
           <div v-if="photoSlides.length > 1" class="home-carousel-dots">
-            <button v-for="(_, index) in photoSlides" :key="index" type="button" class="carousel-dot" :class="{ 'carousel-dot-active': index === photoIndex }" :aria-label="`切换到第 ${index + 1} 张照片`" @click.prevent="setPhoto(index)"></button>
+            <button v-for="(_, index) in photoSlides" :key="index" type="button" class="carousel-dot" :class="{ 'carousel-dot-active': index === photoIndex }" :aria-label="`切换到第 ${index + 1} 张照片`" @mouseenter="setPhoto(index)" @click.prevent="setPhoto(index)"></button>
           </div>
         </RouterLink>
         <div v-else class="home-media-carousel grid place-items-center text-white/58">暂无照片</div>
@@ -283,7 +284,7 @@ onBeforeUnmount(() => {
               <p class="mt-4 line-clamp-3 text-sm leading-7 text-white/60">{{ currentUpdate.summary }}</p>
             </div>
             <div v-if="latestUpdates.length > 1" class="mt-5 flex gap-2">
-              <button v-for="(_, index) in latestUpdates" :key="index" type="button" class="carousel-dot" :class="{ 'carousel-dot-active': index === updateIndex }" :aria-label="`切换到第 ${index + 1} 条更新`" @click.prevent="setUpdate(index)"></button>
+              <button v-for="(_, index) in latestUpdates" :key="index" type="button" class="carousel-dot" :class="{ 'carousel-dot-active': index === updateIndex }" :aria-label="`切换到第 ${index + 1} 条更新`" @mouseenter="setUpdate(index)" @click.prevent="setUpdate(index)"></button>
             </div>
           </RouterLink>
           <div v-else class="home-text-carousel grid place-items-center text-white/58">暂无更新内容</div>
