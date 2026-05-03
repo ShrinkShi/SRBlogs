@@ -4,7 +4,7 @@ import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import CommentBox from '@/components/CommentBox.vue'
 import { contentApi } from '@/api/content'
-import type { PhotoAlbum, PhotoItem, SiteSettings } from '@/types'
+import type { PageConfig, PhotoAlbum, PhotoItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 
 type AlbumView = PhotoAlbum & { slug: string }
@@ -15,9 +15,9 @@ const active = ref<PhotoItem | null>(null)
 const viewMode = ref<'grid' | 'link'>('grid')
 const loading = ref(false)
 const error = ref('')
-const settings = ref<SiteSettings | null>(null)
-const title = computed(() => settings.value?.pageText?.photos?.title || '图片')
-const subtitle = computed(() => settings.value?.pageText?.photos?.subtitle || '相册记录从后端 JSON 动态读取，点击封面可查看组内照片。')
+const pageConfig = ref<PageConfig | null>(null)
+const title = computed(() => pageConfig.value?.pageText?.photos?.title || '图片')
+const subtitle = computed(() => pageConfig.value?.pageText?.photos?.subtitle || '相册记录从后端 JSON 动态读取，点击封面可查看组内照片。')
 useSeo({ title: () => title.value, description: () => subtitle.value, path: '/photowall' })
 
 function slugify(value: string, fallback: string) {
@@ -59,7 +59,7 @@ async function load() {
   error.value = ''
   try {
     rawPhotos.value = await contentApi.json<Array<PhotoItem | PhotoAlbum>>('/photos')
-    settings.value = await contentApi.json<SiteSettings>('/settings/public')
+    pageConfig.value = await contentApi.json<PageConfig>('/pages/config')
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '照片加载失败'
   } finally {

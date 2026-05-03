@@ -4,13 +4,13 @@ import GlassCard from '@/components/GlassCard.vue'
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { contentApi } from '@/api/content'
 import { useSeo } from '@/composables/useSeo'
-import type { SiteSettings } from '@/types'
+import type { PageConfig } from '@/types'
 const content = ref('')
 const loading = ref(true)
 const error = ref('')
-const settings = ref<SiteSettings | null>(null)
-const pageTitle = computed(() => settings.value?.pageText?.about?.title || '关于')
-const pageSubtitle = computed(() => settings.value?.pageText?.about?.subtitle || '关于 SRBlogs 与站点作者。')
+const pageConfig = ref<PageConfig | null>(null)
+const pageTitle = computed(() => pageConfig.value?.pageText?.about?.title || '关于')
+const pageSubtitle = computed(() => pageConfig.value?.pageText?.about?.subtitle || '关于 SRBlogs 与站点作者。')
 useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/about' })
 async function load() {
   loading.value = true
@@ -18,10 +18,10 @@ async function load() {
   try {
     const [aboutData, publicSettings] = await Promise.all([
       contentApi.about(),
-      contentApi.json<SiteSettings>('/settings/public')
+      contentApi.json<PageConfig>('/pages/config')
     ])
     content.value = aboutData.content
-    settings.value = publicSettings
+    pageConfig.value = publicSettings
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '关于页面加载失败'
   } finally {

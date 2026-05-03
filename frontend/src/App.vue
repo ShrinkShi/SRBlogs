@@ -25,12 +25,7 @@ function applyTheme() {
   const tokens = mode === 'day' ? config.day : config.night
   root.dataset.colorMode = mode
   const preferredScale = ui.fontScale || config.fontScale
-  const scalePx = preferredScale === 'small' ? '14.5px' : preferredScale === 'large' ? '18px' : '16px'
-  const scale = preferredScale === 'small' ? '0.9' : preferredScale === 'large' ? '1.15' : '1'
   root.dataset.fontScale = preferredScale || 'medium'
-  root.style.fontSize = scalePx
-  root.style.setProperty('--app-font-size', scalePx)
-  root.style.setProperty('--app-font-scale', scale)
   if (config.fontFamily) root.style.setProperty('--app-font-family', config.fontFamily)
   const map: Record<string, string | undefined> = {
     '--bg-page': tokens?.bgPage,
@@ -48,6 +43,24 @@ function applyTheme() {
   Object.entries(map).forEach(([key, value]) => {
     if (value) root.style.setProperty(key, value)
     else root.style.removeProperty(key)
+  })
+  const opacityDefaults: Record<string, number> = {
+    toolboxSettingsPanel: 0.92,
+    toolboxSearchPanel: 0.92,
+    toolboxCalculatorPanel: 0.90,
+    homeCard: 0.82,
+    homeCarousel: 0.82,
+    contentCard: 0.82,
+    photoCard: 0.82,
+    musicPanel: 0.88,
+    messageBoard: 0.86,
+    navBar: 0.72
+  }
+  const opacity = (config.opacity || {}) as Record<string, number>
+  Object.entries(opacityDefaults).forEach(([key, fallback]) => {
+    const raw = Number(opacity[key] ?? fallback)
+    const value = Math.min(1, Math.max(0.6, Number.isFinite(raw) ? raw : fallback))
+    root.style.setProperty(`--opacity-${key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)}`, String(value))
   })
 }
 

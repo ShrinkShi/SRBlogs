@@ -1,0 +1,153 @@
+{
+  "pageText": {
+    "home": {
+      "title": "首页",
+      "subtitle": "名片、音乐、歌词、轮播与状态区。"
+    },
+    "posts": {
+      "title": "文章归档",
+      "subtitle": "从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。"
+    },
+    "chatters": {
+      "title": "云端杂谈",
+      "subtitle": "长一点的念头，短一点的文章。"
+    },
+    "photos": {
+      "title": "图片",
+      "subtitle": "相册记录从后端 JSON 动态读取，点击封面可查看组内照片。"
+    },
+    "music": {
+      "title": "音乐歌单",
+      "subtitle": "全局播放器、歌词和歌单共享同一播放状态。"
+    },
+    "projects": {
+      "title": "项目陈列柜",
+      "subtitle": "记录正在构建和已经完成的作品。"
+    },
+    "friends": {
+      "title": "星际友链",
+      "subtitle": "把值得长期访问的站点放在这里。"
+    },
+    "about": {
+      "title": "关于",
+      "subtitle": "关于 SRBlogs 与站点作者。"
+    }
+  },
+  "homeProfile": {
+    "author": "Shrink",
+    "avatar": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=500&auto=format&fit=crop",
+    "description": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
+    "socialLinks": {
+      "github": "",
+      "email": "",
+      "qq": "",
+      "wechat": ""
+    }
+  },
+  "homeLayout": {
+    "layoutVersion": 1,
+    "components": {
+      "profileCard": {
+        "order": 1,
+        "w": 6,
+        "h": 2,
+        "visible": true
+      },
+      "musicPlayer": {
+        "order": 2,
+        "w": 6,
+        "h": 2,
+        "visible": true
+      },
+      "lyrics": {
+        "order": 3,
+        "w": 12,
+        "h": 1,
+        "visible": true
+      },
+      "latestPostsCarousel": {
+        "order": 4,
+        "w": 4,
+        "h": 3,
+        "visible": true
+      },
+      "photoCarousel": {
+        "order": 5,
+        "w": 8,
+        "h": 2,
+        "visible": true
+      },
+      "updatesCarousel": {
+        "order": 6,
+        "w": 8,
+        "h": 2,
+        "visible": true
+      },
+      "themeToggle": {
+        "order": 7,
+        "w": 4,
+        "h": 2,
+        "visible": true
+      },
+      "statusBar": {
+        "order": 8,
+        "w": 12,
+        "h": 1,
+        "visible": true
+      }
+    }
+  },
+  "home": {
+    "layoutVersion": 1,
+    "components": {
+      "profileCard": {
+        "order": 1,
+        "w": 6,
+        "h": 2,
+        "visible": true
+      },
+      "musicPlayer": {
+        "order": 2,
+        "w": 6,
+        "h": 2,
+        "visible": true
+      },
+      "lyrics": {
+        "order": 3,
+        "w": 12,
+        "h": 1,
+        "visible": true
+      },
+      "latestPostsCarousel": {
+        "order": 4,
+        "w": 4,
+        "h": 3,
+        "visible": true
+      },
+      "photoCarousel": {
+        "order": 5,
+        "w": 8,
+        "h": 2,
+        "visible": true
+      },
+      "updatesCarousel": {
+        "order": 6,
+        "w": 8,
+        "h": 2,
+        "visible": true
+      },
+      "themeToggle": {
+        "order": 7,
+        "w": 4,
+        "h": 2,
+        "visible": true
+      },
+      "statusBar": {
+        "order": 8,
+        "w": 12,
+        "h": 1,
+        "visible": true
+      }
+    }
+  }
+}

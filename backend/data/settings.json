@@ -135,6 +135,18 @@
       "navBg": "rgba(7,12,28,.64)",
       "homePanelBg": "rgba(255,255,255,.105)",
       "shadowGlow": "rgba(34,211,238,.42)"
+    },
+    "opacity": {
+      "toolboxSettingsPanel": 0.6,
+      "toolboxSearchPanel": 0.6,
+      "toolboxCalculatorPanel": 0.9,
+      "homeCard": 0.82,
+      "homeCarousel": 0.82,
+      "contentCard": 0.82,
+      "photoCard": 0.82,
+      "musicPanel": 0.88,
+      "messageBoard": 0.86,
+      "navBar": 0.72
     }
   },
   "interaction": {
@@ -175,6 +187,10 @@
     "about": {
       "title": "关于",
       "subtitle": "关于 SRBlogs 与站点作者。"
+    },
+    "chatters": {
+      "title": "云端杂谈",
+      "subtitle": "长一点的念头，短一点的文章。"
     }
   },
   "pageLayouts": {
@@ -207,16 +223,16 @@
         {
           "id": "carousel",
           "label": "轮播区",
-          "x": 4.175443950452302,
-          "y": 64.57576682350853,
+          "x": 4.263173956620065,
+          "y": 50.18181818181819,
           "w": 92,
           "h": 30
         },
         {
           "id": "status",
           "label": "底部状态",
-          "x": 4.087713944284539,
-          "y": 51.606051358309664,
+          "x": 4.614021702816612,
+          "y": 83.33333795720881,
           "w": 92,
           "h": 10
         }

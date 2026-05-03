@@ -205,12 +205,13 @@ onBeforeUnmount(() => {
       v-if="menuOpen"
       class="mb-3 grid min-w-40 gap-2 rounded-[26px] border border-white/15 bg-slate-950/82 p-3 text-sm text-white/82 shadow-2xl backdrop-blur-2xl"
     >
-      <button type="button" class="toolbox-menu-item" @click="openPanel('calculator')">计算器</button>
-      <button type="button" class="toolbox-menu-item" @click="openPanel('search')">全局搜索</button>
-      <button type="button" class="toolbox-menu-item" @click="openPanel('settings')">设置</button>
+      <button type="button" data-clickable="true" class="toolbox-menu-item" @click="openPanel('calculator')">计算器</button>
+      <button type="button" data-clickable="true" class="toolbox-menu-item" @click="openPanel('search')">全局搜索</button>
+      <button type="button" data-clickable="true" class="toolbox-menu-item" @click="openPanel('settings')">设置</button>
     </div>
     <button
       type="button"
+      data-clickable="true"
       class="grid h-14 w-14 place-items-center rounded-full border border-cyan-200/25 bg-slate-950/72 text-cyan-100 shadow-[0_18px_48px_rgba(0,0,0,.35),0_0_34px_rgba(103,232,249,.18)] backdrop-blur-2xl transition hover:scale-105"
       :aria-expanded="menuOpen"
       aria-label="打开工具箱"
@@ -227,7 +228,7 @@ onBeforeUnmount(() => {
     <section
       v-if="activePanel === 'calculator'"
       data-toolbox-modal
-      class="fixed bottom-24 left-5 z-[92] grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[28px] border border-white/15 bg-slate-950/92 p-4 text-white shadow-2xl backdrop-blur-2xl"
+      class="toolbox-calculator-panel fixed bottom-24 left-5 z-[92] grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[28px] border border-white/15 p-4 text-white shadow-2xl backdrop-blur-2xl"
       role="dialog"
       aria-label="计算器"
       @click.stop
@@ -237,7 +238,7 @@ onBeforeUnmount(() => {
           <p class="text-xs font-bold uppercase tracking-[.22em] text-cyan-100/45">calculator</p>
           <h2 class="text-xl font-black">计算器</h2>
         </div>
-        <button type="button" class="rounded-full border border-white/12 px-3 py-1.5 text-sm text-white/70 hover:bg-white/10" @click="closePanel">关闭</button>
+        <button type="button" data-clickable="true" class="rounded-full border border-white/12 px-3 py-1.5 text-sm text-white/70 hover:bg-white/10" @click="closePanel">关闭</button>
       </header>
       <div class="rounded-[22px] border border-white/12 bg-white/[0.09] p-3">
         <p class="min-h-6 break-all text-base text-white/80">{{ calculatorExpr || '0' }}</p>
@@ -245,11 +246,11 @@ onBeforeUnmount(() => {
         <p v-if="calculatorError" class="mt-2 text-sm text-red-200">{{ calculatorError }}</p>
       </div>
       <div class="grid grid-cols-4 gap-2">
-        <button v-for="key in ['7','8','9','/','4','5','6','*','1','2','3','-','0','.','(',')']" :key="key" type="button" class="toolbox-key" @click="appendCalc(key)">{{ key }}</button>
-        <button type="button" class="toolbox-key" @click="backspaceCalc">退格</button>
-        <button type="button" class="toolbox-key" @click="appendCalc('+')">+</button>
-        <button type="button" class="toolbox-key" @click="clearCalc">清空</button>
-        <button type="button" class="toolbox-key toolbox-key-main" @click="calculate">=</button>
+        <button v-for="key in ['7','8','9','/','4','5','6','*','1','2','3','-','0','.','(',')']" :key="key" type="button" data-clickable="true" class="toolbox-key" @click="appendCalc(key)">{{ key }}</button>
+        <button type="button" data-clickable="true" class="toolbox-key" @click="backspaceCalc">退格</button>
+        <button type="button" data-clickable="true" class="toolbox-key" @click="appendCalc('+')">+</button>
+        <button type="button" data-clickable="true" class="toolbox-key" @click="clearCalc">清空</button>
+        <button type="button" data-clickable="true" class="toolbox-key toolbox-key-main" @click="calculate">=</button>
       </div>
     </section>
 
@@ -261,13 +262,13 @@ onBeforeUnmount(() => {
       aria-modal="true"
       @click.self="closePanel"
     >
-      <section class="toolbox-modal max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/15 bg-slate-950/[0.98] text-white shadow-2xl backdrop-blur-2xl">
+      <section class="toolbox-modal toolbox-modal-panel max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/15 text-white shadow-2xl backdrop-blur-2xl" :class="activePanel === 'search' ? 'toolbox-modal-panel-search' : 'toolbox-modal-panel-settings'">
         <header class="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-[.28em] text-cyan-100/45">toolbox</p>
             <h2 class="text-2xl font-black">{{ modalTitle }}</h2>
           </div>
-          <button type="button" class="rounded-full border border-white/12 px-3 py-2 text-sm text-white/70 hover:bg-white/10" @click="closePanel">关闭</button>
+          <button type="button" data-clickable="true" class="rounded-full border border-white/12 px-3 py-2 text-sm text-white/70 hover:bg-white/10" @click="closePanel">关闭</button>
         </header>
 
         <div class="max-h-[calc(88vh-5.5rem)] overflow-y-auto p-5">
@@ -406,6 +407,19 @@ onBeforeUnmount(() => {
   padding: 1rem;
   color: rgba(255,255,255,.78);
   font-size: .9rem;
+}
+.toolbox-calculator-panel {
+  background: rgb(var(--toolbox-panel-rgb, 12 16 32) / var(--opacity-toolbox-calculator-panel, .9)) !important;
+}
+.toolbox-modal-panel-settings {
+  background: rgb(var(--toolbox-panel-rgb, 12 16 32) / var(--opacity-toolbox-settings-panel, .92)) !important;
+}
+.toolbox-modal-panel-search {
+  background: rgb(var(--toolbox-panel-rgb, 12 16 32) / var(--opacity-toolbox-search-panel, .92)) !important;
+}
+:global(:root[data-color-mode='day']) .toolbox-modal-panel,
+:global(:root[data-color-mode='day']) .toolbox-calculator-panel {
+  color: rgb(15, 23, 42);
 }
 .toolbox-setting select,
 .toolbox-setting input[type='range'] {

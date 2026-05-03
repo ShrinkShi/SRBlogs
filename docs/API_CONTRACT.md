@@ -1,3 +1,113 @@
+## 2026-05-03 Pages Config API
+
+### GET `/api/pages/config`
+
+公开读取前台页面文案和首页布局配置，不需要 JWT。
+
+响应示例：
+
+```json
+{
+  "pageText": {
+    "posts": { "title": "文章归档", "subtitle": "从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。" }
+  },
+  "homeProfile": {
+    "author": "Shrink",
+    "avatar": "/uploads/avatar.png",
+    "description": "首页简介",
+    "socialLinks": { "github": "https://github.com/ShrinkShi" }
+  },
+  "homeLayout": {
+    "layoutVersion": 1,
+    "components": {
+      "profileCard": { "order": 1, "w": 6, "h": 2, "visible": true },
+      "musicPlayer": { "order": 2, "w": 6, "h": 2, "visible": true },
+      "lyrics": { "order": 3, "w": 12, "h": 1, "visible": true },
+      "latestPostsCarousel": { "order": 4, "w": 4, "h": 3, "visible": true },
+      "photoCarousel": { "order": 5, "w": 8, "h": 2, "visible": true },
+      "updatesCarousel": { "order": 6, "w": 8, "h": 2, "visible": true },
+      "themeToggle": { "order": 7, "w": 4, "h": 2, "visible": true },
+      "statusBar": { "order": 8, "w": 12, "h": 1, "visible": true }
+    }
+  }
+}
+```
+
+### GET `/api/admin/pages/config`
+
+后台读取页面配置，需要管理员 JWT。结构同公开响应，不返回 Secret。
+
+### PUT `/api/admin/pages/config`
+
+后台保存页面配置，需要管理员 JWT。
+
+- 写入文件：`backend/data/page_config.json`。
+- 写入方式：`JsonStore.write`，底层继续走安全 JSON 写入和备份。
+- 高风险变更写审计日志：`pages.config.update`。
+- `homeLayout.components` 必须使用固定组件 ID：`profileCard`、`musicPlayer`、`lyrics`、`latestPostsCarousel`、`photoCarousel`、`updatesCarousel`、`themeToggle`、`statusBar`。
+- `w` 表示 12 栅格宽度，`h` 表示高度档位，`order` 表示桌面排序。
+- 该接口不得保存脚本、HTML 片段、Secret、access token 或服务器绝对路径。
+- 接口兼容 `home.components` 旧/文档别名，但当前前后台主契约以 `homeLayout.components` 为准；两者同时存在时以后者为准。
+
+### `themeConfig.opacity`
+
+`GET /api/settings/public` 会返回公开透明度配置，后台通过 `PUT /api/admin/settings` 保存。该字段只控制前台视觉透明度，不包含任何私密配置。
+
+```json
+{
+  "themeConfig": {
+    "opacity": {
+      "toolboxSettingsPanel": 0.92,
+      "toolboxSearchPanel": 0.92,
+      "toolboxCalculatorPanel": 0.9,
+      "homeCard": 0.82,
+      "homeCarousel": 0.82,
+      "contentCard": 0.82,
+      "photoCard": 0.82,
+      "musicPanel": 0.88,
+      "messageBoard": 0.86,
+      "navBar": 0.72
+    }
+  }
+}
+```
+
+- 所有值限制在 `0.60` 到 `1.00`。
+- 后台设置页提供滑块和数字输入。
+- 前台通过 CSS 变量应用，工具箱设置/搜索/计算器弹窗必须读取对应透明度字段。
+- 公开响应不得包含 GitHub/QQ OAuth Secret、OSS Secret、AI Key、JWT Secret 或管理员密码。
+
+## 2026-05-03 Page Editor Legacy Note
+
+早期曾尝试把页面编辑数据挂在 `GET /api/settings/public` 的 `pageText/pageLayouts` 下。当前实现已改为独立 `GET /api/pages/config` 与 `PUT /api/admin/pages/config`，前台首页和各页面文案应优先读取 `/api/pages/config`。旧字段仅作兼容说明，不作为新增实现入口。
+
+```json
+{
+  "pageText": {
+    "home": { "title": "首页", "subtitle": "名片、音乐、歌词、轮播与状态区。" },
+    "posts": { "title": "文章归档", "subtitle": "从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。" },
+    "chatters": { "title": "云端杂谈", "subtitle": "长一点的念头，短一点的文章。" },
+    "photos": { "title": "图片", "subtitle": "相册记录从后端 JSON 动态读取。" },
+    "music": { "title": "音乐歌单", "subtitle": "全局播放器、歌词和歌单共享同一播放状态。" },
+    "projects": { "title": "项目陈列柜", "subtitle": "记录正在构建和已经完成的作品。" },
+    "friends": { "title": "星际友链", "subtitle": "把值得长期访问的站点放在这里。" },
+    "about": { "title": "关于", "subtitle": "关于 SRBlogs 与站点作者。" }
+  },
+  "pageLayouts": {
+    "home": {
+      "blocks": [
+        { "id": "profile", "label": "名片", "x": 4, "y": 6, "w": 42, "h": 24 }
+      ]
+    }
+  }
+}
+```
+
+- 上方 `pageText/pageLayouts` 是旧兼容结构示例；新实现使用 `pageText/homeProfile/homeLayout`。
+- 后台通过 `PUT /api/admin/pages/config` 保存这些字段；写入 `backend/data/page_config.json`，底层仍走安全 JSON 写入流程。
+- `pageText` / `homeProfile` / `homeLayout` 不得包含脚本、HTML 片段、Secret、access token 或服务端路径。
+- 关于页 Markdown 仍通过 `GET /api/about` 与管理员 `PUT /api/about` 读写。
+
 ## 2026-05-03 Interaction And Page Layout Addendum
 
 `GET /api/settings/public` 的公开 `interaction` 字段包含：
@@ -13,9 +123,10 @@
 }
 ```
 
-- `clickEffectEnabled` 只表示站点是否允许前台鼠标点击视觉特效。
+- `clickSoundEnabled` 表示站点是否允许前台点击音效；为 `false` 时游客本地设置不能强行开启。
+- `clickEffectEnabled` 只表示站点是否允许前台鼠标点击视觉特效；为 `false` 时游客本地设置不能强行开启。
 - 公开接口不得返回点击音效以外的私有配置，也不得返回任何 Secret。
-- 游客本地开关存储在浏览器 localStorage；站点级 `clickEffectEnabled=false` 时前端必须禁用游客覆盖。
+- 游客本地开关存储在浏览器 localStorage；站点级开关关闭时前端必须禁用游客覆盖。
 
 后台页面编辑第一阶段通过 `PUT /api/admin/settings` 保存 `pageLayouts` 配置，例如：
 

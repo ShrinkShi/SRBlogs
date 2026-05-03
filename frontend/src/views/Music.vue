@@ -4,20 +4,21 @@ import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import CommentBox from '@/components/CommentBox.vue'
 import { contentApi } from '@/api/content'
-import type { MusicItem, SiteSettings } from '@/types'
+import type { MusicItem, PageConfig, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { usePlayerStore } from '@/stores/player'
 
 const tracks = ref<MusicItem[]>([])
 const settings = ref<SiteSettings | null>(null)
+const pageConfig = ref<PageConfig | null>(null)
 const loading = ref(false)
 const error = ref('')
 const activeTab = ref<'lyrics' | 'playlist'>('lyrics')
 const lyricText = ref('')
 const player = usePlayerStore()
 
-const pageTitle = computed(() => settings.value?.pageText?.music?.title || '音乐歌单')
-const pageSubtitle = computed(() => settings.value?.pageText?.music?.subtitle || '左侧控制播放，右侧查看歌词和歌单。')
+const pageTitle = computed(() => pageConfig.value?.pageText?.music?.title || '音乐歌单')
+const pageSubtitle = computed(() => pageConfig.value?.pageText?.music?.subtitle || '左侧控制播放，右侧查看歌词和歌单。')
 useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/music' })
 
 const sortedTracks = computed(() => [...tracks.value].sort((a, b) => Number(a.sort ?? 0) - Number(b.sort ?? 0)))
@@ -68,12 +69,14 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const [music, publicSettings] = await Promise.all([
+    const [music, publicSettings, config] = await Promise.all([
       contentApi.json<MusicItem[]>('/music'),
-      contentApi.json<SiteSettings>('/settings/public')
+      contentApi.json<SiteSettings>('/settings/public'),
+      contentApi.json<PageConfig>('/pages/config')
     ])
     tracks.value = music
     settings.value = publicSettings
+    pageConfig.value = config
     player.setTracks(music)
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '歌单加载失败'

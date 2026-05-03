@@ -3,15 +3,15 @@ import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import { contentApi } from '@/api/content'
-import type { FriendItem, SiteSettings } from '@/types'
+import type { FriendItem, PageConfig } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 
 const friends = ref<FriendItem[]>([])
 const loading = ref(false)
 const error = ref('')
-const settings = ref<SiteSettings | null>(null)
-const pageTitle = computed(() => settings.value?.pageText?.friends?.title || '星际友链')
-const pageSubtitle = computed(() => settings.value?.pageText?.friends?.subtitle || '朋友站点、项目站点和个人链接会从后端 JSON 动态读取。')
+const pageConfig = ref<PageConfig | null>(null)
+const pageTitle = computed(() => pageConfig.value?.pageText?.friends?.title || '星际友链')
+const pageSubtitle = computed(() => pageConfig.value?.pageText?.friends?.subtitle || '朋友站点、项目站点和个人链接会从后端 JSON 动态读取。')
 useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/friends' })
 
 async function load() {
@@ -20,10 +20,10 @@ async function load() {
   try {
     const [friendData, publicSettings] = await Promise.all([
       contentApi.json<FriendItem[]>('/friends'),
-      contentApi.json<SiteSettings>('/settings/public')
+      contentApi.json<PageConfig>('/pages/config')
     ])
     friends.value = friendData
-    settings.value = publicSettings
+    pageConfig.value = publicSettings
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '友链加载失败'
   } finally {

@@ -32,6 +32,25 @@
   --status-warning: rgba(253, 224, 71, 0.88);
   --status-info: rgba(103, 232, 249, 0.88);
   --motion-ease: cubic-bezier(.2, .8, .2, 1);
+  --toolbox-panel-rgb: 12 16 32;
+  --opacity-toolbox-settings-panel: .92;
+  --opacity-toolbox-search-panel: .92;
+  --opacity-toolbox-calculator-panel: .9;
+  --opacity-home-card: .82;
+  --opacity-home-carousel: .82;
+  --opacity-content-card: .82;
+  --opacity-photo-card: .82;
+  --opacity-music-panel: .88;
+  --opacity-message-board: .86;
+  --opacity-nav-bar: .72;
+  --fs-xs: .75rem;
+  --fs-sm: .875rem;
+  --fs-base: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.25rem;
+  --fs-2xl: 1.5rem;
+  --fs-3xl: 1.875rem;
+  --fs-4xl: 2.25rem;
 }
 
 :root[data-color-mode='day'] {
@@ -56,15 +75,16 @@
   --shadow-glow: rgba(8, 145, 178, 0.2);
   --glow-cyan: rgba(8, 145, 178, 0.2);
   --glow-pink: rgba(219, 39, 119, 0.12);
+  --toolbox-panel-rgb: 245 248 255;
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; overflow-x: hidden; font-size: var(--app-font-size, 16px); }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--app-font-family, Inter, Geist, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-  font-size: var(--app-font-size, 16px);
+  font-size: var(--fs-base);
   background: var(--bg-page);
   color: var(--text-primary);
   overflow-x: hidden;
@@ -84,14 +104,42 @@ body::before {
 }
 #app { min-height: 100vh; }
 
+:root[data-font-scale='small'] {
+  --fs-xs: .66rem;
+  --fs-sm: .78rem;
+  --fs-base: .9rem;
+  --fs-lg: 1rem;
+  --fs-xl: 1.12rem;
+  --fs-2xl: 1.32rem;
+  --fs-3xl: 1.66rem;
+  --fs-4xl: 2rem;
+}
+
+:root[data-font-scale='large'] {
+  --fs-xs: .86rem;
+  --fs-sm: 1rem;
+  --fs-base: 1.15rem;
+  --fs-lg: 1.32rem;
+  --fs-xl: 1.5rem;
+  --fs-2xl: 1.82rem;
+  --fs-3xl: 2.22rem;
+  --fs-4xl: 2.72rem;
+}
+
+.text-xs { font-size: var(--fs-xs) !important; }
+.text-sm { font-size: var(--fs-sm) !important; }
+.text-base { font-size: var(--fs-base) !important; }
+.text-lg { font-size: var(--fs-lg) !important; }
+.text-xl { font-size: var(--fs-xl) !important; }
+.text-2xl { font-size: var(--fs-2xl) !important; }
+.text-3xl { font-size: var(--fs-3xl) !important; }
+.text-4xl { font-size: var(--fs-4xl) !important; }
+.text-\[10px\] { font-size: calc(var(--fs-xs) * .84) !important; }
+.text-\[11px\] { font-size: calc(var(--fs-xs) * .92) !important; }
 .prose-sr,
 .markdown-body,
 .comment-board,
-.toolbox-modal,
-.sr-card,
-.glass-card {
-  font-size: calc(1rem * var(--app-font-scale, 1));
-}
+.toolbox-modal { font-size: var(--fs-base); }
 
 .sr-page-shell {
   width: min(calc(100% - 3rem), 80rem);
@@ -141,7 +189,7 @@ body::before {
   max-width: 100%;
   border: 1px solid var(--border-glass);
   background:
-    linear-gradient(135deg, var(--bg-card-elevated), var(--bg-card)),
+    linear-gradient(135deg, color-mix(in srgb, var(--bg-card-elevated) calc(var(--opacity-content-card) * 100%), transparent), color-mix(in srgb, var(--bg-card) calc(var(--opacity-content-card) * 100%), transparent)),
     radial-gradient(circle at 16% 0%, rgba(103,232,249,.12), transparent 34%);
   box-shadow: 0 22px 72px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.14);
   backdrop-filter: blur(22px) saturate(138%);
@@ -241,7 +289,7 @@ body::before {
 }
 
 .app-topbar {
-  background: linear-gradient(135deg, var(--nav-bg), rgba(255,255,255,.055));
+  background: linear-gradient(135deg, color-mix(in srgb, var(--nav-bg) calc(var(--opacity-nav-bar) * 100%), transparent), rgba(255,255,255,.055));
   border-bottom: 1px solid var(--border-glass);
   backdrop-filter: blur(22px) saturate(150%);
   -webkit-backdrop-filter: blur(22px) saturate(150%);
@@ -330,8 +378,21 @@ body::before {
   overflow: hidden;
   border-radius: 32px;
   border: 1px solid var(--border-glass);
-  background: linear-gradient(135deg, var(--bg-card-elevated), var(--bg-card));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--bg-card-elevated) calc(var(--opacity-home-carousel) * 100%), transparent), color-mix(in srgb, var(--bg-card) calc(var(--opacity-home-carousel) * 100%), transparent));
   box-shadow: 0 24px 80px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.15);
+}
+
+.music-compact-card,
+.home-card-opacity,
+.lyrics-compact {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--bg-card-elevated) calc(var(--opacity-home-card) * 100%), transparent), color-mix(in srgb, var(--home-panel-bg) calc(var(--opacity-home-card) * 100%), transparent)) !important;
+}
+
+.comment-board {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--bg-card-elevated) calc(var(--opacity-message-board) * 100%), transparent), color-mix(in srgb, var(--bg-card) calc(var(--opacity-message-board) * 100%), transparent)) !important;
 }
 
 .home-media-carousel {
@@ -379,6 +440,18 @@ body::before {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: .75rem;
+}
+
+.home-layout-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.6rem);
+  align-items: stretch;
+}
+
+.home-layout-grid > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .article-link-mode {
@@ -598,9 +671,9 @@ body::before {
 
 .prose-sr { color: rgba(247, 251, 255, .9); overflow-wrap: anywhere; }
 .prose-sr h1,.prose-sr h2,.prose-sr h3 { color: white; scroll-margin-top: 150px; font-weight: 900; line-height: 1.25; }
-.prose-sr h1 { margin: 0 0 1rem; font-size: 2.1rem; }
-.prose-sr h2 { margin-top: 2.2em; font-size: 1.65rem; }
-.prose-sr h3 { margin-top: 1.7em; font-size: 1.25rem; }
+.prose-sr h1 { margin: 0 0 1rem; font-size: var(--fs-3xl); }
+.prose-sr h2 { margin-top: 2.2em; font-size: var(--fs-2xl); }
+.prose-sr h3 { margin-top: 1.7em; font-size: var(--fs-xl); }
 .prose-sr p { margin: 1em 0; color: rgba(247,251,255,.78); line-height: 1.9; }
 .prose-sr ul,.prose-sr ol { margin: 1em 0 1em 1.5rem; padding-left: 1.15rem; color: rgba(247,251,255,.78); line-height: 1.85; }
 .prose-sr ul { list-style: disc; }
@@ -634,11 +707,16 @@ body::before {
 
 @media (max-width: 1024px) {
   .home-asymmetric-grid,
+  .home-layout-grid,
   .home-feature-grid,
   .home-carousel-layout,
   .home-carousel-bottom,
   .music-page-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-layout-grid > * {
+    grid-column: 1 / -1 !important;
   }
 
   .article-link-mode::before {

@@ -62,6 +62,18 @@ export interface ThemeConfig {
   fontScale?: 'small' | 'medium' | 'large'
   day?: ThemeTokens
   night?: ThemeTokens
+  opacity?: {
+    toolboxSettingsPanel?: number
+    toolboxSearchPanel?: number
+    toolboxCalculatorPanel?: number
+    homeCard?: number
+    homeCarousel?: number
+    contentCard?: number
+    photoCard?: number
+    musicPanel?: number
+    messageBoard?: number
+    navBar?: number
+  }
 }
 
 export interface PhotoItem {
@@ -168,6 +180,41 @@ export interface SiteSettings {
   }>
   githubOAuth?: {
     configured?: boolean
+  }
+}
+
+export type HomeComponentId =
+  | 'profileCard'
+  | 'musicPlayer'
+  | 'lyrics'
+  | 'latestPostsCarousel'
+  | 'photoCarousel'
+  | 'updatesCarousel'
+  | 'themeToggle'
+  | 'statusBar'
+
+export interface HomeLayoutComponent {
+  order: number
+  w: number
+  h: number
+  visible?: boolean
+}
+
+export interface PageConfig {
+  pageText?: Record<string, { title?: string; subtitle?: string; description?: string }>
+  homeProfile?: {
+    author?: string
+    avatar?: string
+    description?: string
+    socialLinks?: Record<string, string>
+  }
+  homeLayout?: {
+    layoutVersion?: number
+    components?: Partial<Record<HomeComponentId, HomeLayoutComponent>>
+  }
+  home?: {
+    layoutVersion?: number
+    components?: Partial<Record<HomeComponentId, HomeLayoutComponent>>
   }
 }
 

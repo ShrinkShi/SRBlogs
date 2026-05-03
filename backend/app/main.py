@@ -17,6 +17,7 @@ from app.api.upload import router as upload_router
 from app.api.chat import router as chat_router
 from app.api.dashboard import router as dashboard_router
 from app.api.settings import router as settings_router
+from app.api.pages import router as pages_router
 from app.api.discovery import router as discovery_router
 from app.api.seo import router as seo_router
 from app.api.admin_tools import router as admin_tools_router
@@ -78,6 +79,7 @@ app.include_router(make_json_router("projects", "projects.json", "projects"), pr
 app.include_router(make_json_router("music", "music.json", "music"), prefix="/api")
 app.include_router(make_json_router("photos", "photos/photos.json", "photos"), prefix="/api")
 app.include_router(settings_router, prefix="/api")
+app.include_router(pages_router, prefix="/api")
 app.include_router(comments_router, prefix="/api")
 app.include_router(comments_admin_router, prefix="/api")
 app.include_router(upload_router, prefix="/api")

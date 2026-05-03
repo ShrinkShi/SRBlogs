@@ -3,15 +3,15 @@ import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import { contentApi } from '@/api/content'
-import type { ProjectItem, SiteSettings } from '@/types'
+import type { PageConfig, ProjectItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 
 const projects = ref<ProjectItem[]>([])
 const loading = ref(false)
 const error = ref('')
-const settings = ref<SiteSettings | null>(null)
-const pageTitle = computed(() => settings.value?.pageText?.projects?.title || '项目陈列柜')
-const pageSubtitle = computed(() => settings.value?.pageText?.projects?.subtitle || '项目数据来自后端 JSON，可在后台表单化维护。')
+const pageConfig = ref<PageConfig | null>(null)
+const pageTitle = computed(() => pageConfig.value?.pageText?.projects?.title || '项目陈列柜')
+const pageSubtitle = computed(() => pageConfig.value?.pageText?.projects?.subtitle || '项目数据来自后端 JSON，可在后台表单化维护。')
 useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/projects' })
 
 async function load() {
@@ -20,10 +20,10 @@ async function load() {
   try {
     const [projectData, publicSettings] = await Promise.all([
       contentApi.json<ProjectItem[]>('/projects'),
-      contentApi.json<SiteSettings>('/settings/public')
+      contentApi.json<PageConfig>('/pages/config')
     ])
     projects.value = projectData
-    settings.value = publicSettings
+    pageConfig.value = publicSettings
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '项目加载失败'
   } finally {

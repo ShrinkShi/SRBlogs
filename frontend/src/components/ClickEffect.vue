@@ -8,7 +8,21 @@ let customAudio: HTMLAudioElement | null = null
 
 function isInteractive(target: EventTarget | null) {
   const el = target instanceof Element ? target : null
-  return Boolean(el?.closest('button,a,input,select,textarea,label,[role="button"],[tabindex]:not([tabindex="-1"])'))
+  return Boolean(el?.closest([
+    'button',
+    'a',
+    '[role="button"]',
+    'input[type="button"]',
+    'input[type="submit"]',
+    'input[type="reset"]',
+    'label',
+    '[data-clickable="true"]',
+    '.clickable',
+    '.btn',
+    '.button',
+    '[aria-label]',
+    '[tabindex]:not([tabindex="-1"])'
+  ].join(',')))
 }
 
 function playClickSound() {
@@ -57,8 +71,8 @@ function click(e: MouseEvent) {
   }
 }
 
-onMounted(() => window.addEventListener('click', click))
-onBeforeUnmount(() => window.removeEventListener('click', click))
+onMounted(() => window.addEventListener('click', click, true))
+onBeforeUnmount(() => window.removeEventListener('click', click, true))
 </script>
 
 <template><span /></template>

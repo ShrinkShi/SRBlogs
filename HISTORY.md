@@ -1,5 +1,137 @@
 # HISTORY
 
+## 2026-05-04 - 页面配置接口与透明度配置硬修轮
+
+本轮目标：
+
+- 修复浏览器报 `GET /api/admin/pages/config 404` 的页面配置闭环风险。
+- 打通页面编辑保存布局到后端持久化、前台公开读取、首页真实应用的链路。
+- 将前台主要组件透明度迁入后台设置，避免继续靠改代码调透明度。
+- 补齐左下角工具箱悬浮球和菜单项点击音效识别。
+
+前台变更：
+
+- `App.vue` 读取公开 `themeConfig.opacity` 后写入 CSS 变量，覆盖工具箱弹窗、首页卡片、首页轮播、内容卡片、留言板、顶部导航等透明度。
+- 工具箱“设置 / 全局搜索 / 计算器”弹窗改为读取后台透明度变量，仍保留玻璃模糊但不再硬编码不可调透明度。
+- `ClickEffect` 改为捕获阶段监听点击，解决工具箱 `@click.stop` 阻断全局点击音效的问题。
+- 工具箱悬浮球、菜单项、关闭按钮、计算器按钮补充 `data-clickable="true"`，确保点击音效可识别；空白点击仍不播放音效。
+- 首页布局读取 `homeLayout`，兼容后端返回的 `home` alias，但以 `homeLayout.components` 为主。
+
+后台/API 变更：
+
+- `GET /api/pages/config`、`GET /api/admin/pages/config`、`PUT /api/admin/pages/config` 保持固定路径；后台接口需要 JWT，未登录返回 401 而不是 404。
+- `backend/app/api/pages.py` 兼容文档里的 `home.components` 结构，但当 `homeLayout` 和 `home` 同时存在时以 `homeLayout` 为准，避免保存后被旧 alias 覆盖。
+- `/api/settings/public` 与 `/api/admin/settings` 为 `themeConfig.opacity` 注入默认值并做 0.60-1.00 范围归一化。
+- 后台设置“主题与背景”新增“前台透明度设置”分组，提供滑块和数字输入。
+
+文档变更：
+
+- 更新 `HISTORY.md`、`docs/API_CONTRACT.md`、`docs/SECURITY_NOTES.md`、`docs/UI_STYLE_GUIDE.md`、`docs/MANUAL_QA_CHECKLIST.md`、`docs/USER_GUIDE.md`、`README.md`。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`
+- 通过：`cd admin && npm run build`
+- 通过：`python -m compileall backend\app`
+- 通过：FastAPI TestClient `GET /api/pages/config` 返回 200。
+- 通过：FastAPI TestClient 未登录访问 `GET /api/admin/pages/config` 和 `PUT /api/admin/pages/config` 返回 401，不再是 404。
+- 通过：FastAPI TestClient 登录后台后临时调整 `statusBar.order` 和 `profileCard.w`，`PUT /api/admin/pages/config` 返回 200，公开 `GET /api/pages/config` 读到变化；随后已恢复原布局。
+- 通过：FastAPI TestClient 临时修改 `themeConfig.opacity.toolboxSettingsPanel/toolboxSearchPanel`，`GET /api/settings/public` 读到变化；随后已恢复。
+- 通过：构建产物 Secret 静态搜索未匹配到默认密码、JWT/管理员密码配置键、GitHub/QQ OAuth Secret 配置键或常见真实密钥形态。
+
+遗留问题：
+
+- 未启动 dev server 做浏览器人工回归；工具箱透明度滑块前台刷新生效、工具箱点击音效、页面编辑保存后前台实际移动/缩放仍需用户在浏览器确认。
+
+## 2026-05-03 - 页面编辑布局闭环硬修轮
+
+本轮目标：
+
+- 针对上一轮人工验收失败项重修：工具箱弹窗不透明度、按钮点击音效、字体大小不缩放盒子、首页页面编辑布局保存后前台真实生效。
+
+前台变更：
+
+- 工具箱设置和全局搜索弹窗主体改为明确的高不透明玻璃面板；夜间为 `rgba(12,16,32,.94)`，日间为 `rgba(245,248,255,.94)`。
+- 点击视觉特效与点击音效彻底分离：视觉特效响应任意页面点击；音效只响应 `button`、`a`、`[role=button]`、提交按钮、`.btn/.button/.clickable`、`data-clickable`、图标按钮等交互元素。
+- 移除 `html` 根字号缩放方案和旧 `--app-font-size/--app-font-scale` 写入；字体大小只通过字体变量和 `.text-*`、少量任意字号、Markdown、留言板、工具箱等文本类覆盖 `font-size`，不再用根字号放大组件盒子。
+- 首页改为 8 个可布局组件：名片、音乐播放器、歌词区、最新文章轮播、图片轮播、更新内容轮播、昼夜切换、底部状态区。
+- 首页桌面端读取 `/api/pages/config` 的 `homeLayout.components`，按每个组件的 `order/w/h/visible` 真实应用顺序和尺寸；移动端仍退化为单列以保证可读性。
+- 文章、杂谈、图片、音乐、项目、友链、关于页改为读取 `/api/pages/config` 的 `pageText` 文案。
+
+后台/API 变更：
+
+- 新增 `backend/app/api/pages.py`。
+- 新增公开接口 `GET /api/pages/config`。
+- 新增后台接口 `GET /api/admin/pages/config`、`PUT /api/admin/pages/config`，后台写入需要 JWT，保存走 `JsonStore`/安全写入并写审计日志。
+- 页面配置保存到 `backend/data/page_config.json`，避免被普通 settings 保存流程覆盖。
+- `PageEditor` 改为 8 个首页真实组件的排序/尺寸编辑器，支持拖拽排序、上移/下移、宽度档位、高度档位、恢复默认布局。
+- “页面编辑 > 首页”保存作者、头像、简介和社交链接到页面配置；设置中心站点公开信息继续仅保留兼容折叠区。
+
+文档变更：
+
+- 更新 `HISTORY.md`、`docs/API_CONTRACT.md`、`docs/SECURITY_NOTES.md`、`docs/UI_STYLE_GUIDE.md`、`docs/MANUAL_QA_CHECKLIST.md`、`docs/USER_GUIDE.md`、`README.md`。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`
+- 通过：`cd admin && npm run build`
+- 通过：`python -m compileall backend\app`
+- 通过：FastAPI TestClient `GET /api/health` 返回 200，`{"ok": true, "app": "SRBlogs API"}`。
+- 通过：FastAPI TestClient `GET /api/pages/config` 返回 200，包含 `pageText`、`homeProfile`、8 个 `homeLayout.components`。
+- 通过：FastAPI TestClient 登录后台后临时调整 `statusBar` 与 `lyrics` 的顺序，`PUT /api/admin/pages/config` 返回 200，公开 `GET /api/pages/config` 可读到变化；随后已写回原顺序。
+- 通过：构建产物 Secret 静态搜索未匹配到默认密码、JWT/管理员密码配置键、GitHub/QQ OAuth Secret 配置键或常见真实密钥形态。
+
+遗留问题：
+
+- 未启动浏览器人工回归；弹窗透明度、按钮音效、字体只改文字、首页布局保存后前台顺序/尺寸变化仍需用户在浏览器确认。
+
+## 2026-05-03 - 页面编辑真实绑定与工具箱交互修复轮
+
+本轮目标：
+
+- 修复工具箱“设置 / 全局搜索”弹窗透明度过高的问题。
+- 将点击视觉特效和点击音效规则分离：视觉特效响应页面任意点击，音效只响应有效交互元素。
+- 让前台字体大小档位影响更多固定字号组件；该旧方案后来已修正为只改文字字号，不再改根字号。
+- 将中枢链路模式上下卡片间距进一步放大。
+- 将页面编辑从静态占位推进为读取真实 settings、about 和内容数据摘要的第一阶段编辑器。
+- 将首页作者、头像、简介、社交链接迁移到“页面编辑 > 首页”作为主流程。
+
+前台变更：
+
+- `Toolbox` 搜索和设置弹窗背景提高到接近不透明的玻璃面板，遮罩更深，搜索结果和设置项可读性更强。
+- `ClickEffect` 改为任意点击触发视觉圆环；点击音效仍只在按钮、链接、导航、表单控件等交互元素触发。
+- `ui` 状态新增 `clickSoundAllowed`，后台关闭点击音效后游客设置不能重新开启。
+- 当时曾让根元素同步写入字号变量；本轮已废弃该做法，改为只覆盖文本 `font-size`，避免组件盒子跟随缩放。
+- 文章、杂谈、图片的中枢链路模式垂直间距增加到更疏朗的 2.5 倍级别。
+- `/settings/public` 公开返回 `pageText` 与 `pageLayouts`，用于前台读取页面文案和首页布局配置；该字段只包含公开页面配置，不包含 Secret。
+- 前台首页读取页面布局配置并应用核心模块的保存后布局高度/顺序；本轮已迁移为独立 `/api/pages/config` 的 `homeLayout.components`。
+- 文章、杂谈、图片、音乐、项目、友链、关于页开始读取 `pageText` 中的标题和副标题配置。
+
+后台/API 变更：
+
+- `PageEditor` 重写为真实页面编辑入口：读取 `/admin/settings`、`/about`、文章列表、照片、音乐、项目、友链等真实数据，显示真实摘要。
+- “页面编辑 > 首页”可编辑作者、头像 URL、首页简介、社交链接，并保存回 settings，刷新前台后生效。
+- “页面编辑 > 文章”可编辑文章板块与杂谈板块标题/副标题。
+- “页面编辑 > 关于”可读取和保存真实 `about.md` Markdown 内容。
+- 首页核心模块在后台预览区支持拖拽位置和缩放大小；本轮已迁移为保存到 `backend/data/page_config.json` 的 `homeLayout.components`，未保存前只影响后台预览。
+- 设置中心“站点公开信息”隐藏作者、头像、简介、社交链接主流程，仅保留兼容折叠区，并提示这些字段已迁移到“页面编辑 > 首页”。
+
+文档变更：
+
+- 更新 `HISTORY.md`、`docs/API_CONTRACT.md`、`docs/SECURITY_NOTES.md`、`docs/UI_STYLE_GUIDE.md`、`docs/MANUAL_QA_CHECKLIST.md`、`docs/USER_GUIDE.md`、`README.md`。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`
+- 通过：`cd admin && npm run build`
+- 通过：`python -m compileall backend\app`
+- 通过：构建产物 Secret 静态搜索未匹配到默认密码、JWT/管理员密码配置键、GitHub/QQ OAuth Secret 配置键或常见真实密钥形态。
+- 通过：直接调用 `public_settings`，确认公开 settings 包含 `pageText`、`pageLayouts` 和 `interaction`，只出现 `secretConfigured` 这类布尔状态字段。
+
+遗留问题：
+
+- 未启动浏览器人工回归；页面编辑保存后前台生效、拖拽/缩放布局效果、字体档位全站感知、点击视觉/音效规则仍需在浏览器确认。
+
 ## 2026-05-03 - 工具箱细节与后台信息架构重构轮
 
 本轮目标：

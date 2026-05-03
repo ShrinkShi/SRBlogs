@@ -1,5 +1,17 @@
 # Security Notes
 
+## 2026-05-03 页面配置与首页布局安全规则
+
+- `backend/data/page_config.json` 只保存公开页面文案、首页资料卡公开字段和首页模块布局，不得保存 Secret、管理员 Token、OAuth access token、服务端绝对路径、脚本或任意 HTML。
+- `GET /api/pages/config` 是公开读取接口，只返回前台需要展示的页面配置。
+- `GET /api/admin/pages/config` 和 `PUT /api/admin/pages/config` 必须需要管理员 JWT。
+- 页面配置写入必须继续走 `JsonStore.write` / `safe_write_json`，覆盖前生成备份。
+- 首页布局只允许固定组件 ID：`profileCard`、`musicPlayer`、`lyrics`、`latestPostsCarousel`、`photoCarousel`、`updatesCarousel`、`themeToggle`、`statusBar`；不要让前台执行任意组件名或脚本。
+- 页面布局配置只允许保存固定组件 ID、顺序、宽度、高度和公开文案；不得保存脚本、HTML 注入片段、access token、Secret 或服务器绝对路径。
+- `themeConfig.opacity` 属于公开视觉配置，只允许保存 0.60-1.00 的数字；它不能承载任何私密配置。
+- 字体大小游客设置只能改变文字 `font-size`，不得通过 `zoom`、根字号缩放或 `transform: scale()` 放大整页、卡片、图片、播放器、弹窗或布局容器。
+- 点击视觉特效只在前端生成临时 DOM，不记录用户点击内容，也不向后端发送点击轨迹。
+
 ## 2026-05-03 多平台留言登录安全规则
 
 - GitHub OAuth Secret 与 QQ App Secret 只能保存在后端 `.env` 或服务端配置中，不能进入 `frontend/dist`、`admin/dist` 或 `/api/settings/public`。
@@ -78,5 +90,7 @@
 - `/api/settings/public` 可以公开 `interaction.clickEffectEnabled`，但只能作为布尔站点开关，不得携带 Secret、管理员配置或调试信息。
 - 点击音效 URL 属于公开前台资源地址；如果使用上传资源，仍必须经过上传类型、MIME 和大小限制。
 - 页面编辑第一阶段保存的 `pageLayouts` 只能保存页面标题、副标题、说明和预览布局坐标，不得保存脚本、HTML 片段、Secret 或服务端路径。
+- 页面编辑公开配置 `pageText` / `pageLayouts` 会进入 `/api/settings/public`，只能包含前台可展示的文字、公开链接和布局坐标；不得写入管理员 Token、OAuth Secret、服务器绝对路径、HTML 脚本或任意可执行代码。
+- “页面编辑 > 首页”保存的作者、头像、简介和社交链接属于公开资料卡内容，任何私人联系方式应由站点管理员自行判断是否适合公开展示。
 - 页面布局配置通过后台 settings 写入，仍需管理员 JWT；前台游客只能读取公开效果，不能写入布局配置。
 - 鼠标点击视觉特效只在前端渲染临时节点，不应记录用户点击内容，也不应向后端发送点击轨迹。

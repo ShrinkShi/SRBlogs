@@ -55,6 +55,32 @@ const tokenLabels: Record<string, string> = {
   shadowGlow: '发光阴影'
 }
 
+const opacityLabels: Record<string, string> = {
+  toolboxSettingsPanel: '工具箱设置弹窗',
+  toolboxSearchPanel: '工具箱全局搜索弹窗',
+  toolboxCalculatorPanel: '工具箱计算器弹窗',
+  homeCard: '首页卡片',
+  homeCarousel: '首页轮播卡片',
+  contentCard: '文章 / 杂谈卡片',
+  photoCard: '图片相册卡片',
+  musicPanel: '音乐页卡片',
+  messageBoard: '留言板',
+  navBar: '顶部导航栏'
+}
+
+const defaultOpacity: Record<string, number> = {
+  toolboxSettingsPanel: 0.92,
+  toolboxSearchPanel: 0.92,
+  toolboxCalculatorPanel: 0.90,
+  homeCard: 0.82,
+  homeCarousel: 0.82,
+  contentCard: 0.82,
+  photoCard: 0.82,
+  musicPanel: 0.88,
+  messageBoard: 0.86,
+  navBar: 0.72
+}
+
 const form = reactive({
   siteTitle: '',
   subtitle: '',
@@ -91,7 +117,8 @@ const form = reactive({
       navBg: 'rgba(7,12,28,.64)',
       homePanelBg: 'rgba(255,255,255,.105)',
       shadowGlow: 'rgba(34,211,238,.42)'
-    } as Record<string, string>
+    } as Record<string, string>,
+    opacity: { ...defaultOpacity } as Record<string, number>
   },
   bgImagesText: '',
   cloudMusicIdsText: '',
@@ -142,6 +169,15 @@ function tokenLabel(key: string) {
   return tokenLabels[key] || key
 }
 
+function opacityLabel(key: string) {
+  return opacityLabels[key] || key
+}
+
+function normalizeOpacity(value: unknown) {
+  const number = Number(value)
+  return Math.min(1, Math.max(0.6, Number.isFinite(number) ? number : 0.9))
+}
+
 function colorPickerValue(value: unknown) {
   const text = String(value || '').trim()
   return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#67e8f9'
@@ -173,6 +209,7 @@ function applySettings(data: AnySettings) {
   form.themeConfig.fontScale = themeConfig.fontScale || 'medium'
   form.themeConfig.day = { ...form.themeConfig.day, ...(themeConfig.day || {}) }
   form.themeConfig.night = { ...form.themeConfig.night, ...(themeConfig.night || {}) }
+  form.themeConfig.opacity = { ...defaultOpacity, ...(themeConfig.opacity || {}) }
   form.bgImagesText = Array.isArray(data.bgImages) ? data.bgImages.join('\n') : ''
   form.cloudMusicIdsText = Array.isArray(data.cloudMusicIds) ? data.cloudMusicIds.join(', ') : ''
 
@@ -245,7 +282,8 @@ function buildPayload() {
       fontFamily: form.themeConfig.fontFamily,
       fontScale: form.themeConfig.fontScale,
       day: { ...form.themeConfig.day },
-      night: { ...form.themeConfig.night }
+      night: { ...form.themeConfig.night },
+      opacity: Object.fromEntries(Object.entries(form.themeConfig.opacity).map(([key, value]) => [key, normalizeOpacity(value)]))
     },
     bgImages: linesToArray(form.bgImagesText),
     cloudMusicIds: commaToArray(form.cloudMusicIdsText),
@@ -416,13 +454,19 @@ onMounted(load)
           <div class="grid gap-3 md:grid-cols-2">
             <label class="field">站点标题<input v-model="form.siteTitle" class="admin-input" /></label>
             <label class="field">副标题<input v-model="form.subtitle" class="admin-input" /></label>
-            <label class="field">作者<input v-model="form.author" class="admin-input" /></label>
-            <label class="field">头像 URL<div class="flex gap-2"><input v-model="form.avatar" class="admin-input min-w-0 flex-1" /><label class="admin-btn admin-btn-ghost cursor-pointer">上传<input type="file" accept="image/*" class="hidden" @change="uploadInto('avatar', ($event.target as HTMLInputElement).files)" /></label></div></label>
           </div>
-          <label class="field">站点简介<textarea v-model="form.description" rows="4" class="admin-input"></textarea></label>
-          <div class="grid gap-3 md:grid-cols-2">
-            <label v-for="(_, key) in form.socialLinks" :key="key" class="field">社交链接 {{ key }}<input v-model="form.socialLinks[key]" class="admin-input" /></label>
+          <div class="rounded-[24px] border border-cyan-200/15 bg-cyan-200/[0.07] p-4 text-sm leading-7 text-cyan-50/75">
+            作者、头像、首页简介和社交链接已迁移到“页面编辑 > 首页”作为主流程。这里不再作为主要入口，避免站点级设置和页面内容混在一起。
           </div>
+          <details class="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+            <summary class="cursor-pointer text-sm font-bold text-white/70">兼容旧字段：作者、头像、简介和社交链接</summary>
+            <div class="mt-4 grid gap-3 md:grid-cols-2">
+              <label class="field">作者<input v-model="form.author" class="admin-input" /></label>
+              <label class="field">头像 URL<div class="flex gap-2"><input v-model="form.avatar" class="admin-input min-w-0 flex-1" /><label class="admin-btn admin-btn-ghost cursor-pointer">上传<input type="file" accept="image/*" class="hidden" @change="uploadInto('avatar', ($event.target as HTMLInputElement).files)" /></label></div></label>
+              <label class="field md:col-span-2">站点简介<textarea v-model="form.description" rows="4" class="admin-input"></textarea></label>
+              <label v-for="(_, key) in form.socialLinks" :key="key" class="field">社交链接 {{ key }}<input v-model="form.socialLinks[key]" class="admin-input" /></label>
+            </div>
+          </details>
         </template>
 
         <template v-else-if="active === 'theme'">
@@ -440,6 +484,24 @@ onMounted(load)
               <label class="setting-check"><input v-model="form.interaction.clickEffectEnabled" type="checkbox" />启用鼠标点击特效</label>
               <label class="field">音量<input v-model.number="form.interaction.clickSoundVolume" type="number" min="0" max="1" step="0.01" class="admin-input" /></label>
               <label class="field md:col-span-3">音效 URL<div class="flex gap-2"><input v-model="form.interaction.clickSoundUrl" class="admin-input min-w-0 flex-1" /><label class="admin-btn admin-btn-ghost cursor-pointer">上传<input type="file" accept="audio/*" class="hidden" @change="uploadInto('clickSound', ($event.target as HTMLInputElement).files)" /></label></div></label>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h3 class="font-black text-white">前台透明度设置</h3>
+                <p class="mt-1 text-sm text-white/50">数值越高越不透明。范围限制为 0.60 到 1.00，前台刷新后生效。</p>
+              </div>
+            </div>
+            <div class="mt-4 grid gap-3 md:grid-cols-2">
+              <label v-for="(_, key) in form.themeConfig.opacity" :key="String(key)" class="opacity-token-row">
+                <span class="min-w-0">
+                  <b>{{ opacityLabel(String(key)) }}</b>
+                  <small>{{ key }}</small>
+                </span>
+                <input v-model.number="form.themeConfig.opacity[key]" type="range" min="0.6" max="1" step="0.01" class="min-w-0 flex-1" />
+                <input v-model.number="form.themeConfig.opacity[key]" type="number" min="0.6" max="1" step="0.01" class="admin-input w-24" />
+              </label>
             </div>
           </section>
           <div class="grid gap-4 xl:grid-cols-2">
@@ -598,6 +660,27 @@ onMounted(load)
   background: rgb(255 255 255 / 0.055);
   padding: 0.65rem;
 }
+.opacity-token-row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1fr) minmax(10rem, 1.2fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgb(255 255 255 / 0.09);
+  background: rgb(255 255 255 / 0.055);
+  padding: 0.75rem;
+}
+.opacity-token-row b {
+  display: block;
+  color: rgb(255 255 255 / 0.88);
+  font-size: 0.86rem;
+}
+.opacity-token-row small {
+  display: block;
+  margin-top: 0.15rem;
+  color: rgb(255 255 255 / 0.34);
+  font-size: 0.68rem;
+}
 .theme-token-row b {
   display: block;
   color: rgb(255 255 255 / 0.88);
@@ -629,6 +712,9 @@ onMounted(load)
   }
   .theme-token-row > div {
     grid-column: 1 / -1;
+  }
+  .opacity-token-row {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>

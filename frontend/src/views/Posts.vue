@@ -7,7 +7,7 @@ import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import StateBlock from '@/components/StateBlock.vue'
 import { contentApi } from '@/api/content'
-import type { ContentItem, SiteSettings } from '@/types'
+import type { ContentItem, PageConfig } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { formatDate } from '@/utils/date'
 
@@ -22,21 +22,21 @@ const displayMode = ref<'grid' | 'link'>('grid')
 const section = ref<SectionKey>(route.query.section === 'chatters' ? 'chatters' : 'posts')
 const loading = ref(true)
 const error = ref('')
-const settings = ref<SiteSettings | null>(null)
+const pageConfig = ref<PageConfig | null>(null)
 const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop'
 
 const sectionConfig = computed(() => section.value === 'chatters'
   ? {
-      title: settings.value?.pageText?.chatters?.title || '云端杂谈',
+      title: pageConfig.value?.pageText?.chatters?.title || '云端杂谈',
       eyebrow: 'chatters',
-      subtitle: settings.value?.pageText?.chatters?.subtitle || '长一点的念头，短一点的文章。',
+      subtitle: pageConfig.value?.pageText?.chatters?.subtitle || '长一点的念头，短一点的文章。',
       base: '/chatters',
       empty: '暂无杂谈。'
     }
   : {
-      title: settings.value?.pageText?.posts?.title || '文章归档',
+      title: pageConfig.value?.pageText?.posts?.title || '文章归档',
       eyebrow: 'archive',
-      subtitle: settings.value?.pageText?.posts?.subtitle || '从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。',
+      subtitle: pageConfig.value?.pageText?.posts?.subtitle || '从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。',
       base: '/posts',
       empty: '暂无公开文章。'
     })
@@ -95,7 +95,7 @@ watch(section, load)
 
 onMounted(() => {
   if (route.query.mode === 'grid' || route.query.mode === 'link') displayMode.value = route.query.mode
-  contentApi.json<SiteSettings>('/settings/public').then((data) => { settings.value = data }).catch(() => {})
+  contentApi.json<PageConfig>('/pages/config').then((data) => { pageConfig.value = data }).catch(() => {})
   load()
 })
 </script>

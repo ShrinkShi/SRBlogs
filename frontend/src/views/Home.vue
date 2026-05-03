@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import ProfileCard from '@/components/ProfileCard.vue'
 import { contentApi } from '@/api/content'
-import type { ContentItem, MusicItem, PhotoAlbum, PhotoItem, SiteSettings } from '@/types'
+import type { ContentItem, HomeComponentId, MusicItem, PageConfig, PhotoAlbum, PhotoItem, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { useUiStore } from '@/stores/ui'
 import { usePlayerStore } from '@/stores/player'
@@ -24,6 +24,7 @@ const chatters = ref<ContentItem[]>([])
 const photos = ref<Array<PhotoItem | PhotoAlbum>>([])
 const music = ref<MusicItem[]>([])
 const settings = ref<SiteSettings | null>(null)
+const pageConfig = ref<PageConfig | null>(null)
 const remoteLyrics = ref('')
 const currentTrack = ref(0)
 const postIndex = ref(0)
@@ -116,14 +117,46 @@ const progressPercent = computed(() => player.duration ? `${Math.min(100, (playe
 const recordStyle = computed<Record<string, string>>(() => (
   track.value?.cover ? { '--record-cover': `url(${track.value.cover})` } : {} as Record<string, string>
 ))
-const homeBlocks = computed(() => settings.value?.pageLayouts?.home?.blocks || [])
-
-function homeBlockStyle(id: string) {
-  const block = homeBlocks.value.find((item) => item.id === id)
-  if (!block) return {}
+const homeSettings = computed<SiteSettings | null>(() => {
+  const profile = pageConfig.value?.homeProfile
+  if (!profile) return settings.value
   return {
-    order: Math.round(block.y),
-    minHeight: `${Math.max(54, block.h * 4.2)}px`
+    ...(settings.value || {}),
+    author: profile.author || settings.value?.author,
+    avatar: profile.avatar || settings.value?.avatar,
+    description: profile.description || settings.value?.description,
+    socialLinks: profile.socialLinks || settings.value?.socialLinks
+  }
+})
+
+const defaultHomeLayout: Record<HomeComponentId, { order: number; w: number; h: number; visible: boolean }> = {
+  profileCard: { order: 1, w: 6, h: 2, visible: true },
+  musicPlayer: { order: 2, w: 6, h: 2, visible: true },
+  lyrics: { order: 3, w: 12, h: 1, visible: true },
+  latestPostsCarousel: { order: 4, w: 4, h: 3, visible: true },
+  photoCarousel: { order: 5, w: 8, h: 2, visible: true },
+  updatesCarousel: { order: 6, w: 8, h: 2, visible: true },
+  themeToggle: { order: 7, w: 4, h: 2, visible: true },
+  statusBar: { order: 8, w: 12, h: 1, visible: true }
+}
+
+function componentLayout(id: HomeComponentId) {
+  const components = pageConfig.value?.homeLayout?.components || pageConfig.value?.home?.components || {}
+  return { ...defaultHomeLayout[id], ...(components[id] || {}) }
+}
+
+function isComponentVisible(id: HomeComponentId) {
+  return componentLayout(id).visible !== false
+}
+
+function homeComponentStyle(id: HomeComponentId) {
+  const item = componentLayout(id)
+  const span = Math.max(1, Math.min(12, Math.round(Number(item.w || 12))))
+  const h = Math.max(1, Number(item.h || 1))
+  return {
+    order: Number(item.order || defaultHomeLayout[id].order),
+    gridColumn: `span ${span} / span ${span}`,
+    minHeight: `${Math.max(5.5, h * 8)}rem`
   }
 }
 
@@ -168,13 +201,14 @@ function setVolumeFromEvent(event: Event) {
 }
 
 onMounted(async () => {
-  const [p, m, c, ph, s, mu] = await Promise.allSettled([
+  const [p, m, c, ph, s, mu, pc] = await Promise.allSettled([
     contentApi.list('posts'),
     contentApi.list('moments'),
     contentApi.list('chatters'),
     contentApi.json<Array<PhotoItem | PhotoAlbum>>('/photos'),
     contentApi.json<SiteSettings>('/settings/public'),
-    contentApi.json<MusicItem[]>('/music')
+    contentApi.json<MusicItem[]>('/music'),
+    contentApi.json<PageConfig>('/pages/config')
   ])
   if (p.status === 'fulfilled') posts.value = p.value
   if (m.status === 'fulfilled') moments.value = m.value
@@ -182,6 +216,7 @@ onMounted(async () => {
   if (ph.status === 'fulfilled') photos.value = ph.value
   if (s.status === 'fulfilled') settings.value = s.value
   if (mu.status === 'fulfilled') music.value = mu.value
+  if (pc.status === 'fulfilled') pageConfig.value = pc.value
   if (mu.status === 'fulfilled') player.setTracks(mu.value)
 
   clockTimer = window.setInterval(() => { now.value = new Date() }, 1000)
@@ -200,17 +235,18 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="grid min-w-0 max-w-full gap-6 md:gap-8">
-    <div class="home-asymmetric-grid">
+    <div class="home-layout-grid">
       <ProfileCard
-        class="min-w-0 max-w-full"
-        :style="homeBlockStyle('profile')"
-        :settings="settings"
+        v-if="isComponentVisible('profileCard')"
+        class="home-card-opacity min-w-0 max-w-full"
+        :style="homeComponentStyle('profileCard')"
+        :settings="homeSettings"
         :posts="posts.length"
         :chatters="chatters.length"
         :photos="photoCount || settings?.counts?.photos || 0"
       />
 
-      <GlassCard hover class="music-compact-card min-w-0" :style="homeBlockStyle('music')">
+      <GlassCard v-if="isComponentVisible('musicPlayer')" hover class="music-compact-card min-w-0" :style="homeComponentStyle('musicPlayer')">
         <div class="music-compact-layout">
           <div class="record-disc music-compact-disc rounded-full" :class="{ playing: player.playing }" :style="recordStyle" aria-hidden="true"></div>
           <div class="grid min-w-0 content-center justify-items-center gap-4 text-center">
@@ -250,19 +286,18 @@ onBeforeUnmount(() => {
           </div>
         </div>
       </GlassCard>
-    </div>
 
-    <GlassCard hover class="sr-hero-panel lyrics-compact" :style="homeBlockStyle('lyrics')">
-      <div class="flex min-h-[38px] flex-col items-center justify-center text-center">
+      <GlassCard v-if="isComponentVisible('lyrics')" hover class="sr-hero-panel lyrics-compact" :style="homeComponentStyle('lyrics')">
+      <div class="flex h-full min-h-[38px] flex-col items-center justify-center text-center">
         <p class="max-w-full truncate px-2 font-black leading-tight text-white/78" :style="lyricStyle">{{ lyricLine }}</p>
       </div>
     </GlassCard>
 
-    <div class="home-carousel-layout" :style="homeBlockStyle('carousel')">
       <RouterLink
-        v-if="currentPost"
+        v-if="isComponentVisible('latestPostsCarousel') && currentPost"
         :to="`/posts/${currentPost.slug}`"
         class="home-media-carousel home-image-zoom home-carousel-tall"
+        :style="homeComponentStyle('latestPostsCarousel')"
       >
         <div class="image-layer absolute inset-0 bg-cover bg-center" :style="{ backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,.08), rgba(0,0,0,.72)), url(${currentPost.meta.cover || settings?.defaultPostCover || ''})` }"></div>
         <div class="home-carousel-copy">
@@ -274,10 +309,9 @@ onBeforeUnmount(() => {
             <button v-for="(_, index) in postSlides" :key="index" type="button" class="carousel-dot" :class="{ 'carousel-dot-active': index === postIndex }" :aria-label="`切换到第 ${index + 1} 篇文章`" @mouseenter="setPost(index)" @click.prevent="setPost(index)"></button>
         </div>
       </RouterLink>
-      <div v-else class="home-media-carousel home-carousel-tall grid place-items-center text-white/58">暂无公开文章</div>
+      <div v-else-if="isComponentVisible('latestPostsCarousel')" class="home-media-carousel home-carousel-tall grid place-items-center text-white/58" :style="homeComponentStyle('latestPostsCarousel')">暂无公开文章</div>
 
-      <div class="home-carousel-right">
-        <RouterLink v-if="currentPhoto" to="/photowall" class="home-media-carousel home-image-zoom">
+        <RouterLink v-if="isComponentVisible('photoCarousel') && currentPhoto" to="/photowall" class="home-media-carousel home-image-zoom" :style="homeComponentStyle('photoCarousel')">
           <div class="image-layer absolute inset-0 bg-cover bg-center" :style="{ backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,.08), rgba(0,0,0,.66)), url(${currentPhoto.url})` }"></div>
           <div class="home-carousel-copy">
             <span class="sr-chip px-3 py-1 text-xs">{{ currentPhoto.date || 'photo' }}</span>
@@ -288,10 +322,9 @@ onBeforeUnmount(() => {
             <button v-for="(_, index) in photoSlides" :key="index" type="button" class="carousel-dot" :class="{ 'carousel-dot-active': index === photoIndex }" :aria-label="`切换到第 ${index + 1} 张照片`" @mouseenter="setPhoto(index)" @click.prevent="setPhoto(index)"></button>
           </div>
         </RouterLink>
-        <div v-else class="home-media-carousel grid place-items-center text-white/58">暂无照片</div>
+        <div v-else-if="isComponentVisible('photoCarousel')" class="home-media-carousel grid place-items-center text-white/58" :style="homeComponentStyle('photoCarousel')">暂无照片</div>
 
-        <div class="home-carousel-bottom">
-          <RouterLink v-if="currentUpdate" :to="currentUpdate.url" class="home-text-carousel sr-card-hover">
+          <RouterLink v-if="isComponentVisible('updatesCarousel') && currentUpdate" :to="currentUpdate.url" class="home-text-carousel sr-card-hover" :style="homeComponentStyle('updatesCarousel')">
             <div>
               <div class="flex items-center justify-between gap-3">
                 <span class="sr-chip px-3 py-1 text-xs">{{ currentUpdate.label }}</span>
@@ -304,18 +337,15 @@ onBeforeUnmount(() => {
               <button v-for="(_, index) in latestUpdates" :key="index" type="button" class="carousel-dot" :class="{ 'carousel-dot-active': index === updateIndex }" :aria-label="`切换到第 ${index + 1} 条更新`" @mouseenter="setUpdate(index)" @click.prevent="setUpdate(index)"></button>
             </div>
           </RouterLink>
-          <div v-else class="home-text-carousel grid place-items-center text-white/58">暂无更新内容</div>
+          <div v-else-if="isComponentVisible('updatesCarousel')" class="home-text-carousel grid place-items-center text-white/58" :style="homeComponentStyle('updatesCarousel')">暂无更新内容</div>
 
-          <button type="button" class="home-theme-card sr-card-hover" @click="ui.toggleColorMode">
+          <button v-if="isComponentVisible('themeToggle')" type="button" class="home-theme-card sr-card-hover" :style="homeComponentStyle('themeToggle')" @click="ui.toggleColorMode">
             <span class="mode-orb grid h-20 w-20 place-items-center rounded-[28px] text-3xl">{{ ui.colorMode === 'day' ? '☀' : '☾' }}</span>
             <span class="mt-5 block text-2xl font-black text-white">{{ ui.colorMode === 'day' ? '日间模式' : '夜间模式' }}</span>
             <span class="mt-3 block text-sm leading-6 text-white/58">点击切换全站昼夜主题</span>
           </button>
-        </div>
-      </div>
-    </div>
 
-    <GlassCard hover :style="homeBlockStyle('status')">
+    <GlassCard v-if="isComponentVisible('statusBar')" hover class="home-card-opacity" :style="homeComponentStyle('statusBar')">
       <div class="home-status-grid">
         <div class="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
           <p class="text-xs uppercase tracking-[.24em] text-white/38">beijing time</p>
@@ -331,5 +361,6 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </GlassCard>
+    </div>
   </section>
 </template>

@@ -13,6 +13,20 @@ from app.services.json_service import JsonStore
 
 router = APIRouter(tags=["settings"])
 
+DEFAULT_OPACITY: dict[str, float] = {
+    "toolboxSettingsPanel": 0.92,
+    "toolboxSearchPanel": 0.92,
+    "toolboxCalculatorPanel": 0.90,
+    "homeCard": 0.82,
+    "homeCarousel": 0.82,
+    "contentCard": 0.82,
+    "photoCard": 0.82,
+    "musicPanel": 0.88,
+    "messageBoard": 0.86,
+    "navBar": 0.72,
+}
+
+
 def _store() -> JsonStore:
     return JsonStore(get_settings().data_path, "settings.json", {})
 
@@ -25,6 +39,24 @@ def _configured(value: Any) -> bool:
     if isinstance(value, dict):
         return any(_configured(item) for item in value.values())
     return bool(value)
+
+
+def _normalize_opacity(value: Any) -> dict[str, float]:
+    source = value if isinstance(value, dict) else {}
+    normalized = deepcopy(DEFAULT_OPACITY)
+    for key in DEFAULT_OPACITY:
+        try:
+            number = float(source.get(key, normalized[key]))
+        except (TypeError, ValueError):
+            number = normalized[key]
+        normalized[key] = min(1.0, max(0.6, number))
+    return normalized
+
+
+def _theme_config_with_defaults(value: Any) -> dict[str, Any]:
+    theme_config = deepcopy(value) if isinstance(value, dict) else {}
+    theme_config["opacity"] = _normalize_opacity(theme_config.get("opacity"))
+    return theme_config
 
 
 def public_settings(data: dict[str, Any]) -> dict[str, Any]:
@@ -88,7 +120,7 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "description": data.get("description") or data.get("bio", ""),
         "socialLinks": deepcopy(data.get("socialLinks") or data.get("social") or {}),
         "theme": data.get("theme", "nebula"),
-        "themeConfig": deepcopy(data.get("themeConfig") or {}),
+        "themeConfig": _theme_config_with_defaults(data.get("themeConfig")),
         "bgImages": deepcopy(data.get("bgImages") or []),
         "cloudMusicIds": deepcopy(data.get("cloudMusicIds") or []),
         "interaction": interaction,
@@ -110,6 +142,7 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
 
 def admin_settings(data: dict[str, Any]) -> dict[str, Any]:
     result = deepcopy(data)
+    result["themeConfig"] = _theme_config_with_defaults(result.get("themeConfig"))
     gitalk = result.get("gitalkConfig")
     if isinstance(gitalk, dict):
         gitalk["clientSecretConfigured"] = _configured(gitalk.pop("clientSecret", ""))
