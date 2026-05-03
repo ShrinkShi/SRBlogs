@@ -24,7 +24,7 @@ onMounted(load)
 </script>
 <template>
   <section class="grid gap-5">
-    <GlassCard>
+    <GlassCard class="text-center">
       <h1 class="text-4xl font-black text-white">时间线</h1>
       <p class="mt-3 text-white/56">按时间查看公开动态。</p>
     </GlassCard>

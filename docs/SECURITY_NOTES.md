@@ -116,3 +116,9 @@
 - 草稿发布
 
 图片上传、Secret 修改、评论管理暂不进入本地 `pendingOperations`。第一阶段队列在刷新页面后会丢失；第二阶段再做服务端持久化。
+# 2026-05-03 安全补充：GitHub 评论与前台入口
+
+- GitHub OAuth 登录入口只能放在前台文章详情评论区；后台设置页只负责配置 Client ID 和 Secret configured 状态，不承担访客登录。
+- 未登录用户提交评论必须返回 `401`，不能回退到匿名评论、邮箱评论或前端伪造作者。
+- 前台只能读取 `/api/auth/github/me` 的 configured 状态和 GitHub 公开用户信息；OAuth Secret、access token、管理员 JWT 不得进入前端构建产物。
+- 音乐页和首页共享全局播放状态不应保存任何 Secret；歌词文件上传仍按文本类安全限制处理。

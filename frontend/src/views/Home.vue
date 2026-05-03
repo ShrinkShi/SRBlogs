@@ -198,12 +198,12 @@ onBeforeUnmount(() => {
       <GlassCard hover class="music-compact-card min-w-0">
         <div class="music-compact-layout">
           <div class="record-disc music-compact-disc rounded-full" :class="{ playing: player.playing }" :style="recordStyle" aria-hidden="true"></div>
-          <div class="grid min-w-0 content-center gap-4">
+          <div class="grid min-w-0 content-center justify-items-center gap-4 text-center">
             <div class="min-w-0">
               <h3 class="line-clamp-2 break-words text-3xl font-black text-white">{{ track?.title || '暂无歌曲' }}</h3>
               <p class="mt-2 text-sm text-white/58">{{ track?.artist || '请在后台音乐管理添加歌曲' }}</p>
             </div>
-            <div>
+            <div class="w-full max-w-[24rem]">
               <div class="mb-2 flex items-center justify-between text-xs text-white/48">
                 <span>{{ formatTime(player.currentTime) }}</span>
                 <span>{{ formatTime(player.duration) }}</span>
@@ -212,7 +212,7 @@ onBeforeUnmount(() => {
                 <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 to-fuchsia-300 transition-all duration-300" :style="{ width: progressPercent }"></div>
               </div>
             </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center justify-center gap-3">
             <button type="button" class="icon-button" aria-label="上一首" @click="prevTrack">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h2v12H7zM18 6v12l-8.5-6z" /></svg>
             </button>
@@ -231,9 +231,8 @@ onBeforeUnmount(() => {
     </div>
 
     <GlassCard hover class="sr-hero-panel lyrics-compact">
-      <div class="flex min-h-[72px] flex-col items-center justify-center text-center">
-        <p class="text-xs font-bold uppercase tracking-[.3em] text-cyan-100/50">lyrics</p>
-        <p class="mt-4 max-w-full truncate px-2 font-black leading-tight text-white/78" :style="lyricStyle">{{ lyricLine }}</p>
+      <div class="flex min-h-[38px] flex-col items-center justify-center text-center">
+        <p class="max-w-full truncate px-2 font-black leading-tight text-white/78" :style="lyricStyle">{{ lyricLine }}</p>
       </div>
     </GlassCard>
 

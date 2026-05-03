@@ -1,5 +1,60 @@
 # HISTORY
 
+## 2026-05-03 - 前台评论入口修正与列表页统一改版轮
+
+本轮目标：
+
+- 将 GitHub 评论登录入口收口到前台文章详情评论区，后台只保留 OAuth 配置。
+- 统一文章页、杂谈页和非首页页面标题居中风格。
+- 将音乐页改为左侧播放器、右侧歌词/歌单双页签布局。
+- 继续精修首页音乐播放器、歌词区和名片 hover，不新增业务模块。
+
+当前进度估算：
+
+- P0：100%。
+- P1：约 98%，真实 GitHub OAuth 授权回跳仍需配置 Client ID/Secret 后人工验收。
+- P2：约 90%，本轮完成前台列表页和音乐页结构改版，仍需浏览器人工确认视觉细节。
+
+前台变更：
+
+- `CommentBox` 只依据 `comments.enabled` 和 GitHub 登录态控制评论入口；未登录时显示“使用 GitHub 登录后评论”，未配置 OAuth 时显示联系管理员提示，匿名评论入口保持关闭。
+- 文章列表页改为居中标题/副标题、无外边框搜索栏、居中标签栏和三列图片卡片；移除 RSS 订阅按钮。
+- 杂谈页改为与文章页一致的居中标题、搜索栏和三列图片卡片布局。
+- `PostList` 统一为响应式图片卡片：大屏三列，中屏两列，小屏单列，封面在上、标题摘要标签在下。
+- `/music` 改为左侧唱片式播放器、右侧“歌词 / 歌单”双页签，复用全局播放器状态，切换页面不销毁 audio。
+- 首页音乐播放器右侧歌名、歌手、进度条和按钮居中收拢；歌词区移除 `lyrics` 字样并继续压缩高度；名片统计 hover scale 提升。
+- Friends、Projects、Photowall、Search、Tags、TagDetail、Archive、Timeline、Moments、About 等非首页标题区改为居中展示。
+
+后台变更：
+
+- 本轮未新增后台业务模块；沿用已有 GitHub OAuth 配置、照片墙相册编辑和设置中心结构。
+
+后端/API 变更：
+
+- 本轮未新增后端接口。
+- 通过 TestClient 确认 `GET /api/auth/github/me` 在未配置 OAuth 时返回 `configured=false`，未登录评论提交返回 401。
+
+文档变更：
+
+- 更新 `HISTORY.md` 和 `docs/XINGHUI_PARITY_MATRIX.md`，同步 P0/P1/P2 进度、前台 GitHub 评论、文章/杂谈/音乐页 P2 状态。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`、`docs/UI_STYLE_GUIDE.md`、`docs/USER_GUIDE.md`、`README.md`，补充前台 GitHub 评论入口、三列列表页、音乐页双栏布局和非首页标题居中验收项。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`，仍有既有 chunk 体积提示。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient `GET /api/health` 返回 200。
+- 通过：FastAPI TestClient `GET /api/settings/public` 返回 200。
+- 通过：FastAPI TestClient `GET /api/auth/github/me` 返回 `{"configured": false, "user": null}`。
+- 通过：未登录 `POST /api/comments/posts/vue-fastapi-blog` 返回 401。
+- 通过：构建产物 Secret 固定字符串搜索未匹配 `change-me`、`please-change-this-secret`、`JWT_SECRET=`、`ADMIN_PASSWORD=`、`GITHUB_OAUTH_CLIENT_SECRET`、`AI_A_API_KEY`、`OSS_ACCESS_KEY_SECRET`。
+
+遗留问题：
+
+- 本轮未启动 dev server 做完整浏览器人工回归；前台 GitHub OAuth 真实授权、相册组编辑拖拽、文章/杂谈三列视觉、音乐页双栏、390px 移动端仍需用户确认。
+- GitHub OAuth 真实 code flow 需要配置 GitHub Client ID/Secret 后才能完整验收。
+
 ## 2026-05-03 - P1/P2 混合收口补修轮
 
 本轮目标：

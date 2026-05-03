@@ -27,7 +27,7 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
-    <GlassCard>
+    <GlassCard class="text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">tags</p>
       <h1 class="mt-2 text-4xl font-black text-white">标签索引</h1>
       <p class="mt-3 text-white/56">标签合并文章、瞬间、杂谈和项目数据，点击后进入对应内容列表。</p>

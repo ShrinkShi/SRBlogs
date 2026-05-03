@@ -81,7 +81,7 @@ onMounted(async () => {
 
 <template>
   <section class="grid gap-5">
-    <GlassCard>
+    <GlassCard class="text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">search</p>
       <h1 class="mt-2 text-4xl font-black text-white">全站搜索</h1>
       <form class="mt-5 grid gap-3 lg:grid-cols-[1fr_auto]" @submit.prevent="syncQuery(); load()">

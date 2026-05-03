@@ -101,9 +101,12 @@ async function copy(value: string, label: string) {
   color: rgba(255,255,255,.72);
   transition: transform .22s var(--motion-ease), opacity .22s var(--motion-ease), color .22s var(--motion-ease), text-shadow .22s var(--motion-ease);
 }
-.profile-plain-action:hover,
+.profile-plain-action:hover {
+  transform: scale(1.12);
+  opacity: .95;
+}
 .profile-icon-action:hover {
-  transform: scale(1.08);
+  transform: scale(1.1);
   opacity: .92;
 }
 .profile-plain-action:hover {

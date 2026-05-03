@@ -53,7 +53,7 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
-    <GlassCard>
+    <GlassCard class="text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-pink-100/45">photowall</p>
       <h1 class="mt-2 text-4xl font-black text-white">照片墙</h1>
       <p class="mt-3 text-white/56">图片记录从后端 JSON 动态读取，点击图片可放大预览。</p>

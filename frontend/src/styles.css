@@ -245,19 +245,31 @@ body::before {
 .music-compact-layout {
   display: grid;
   min-height: 100%;
-  grid-template-columns: minmax(8.5rem, 11rem) minmax(0, 1fr);
+  grid-template-columns: minmax(7.6rem, 10rem) minmax(0, 1fr);
   align-items: center;
   gap: clamp(1rem, 2vw, 1.4rem);
 }
 
 .music-compact-disc {
-  width: clamp(8.5rem, 16vw, 11rem);
-  height: clamp(8.5rem, 16vw, 11rem);
+  width: clamp(7.6rem, 14vw, 10rem);
+  height: clamp(7.6rem, 14vw, 10rem);
   justify-self: start;
 }
 
+.music-page-grid {
+  display: grid;
+  grid-template-columns: minmax(18rem, .85fr) minmax(0, 1.15fr);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  align-items: stretch;
+}
+
+.music-page-record {
+  width: clamp(12rem, 26vw, 18rem);
+  height: clamp(12rem, 26vw, 18rem);
+}
+
 .lyrics-compact {
-  min-height: 96px;
+  min-height: 48px;
 }
 
 .home-feature-grid {
@@ -535,7 +547,8 @@ body::before {
   .home-asymmetric-grid,
   .home-feature-grid,
   .home-carousel-layout,
-  .home-carousel-bottom {
+  .home-carousel-bottom,
+  .music-page-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 

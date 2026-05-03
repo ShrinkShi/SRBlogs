@@ -22,7 +22,12 @@ async function load() {
 onMounted(load)
 </script>
 <template>
-  <section>
+  <section class="grid gap-5">
+    <GlassCard class="text-center">
+      <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">about</p>
+      <h1 class="mt-2 text-4xl font-black text-white">关于</h1>
+      <p class="mt-3 text-white/56">关于 SRBlogs 与站点作者。</p>
+    </GlassCard>
     <GlassCard v-if="loading"><p class="text-white/60">关于页面加载中...</p></GlassCard>
     <GlassCard v-else-if="error">
       <p class="text-red-200/85">{{ error }}</p>

@@ -28,7 +28,7 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
-    <GlassCard>
+    <GlassCard class="text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">friends</p>
       <h1 class="mt-2 text-4xl font-black text-white">星际友链</h1>
       <p class="mt-3 text-white/56">朋友站点、项目站点和个人链接会从后端 JSON 动态读取。</p>

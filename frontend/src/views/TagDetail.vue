@@ -48,10 +48,10 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
-    <GlassCard>
+    <GlassCard class="text-center">
       <RouterLink to="/tags" class="text-sm text-cyan-100/70 hover:text-cyan-100">返回标签索引</RouterLink>
       <h1 class="mt-3 break-words text-4xl font-black text-white"># {{ tagName }}</h1>
-      <div class="mt-4 flex flex-wrap gap-2">
+      <div class="mt-4 flex flex-wrap justify-center gap-2">
         <button v-for="option in typeOptions" :key="option.value" class="rounded-full border px-3 py-1 text-sm" :class="type === option.value ? 'border-cyan-200/50 bg-cyan-200/[0.16] text-cyan-100' : 'border-white/10 text-white/55 hover:bg-white/10'" @click="chooseType(option.value)">{{ option.label }}</button>
       </div>
     </GlassCard>
