@@ -121,4 +121,5 @@
 - GitHub OAuth 登录入口只能放在前台文章详情评论区；后台设置页只负责配置 Client ID 和 Secret configured 状态，不承担访客登录。
 - 未登录用户提交评论必须返回 `401`，不能回退到匿名评论、邮箱评论或前端伪造作者。
 - 前台只能读取 `/api/auth/github/me` 的 configured 状态和 GitHub 公开用户信息；OAuth Secret、access token、管理员 JWT 不得进入前端构建产物。
+- 留言板只是前台展示名称，后端仍使用既有 comments 存储；不得为了文案变化新增匿名提交旁路。
 - 音乐页和首页共享全局播放状态不应保存任何 Secret；歌词文件上传仍按文本类安全限制处理。

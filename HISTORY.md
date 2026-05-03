@@ -1,5 +1,58 @@
 # HISTORY
 
+## 2026-05-03 - 留言体系收口 + 相册后台编辑 + 列表页细节统一轮
+
+本轮目标：
+
+- 将评论区统一为前台“留言板”体验，文案面向访客。
+- 补全后台照片墙相册组编辑预览，确保封面也作为组内照片展示。
+- 收口首页播放器图标按钮、名片 hover、卡片标签沉底、顶部导航和文章页双显示模式。
+
+当前进度估算：
+
+- P0：100%。
+- P1：约 98%，GitHub OAuth 真实授权仍需配置后浏览器人工验收。
+- P2：约 92%，本轮完成留言板 UI、文章双模式、轻量搜索栏和相册编辑预览补强，仍需人工确认视觉细节。
+
+前台变更：
+
+- `CommentBox` 重写为“留言板”：顶部标题、副标题、留言列表、GitHub 头像/用户名、访客状态、登录按钮、退出登录和发布留言区域统一。
+- GitHub OAuth 未配置时的前台文案改为：“站点暂未开启 GitHub 登录留言，请稍后再试或联系站点管理员。”，不再使用后台配置视角文案。
+- 顶部导航移除“归档”入口；`/archive` 页面仍可直接访问，SEO 和站内深链不受影响。
+- 首页和音乐页播放器按钮去掉边框和背景，只保留图标，hover 变色/放大。
+- 名片文章/杂谈/照片统计项 hover scale 提升到 1.5，仍不增加边框和背景。
+- `PostList` 标签区使用 `mt-auto` 下沉到卡片底部。
+- 文章页新增“矩阵网格 / 中枢链路”显示模式；中枢链路按时间线纵向排列，卡片左右交替，移动端退化为单列。
+- 大搜索栏进一步轻量化，去掉外框和背景填充，仅保留底线、搜索标识、placeholder 和输入能力。
+
+后台变更：
+
+- `StructuredJsonManager` 在编辑相册时会把封面 URL 合并进组内照片列表，确保封面/第一张照片也显示为缩略图。
+- 删除组内照片时先记录被删项，再更新封面，避免删除封面时封面状态不同步。
+
+后端/API 变更：
+
+- 本轮未新增后端接口。
+- 通过 TestClient 确认未登录留言提交继续返回 401，GitHub OAuth 未配置状态为 `configured=false`。
+
+文档变更：
+
+- 更新 `HISTORY.md`、`docs/XINGHUI_PARITY_MATRIX.md`、`docs/UI_STYLE_GUIDE.md`、`docs/MANUAL_QA_CHECKLIST.md`、`docs/API_CONTRACT.md`、`docs/SECURITY_NOTES.md`、`docs/USER_GUIDE.md`、`README.md`。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`，仍有既有 chunk 体积提示。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient `GET /api/health` 返回 200。
+- 通过：FastAPI TestClient `GET /api/auth/github/me` 返回 `{"configured": false, "user": null}`。
+- 通过：未登录 `POST /api/comments/posts/vue-fastapi-blog` 返回 401。
+- 通过：构建产物 Secret 固定字符串搜索未匹配 `change-me`、`please-change-this-secret`、`JWT_SECRET=`、`ADMIN_PASSWORD=`、`GITHUB_OAUTH_CLIENT_SECRET`、`AI_A_API_KEY`、`OSS_ACCESS_KEY_SECRET`。
+
+遗留问题：
+
+- 本轮未启动 dev server 做完整浏览器人工回归；留言板真实 GitHub OAuth 回跳、相册组增加/删除/拖动排序、文章双模式、搜索栏视觉和 390px 移动端仍需用户确认。
+
 ## 2026-05-03 - 前台评论入口修正与列表页统一改版轮
 
 本轮目标：

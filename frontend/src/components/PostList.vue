@@ -32,7 +32,7 @@ const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c
             </div>
             <h2 class="line-clamp-2 text-xl font-black text-white">{{ item.meta.title }}</h2>
             <p class="line-clamp-3 flex-1 text-sm leading-7 text-white/58">{{ item.meta.summary || item.content.slice(0, 120) }}</p>
-            <div class="flex flex-wrap gap-2">
+            <div class="mt-auto flex flex-wrap gap-2 pt-3">
               <span v-for="tag in item.meta.tags" :key="tag" class="rounded-full border border-cyan-200/15 bg-cyan-200/[0.08] px-3 py-1 text-xs text-cyan-100/65"># {{ tag }}</span>
             </div>
           </div>

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -9,7 +9,6 @@ const links = [
   ['首页', '/'],
   ['文章', '/posts'],
   ['搜索', '/search'],
-  ['归档', '/archive'],
   ['杂谈', '/chatters'],
   ['友链', '/friends'],
   ['音乐', '/music'],

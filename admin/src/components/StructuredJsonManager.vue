@@ -78,10 +78,24 @@ async function load() {
 function editItem(index: number) {
   editIndex.value = index
   form.value = clone(items.value[index])
+  normalizeGalleryFields()
   dirty.value = false
   modalOpen.value = true
   error.value = ''
   success.value = ''
+}
+
+function normalizeGalleryFields() {
+  for (const field of props.fields) {
+    if (field.type !== 'gallery') continue
+    const current = galleryItems(field.key).slice(0, 50)
+    const cover = String(form.value.cover || '')
+    if (cover && !current.some((photo) => String(photo.url || '') === cover)) {
+      current.unshift({ url: cover, title: '封面' })
+    }
+    form.value[field.key] = current.slice(0, 50)
+    if (!form.value.cover && current[0]?.url) form.value.cover = current[0].url
+  }
 }
 
 function closeForm() {
@@ -200,9 +214,10 @@ function galleryItems(key: string) {
 
 function removeGalleryItem(key: string, index: number) {
   if (!confirm('确认删除这张照片？保存后前台相册会同步更新。')) return
+  const removed = galleryItems(key)[index]
   const next = galleryItems(key).filter((_, itemIndex) => itemIndex !== index)
   form.value[key] = next
-  if (form.value.cover === (galleryItems(key)[index]?.url || '')) form.value.cover = next[0]?.url || ''
+  if (form.value.cover === (removed?.url || '')) form.value.cover = next[0]?.url || ''
   dirty.value = true
 }
 

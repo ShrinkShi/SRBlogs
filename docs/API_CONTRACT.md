@@ -642,4 +642,6 @@ Query：
 - GitHub 评论登录入口属于前台文章详情评论区；后台只提供 OAuth 配置和评论管理，不提供访客登录入口。
 - `GET /api/auth/github/me` 供前台评论区判断 `{ configured, user }`。未配置时前台应显示“GitHub 登录未配置，请联系站点管理员”。
 - `POST /api/comments/{resource}/{slug}` 对未登录 GitHub 的请求返回 `401`，不得回退到匿名作者或邮箱评论。
+- 前台展示名称统一为“留言板”。接口路径仍保持 `/api/comments/...`，避免破坏既有数据和后台管理契约。
+- OAuth 未配置时，前台文案应面向访客，例如“站点暂未开启 GitHub 登录留言，请稍后再试或联系站点管理员。”，不得要求访客“配置后端”。
 - 本轮未新增接口；照片墙相册组和音乐歌词仍复用既有 `/api/photos`、`/api/music`、`/api/upload` 契约。
