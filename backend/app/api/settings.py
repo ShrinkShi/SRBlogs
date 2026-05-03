@@ -31,6 +31,8 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
     settings = get_settings()
     comments = deepcopy(data.get("comments") or {})
     gitalk = deepcopy(data.get("gitalkConfig") or comments.get("gitalk") or {})
+    github_client_id = settings.github_oauth_client_id or gitalk.get("clientID", "")
+    github_client_secret = settings.github_oauth_client_secret or gitalk.get("clientSecret", "")
     public_comments = {
         "enabled": comments.get("enabled", True),
         "requireEmail": comments.get("requireEmail", False),
@@ -57,7 +59,7 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "cloudMusicIds": deepcopy(data.get("cloudMusicIds") or []),
         "interaction": deepcopy(data.get("interaction") or {"clickSoundEnabled": True, "clickSoundVolume": 0.05, "clickSoundUrl": ""}),
         "githubOAuth": {
-            "configured": bool(settings.github_oauth_client_id and settings.github_oauth_client_secret),
+            "configured": bool(github_client_id and github_client_secret),
         },
         "comments": public_comments,
     }
@@ -91,7 +93,10 @@ def admin_settings(data: dict[str, Any]) -> dict[str, Any]:
         "ossKeyConfigured": _configured(get_settings().oss_access_key_secret),
         "aiKeyConfigured": _configured(get_settings().ai_a_api_key or get_settings().ai_b_api_key),
         "githubOAuthSecretConfigured": _configured((data.get("gitalkConfig") or {}).get("clientSecret", "")),
-        "githubOAuthConfigured": _configured(get_settings().github_oauth_client_id and get_settings().github_oauth_client_secret),
+        "githubOAuthConfigured": _configured(
+            (get_settings().github_oauth_client_id or (data.get("gitalkConfig") or {}).get("clientID", ""))
+            and (get_settings().github_oauth_client_secret or (data.get("gitalkConfig") or {}).get("clientSecret", ""))
+        ),
     }
     return result
 

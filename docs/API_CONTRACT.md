@@ -140,7 +140,7 @@ Base path: `/api`
     "requireEmail": false,
     "maxLength": 1000,
     "showEmail": false,
-    "localEnabled": true,
+    "githubOnly": true,
     "gitalk": {
       "clientID": "",
       "repo": "",
@@ -405,9 +405,8 @@ Sitemap: https://example.com/api/sitemap.xml
 
 响应会读取公开评论配置：
 
-- `comments.showEmail=false` 时，公开响应中的 `email` 固定为空字符串。
-- `comments.showEmail=true` 时，公开响应中的 `email` 只返回脱敏邮箱，例如 `r***r@example.com`。
-- 后端仍在评论 JSON 文件中保存原始邮箱，供后续治理使用；前台不得直接渲染危险 HTML。
+- 旧评论可能包含本地作者名或脱敏邮箱；新评论仅使用 GitHub 登录身份。
+- 前台不得直接渲染危险 HTML。
 
 ### POST `/comments/{resource}/{slug}`
 
@@ -435,11 +434,11 @@ GitHub 登录后提交。新评论只允许 GitHub 登录这一种身份；后�
 
 提交规则：
 
-- `comments.enabled=false` 或 `comments.localEnabled=false` 时返回 `403`，不得继续提交。
+- `comments.enabled=false` 时返回 `403`，不得继续提交。
 - 未登录 GitHub 时返回 `401`。
 - `comments.maxLength` 动态限制评论长度，超过返回 `400`。
 - 提交内容必须用 bleach 清洗。
-- 响应中的 `email` 仍按 `showEmail` 规则隐藏或脱敏。
+- 新评论响应中的 `email` 固定为空字符串，避免恢复匿名/邮箱评论入口。
 
 ### GitHub Auth For Comments
 

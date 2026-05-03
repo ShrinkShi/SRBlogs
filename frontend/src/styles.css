@@ -235,6 +235,29 @@ body::before {
   display: grid;
   grid-template-columns: minmax(0, 1.12fr) minmax(18rem, .88fr);
   gap: clamp(1rem, 2vw, 1.5rem);
+  align-items: stretch;
+}
+
+.music-compact-card > div {
+  height: 100%;
+}
+
+.music-compact-layout {
+  display: grid;
+  min-height: 100%;
+  grid-template-columns: minmax(8.5rem, 11rem) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1rem, 2vw, 1.4rem);
+}
+
+.music-compact-disc {
+  width: clamp(8.5rem, 16vw, 11rem);
+  height: clamp(8.5rem, 16vw, 11rem);
+  justify-self: start;
+}
+
+.lyrics-compact {
+  min-height: 96px;
 }
 
 .home-feature-grid {
@@ -528,6 +551,16 @@ body::before {
 @media (max-width: 640px) {
   .home-status-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .music-compact-layout {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    text-align: center;
+  }
+
+  .music-compact-disc {
+    justify-self: center;
   }
 }
 

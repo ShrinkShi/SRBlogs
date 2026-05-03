@@ -1,5 +1,59 @@
 # HISTORY
 
+## 2026-05-03 - P1/P2 混合收口补修轮
+
+本轮目标：
+
+- 修复 Toast 仍落在页面底部的问题。
+- 确认 GitHub 登录评论入口在前台文章详情，清理后台旧本地评论设置。
+- 增强照片墙相册编辑、首页音乐播放器比例、歌词高度和名片 hover/tooltip。
+
+当前进度估算：
+
+- P0：100%。
+- P1：约 99%，GitHub OAuth 真实授权回跳仍需配置 Client ID/Secret 后人工验收。
+- P2：约 88%，仍需用户浏览器人工确认 Toast、首页比例和相册编辑体验。
+
+前台变更：
+
+- Toast 去掉 `.glass` 类依赖，改为专用 `toast-shell` fixed 顶层样式，避免被全局 `.glass { position: relative }` 覆盖。
+- 前台评论区继续作为 GitHub 登录入口；未登录不显示评论输入框，未配置 OAuth 时显示“GitHub 登录未配置，请联系站点管理员”方向的提示。
+- 前端评论启用逻辑只看 `comments.enabled`，不再受旧 `localEnabled` 影响。
+- 首页音乐播放器改为紧凑横向结构：唱片在左，歌名、歌手、进度条和控制按钮在右；移除“今日播放”字样。
+- 歌词组件高度减半，仍保持单行居中和长句字号自适应。
+- 名片统计 hover 放大增强；GitHub、Email、QQ、微信图标 hover 变色并显示 tooltip，点击行为保持跳转或复制。
+
+后台变更：
+
+- 后台 Toast 同步去掉 `.glass` 依赖，保证顶部 fixed 显示。
+- 评论设置页隐藏旧本地匿名评论、邮箱必填和邮箱显示主流程，只保留 GitHub 登录评论说明、开启评论、最大长度、GitHub Client ID/Repo/Owner 和 Secret configured 状态。
+- 照片墙相册编辑支持预览组内照片、追加照片、确认删除单张照片、拖动排序、上移/下移和设为封面；每组仍最多 50 张。
+
+后端/API 变更：
+
+- GitHub OAuth 配置读取支持后端 `.env` 优先，也支持服务端 `settings.json` 中的 GitHub Client ID / Client Secret；Secret 仍不进入公开 settings 响应。
+- 评论提交后端只检查 `comments.enabled` 和 GitHub 登录 cookie；未登录提交返回 401。
+
+文档变更：
+
+- 更新 `HISTORY.md`、`docs/XINGHUI_PARITY_MATRIX.md`、`docs/API_CONTRACT.md`、`docs/SECURITY_NOTES.md`、`docs/UI_STYLE_GUIDE.md`、`docs/MANUAL_QA_CHECKLIST.md`、`docs/USER_GUIDE.md`，同步 GitHub-only 评论、相册编辑和 Toast 修复。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`，仍有既有 chunk 体积提示。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient `GET /api/health` 返回 200。
+- 通过：`GET /api/settings/public` 返回 200，未匹配 `jwt_secret`、`admin_password`、`accesskeysecret`、`clientsecret`、`api_key`。
+- 通过：`GET /api/auth/github/me` 返回 200；当前未配置 OAuth 时 `configured=false`。
+- 通过：未登录 `POST /api/comments/posts/vue-fastapi-blog` 返回 401。
+- 通过：构建产物固定 Secret 字符串搜索未匹配 `change-me`、`please-change-this-secret`、`JWT_SECRET=`、`ADMIN_PASSWORD=`、`GITHUB_OAUTH_CLIENT_SECRET`、`AI_A_API_KEY`、`OSS_ACCESS_KEY_SECRET`。
+- 通过：`git diff --check` 无空白错误，仅有 Windows 换行提示。
+
+遗留问题：
+
+- 本轮未启动 dev server 做浏览器人工回归；Toast 顶部位置、首页音乐播放器与名片高度、相册拖动排序、GitHub OAuth 真实回跳和 390px 移动端仍需人工确认。
+
 ## 2026-05-03 - P1/P2 混合收口：GitHub 评论、全局音乐与相册组
 
 本轮目标：

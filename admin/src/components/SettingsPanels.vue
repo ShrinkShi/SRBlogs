@@ -171,7 +171,7 @@ function applySettings(data: AnySettings) {
   form.comments.requireEmail = comments.requireEmail === true
   form.comments.maxLength = Number(comments.maxLength || 1000)
   form.comments.showEmail = comments.showEmail === true
-  form.comments.localEnabled = comments.localEnabled !== false
+  form.comments.localEnabled = true
   form.comments.gitalkClientID = gitalk.clientID || ''
   form.comments.gitalkRepo = gitalk.repo || ''
   form.comments.gitalkOwner = gitalk.owner || ''
@@ -233,10 +233,10 @@ function buildPayload() {
     cloudMusicIds: commaToArray(form.cloudMusicIdsText),
     comments: {
       enabled: form.comments.enabled,
-      requireEmail: form.comments.requireEmail,
+      requireEmail: false,
       maxLength: Number(form.comments.maxLength || 1000),
-      showEmail: form.comments.showEmail,
-      localEnabled: form.comments.localEnabled,
+      showEmail: false,
+      localEnabled: true,
       gitalk: {
         clientID: form.comments.gitalkClientID,
         repo: form.comments.gitalkRepo,
@@ -468,18 +468,20 @@ onMounted(load)
           </template>
 
           <template v-else-if="active === 'comments'">
-            <div class="grid gap-3 md:grid-cols-2">
-              <label class="setting-check"><input v-model="form.comments.enabled" type="checkbox" />开启评论</label>
-              <label class="setting-check"><input v-model="form.comments.localEnabled" type="checkbox" />启用本地评论</label>
-              <label class="setting-check"><input v-model="form.comments.requireEmail" type="checkbox" />评论需要邮箱</label>
-              <label class="setting-check"><input v-model="form.comments.showEmail" type="checkbox" />前台显示邮箱</label>
-              <label class="grid gap-2 text-sm text-white/65">评论最大长度<input v-model.number="form.comments.maxLength" type="number" min="1" max="5000" class="admin-input" /></label>
+            <div class="rounded-[24px] border border-cyan-200/15 bg-cyan-300/[0.07] p-4 text-sm leading-6 text-cyan-50/78">
+              前台评论仅支持 GitHub 登录。GitHub OAuth Secret 只保存在后端，不会在后台响应或前台构建产物中回显。
             </div>
             <div class="grid gap-3 md:grid-cols-2">
-              <label class="grid gap-2 text-sm text-white/65">Gitalk Client ID<input v-model="form.comments.gitalkClientID" class="admin-input" /></label>
+              <label class="setting-check"><input v-model="form.comments.enabled" type="checkbox" />开启 GitHub 登录评论</label>
+              <label class="grid gap-2 text-sm text-white/65">评论最大长度<input v-model.number="form.comments.maxLength" type="number" min="1" max="5000" class="admin-input" /></label>
+              <label class="grid gap-2 text-sm text-white/65">GitHub Client ID<input v-model="form.comments.gitalkClientID" class="admin-input" /></label>
               <label class="grid gap-2 text-sm text-white/65">GitHub Repo<input v-model="form.comments.gitalkRepo" class="admin-input" /></label>
               <label class="grid gap-2 text-sm text-white/65">GitHub Owner<input v-model="form.comments.gitalkOwner" class="admin-input" /></label>
               <label class="grid gap-2 text-sm text-white/65">Gitalk Admin，逗号分隔<input v-model="form.comments.gitalkAdminText" class="admin-input" /></label>
+              <div class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-sm text-white/60">
+                GitHub OAuth Secret configured:
+                {{ raw.serverSecrets?.githubOAuthConfigured || raw.serverSecrets?.githubOAuthSecretConfigured ? 'true' : 'false' }}
+              </div>
               <label class="grid gap-2 text-sm text-white/65 md:col-span-2">新的 GitHub OAuth Secret<input v-model="secretInputs.githubOAuthSecret" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保留旧值，不回显明文" /></label>
             </div>
           </template>

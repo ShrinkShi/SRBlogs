@@ -16,7 +16,7 @@ const github = ref<{ configured: boolean; user: null | { login: string; name?: s
 const showDebug = import.meta.env.DEV
 
 const commentOptions = () => settings.value?.comments || {}
-const commentsEnabled = () => commentOptions().enabled !== false && commentOptions().localEnabled !== false
+const commentsEnabled = () => commentOptions().enabled !== false
 const maxLength = () => Number(commentOptions().maxLength || 1000)
 
 async function load() {

@@ -1,6 +1,6 @@
 # SRBlogs
 
-> 当前进度：P0 100%，P1 约 98%，P2 约 86%。本轮完成顶层 Toast、后台固定侧栏与设置层级、Markdown 拖动分栏、字体颜色弹窗、点击音效设置、全局音乐播放、歌词上传、GitHub 登录评论基础链路和照片墙相册组。
+> 当前进度：P0 100%，P1 约 99%，P2 约 88%。本轮补修顶层 Toast、前台 GitHub 评论入口、后台 GitHub-only 评论设置、相册组编辑、紧凑首页音乐播放器、歌词高度和名片 hover/tooltip。
 
 SRBlogs 是一个基于 **Vue 3 + Vite + TypeScript + Tailwind CSS + FastAPI** 的个人博客系统。当前工程是对标 XinghuisamaBlogs 产品方向的 Vue3/FastAPI 重制版，不复制原项目源码、图片、文案或私有素材。
 

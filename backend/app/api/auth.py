@@ -10,6 +10,7 @@ from app.config import get_settings
 from app.models.schemas import LoginRequest, TokenResponse
 from app.services.audit_service import write_audit
 from app.services.auth_service import create_access_token
+from app.services.json_service import JsonStore
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 GITHUB_COOKIE = "srblogs_github_user"
@@ -43,9 +44,22 @@ def login(payload: LoginRequest, request: Request):
     return TokenResponse(access_token=create_access_token(payload.username))
 
 
-def _github_configured() -> bool:
+def _settings_data() -> dict:
+    return JsonStore(get_settings().data_path, "settings.json", {}).read()
+
+
+def _github_oauth_config() -> tuple[str, str]:
     settings = get_settings()
-    return bool(settings.github_oauth_client_id and settings.github_oauth_client_secret)
+    data = _settings_data()
+    gitalk = data.get("gitalkConfig") or (data.get("comments") or {}).get("gitalk") or {}
+    client_id = settings.github_oauth_client_id or gitalk.get("clientID", "")
+    client_secret = settings.github_oauth_client_secret or gitalk.get("clientSecret", "")
+    return str(client_id or ""), str(client_secret or "")
+
+
+def _github_configured() -> bool:
+    client_id, client_secret = _github_oauth_config()
+    return bool(client_id and client_secret)
 
 
 def _frontend_url(request: Request) -> str:
@@ -97,13 +111,14 @@ def github_me(request: Request):
 @router.get("/github/login")
 def github_login(request: Request):
     settings = get_settings()
+    client_id, _client_secret = _github_oauth_config()
     if not _github_configured():
         raise HTTPException(status_code=503, detail="GitHub OAuth is not configured")
     state = uuid4().hex
     callback = f"{settings.public_base_url.rstrip('/')}/api/auth/github/callback"
     url = (
         "https://github.com/login/oauth/authorize"
-        f"?client_id={settings.github_oauth_client_id}"
+        f"?client_id={client_id}"
         f"&redirect_uri={callback}"
         f"&state={state}"
         "&scope=read:user"
@@ -118,6 +133,7 @@ def github_login(request: Request):
 @router.get("/github/callback")
 async def github_callback(request: Request, code: str = "", state: str = ""):
     settings = get_settings()
+    client_id, client_secret = _github_oauth_config()
     expected_state = request.cookies.get(GITHUB_STATE_COOKIE)
     return_to = request.cookies.get(GITHUB_RETURN_COOKIE) or (settings.cors_list[0] if settings.cors_list else "http://127.0.0.1:5173")
     if not _github_configured():
@@ -129,8 +145,8 @@ async def github_callback(request: Request, code: str = "", state: str = ""):
         token_resp = await client.post(
             "https://github.com/login/oauth/access_token",
             json={
-                "client_id": settings.github_oauth_client_id,
-                "client_secret": settings.github_oauth_client_secret,
+                "client_id": client_id,
+                "client_secret": client_secret,
                 "code": code,
                 "redirect_uri": callback,
                 "state": state,

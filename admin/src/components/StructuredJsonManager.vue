@@ -36,6 +36,7 @@ const advancedOpen = ref(false)
 const jsonText = ref('[]')
 const jsonError = ref('')
 const uploadProgress = ref<Record<string, number>>({})
+const dragPhotoIndex = ref<number | null>(null)
 
 const isEditing = computed(() => editIndex.value !== null)
 
@@ -198,9 +199,32 @@ function galleryItems(key: string) {
 }
 
 function removeGalleryItem(key: string, index: number) {
+  if (!confirm('确认删除这张照片？保存后前台相册会同步更新。')) return
   const next = galleryItems(key).filter((_, itemIndex) => itemIndex !== index)
   form.value[key] = next
+  if (form.value.cover === (galleryItems(key)[index]?.url || '')) form.value.cover = next[0]?.url || ''
   dirty.value = true
+}
+
+function setGalleryCover(url: unknown) {
+  form.value.cover = String(url || '')
+  dirty.value = true
+}
+
+function moveGalleryItem(key: string, from: number, to: number) {
+  const list = [...galleryItems(key)]
+  if (from < 0 || to < 0 || from >= list.length || to >= list.length || from === to) return
+  const [item] = list.splice(from, 1)
+  list.splice(to, 0, item)
+  form.value[key] = list
+  if (!form.value.cover && list[0]?.url) form.value.cover = list[0].url
+  dirty.value = true
+}
+
+function onGalleryDrop(key: string, index: number) {
+  if (dragPhotoIndex.value === null) return
+  moveGalleryItem(key, dragPhotoIndex.value, index)
+  dragPhotoIndex.value = null
 }
 
 async function uploadGallery(field: StructuredField, files: FileList | null) {
@@ -327,14 +351,30 @@ onMounted(load)
                 <div class="h-full rounded-full bg-cyan-300" :style="{ width: uploadProgress[field.key] + '%' }"></div>
               </div>
               <div v-if="galleryItems(field.key).length" class="grid gap-2 sm:grid-cols-2">
-                <div v-for="(photo, photoIndex) in galleryItems(field.key)" :key="`${photoIndex}-${photo.url}`" class="rounded-2xl border border-white/10 bg-white/[0.055] p-2">
-                  <img v-if="photo.url" :src="String(photo.url)" alt="" class="h-28 w-full rounded-xl object-cover" />
+                <div
+                  v-for="(photo, photoIndex) in galleryItems(field.key)"
+                  :key="`${photoIndex}-${photo.url}`"
+                  class="rounded-2xl border border-white/10 bg-white/[0.055] p-2"
+                  draggable="true"
+                  @dragstart="dragPhotoIndex = photoIndex"
+                  @dragover.prevent
+                  @drop="onGalleryDrop(field.key, photoIndex)"
+                >
+                  <div class="relative overflow-hidden rounded-xl">
+                    <img v-if="photo.url" :src="String(photo.url)" alt="" class="h-28 w-full object-cover" />
+                    <span v-if="form.cover === photo.url || (!form.cover && photoIndex === 0)" class="absolute left-2 top-2 rounded-full bg-cyan-300 px-2 py-1 text-[10px] font-bold text-slate-950">封面</span>
+                  </div>
                   <input
                     :value="String(photo.url || '')"
                     class="mt-2 w-full rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs text-white outline-none"
                     @input="photo.url = ($event.target as HTMLInputElement).value; dirty = true"
                   />
-                  <button type="button" class="mt-2 rounded-xl border border-red-200/20 px-3 py-1.5 text-xs text-red-100" @click="removeGalleryItem(field.key, photoIndex)">移除照片</button>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <button type="button" class="rounded-xl border border-white/10 px-3 py-1.5 text-xs text-white/62" @click="moveGalleryItem(field.key, photoIndex, photoIndex - 1)">上移</button>
+                    <button type="button" class="rounded-xl border border-white/10 px-3 py-1.5 text-xs text-white/62" @click="moveGalleryItem(field.key, photoIndex, photoIndex + 1)">下移</button>
+                    <button type="button" class="rounded-xl border border-cyan-200/20 px-3 py-1.5 text-xs text-cyan-100" @click="setGalleryCover(photo.url)">设为封面</button>
+                    <button type="button" class="rounded-xl border border-red-200/20 px-3 py-1.5 text-xs text-red-100" @click="removeGalleryItem(field.key, photoIndex)">删除</button>
+                  </div>
                 </div>
               </div>
             </div>

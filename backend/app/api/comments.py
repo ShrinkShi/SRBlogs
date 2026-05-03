@@ -56,7 +56,7 @@ def _comment_options() -> dict:
 
 
 def _comments_enabled(options: dict) -> bool:
-    return options.get("enabled", True) is not False and options.get("localEnabled", True) is not False
+    return options.get("enabled", True) is not False
 
 
 def _max_comment_length(options: dict) -> int:
