@@ -1,4 +1,14 @@
-﻿# Manual QA Checklist
+# Manual QA Checklist
+
+## 2026-05-03 多平台留言与中文化回归
+
+- [ ] `/api/settings/public` 中 `comments.providers.github.configured` 与 `comments.providers.qq.configured` 均为布尔值，且不会返回任何 OAuth Secret。
+- [ ] GitHub 已配置时，前台留言板显示“使用 GitHub 登录后留言”按钮；QQ 未配置时不影响 GitHub 按钮。
+- [ ] GitHub/QQ 未配置提示均为中文访客文案，不出现后端、Secret、Client Secret、OAuth Secret、`.env`、Please try again later 等字样。
+- [ ] 点击 GitHub/QQ 登录入口访问 `/api/auth/github/login` 或 `/api/auth/qq/login`，接口不返回 Not Found。
+- [ ] 未登录直接提交留言返回 401，前台显示“请先登录后再留言。”。
+- [ ] 后台设置页留言相关配置项中文展示，Secret 状态显示“已配置/未配置”，空 Secret 保存不覆盖旧值。
+- [ ] 文章页、杂谈页、搜索页搜索框更紧凑、更不透明，右侧为深色搜索图标按钮，移动端不溢出。
 
 ## 2026-05-03 留言板入口、相册滚动、标题轻量化与音量控件验收
 - [ ] 前台文章详情留言板可见“使用 GitHub 登录后留言”入口，入口出现在前台留言板区域而不是后台页面。
@@ -439,3 +449,24 @@
 - [ ] Save/clear/close controls remain reachable after scrolling.
 - [ ] Batch upload, delete photo, move/sort, drag/drop, and set cover still work.
 - [ ] 390px width can still scroll and operate the album modal.
+
+## 2026-05-03 Multi-provider Message QA
+
+- [ ] Article detail message board shows GitHub and QQ login choices when logged out.
+- [ ] Chatter detail message board shows GitHub and QQ login choices when logged out.
+- [ ] Music page shows a `music/global` message board without breaking playback, lyrics, playlist, or volume.
+- [ ] Photowall album dialog shows a per-album message board without breaking preview, sorting, cover, or upload workflows.
+- [ ] GitHub unavailable text is visitor-friendly and does not mention backend, `.env`, or Secret.
+- [ ] QQ unavailable text is visitor-friendly and does not mention backend, `.env`, or Secret.
+- [ ] Anonymous `POST /api/comments/{resource}/{slug}` returns 401.
+- [ ] Search inputs are about 75% of the previous height and more opaque on desktop and 390px mobile.
+# 2026-05-03 多平台留言与中文化回归补充
+
+- [ ] 前台文章详情留言板不出现英文提示。
+- [ ] GitHub 已配置时显示“使用 GitHub 登录后留言”按钮。
+- [ ] QQ 未配置时只显示 QQ 未开启提示，不影响 GitHub 按钮。
+- [ ] GitHub / QQ 登录按钮点击后访问 `/api/auth/{provider}/login?returnTo=当前路径`，不出现 Not Found。
+- [ ] 未登录直接提交留言显示中文错误提示。
+- [ ] 后台设置中心留言设置、主题与背景、图床、AI、部署提示均为中文展示。
+- [ ] 后台 Secret 状态显示“已配置 / 未配置”，不显示 true/false。
+- [ ] 搜索框更不透明，且高度比上一轮更低；390px 下仍可输入和点击搜索图标。

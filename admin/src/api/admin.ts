@@ -28,7 +28,7 @@ export const adminApi = {
     const { data } = await http.delete(`/${section}/${slug}`)
     return data
   },
-  comments: async (resource: 'posts' | 'moments' | 'chatters', slug: string) => {
+  comments: async (resource: 'posts' | 'moments' | 'chatters' | 'music' | 'photos', slug: string) => {
     const { data } = await http.get<CommentItem[]>(`/comments/${resource}/${slug}`)
     return data
   },
@@ -36,7 +36,7 @@ export const adminApi = {
     const { data } = await http.get<CommentIndexItem[]>('/admin/comments/index')
     return data
   },
-  deleteComment: async (resource: 'posts' | 'moments' | 'chatters', slug: string, commentId: string) => {
+  deleteComment: async (resource: 'posts' | 'moments' | 'chatters' | 'music' | 'photos', slug: string, commentId: string) => {
     const { data } = await http.delete(`/comments/${resource}/${slug}/${commentId}`)
     return data
   },

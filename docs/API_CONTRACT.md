@@ -1,49 +1,73 @@
 # API Contract
 
-Base path: `/api`
+## 2026-05-03 多平台留言公开状态修订
 
-统一错误响应：
+`GET /api/settings/public` 的 `comments` 字段优先使用多平台结构：
 
 ```json
-{ "code": "ERROR_CODE", "message": "用户可读错误", "detail": {} }
+{
+  "comments": {
+    "enabled": true,
+    "provider": "multi",
+    "providers": {
+      "github": { "enabled": true, "configured": true },
+      "qq": { "enabled": true, "configured": false }
+    },
+    "githubLoginEnabled": true,
+    "githubLoginConfigured": true,
+    "qqLoginEnabled": true,
+    "qqLoginConfigured": false,
+    "maxLength": 1000
+  }
+}
 ```
 
-状态码约定：
+- `providers.github` 与 `providers.qq` 独立判断，QQ 未配置不得影响 GitHub。
+- `configured` 只能是布尔值，不得返回 GitHub OAuth Secret、QQ App Secret、access token、`.env` 路径或服务端私有配置。
+- 旧字段 `githubLoginConfigured`、`qqLoginConfigured` 暂时保留，用于兼容旧前端。
 
-- `400`：参数、格式、slug、JSON/Markdown 校验失败。
-- `401`：未登录或 token 缺失/失效。
-- `403`：已登录但无权限。
-- `404`：资源不存在。
-- `409`：slug 冲突、版本冲突、重复提交。
-- `413`：上传文件过大。
-- `415`：上传类型或 MIME 不允许。
-- `500`：服务端未预期错误。
+访客登录接口：
 
-敏感配置不得进入前端构建产物。JWT Secret、管理员密码、AI Key、OSS Key、GitHub OAuth Secret 只能保存在后端 `.env` 或服务端配置中。
+- `GET /api/auth/github/login?returnTo=/posts/{slug}`：启动 GitHub OAuth。后端生成 CSRF `state`，callback URL 使用当前后端请求生成，避免回调落到前台导致 404。
+- `GET /api/auth/github/callback`：校验 `state`，服务端换取 token，写入 HttpOnly 访客登录 cookie 后跳回 `returnTo`。
+- `GET /api/auth/qq/login?returnTo=/posts/{slug}`：启动 QQ OAuth，行为同上。
+- `GET /api/auth/qq/callback`：校验 `state`，服务端换取 token 和公开资料，写入 HttpOnly 访客登录 cookie 后跳回 `returnTo`。
+- `GET /api/auth/visitor/me`：返回 `{ configured: { github, qq }, user }`，不返回 access token。
+- `POST /api/auth/visitor/logout`：清除访客登录 cookie。
+- `POST /api/comments/{resource}/{slug}`：需要访客登录态；未登录返回 `401` 和中文错误提示。
 
+前台未配置提示必须面向访客，例如“站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。”，不得出现 Secret、后端、`.env` 等配置细节。
+
+Base path: `/api`
+
+缁熶竴閿欒鍝嶅簲锛?
+```json
+{ "code": "ERROR_CODE", "message": "鐢ㄦ埛鍙閿欒", "detail": {} }
+```
+
+鐘舵€佺爜绾﹀畾锛?
+- `400`锛氬弬鏁般€佹牸寮忋€乻lug銆丣SON/Markdown 鏍￠獙澶辫触銆?- `401`锛氭湭鐧诲綍鎴?token 缂哄け/澶辨晥銆?- `403`锛氬凡鐧诲綍浣嗘棤鏉冮檺銆?- `404`锛氳祫婧愪笉瀛樺湪銆?- `409`锛歴lug 鍐茬獊銆佺増鏈啿绐併€侀噸澶嶆彁浜ゃ€?- `413`锛氫笂浼犳枃浠惰繃澶с€?- `415`锛氫笂浼犵被鍨嬫垨 MIME 涓嶅厑璁搞€?- `500`锛氭湇鍔＄鏈鏈熼敊璇€?
+鏁忔劅閰嶇疆涓嶅緱杩涘叆鍓嶇鏋勫缓浜х墿銆侸WT Secret銆佺鐞嗗憳瀵嗙爜銆丄I Key銆丱SS Key銆丟itHub OAuth Secret 鍙兘淇濆瓨鍦ㄥ悗绔?`.env` 鎴栨湇鍔＄閰嶇疆涓€?
 ## Content APIs
 
-适用于 `/api/posts`、`/api/moments`、`/api/chatters`。
-
+閫傜敤浜?`/api/posts`銆乣/api/moments`銆乣/api/chatters`銆?
 ### GET `/{section}`
 
-公开读取已发布内容，默认不返回 `draft=true`。后台携带管理员 JWT 可传 `include_drafts=true` 查看草稿；未登录传 `include_drafts=true` 返回 `401`。
-
-响应：
-
+鍏紑璇诲彇宸插彂甯冨唴瀹癸紝榛樿涓嶈繑鍥?`draft=true`銆傚悗鍙版惡甯︾鐞嗗憳 JWT 鍙紶 `include_drafts=true` 鏌ョ湅鑽夌锛涙湭鐧诲綍浼?`include_drafts=true` 杩斿洖 `401`銆?
+鍝嶅簲锛?
 ```json
 [
   {
     "slug": "welcome",
     "meta": {
-      "title": "标题",
+      "title": "鏍囬",
       "date": "2026-05-02 12:00",
       "tags": ["Vue3"],
       "draft": false,
       "cover": "",
       "summary": ""
     },
-    "content": "Markdown 正文",
+    "content": "Markdown 姝ｆ枃",
     "updatedAt": "2026-05-02 12:30"
   }
 ]
@@ -51,36 +75,32 @@ Base path: `/api`
 
 ### GET `/{section}/{slug}`
 
-公开读取单条已发布内容。`slug` 必须通过 `validate_slug`，禁止路径穿越。`draft=true` 内容在公开详情中返回 `404`；后台携带管理员 JWT 可传 `include_drafts=true` 读取草稿详情，未登录传该参数返回 `401`。
-
+鍏紑璇诲彇鍗曟潯宸插彂甯冨唴瀹广€俙slug` 蹇呴』閫氳繃 `validate_slug`锛岀姝㈣矾寰勭┛瓒娿€俙draft=true` 鍐呭鍦ㄥ叕寮€璇︽儏涓繑鍥?`404`锛涘悗鍙版惡甯︾鐞嗗憳 JWT 鍙紶 `include_drafts=true` 璇诲彇鑽夌璇︽儏锛屾湭鐧诲綍浼犺鍙傛暟杩斿洖 `401`銆?
 ### POST `/{section}`
 
-后台 JWT。请求体：
-
+鍚庡彴 JWT銆傝姹備綋锛?
 ```json
 {
   "slug": "new-post",
   "meta": {
-    "title": "标题",
+    "title": "鏍囬",
     "date": "",
     "tags": [],
     "draft": false,
     "cover": "",
     "summary": ""
   },
-  "content": "Markdown 正文"
+  "content": "Markdown 姝ｆ枃"
 }
 ```
 
-响应为保存后的 `ContentItem`。重复 slug 返回 `409`，非法 slug 返回 `400`。
-
+鍝嶅簲涓轰繚瀛樺悗鐨?`ContentItem`銆傞噸澶?slug 杩斿洖 `409`锛岄潪娉?slug 杩斿洖 `400`銆?
 ### PUT `/{section}/{slug}`
 
-后台 JWT。请求体同 POST。允许通过 body 中的新 `slug` 重命名，旧文件删除前必须备份。更新不存在内容返回 `404`；重命名到已有 slug 返回 `409`。`draft=true -> false` 记为发布，`draft=false -> true` 记为撤回发布，并写入审计日志。
-
+鍚庡彴 JWT銆傝姹備綋鍚?POST銆傚厑璁搁€氳繃 body 涓殑鏂?`slug` 閲嶅懡鍚嶏紝鏃ф枃浠跺垹闄ゅ墠蹇呴』澶囦唤銆傛洿鏂颁笉瀛樺湪鍐呭杩斿洖 `404`锛涢噸鍛藉悕鍒板凡鏈?slug 杩斿洖 `409`銆俙draft=true -> false` 璁颁负鍙戝竷锛宍draft=false -> true` 璁颁负鎾ゅ洖鍙戝竷锛屽苟鍐欏叆瀹¤鏃ュ織銆?
 ### DELETE `/{section}/{slug}`
 
-后台 JWT。删除前必须备份并写审计日志；删除不存在内容返回 `404`。响应：
+鍚庡彴 JWT銆傚垹闄ゅ墠蹇呴』澶囦唤骞跺啓瀹¤鏃ュ織锛涘垹闄や笉瀛樺湪鍐呭杩斿洖 `404`銆傚搷搴旓細
 
 ```json
 { "ok": true }
@@ -90,15 +110,14 @@ Base path: `/api`
 
 ### GET `/settings/public`
 
-前台公开读取。只返回公开站点配置和公开评论显示选项：
-
+鍓嶅彴鍏紑璇诲彇銆傚彧杩斿洖鍏紑绔欑偣閰嶇疆鍜屽叕寮€璇勮鏄剧ず閫夐」锛?
 ```json
 {
   "siteTitle": "SRBlogs",
-  "subtitle": "副标题",
+  "subtitle": "鍓爣棰?,
   "author": "Author",
   "avatar": "https://example.com/avatar.png",
-  "description": "站点简介",
+  "description": "绔欑偣绠€浠?,
   "socialLinks": {
     "github": "https://github.com/example"
   },
@@ -151,11 +170,10 @@ Base path: `/api`
 }
 ```
 
-`themeConfig` 是公开视觉配置，只允许包含颜色、字体和字号档位等非敏感 token。不得返回 GitHub OAuth Secret、AI Key、OSS Key、JWT Secret、管理员密码，也不得返回后台私有字段。
-
+`themeConfig` 鏄叕寮€瑙嗚閰嶇疆锛屽彧鍏佽鍖呭惈棰滆壊銆佸瓧浣撳拰瀛楀彿妗ｄ綅绛夐潪鏁忔劅 token銆備笉寰楄繑鍥?GitHub OAuth Secret銆丄I Key銆丱SS Key銆丣WT Secret銆佺鐞嗗憳瀵嗙爜锛屼篃涓嶅緱杩斿洖鍚庡彴绉佹湁瀛楁銆?
 ### GET `/admin/settings`
 
-后台 JWT。返回可管理配置和 Secret 配置状态。Secret 不返回明文，只返回布尔值：
+鍚庡彴 JWT銆傝繑鍥炲彲绠＄悊閰嶇疆鍜?Secret 閰嶇疆鐘舵€併€係ecret 涓嶈繑鍥炴槑鏂囷紝鍙繑鍥炲竷灏斿€硷細
 
 ```json
 {
@@ -195,89 +213,61 @@ Base path: `/api`
 
 ### PUT `/admin/settings`
 
-后台 JWT。请求体：
-
+鍚庡彴 JWT銆傝姹備綋锛?
 ```json
 { "data": { "title": "SRBlogs", "theme": "nebula" } }
 ```
 
-保存到 `backend/data/settings.json`，写入必须走 `safe_write_json`。`PUT /api/admin/settings` 中 Secret 字段为空字符串、`null` 或未传时，后端必须保留旧值；只有传入明确新值时才覆盖。保存后响应仍不得回显 Secret 明文。
-
+淇濆瓨鍒?`backend/data/settings.json`锛屽啓鍏ュ繀椤昏蛋 `safe_write_json`銆俙PUT /api/admin/settings` 涓?Secret 瀛楁涓虹┖瀛楃涓层€乣null` 鎴栨湭浼犳椂锛屽悗绔繀椤讳繚鐣欐棫鍊硷紱鍙湁浼犲叆鏄庣‘鏂板€兼椂鎵嶈鐩栥€備繚瀛樺悗鍝嶅簲浠嶄笉寰楀洖鏄?Secret 鏄庢枃銆?
 ## Structured JSON APIs
 
-适用于 `/friends`、`/projects`、`/music`、`/photos`。
-
+閫傜敤浜?`/friends`銆乣/projects`銆乣/music`銆乣/photos`銆?
 ### GET `/{resource}`
 
-公开读取结构化内容列表。`/photos` 实际存储在 `backend/data/photos/photos.json`。
-
-响应示例：
-
+鍏紑璇诲彇缁撴瀯鍖栧唴瀹瑰垪琛ㄣ€俙/photos` 瀹為檯瀛樺偍鍦?`backend/data/photos/photos.json`銆?
+鍝嶅簲绀轰緥锛?
 ```json
 [
   {
-    "name": "站点名称",
+    "name": "绔欑偣鍚嶇О",
     "url": "https://example.com",
-    "description": "说明",
+    "description": "璇存槑",
     "tags": ["Blog"]
   }
 ]
 ```
 
-各资源主字段：
-- `/friends`：`name`、`url`、`description`、`avatar`、`tags`
-- `/projects`：`name`、`description`、`tags`、`url`、`repo`、`cover`、`status`
-- `/music`：`title`、`artist`、`cover`、`url`、`lyricUrl`、`lyrics`、`id`、`sort`
-- `/photos`：兼容旧单图 `{ url, title, description, date, tags }`；新相册组推荐 `{ title, description, cover, date, tags, photos: [{ url, title, description, date, tags }] }`，每组最多 50 张。
-
+鍚勮祫婧愪富瀛楁锛?- `/friends`锛歚name`銆乣url`銆乣description`銆乣avatar`銆乣tags`
+- `/projects`锛歚name`銆乣description`銆乣tags`銆乣url`銆乣repo`銆乣cover`銆乣status`
+- `/music`锛歚title`銆乣artist`銆乣cover`銆乣url`銆乣lyricUrl`銆乣lyrics`銆乣id`銆乣sort`
+- `/photos`锛氬吋瀹规棫鍗曞浘 `{ url, title, description, date, tags }`锛涙柊鐩稿唽缁勬帹鑽?`{ title, description, cover, date, tags, photos: [{ url, title, description, date, tags }] }`锛屾瘡缁勬渶澶?50 寮犮€?
 ### PUT `/{resource}`
 
-后台 JWT。请求体：
-
+鍚庡彴 JWT銆傝姹備綋锛?
 ```json
 { "data": [] }
 ```
 
-说明：
-- 后台主流程应使用表单化管理，保留高级 JSON 编辑作为兜底。
-- 高级 JSON 必须是数组；前端应在发送前校验 JSON 格式。
-- 写入必须通过 `JsonStore.write` -> `safe_write_json`，覆盖前生成 `.backups` 备份。
-- 图片上传、Secret 修改、评论删除不进入本地 `pendingOperations`。
-
+璇存槑锛?- 鍚庡彴涓绘祦绋嬪簲浣跨敤琛ㄥ崟鍖栫鐞嗭紝淇濈暀楂樼骇 JSON 缂栬緫浣滀负鍏滃簳銆?- 楂樼骇 JSON 蹇呴』鏄暟缁勶紱鍓嶇搴斿湪鍙戦€佸墠鏍￠獙 JSON 鏍煎紡銆?- 鍐欏叆蹇呴』閫氳繃 `JsonStore.write` -> `safe_write_json`锛岃鐩栧墠鐢熸垚 `.backups` 澶囦唤銆?- 鍥剧墖涓婁紶銆丼ecret 淇敼銆佽瘎璁哄垹闄や笉杩涘叆鏈湴 `pendingOperations`銆?
 ## Discovery APIs
 
 ### GET `/search`
 
-公开轻量搜索。数据来自后端 Markdown/JSON 读取，不使用前端直读文件，不接入全文索引数据库。
-
-Query 参数：
-
-- `q`：关键词，默认空字符串。
-- `type`：`all`、`posts`、`moments`、`chatters`、`projects`、`photos`、`friends`、`music`，默认 `all`。
-- `tag`：标签筛选，大小写不敏感，当前支持包含匹配，例如 `Vue` 可匹配 `Vue3`。
-- `limit`：默认 20，范围 1-100。
-- `offset`：默认 0。
-
-搜索范围：
-
-- `posts`、`moments`、`chatters`：`title`、`summary`、`tags`、`content`。
-- `projects`：`name`、`description`、`tags`。
-- `photos`：`title`、`description`。
-- `friends`：`name`、`description`、`url`。
-- `music`：`title`、`artist`。
-
-`draft=true` 的内容不得进入公开搜索。`q` 和 `tag` 都为空时，接口返回最近公开内容；没有匹配结果时返回空数组，不返回 500。
-
-响应：
-
+鍏紑杞婚噺鎼滅储銆傛暟鎹潵鑷悗绔?Markdown/JSON 璇诲彇锛屼笉浣跨敤鍓嶇鐩磋鏂囦欢锛屼笉鎺ュ叆鍏ㄦ枃绱㈠紩鏁版嵁搴撱€?
+Query 鍙傛暟锛?
+- `q`锛氬叧閿瘝锛岄粯璁ょ┖瀛楃涓层€?- `type`锛歚all`銆乣posts`銆乣moments`銆乣chatters`銆乣projects`銆乣photos`銆乣friends`銆乣music`锛岄粯璁?`all`銆?- `tag`锛氭爣绛剧瓫閫夛紝澶у皬鍐欎笉鏁忔劅锛屽綋鍓嶆敮鎸佸寘鍚尮閰嶏紝渚嬪 `Vue` 鍙尮閰?`Vue3`銆?- `limit`锛氶粯璁?20锛岃寖鍥?1-100銆?- `offset`锛氶粯璁?0銆?
+鎼滅储鑼冨洿锛?
+- `posts`銆乣moments`銆乣chatters`锛歚title`銆乣summary`銆乣tags`銆乣content`銆?- `projects`锛歚name`銆乣description`銆乣tags`銆?- `photos`锛歚title`銆乣description`銆?- `friends`锛歚name`銆乣description`銆乣url`銆?- `music`锛歚title`銆乣artist`銆?
+`draft=true` 鐨勫唴瀹逛笉寰楄繘鍏ュ叕寮€鎼滅储銆俙q` 鍜?`tag` 閮戒负绌烘椂锛屾帴鍙ｈ繑鍥炴渶杩戝叕寮€鍐呭锛涙病鏈夊尮閰嶇粨鏋滄椂杩斿洖绌烘暟缁勶紝涓嶈繑鍥?500銆?
+鍝嶅簲锛?
 ```json
 {
   "items": [
     {
       "type": "posts",
-      "title": "文章标题",
+      "title": "鏂囩珷鏍囬",
       "slug": "post-slug",
-      "summary": "摘要",
+      "summary": "鎽樿",
       "url": "/posts/post-slug",
       "tags": ["Vue", "FastAPI"],
       "date": "2026-05-02",
@@ -292,10 +282,8 @@ Query 参数：
 
 ### GET `/tags`
 
-公开标签统计。合并 `posts`、`moments`、`chatters`、`projects` 的 `tags`，草稿不进入统计。
-
-响应：
-
+鍏紑鏍囩缁熻銆傚悎骞?`posts`銆乣moments`銆乣chatters`銆乣projects` 鐨?`tags`锛岃崏绋夸笉杩涘叆缁熻銆?
+鍝嶅簲锛?
 ```json
 [
   {
@@ -309,10 +297,8 @@ Query 参数：
 
 ### GET `/archive`
 
-公开归档。按年月聚合 `posts`、`moments`、`chatters`，草稿不进入归档。时间解析失败的数据放入 `unknown` 分组，不应导致 500。
-
-响应：
-
+鍏紑褰掓。銆傛寜骞存湀鑱氬悎 `posts`銆乣moments`銆乣chatters`锛岃崏绋夸笉杩涘叆褰掓。銆傛椂闂磋В鏋愬け璐ョ殑鏁版嵁鏀惧叆 `unknown` 鍒嗙粍锛屼笉搴斿鑷?500銆?
+鍝嶅簲锛?
 ```json
 {
   "years": [
@@ -324,7 +310,7 @@ Query 参数：
           "items": [
             {
               "type": "posts",
-              "title": "标题",
+              "title": "鏍囬",
               "slug": "slug",
               "url": "/posts/slug",
               "date": "2026-05-02",
@@ -342,24 +328,19 @@ Query 参数：
 
 ### GET `/api/rss.xml`
 
-公开 RSS 2.0 Feed，不需要 JWT。至少包含已发布 posts，可包含部分 chatters；`draft=true` 内容不得进入 RSS。
+鍏紑 RSS 2.0 Feed锛屼笉闇€瑕?JWT銆傝嚦灏戝寘鍚凡鍙戝竷 posts锛屽彲鍖呭惈閮ㄥ垎 chatters锛沗draft=true` 鍐呭涓嶅緱杩涘叆 RSS銆?
+鍝嶅簲绫诲瀷锛歚application/rss+xml; charset=utf-8`
 
-响应类型：`application/rss+xml; charset=utf-8`
-
-每个 item 至少包含 `title`、`link`、`guid`、`pubDate`、`description`。`description` 必须做 XML/HTML 转义。站点链接基于 `PUBLIC_BASE_URL`；开发默认兜底为 `http://127.0.0.1:5173`。
-
+姣忎釜 item 鑷冲皯鍖呭惈 `title`銆乣link`銆乣guid`銆乣pubDate`銆乣description`銆俙description` 蹇呴』鍋?XML/HTML 杞箟銆傜珯鐐归摼鎺ュ熀浜?`PUBLIC_BASE_URL`锛涘紑鍙戦粯璁ゅ厹搴曚负 `http://127.0.0.1:5173`銆?
 ### GET `/api/sitemap.xml`
 
-公开 XML Sitemap，不需要 JWT。包含公开前台固定路由、已发布 posts 详情页、chatters 详情页和标签详情页；`draft=true` 内容不得进入 sitemap。
+鍏紑 XML Sitemap锛屼笉闇€瑕?JWT銆傚寘鍚叕寮€鍓嶅彴鍥哄畾璺敱銆佸凡鍙戝竷 posts 璇︽儏椤点€乧hatters 璇︽儏椤靛拰鏍囩璇︽儏椤碉紱`draft=true` 鍐呭涓嶅緱杩涘叆 sitemap銆?
+鍝嶅簲绫诲瀷锛歚application/xml; charset=utf-8`
 
-响应类型：`application/xml; charset=utf-8`
-
-每个 url 至少包含 `loc`；有可解析日期时提供 `lastmod`。
-
+姣忎釜 url 鑷冲皯鍖呭惈 `loc`锛涙湁鍙В鏋愭棩鏈熸椂鎻愪緵 `lastmod`銆?
 ### GET `/robots.txt`
 
-公开 robots 文件，不需要 JWT。必须禁止爬取后台路径，并指向 sitemap。
-
+鍏紑 robots 鏂囦欢锛屼笉闇€瑕?JWT銆傚繀椤荤姝㈢埇鍙栧悗鍙拌矾寰勶紝骞舵寚鍚?sitemap銆?
 ```text
 User-agent: *
 Allow: /
@@ -369,30 +350,20 @@ Sitemap: https://example.com/api/sitemap.xml
 
 ## Upload API
 
-2026-05-03 更新：`POST /api/upload` 继续要求管理员 JWT，但本地资源上传范围从图片扩展为图片、音频、视频和歌词文本。后台表单可将上传返回的 URL 回填到头像、背景、照片/相册、封面、音乐 URL、歌词 URL 或后续视频字段。接口仍必须同时校验扩展名、MIME 和大小；非法类型返回 `415`，超大文件返回 `413`。
-
-当前默认允许：
-
-- 图片：`.jpg`、`.jpeg`、`.png`、`.gif`、`.webp`、`.svg`
-- 音频：`.mp3`、`.wav`、`.ogg`、`.m4a`
-- 视频：`.mp4`、`.webm`、`.mov`
-- 歌词：`.lrc`、`.txt`
-- MIME：`image/jpeg`、`image/png`、`image/gif`、`image/webp`、`image/svg+xml`、`audio/mpeg`、`audio/wav`、`audio/ogg`、`audio/mp4`、`video/mp4`、`video/webm`、`video/quicktime`
-- 大小上限按类型分档：图片默认 10 MB，音频默认 100 MB，视频默认 200 MB，歌词默认 1 MB；不允许无限制上传。
-- 错误信息需明确指出图片、音频、视频或歌词超过对应限制，方便后台 UI 显示可读错误。
-
+2026-05-03 鏇存柊锛歚POST /api/upload` 缁х画瑕佹眰绠＄悊鍛?JWT锛屼絾鏈湴璧勬簮涓婁紶鑼冨洿浠庡浘鐗囨墿灞曚负鍥剧墖銆侀煶棰戙€佽棰戝拰姝岃瘝鏂囨湰銆傚悗鍙拌〃鍗曞彲灏嗕笂浼犺繑鍥炵殑 URL 鍥炲～鍒板ご鍍忋€佽儗鏅€佺収鐗?鐩稿唽銆佸皝闈€侀煶涔?URL銆佹瓕璇?URL 鎴栧悗缁棰戝瓧娈点€傛帴鍙ｄ粛蹇呴』鍚屾椂鏍￠獙鎵╁睍鍚嶃€丮IME 鍜屽ぇ灏忥紱闈炴硶绫诲瀷杩斿洖 `415`锛岃秴澶ф枃浠惰繑鍥?`413`銆?
+褰撳墠榛樿鍏佽锛?
+- 鍥剧墖锛歚.jpg`銆乣.jpeg`銆乣.png`銆乣.gif`銆乣.webp`銆乣.svg`
+- 闊抽锛歚.mp3`銆乣.wav`銆乣.ogg`銆乣.m4a`
+- 瑙嗛锛歚.mp4`銆乣.webm`銆乣.mov`
+- 姝岃瘝锛歚.lrc`銆乣.txt`
+- MIME锛歚image/jpeg`銆乣image/png`銆乣image/gif`銆乣image/webp`銆乣image/svg+xml`銆乣audio/mpeg`銆乣audio/wav`銆乣audio/ogg`銆乣audio/mp4`銆乣video/mp4`銆乣video/webm`銆乣video/quicktime`
+- 澶у皬涓婇檺鎸夌被鍨嬪垎妗ｏ細鍥剧墖榛樿 10 MB锛岄煶棰戦粯璁?100 MB锛岃棰戦粯璁?200 MB锛屾瓕璇嶉粯璁?1 MB锛涗笉鍏佽鏃犻檺鍒朵笂浼犮€?- 閿欒淇℃伅闇€鏄庣‘鎸囧嚭鍥剧墖銆侀煶棰戙€佽棰戞垨姝岃瘝瓒呰繃瀵瑰簲闄愬埗锛屾柟渚垮悗鍙?UI 鏄剧ず鍙閿欒銆?
 ### POST `/upload`
 
-后台 JWT。`multipart/form-data` 字段：`file`。
-
-限制：
-
-- 扩展名：图片、音频、视频和歌词文件白名单，禁止可执行文件。
-- MIME：图片/音频/视频必须匹配配置白名单；歌词仅允许 `.lrc`/`.txt` 的文本类型。
-- 大小：图片 10 MB、音频 100 MB、视频 200 MB、歌词 1 MB。
-
-响应：
-
+鍚庡彴 JWT銆俙multipart/form-data` 瀛楁锛歚file`銆?
+闄愬埗锛?
+- 鎵╁睍鍚嶏細鍥剧墖銆侀煶棰戙€佽棰戝拰姝岃瘝鏂囦欢鐧藉悕鍗曪紝绂佹鍙墽琛屾枃浠躲€?- MIME锛氬浘鐗?闊抽/瑙嗛蹇呴』鍖归厤閰嶇疆鐧藉悕鍗曪紱姝岃瘝浠呭厑璁?`.lrc`/`.txt` 鐨勬枃鏈被鍨嬨€?- 澶у皬锛氬浘鐗?10 MB銆侀煶棰?100 MB銆佽棰?200 MB銆佹瓕璇?1 MB銆?
+鍝嶅簲锛?
 ```json
 { "filename": "uuid.png", "url": "http://127.0.0.1:8000/uploads/uuid.png", "size": 1234 }
 ```
@@ -401,25 +372,19 @@ Sitemap: https://example.com/api/sitemap.xml
 
 ### GET `/comments/{resource}/{slug}`
 
-公开读取。`resource` 仅允许 `posts`、`moments`、`chatters`，`slug` 必须通过 `validate_slug`。
-
-响应会读取公开评论配置：
-
-- 旧评论可能包含本地作者名或脱敏邮箱；新评论仅使用 GitHub 登录身份。
-- 前台不得直接渲染危险 HTML。
-
+鍏紑璇诲彇銆俙resource` 浠呭厑璁?`posts`銆乣moments`銆乣chatters`锛宍slug` 蹇呴』閫氳繃 `validate_slug`銆?
+鍝嶅簲浼氳鍙栧叕寮€璇勮閰嶇疆锛?
+- 鏃ц瘎璁哄彲鑳藉寘鍚湰鍦颁綔鑰呭悕鎴栬劚鏁忛偖绠憋紱鏂拌瘎璁轰粎浣跨敤 GitHub 鐧诲綍韬唤銆?- 鍓嶅彴涓嶅緱鐩存帴娓叉煋鍗遍櫓 HTML銆?
 ### POST `/comments/{resource}/{slug}`
 
-GitHub 登录后提交。新评论只允许 GitHub 登录这一种身份；后端通过 `srblogs_github_user` HttpOnly cookie 读取 GitHub 用户，不接受前端伪造作者身份。
-
-请求体：
+GitHub 鐧诲綍鍚庢彁浜ゃ€傛柊璇勮鍙厑璁?GitHub 鐧诲綍杩欎竴绉嶈韩浠斤紱鍚庣閫氳繃 `srblogs_github_user` HttpOnly cookie 璇诲彇 GitHub 鐢ㄦ埛锛屼笉鎺ュ彈鍓嶇浼€犱綔鑰呰韩浠姐€?
+璇锋眰浣擄細
 
 ```json
 { "content": "comment" }
 ```
 
-响应：
-
+鍝嶅簲锛?
 ```json
 {
   "id": "uuid",
@@ -432,46 +397,27 @@ GitHub 登录后提交。新评论只允许 GitHub 登录这一种身份；后�
 }
 ```
 
-提交规则：
-
-- `comments.enabled=false` 时返回 `403`，不得继续提交。
-- 未登录 GitHub 时返回 `401`。
-- `comments.maxLength` 动态限制评论长度，超过返回 `400`。
-- 提交内容必须用 bleach 清洗。
-- 新评论响应中的 `email` 固定为空字符串，避免恢复匿名/邮箱评论入口。
-
+鎻愪氦瑙勫垯锛?
+- `comments.enabled=false` 鏃惰繑鍥?`403`锛屼笉寰楃户缁彁浜ゃ€?- 鏈櫥褰?GitHub 鏃惰繑鍥?`401`銆?- `comments.maxLength` 鍔ㄦ€侀檺鍒惰瘎璁洪暱搴︼紝瓒呰繃杩斿洖 `400`銆?- 鎻愪氦鍐呭蹇呴』鐢?bleach 娓呮礂銆?- 鏂拌瘎璁哄搷搴斾腑鐨?`email` 鍥哄畾涓虹┖瀛楃涓诧紝閬垮厤鎭㈠鍖垮悕/閭璇勮鍏ュ彛銆?
 ### GitHub Auth For Comments
 
-- `GET /auth/github/me`：返回 `{ configured, user }`。不需要 JWT，不返回 OAuth Secret。
-- `GET /auth/github/login?returnTo=...`：启动 GitHub OAuth code flow，后端生成并校验 CSRF `state`；兼容旧参数 `return_to`。
-- `GET /auth/github/callback`：后端使用 GitHub OAuth Secret 换取 access token，读取 GitHub 公开用户信息，写入 HttpOnly 登录 cookie 后跳回 `returnTo` 对应页面。
-- `POST /auth/github/logout`：清除评论登录 cookie。
-
-GitHub OAuth Client Secret 只能保存在后端 `.env` 或服务端配置。未配置时，前台留言板必须显示访客友好提示，不能回退到匿名评论。
-
+- `GET /auth/github/me`锛氳繑鍥?`{ configured, user }`銆備笉闇€瑕?JWT锛屼笉杩斿洖 OAuth Secret銆?- `GET /auth/github/login?returnTo=...`锛氬惎鍔?GitHub OAuth code flow锛屽悗绔敓鎴愬苟鏍￠獙 CSRF `state`锛涘吋瀹规棫鍙傛暟 `return_to`銆?- `GET /auth/github/callback`锛氬悗绔娇鐢?GitHub OAuth Secret 鎹㈠彇 access token锛岃鍙?GitHub 鍏紑鐢ㄦ埛淇℃伅锛屽啓鍏?HttpOnly 鐧诲綍 cookie 鍚庤烦鍥?`returnTo` 瀵瑰簲椤甸潰銆?- `POST /auth/github/logout`锛氭竻闄よ瘎璁虹櫥褰?cookie銆?
+GitHub OAuth Client Secret 鍙兘淇濆瓨鍦ㄥ悗绔?`.env` 鎴栨湇鍔＄閰嶇疆銆傛湭閰嶇疆鏃讹紝鍓嶅彴鐣欒█鏉垮繀椤绘樉绀鸿瀹㈠弸濂芥彁绀猴紝涓嶈兘鍥為€€鍒板尶鍚嶈瘎璁恒€?
 ### DELETE `/comments/{resource}/{slug}/{comment_id}`
 
-后台 JWT。删除本地评论。删除前 `JsonStore.write` 必须通过 `safe_write_json` 备份原评论 JSON。
-
-响应：
-
+鍚庡彴 JWT銆傚垹闄ゆ湰鍦拌瘎璁恒€傚垹闄ゅ墠 `JsonStore.write` 蹇呴』閫氳繃 `safe_write_json` 澶囦唤鍘熻瘎璁?JSON銆?
+鍝嶅簲锛?
 ```json
 { "ok": true }
 ```
 
-错误：
-
-- `401`：未登录或 token 缺失/失效。
-- `404`：评论 ID 不存在。
-
+閿欒锛?
+- `401`锛氭湭鐧诲綍鎴?token 缂哄け/澶辨晥銆?- `404`锛氳瘎璁?ID 涓嶅瓨鍦ㄣ€?
 ### GET `/admin/comments/index`
 
-后台 JWT。返回已有评论的内容索引，供后台评论管理默认列表使用。扫描 `backend/data/comments` 下的评论 JSON 文件；目录不存在或没有评论时返回空数组，不返回 500。
-
-该接口必须出现在 `http://127.0.0.1:8000/docs`。如果浏览器调用返回 404，优先确认 8000 后端进程是否已重启到当前代码。
-
-响应：
-
+鍚庡彴 JWT銆傝繑鍥炲凡鏈夎瘎璁虹殑鍐呭绱㈠紩锛屼緵鍚庡彴璇勮绠＄悊榛樿鍒楄〃浣跨敤銆傛壂鎻?`backend/data/comments` 涓嬬殑璇勮 JSON 鏂囦欢锛涚洰褰曚笉瀛樺湪鎴栨病鏈夎瘎璁烘椂杩斿洖绌烘暟缁勶紝涓嶈繑鍥?500銆?
+璇ユ帴鍙ｅ繀椤诲嚭鐜板湪 `http://127.0.0.1:8000/docs`銆傚鏋滄祻瑙堝櫒璋冪敤杩斿洖 404锛屼紭鍏堢‘璁?8000 鍚庣杩涚▼鏄惁宸查噸鍚埌褰撳墠浠ｇ爜銆?
+鍝嶅簲锛?
 ```json
 [
   {
@@ -484,18 +430,13 @@ GitHub OAuth Client Secret 只能保存在后端 `.env` 或服务端配置。未
 ]
 ```
 
-说明：
-
-- 文件名形如 `posts-srblogs-p0-20260502130609.json` 时，反推 `resource=posts`、`slug=srblogs-p0-20260502130609`。
-- `resource` 仅允许 `posts`、`moments`、`chatters`。
-- `title` 优先读取对应内容 Markdown Front Matter 的 `meta.title`；内容文件不存在时回退为 `slug`。
-- 只返回后台评论索引需要的信息，不返回邮箱之外的额外评论详情，也不返回任何 Secret。
-
+璇存槑锛?
+- 鏂囦欢鍚嶅舰濡?`posts-srblogs-p0-20260502130609.json` 鏃讹紝鍙嶆帹 `resource=posts`銆乣slug=srblogs-p0-20260502130609`銆?- `resource` 浠呭厑璁?`posts`銆乣moments`銆乣chatters`銆?- `title` 浼樺厛璇诲彇瀵瑰簲鍐呭 Markdown Front Matter 鐨?`meta.title`锛涘唴瀹规枃浠朵笉瀛樺湪鏃跺洖閫€涓?`slug`銆?- 鍙繑鍥炲悗鍙拌瘎璁虹储寮曢渶瑕佺殑淇℃伅锛屼笉杩斿洖閭涔嬪鐨勯澶栬瘎璁鸿鎯咃紝涔熶笉杩斿洖浠讳綍 Secret銆?
 ## Dashboard API
 
 ### GET `/dashboard/stats`
 
-后台 JWT。响应：
+鍚庡彴 JWT銆傚搷搴旓細
 
 ```json
 { "posts": 0, "moments": 0, "chatters": 0, "photos": 0 }
@@ -505,17 +446,9 @@ GitHub OAuth Client Secret 只能保存在后端 `.env` 或服务端配置。未
 
 ### GET `/admin/audit/logs`
 
-后台 JWT。读取 `backend/data/audit/audit.log` 审计日志。
-
-Query：
-- `limit`：默认 50，最大 200。
-- `offset`：默认 0。
-- `action`：可选，精确筛选动作，例如 `posts.create`、`comment.delete`、`backup.restore`。
-- `resource`：可选，精确筛选资源，例如 `posts`、`comments`、`backups`。
-- `q`：可选，模糊搜索 actor/action/resource/target/result/message。
-
-响应：
-```json
+鍚庡彴 JWT銆傝鍙?`backend/data/audit/audit.log` 瀹¤鏃ュ織銆?
+Query锛?- `limit`锛氶粯璁?50锛屾渶澶?200銆?- `offset`锛氶粯璁?0銆?- `action`锛氬彲閫夛紝绮剧‘绛涢€夊姩浣滐紝渚嬪 `posts.create`銆乣comment.delete`銆乣backup.restore`銆?- `resource`锛氬彲閫夛紝绮剧‘绛涢€夎祫婧愶紝渚嬪 `posts`銆乣comments`銆乣backups`銆?- `q`锛氬彲閫夛紝妯＄硦鎼滅储 actor/action/resource/target/result/message銆?
+鍝嶅簲锛?```json
 {
   "items": [
     {
@@ -537,14 +470,11 @@ Query：
 }
 ```
 
-日志不得包含 Secret 明文。日志写入失败不得导致主业务操作失败。
-
+鏃ュ織涓嶅緱鍖呭惈 Secret 鏄庢枃銆傛棩蹇楀啓鍏ュけ璐ヤ笉寰楀鑷翠富涓氬姟鎿嶄綔澶辫触銆?
 ### GET `/admin/system/status`
 
-后台 JWT。返回生产健康检查所需的非敏感系统状态。
-
-响应：
-```json
+鍚庡彴 JWT銆傝繑鍥炵敓浜у仴搴锋鏌ユ墍闇€鐨勯潪鏁忔劅绯荤粺鐘舵€併€?
+鍝嶅簲锛?```json
 {
   "app": "SRBlogs API",
   "backendRunning": true,
@@ -565,25 +495,20 @@ Query：
 }
 ```
 
-不得返回 `.env` 内容、管理员密码、JWT Secret、AI Key、OSS Key 或 OAuth Secret。
-
+涓嶅緱杩斿洖 `.env` 鍐呭銆佺鐞嗗憳瀵嗙爜銆丣WT Secret銆丄I Key銆丱SS Key 鎴?OAuth Secret銆?
 ## Admin Backup API
 
 ### POST `/admin/backups`
 
-后台 JWT。创建手动备份，写入 `backend/data/.manual_backups/{timestamp}.zip`。
-
-备份范围：`posts`、`moments`、`chatters`、`comments`、`photos`、`friends.json`、`projects.json`、`music.json`、`settings.json`、`about.md`、`uploads`。不包含 `.env`、`.venv`、`node_modules`、`dist`、前端源码或手动备份目录本身。`settings.json` 写入 zip 前会剔除 Secret 字段。
-
-响应：
-```json
+鍚庡彴 JWT銆傚垱寤烘墜鍔ㄥ浠斤紝鍐欏叆 `backend/data/.manual_backups/{timestamp}.zip`銆?
+澶囦唤鑼冨洿锛歚posts`銆乣moments`銆乣chatters`銆乣comments`銆乣photos`銆乣friends.json`銆乣projects.json`銆乣music.json`銆乣settings.json`銆乣about.md`銆乣uploads`銆備笉鍖呭惈 `.env`銆乣.venv`銆乣node_modules`銆乣dist`銆佸墠绔簮鐮佹垨鎵嬪姩澶囦唤鐩綍鏈韩銆俙settings.json` 鍐欏叆 zip 鍓嶄細鍓旈櫎 Secret 瀛楁銆?
+鍝嶅簲锛?```json
 { "name": "20260502120000000000.zip", "createdAt": "2026-05-02T12:00:00", "size": 12345 }
 ```
 
 ### GET `/admin/backups`
 
-后台 JWT。返回手动备份列表。
-
+鍚庡彴 JWT銆傝繑鍥炴墜鍔ㄥ浠藉垪琛ㄣ€?
 ```json
 [
   { "name": "20260502120000000000.zip", "createdAt": "2026-05-02T12:00:00", "size": 12345 }
@@ -592,37 +517,27 @@ Query：
 
 ### GET `/admin/backups/{name}/download`
 
-后台 JWT。下载备份 zip。`name` 必须是当前 `.manual_backups` 下的合法 `.zip` 文件名，禁止 `..`、`/`、`\` 和非 zip 名称。
-
+鍚庡彴 JWT銆備笅杞藉浠?zip銆俙name` 蹇呴』鏄綋鍓?`.manual_backups` 涓嬬殑鍚堟硶 `.zip` 鏂囦欢鍚嶏紝绂佹 `..`銆乣/`銆乣\` 鍜岄潪 zip 鍚嶇О銆?
 ### POST `/admin/backups/{name}/restore`
 
-后台 JWT。恢复备份。恢复前会自动创建 `pre-restore-{timestamp}.zip`。
-
-响应：
-```json
+鍚庡彴 JWT銆傛仮澶嶅浠姐€傛仮澶嶅墠浼氳嚜鍔ㄥ垱寤?`pre-restore-{timestamp}.zip`銆?
+鍝嶅簲锛?```json
 { "ok": true, "restored": "20260502120000000000.zip", "preRestoreBackup": "pre-restore-20260502121000000000.zip" }
 ```
 
-错误：
-- `400`：备份名非法、zip 内路径不安全、zip 包含不允许路径。
-- `404`：备份不存在。
-- `500`：恢复过程发生未预期错误。
-
+閿欒锛?- `400`锛氬浠藉悕闈炴硶銆亃ip 鍐呰矾寰勪笉瀹夊叏銆亃ip 鍖呭惈涓嶅厑璁歌矾寰勩€?- `404`锛氬浠戒笉瀛樺湪銆?- `500`锛氭仮澶嶈繃绋嬪彂鐢熸湭棰勬湡閿欒銆?
 ### GET `/admin/export`
 
-后台 JWT。导出当前内容数据 zip。语义等同创建 `export-{timestamp}.zip` 后下载，不包含 `.env` 或 Secret 明文字段。
-
+鍚庡彴 JWT銆傚鍑哄綋鍓嶅唴瀹规暟鎹?zip銆傝涔夌瓑鍚屽垱寤?`export-{timestamp}.zip` 鍚庝笅杞斤紝涓嶅寘鍚?`.env` 鎴?Secret 鏄庢枃瀛楁銆?
 ### POST `/admin/import`
 
-后台 JWT。上传 zip 并导入。导入前自动创建恢复前备份；zip 内路径必须安全且仅允许落在备份范围内。导入失败不得破坏现有数据。
-
+鍚庡彴 JWT銆備笂浼?zip 骞跺鍏ャ€傚鍏ュ墠鑷姩鍒涘缓鎭㈠鍓嶅浠斤紱zip 鍐呰矾寰勫繀椤诲畨鍏ㄤ笖浠呭厑璁歌惤鍦ㄥ浠借寖鍥村唴銆傚鍏ュけ璐ヤ笉寰楃牬鍧忕幇鏈夋暟鎹€?
 ## Chat API
 
 ### POST `/chat`
 
-后台 JWT。AI Key 只从后端环境变量读取。
-
-请求体：
+鍚庡彴 JWT銆侫I Key 鍙粠鍚庣鐜鍙橀噺璇诲彇銆?
+璇锋眰浣擄細
 
 ```json
 {
@@ -632,36 +547,22 @@ Query：
 }
 ```
 
-响应为上游兼容 OpenAI `/chat/completions` 的 JSON；未配置时返回：
+鍝嶅簲涓轰笂娓稿吋瀹?OpenAI `/chat/completions` 鐨?JSON锛涙湭閰嶇疆鏃惰繑鍥烇細
 
 ```json
 { "content": "AI endpoint is not configured." }
 ```
-# 2026-05-03 契约补充：前台 GitHub 评论入口
+# 2026-05-03 濂戠害琛ュ厖锛氬墠鍙?GitHub 璇勮鍏ュ彛
 
-- GitHub 评论登录入口属于前台文章详情评论区；后台只提供 OAuth 配置和评论管理，不提供访客登录入口。
-- `GET /api/auth/github/me` 供前台留言板判断 `{ configured, user }`。未配置时前台应显示“站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。”
-- `POST /api/comments/{resource}/{slug}` 对未登录 GitHub 的请求返回 `401`，不得回退到匿名作者或邮箱评论。
-- 前台展示名称统一为“留言板”。接口路径仍保持 `/api/comments/...`，避免破坏既有数据和后台管理契约。
-- OAuth 未配置时，前台文案应面向访客，例如“站点暂未开启 GitHub 登录留言，请稍后再试或联系站点管理员。”，不得要求访客“配置后端”。
-- 本轮未新增接口；照片墙相册组和音乐歌词仍复用既有 `/api/photos`、`/api/music`、`/api/upload` 契约。
+- GitHub 璇勮鐧诲綍鍏ュ彛灞炰簬鍓嶅彴鏂囩珷璇︽儏璇勮鍖猴紱鍚庡彴鍙彁渚?OAuth 閰嶇疆鍜岃瘎璁虹鐞嗭紝涓嶆彁渚涜瀹㈢櫥褰曞叆鍙ｃ€?- `GET /api/auth/github/me` 渚涘墠鍙扮暀瑷€鏉垮垽鏂?`{ configured, user }`銆傛湭閰嶇疆鏃跺墠鍙板簲鏄剧ず鈥滅珯鐐规殏鏈紑鍚?GitHub 鐣欒█锛岃绋嶅悗鍐嶈瘯鎴栬仈绯荤珯鐐圭鐞嗗憳銆傗€?- `POST /api/comments/{resource}/{slug}` 瀵规湭鐧诲綍 GitHub 鐨勮姹傝繑鍥?`401`锛屼笉寰楀洖閫€鍒板尶鍚嶄綔鑰呮垨閭璇勮銆?- 鍓嶅彴灞曠ず鍚嶇О缁熶竴涓衡€滅暀瑷€鏉库€濄€傛帴鍙ｈ矾寰勪粛淇濇寔 `/api/comments/...`锛岄伩鍏嶇牬鍧忔棦鏈夋暟鎹拰鍚庡彴绠＄悊濂戠害銆?- OAuth 鏈厤缃椂锛屽墠鍙版枃妗堝簲闈㈠悜璁垮锛屼緥濡傗€滅珯鐐规殏鏈紑鍚?GitHub 鐧诲綍鐣欒█锛岃绋嶅悗鍐嶈瘯鎴栬仈绯荤珯鐐圭鐞嗗憳銆傗€濓紝涓嶅緱瑕佹眰璁垮鈥滈厤缃悗绔€濄€?- 鏈疆鏈柊澧炴帴鍙ｏ紱鐓х墖澧欑浉鍐岀粍鍜岄煶涔愭瓕璇嶄粛澶嶇敤鏃㈡湁 `/api/photos`銆乣/api/music`銆乣/api/upload` 濂戠害銆?
+## 2026-05-03 鐣欒█鏉夸笌鎾斁鍣ㄨˉ鍏?
+- 鍓嶅彴鐣欒█鏉夸娇鐢?`GET /api/auth/github/me` 鍒ゆ柇 `{ configured, user }`銆俙configured=false` 鏃跺墠鍙版樉绀鸿瀹㈠弸濂芥彁绀猴紝涓嶆毚闇?OAuth Secret 鎴栨湇鍔＄閰嶇疆缁嗚妭銆?
+## 2026-05-03 GitHub 鐣欒█ returnTo 濂戠害淇
 
-## 2026-05-03 留言板与播放器补充
+- `GET /api/auth/github/login?returnTo=/posts/{slug}` 鏄墠鍙扮暀瑷€鏉垮惎鍔?GitHub 鐧诲綍鐨勪富鍏ュ彛锛涘悗绔吋瀹规棫鍙傛暟 `return_to`銆?- `returnTo` 鏀寔鍓嶅彴鐩稿璺緞銆傚悗绔細瑙ｆ瀽涓哄厑璁哥殑鍓嶅彴鏉ユ簮锛屽苟鎷掔粷闈炵櫧鍚嶅崟缁濆 URL 鍥炶烦锛岄伩鍏嶅紑鏀鹃噸瀹氬悜銆?- OAuth 鏈厤缃椂璇ユ帴鍙ｈ繑鍥炵粺涓€閿欒缁撴瀯锛屼笉杩斿洖 Client Secret銆丱Auth Secret銆乣.env` 璺緞鎴?access token銆?- `GET /api/auth/github/me` 杩斿洖 `{ "configured": boolean, "user": null | { "login": string, "name": string, "avatar": string, "html_url": string } }`锛屼笉杩斿洖 access token銆?- `POST /api/comments/{resource}/{slug}` 蹇呴』鏈?GitHub 鐧诲綍鎬侊紱鏈櫥褰曡繑鍥?`401`锛屾棫鐣欒█浠嶅彲鍏紑璇诲彇銆?
+## 2026-05-03 鐣欒█鏉垮叕寮€閰嶇疆濂戠害
 
-- 前台留言板使用 `GET /api/auth/github/me` 判断 `{ configured, user }`。`configured=false` 时前台显示访客友好提示，不暴露 OAuth Secret 或服务端配置细节。
-
-## 2026-05-03 GitHub 留言 returnTo 契约修订
-
-- `GET /api/auth/github/login?returnTo=/posts/{slug}` 是前台留言板启动 GitHub 登录的主入口；后端兼容旧参数 `return_to`。
-- `returnTo` 支持前台相对路径。后端会解析为允许的前台来源，并拒绝非白名单绝对 URL 回跳，避免开放重定向。
-- OAuth 未配置时该接口返回统一错误结构，不返回 Client Secret、OAuth Secret、`.env` 路径或 access token。
-- `GET /api/auth/github/me` 返回 `{ "configured": boolean, "user": null | { "login": string, "name": string, "avatar": string, "html_url": string } }`，不返回 access token。
-- `POST /api/comments/{resource}/{slug}` 必须有 GitHub 登录态；未登录返回 `401`，旧留言仍可公开读取。
-
-## 2026-05-03 留言板公开配置契约
-
-`GET /api/settings/public` 的 `comments` 字段固定为公开布尔状态，不返回 Secret：
-
+`GET /api/settings/public` 鐨?`comments` 瀛楁鍥哄畾涓哄叕寮€甯冨皵鐘舵€侊紝涓嶈繑鍥?Secret锛?
 ```json
 {
   "comments": {
@@ -674,9 +575,39 @@ Query：
 }
 ```
 
-- `enabled=false`：前台显示“留言板暂时关闭”。
-- `enabled=true` 且 `githubLoginConfigured=false`：前台显示“站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。”
-- `enabled=true` 且 `githubLoginConfigured=true` 且未登录：前台显示“使用 GitHub 登录后留言”按钮。
-- `githubLoginConfigured` 只能是 boolean；不得返回 OAuth Secret、access token 或服务端配置路径。
-- `POST /api/comments/{resource}/{slug}` 继续要求 GitHub 登录态；未登录返回 `401` 统一错误响应。
-- 首页和音乐页音量属于前端本地状态，不新增 API；音量和静音状态写入浏览器 `localStorage`。
+- `enabled=false`锛氬墠鍙版樉绀衡€滅暀瑷€鏉挎殏鏃跺叧闂€濄€?- `enabled=true` 涓?`githubLoginConfigured=false`锛氬墠鍙版樉绀衡€滅珯鐐规殏鏈紑鍚?GitHub 鐣欒█锛岃绋嶅悗鍐嶈瘯鎴栬仈绯荤珯鐐圭鐞嗗憳銆傗€?- `enabled=true` 涓?`githubLoginConfigured=true` 涓旀湭鐧诲綍锛氬墠鍙版樉绀衡€滀娇鐢?GitHub 鐧诲綍鍚庣暀瑷€鈥濇寜閽€?- `githubLoginConfigured` 鍙兘鏄?boolean锛涗笉寰楄繑鍥?OAuth Secret銆乤ccess token 鎴栨湇鍔＄閰嶇疆璺緞銆?- `POST /api/comments/{resource}/{slug}` 缁х画瑕佹眰 GitHub 鐧诲綍鎬侊紱鏈櫥褰曡繑鍥?`401` 缁熶竴閿欒鍝嶅簲銆?- 棣栭〉鍜岄煶涔愰〉闊抽噺灞炰簬鍓嶇鏈湴鐘舵€侊紝涓嶆柊澧?API锛涢煶閲忓拰闈欓煶鐘舵€佸啓鍏ユ祻瑙堝櫒 `localStorage`銆?
+
+## 2026-05-03 Visitor Auth and Multi-provider Message Board
+
+Public settings `GET /api/settings/public` returns message provider status only:
+
+```json
+{
+  "comments": {
+    "enabled": true,
+    "provider": "multi",
+    "githubLoginEnabled": true,
+    "githubLoginConfigured": true,
+    "qqLoginEnabled": true,
+    "qqLoginConfigured": false,
+    "maxLength": 1000
+  }
+}
+```
+
+No OAuth secret, access token, admin JWT, or server-only config may appear in this response.
+
+Visitor auth endpoints:
+
+- `GET /api/auth/visitor/me`: returns `{ "configured": { "github": true, "qq": false }, "user": null | { "provider", "id", "name", "avatar" } }`.
+- `POST /api/auth/visitor/logout`: clears visitor login cookies.
+- `GET /api/auth/github/login?returnTo=/path`: starts GitHub OAuth and sets CSRF state cookie.
+- `GET /api/auth/github/callback`: validates state, exchanges code server-side, stores visitor login cookie, redirects to `returnTo`.
+- `GET /api/auth/qq/login?returnTo=/path`: starts QQ OAuth and sets CSRF state cookie.
+- `GET /api/auth/qq/callback`: validates state, exchanges code server-side, reads QQ public profile, stores visitor login cookie, redirects to `returnTo`.
+
+Message endpoints now accept resources `posts`, `moments`, `chatters`, `music`, and `photos`:
+
+- `GET /api/comments/{resource}/{slug}` remains public and returns old and new comments.
+- `POST /api/comments/{resource}/{slug}` requires visitor login. Anonymous requests return `401`.
+- New messages store `provider` and `providerId`; older `githubLogin` comments remain display-compatible.

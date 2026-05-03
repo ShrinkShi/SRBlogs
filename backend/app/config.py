@@ -34,6 +34,8 @@ class Settings(BaseSettings):
 
     github_oauth_client_id: str = ""
     github_oauth_client_secret: str = ""
+    qq_oauth_app_id: str = ""
+    qq_oauth_app_secret: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

@@ -20,10 +20,14 @@ export interface CommentItem {
   email?: string
   content: string
   created_at: string
+  avatar?: string
+  provider?: 'github' | 'qq' | ''
+  providerId?: string
+  githubLogin?: string
 }
 
 export interface CommentIndexItem {
-  resource: 'posts' | 'moments' | 'chatters'
+  resource: 'posts' | 'moments' | 'chatters' | 'music' | 'photos'
   slug: string
   count: number
   updatedAt: string

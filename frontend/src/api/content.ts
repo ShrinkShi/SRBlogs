@@ -1,6 +1,9 @@
 import { http } from './http'
 import type { ArchiveResponse, CommentItem, ContentItem, DiscoveryType, SearchResponse, TagItem } from '@/types'
 
+export type CommentResource = 'posts' | 'moments' | 'chatters' | 'music' | 'photos'
+export type VisitorUser = { provider: 'github' | 'qq'; id: string; login?: string; name?: string; avatar?: string; html_url?: string }
+
 export const contentApi = {
   list: async (section: 'posts' | 'moments' | 'chatters') => {
     const { data } = await http.get<ContentItem[]>(`/${section}`)
@@ -18,11 +21,11 @@ export const contentApi = {
     const { data } = await http.get<{ content: string }>('/about')
     return data
   },
-  comments: async (resource: 'posts' | 'moments' | 'chatters', slug: string) => {
+  comments: async (resource: CommentResource, slug: string) => {
     const { data } = await http.get<CommentItem[]>(`/comments/${resource}/${slug}`)
     return data
   },
-  createComment: async (resource: 'posts' | 'moments' | 'chatters', slug: string, payload: { author?: string; email?: string; content: string }) => {
+  createComment: async (resource: CommentResource, slug: string, payload: { author?: string; email?: string; content: string }) => {
     const { data } = await http.post<CommentItem>(`/comments/${resource}/${slug}`, payload)
     return data
   },
@@ -32,6 +35,14 @@ export const contentApi = {
   },
   githubLogout: async () => {
     const { data } = await http.post<{ ok: boolean }>('/auth/github/logout')
+    return data
+  },
+  visitorMe: async () => {
+    const { data } = await http.get<{ configured: { github: boolean; qq: boolean }; user: null | VisitorUser }>('/auth/visitor/me')
+    return data
+  },
+  visitorLogout: async () => {
+    const { data } = await http.post<{ ok: boolean }>('/auth/visitor/logout')
     return data
   },
   search: async (params: { q?: string; type?: DiscoveryType; tag?: string; limit?: number; offset?: number }) => {

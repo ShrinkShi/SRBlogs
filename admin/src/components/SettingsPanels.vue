@@ -10,9 +10,9 @@ type AnySettings = Record<string, any>
 
 const ui = useUiStore()
 const pendingStore = usePendingStore()
-const active = ref<SettingsTab>('site')
 const route = useRoute()
 const router = useRouter()
+const active = ref<SettingsTab>('site')
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
@@ -21,24 +21,30 @@ const advancedOpen = ref(false)
 const jsonText = ref('{}')
 const jsonError = ref('')
 const raw = ref<AnySettings>({})
-const secretInputs = reactive({ githubOAuthSecret: '', accessKeyId: '', ossSecretInput: '', aiKeyInput: '' })
 const uploadProgress = ref<Record<string, number>>({})
+
+const secretInputs = reactive({
+  githubOAuthSecret: '',
+  qqOAuthSecret: '',
+  accessKeyId: '',
+  ossSecretInput: '',
+  aiKeyInput: ''
+})
 
 const tabs: { key: SettingsTab; label: string }[] = [
   { key: 'site', label: '站点公开信息' },
   { key: 'theme', label: '主题与背景' },
-  { key: 'comments', label: '评论设置' },
+  { key: 'comments', label: '留言设置' },
   { key: 'image', label: '图床设置' },
   { key: 'ai', label: 'AI 设置' },
   { key: 'deploy', label: '部署与安全提示' }
 ]
 
 const tabKeys = tabs.map((item) => item.key)
-
 const tokenLabels: Record<string, string> = {
   bgPage: '页面背景',
   bgCard: '卡片背景',
-  bgCardElevated: '卡片高层背景',
+  bgCardElevated: '高层卡片背景',
   borderGlass: '玻璃边框',
   textPrimary: '主文字',
   textSecondary: '次文字',
@@ -47,15 +53,6 @@ const tokenLabels: Record<string, string> = {
   navBg: '导航背景',
   homePanelBg: '首页面板背景',
   shadowGlow: '发光阴影'
-}
-
-function tokenLabel(key: string) {
-  return tokenLabels[key] || key
-}
-
-function colorPickerValue(value: unknown) {
-  const text = String(value || '').trim()
-  return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#67e8f9'
 }
 
 const form = reactive({
@@ -81,7 +78,7 @@ const form = reactive({
       navBg: 'rgba(255,255,255,.72)',
       homePanelBg: 'rgba(255,255,255,.72)',
       shadowGlow: 'rgba(8,145,178,.2)'
-    },
+    } as Record<string, string>,
     night: {
       bgPage: '#050713',
       bgCard: 'rgba(255,255,255,.105)',
@@ -94,21 +91,20 @@ const form = reactive({
       navBg: 'rgba(7,12,28,.64)',
       homePanelBg: 'rgba(255,255,255,.105)',
       shadowGlow: 'rgba(34,211,238,.42)'
-    }
+    } as Record<string, string>
   },
   bgImagesText: '',
   cloudMusicIdsText: '',
   comments: {
     enabled: true,
     githubLoginEnabled: true,
-    requireEmail: false,
+    qqLoginEnabled: true,
     maxLength: 1000,
-    showEmail: false,
-    localEnabled: true,
     gitalkClientID: '',
     gitalkRepo: '',
     gitalkOwner: '',
-    gitalkAdminText: ''
+    gitalkAdminText: '',
+    qqAppID: ''
   },
   imageBed: {
     provider: 'local',
@@ -134,13 +130,25 @@ const form = reactive({
 })
 
 const productionChecks = computed(() => [
-  { label: '管理员密码已修改', ok: raw.value.serverSecrets?.adminPasswordConfigured === true },
-  { label: 'JWT 签名密钥已修改', ok: raw.value.serverSecrets?.jwtSecretConfigured === true },
-  { label: 'Secret 不在 settings 响应中明文回显', ok: true },
-  { label: '上传大小限制有效：5 MB', ok: true },
-  { label: 'CORS 白名单生产环境需收紧', ok: false },
-  { label: 'backend/data 已配置备份策略', ok: false }
+  { label: '管理员密码已配置', ok: raw.value.serverSecrets?.adminPasswordConfigured === true },
+  { label: 'JWT 密钥已配置', ok: raw.value.serverSecrets?.jwtSecretConfigured === true },
+  { label: '设置接口不回显私密配置', ok: true },
+  { label: '生产环境需要收紧 CORS 白名单', ok: false },
+  { label: '需要确认 backend/data 备份策略', ok: false }
 ])
+
+function tokenLabel(key: string) {
+  return tokenLabels[key] || key
+}
+
+function colorPickerValue(value: unknown) {
+  const text = String(value || '').trim()
+  return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#67e8f9'
+}
+
+function statusText(value: unknown) {
+  return value ? '已配置' : '未配置'
+}
 
 function linesToArray(value: string) {
   return value.split('\n').map((item) => item.trim()).filter(Boolean)
@@ -166,18 +174,20 @@ function applySettings(data: AnySettings) {
   form.themeConfig.night = { ...form.themeConfig.night, ...(themeConfig.night || {}) }
   form.bgImagesText = Array.isArray(data.bgImages) ? data.bgImages.join('\n') : ''
   form.cloudMusicIdsText = Array.isArray(data.cloudMusicIds) ? data.cloudMusicIds.join(', ') : ''
+
   const comments = data.comments || {}
   const gitalk = data.gitalkConfig || comments.gitalk || {}
+  const qqOAuth = data.qqOAuth || comments.qq || {}
   form.comments.enabled = comments.enabled !== false
   form.comments.githubLoginEnabled = comments.githubLoginEnabled !== false
-  form.comments.requireEmail = comments.requireEmail === true
+  form.comments.qqLoginEnabled = comments.qqLoginEnabled !== false
   form.comments.maxLength = Number(comments.maxLength || 1000)
-  form.comments.showEmail = comments.showEmail === true
-  form.comments.localEnabled = true
   form.comments.gitalkClientID = gitalk.clientID || ''
   form.comments.gitalkRepo = gitalk.repo || ''
   form.comments.gitalkOwner = gitalk.owner || ''
   form.comments.gitalkAdminText = Array.isArray(gitalk.admin) ? gitalk.admin.join(', ') : ''
+  form.comments.qqAppID = qqOAuth.appID || qqOAuth.appId || qqOAuth.clientID || ''
+
   const imageBed = data.imageBed || {}
   form.imageBed.provider = imageBed.provider || imageBed.driver || 'local'
   form.imageBed.publicBaseUrl = imageBed.publicBaseUrl || ''
@@ -185,19 +195,23 @@ function applySettings(data: AnySettings) {
   form.imageBed.region = imageBed.region || ''
   form.imageBed.endpoint = imageBed.endpoint || ''
   form.imageBed.accessKeyConfigured = imageBed.accessKeyConfigured === true
-  form.imageBed.ossSecretConfigured = imageBed[['secret', 'KeyConfigured'].join('')] === true || imageBed.ossKeyConfigured === true
+  form.imageBed.ossSecretConfigured = imageBed.secretKeyConfigured === true || imageBed.ossKeyConfigured === true
+
   const ai = data.ai || {}
   form.ai.provider = ai.provider || ai.active || 'a'
   form.ai.baseUrl = ai.baseUrl || ''
   form.ai.model = ai.model || ''
   form.ai.enableChat = ai.enableChat !== false
   form.ai.aiKeyConfigured = ai.aiKeyConfigured === true
+
   const interaction = data.interaction || {}
   form.interaction.clickSoundEnabled = interaction.clickSoundEnabled !== false
   form.interaction.clickSoundVolume = Number(interaction.clickSoundVolume ?? 0.05)
   form.interaction.clickSoundUrl = interaction.clickSoundUrl || ''
+
   jsonText.value = JSON.stringify(data, null, 2)
   secretInputs.githubOAuthSecret = ''
+  secretInputs.qqOAuthSecret = ''
   secretInputs.accessKeyId = ''
   secretInputs.ossSecretInput = ''
   secretInputs.aiKeyInput = ''
@@ -216,7 +230,7 @@ async function load() {
 }
 
 function buildPayload() {
-  const payload: AnySettings = {
+  return {
     ...raw.value,
     siteTitle: form.siteTitle,
     subtitle: form.subtitle,
@@ -235,17 +249,21 @@ function buildPayload() {
     cloudMusicIds: commaToArray(form.cloudMusicIdsText),
     comments: {
       enabled: form.comments.enabled,
-      provider: 'github',
+      provider: 'multi',
       githubLoginEnabled: form.comments.githubLoginEnabled,
-      requireEmail: false,
+      qqLoginEnabled: form.comments.qqLoginEnabled,
       maxLength: Number(form.comments.maxLength || 1000),
+      requireEmail: false,
       showEmail: false,
-      localEnabled: true,
+      localEnabled: false,
       gitalk: {
         clientID: form.comments.gitalkClientID,
         repo: form.comments.gitalkRepo,
         owner: form.comments.gitalkOwner,
         admin: commaToArray(form.comments.gitalkAdminText)
+      },
+      qq: {
+        appID: form.comments.qqAppID
       }
     },
     gitalkConfig: {
@@ -255,6 +273,11 @@ function buildPayload() {
       owner: form.comments.gitalkOwner,
       admin: commaToArray(form.comments.gitalkAdminText),
       [['client', 'Secret'].join('')]: secretInputs.githubOAuthSecret
+    },
+    qqOAuth: {
+      ...(raw.value.qqOAuth || {}),
+      appID: form.comments.qqAppID,
+      [['app', 'Secret'].join('')]: secretInputs.qqOAuthSecret
     },
     imageBed: {
       ...(raw.value.imageBed || {}),
@@ -282,7 +305,6 @@ function buildPayload() {
       clickSoundUrl: form.interaction.clickSoundUrl
     }
   }
-  return payload
 }
 
 async function save(payload = buildPayload()) {
@@ -291,9 +313,8 @@ async function save(payload = buildPayload()) {
   success.value = ''
   try {
     await adminApi.putJson('/admin/settings', payload)
-    const latest = await adminApi.json<AnySettings>('/admin/settings')
-    applySettings(latest)
-    success.value = '设置已保存，已重新读取后台响应。'
+    applySettings(await adminApi.json<AnySettings>('/admin/settings'))
+    success.value = '设置已保存并重新读取。'
     ui.show('设置已保存')
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '设置保存失败'
@@ -301,22 +322,22 @@ async function save(payload = buildPayload()) {
     saving.value = false
   }
 }
+
 function stageSettings() {
   error.value = ''
   success.value = ''
-  if (secretInputs.githubOAuthSecret || secretInputs.accessKeyId || secretInputs.ossSecretInput || secretInputs.aiKeyInput) {
-    error.value = 'Secret 修改不进入本地 pendingOperations，请直接保存。'
+  if (secretInputs.githubOAuthSecret || secretInputs.qqOAuthSecret || secretInputs.accessKeyId || secretInputs.ossSecretInput || secretInputs.aiKeyInput) {
+    error.value = '私密配置不能进入本地暂存队列，请直接保存。'
     return
   }
-  const payload = buildPayload()
   pendingStore.add({
     kind: 'updateSettings',
-    title: '设置修改',
+    title: '设置更新',
     slug: 'settings.json',
-    settingsPayload: payload
+    settingsPayload: buildPayload()
   })
-  success.value = '设置修改已加入暂存队列，刷新页面会丢失；点击右侧应用后才写入后端。'
-  ui.show('设置修改已加入暂存队列')
+  success.value = '设置更新已加入暂存队列。刷新页面会丢失本地暂存项。'
+  ui.show('设置已加入暂存')
 }
 
 async function saveAdvancedJson() {
@@ -324,51 +345,38 @@ async function saveAdvancedJson() {
   try {
     const parsed = JSON.parse(jsonText.value)
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      jsonError.value = '高级 JSON 必须是对象'
+      jsonError.value = '高级 JSON 必须是对象。'
       return
     }
     await save(parsed)
   } catch (exc) {
-    jsonError.value = exc instanceof Error ? exc.message : 'JSON 格式错误'
+    jsonError.value = exc instanceof Error ? exc.message : 'JSON 格式无效'
   }
 }
 
-async function uploadInto(field: 'avatar' | 'bg', files: FileList | null) {
+async function uploadInto(field: 'avatar' | 'bg' | 'clickSound', files: FileList | null) {
   if (!files?.length) return
-  const key = field === 'avatar' ? 'avatar' : 'bg'
-  uploadProgress.value[key] = 0
+  uploadProgress.value[field] = 0
   error.value = ''
   try {
-    const data = await adminApi.upload(files[0], (percent) => { uploadProgress.value[key] = percent })
+    const data = await adminApi.upload(files[0], (percent) => { uploadProgress.value[field] = percent })
     if (field === 'avatar') form.avatar = data.url
-    else form.bgImagesText = `${form.bgImagesText.trim()}\n${data.url}`.trim()
-    success.value = '上传成功，URL 已填入设置表单。'
+    if (field === 'bg') form.bgImagesText = `${form.bgImagesText.trim()}\n${data.url}`.trim()
+    if (field === 'clickSound') form.interaction.clickSoundUrl = data.url
+    success.value = '上传成功，URL 已自动填入。'
+    ui.show('上传成功')
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '上传失败'
   }
 }
 
-async function uploadClickSound(files: FileList | null) {
-  if (!files?.length) return
-  uploadProgress.value.clickSound = 0
-  error.value = ''
-  try {
-    const data = await adminApi.upload(files[0], (percent) => { uploadProgress.value.clickSound = percent })
-    form.interaction.clickSoundUrl = data.url
-    success.value = '点击音效上传成功，URL 已填入。'
-    ui.show('点击音效上传成功')
-  } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '点击音效上传失败'
-  }
-}
-
 function testImageBed() {
   if (!['local', 'oss', 'custom'].includes(form.imageBed.provider)) {
-    error.value = '图床 provider 只能是 local / oss / custom。'
+    error.value = '存储类型必须是 local、oss 或 custom。'
     return
   }
-  success.value = form.imageBed.provider === 'local' ? '本地图床配置格式正常，可使用上传接口测试。' : '图床配置格式检查通过；真实 OSS/custom 连通性需服务端 SDK 支持。'
   error.value = ''
+  success.value = form.imageBed.provider === 'local' ? '本地上传配置格式有效。' : '配置格式有效；真实服务连通性需部署后验证。'
 }
 
 function syncTabFromRoute() {
@@ -386,168 +394,166 @@ onMounted(load)
 
 <template>
   <div class="grid gap-4">
-    <div class="grid gap-4">
-      <div class="glass rounded-[30px] p-5">
-        <div class="relative z-[1] flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 class="text-2xl font-black text-white">{{ tabs.find((tab) => tab.key === active)?.label }}</h2>
-            <p class="mt-2 text-sm text-white/50">公开设置会进入前台；AI Key、OSS Key、GitHub OAuth Secret 等私有配置只保存在后端。后台不回显 Secret 明文，只显示 configured 状态；Secret 输入框留空保存时会保留旧值。</p>
-          </div>
-          <button class="admin-btn admin-btn-ghost" @click="load">刷新</button>
+    <div class="glass rounded-[30px] p-5">
+      <div class="relative z-[1] flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 class="text-2xl font-black text-white">{{ tabs.find((tab) => tab.key === active)?.label }}</h2>
+          <p class="mt-2 text-sm text-white/50">公开字段会进入前台；私密字段不会回显，Secret 留空保存会保留旧值。</p>
         </div>
-        <p v-if="loading" class="relative z-[1] mt-4 text-white/55">设置加载中...</p>
-        <p v-if="error" class="relative z-[1] mt-4 text-sm text-red-200/85">{{ error }}</p>
-        <p v-if="success" class="relative z-[1] mt-4 text-sm text-emerald-200/85">{{ success }}</p>
+        <button class="admin-btn admin-btn-ghost" @click="load">刷新</button>
       </div>
+      <p v-if="loading" class="relative z-[1] mt-4 text-white/55">设置加载中...</p>
+      <p v-if="error" class="relative z-[1] mt-4 text-sm text-red-200/85">{{ error }}</p>
+      <p v-if="success" class="relative z-[1] mt-4 text-sm text-emerald-200/85">{{ success }}</p>
+    </div>
 
-      <div class="glass rounded-[30px] p-5">
-        <div class="relative z-[1] grid gap-4">
-          <template v-if="active === 'site'">
-            <div class="grid gap-3 md:grid-cols-2">
-              <label class="grid gap-2 text-sm text-white/65">站点标题<input v-model="form.siteTitle" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">副标题<input v-model="form.subtitle" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">作者名<input v-model="form.author" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">头像 URL<div class="flex gap-2"><input v-model="form.avatar" class="admin-input min-w-0 flex-1" /><label class="admin-btn admin-btn-ghost cursor-pointer">上传<input type="file" accept="image/*" class="hidden" @change="uploadInto('avatar', ($event.target as HTMLInputElement).files)" /></label></div></label>
-            </div>
-            <label class="grid gap-2 text-sm text-white/65">站点简介<textarea v-model="form.description" rows="4" class="admin-input"></textarea></label>
-            <div class="grid gap-3 md:grid-cols-2">
-              <label v-for="(_, key) in form.socialLinks" :key="key" class="grid gap-2 text-sm text-white/65">社交链接 {{ key }}<input v-model="form.socialLinks[key]" class="admin-input" /></label>
-            </div>
-          </template>
+    <div class="glass rounded-[30px] p-5">
+      <div class="relative z-[1] grid gap-4">
+        <template v-if="active === 'site'">
+          <div class="grid gap-3 md:grid-cols-2">
+            <label class="field">站点标题<input v-model="form.siteTitle" class="admin-input" /></label>
+            <label class="field">副标题<input v-model="form.subtitle" class="admin-input" /></label>
+            <label class="field">作者<input v-model="form.author" class="admin-input" /></label>
+            <label class="field">头像 URL<div class="flex gap-2"><input v-model="form.avatar" class="admin-input min-w-0 flex-1" /><label class="admin-btn admin-btn-ghost cursor-pointer">上传<input type="file" accept="image/*" class="hidden" @change="uploadInto('avatar', ($event.target as HTMLInputElement).files)" /></label></div></label>
+          </div>
+          <label class="field">站点简介<textarea v-model="form.description" rows="4" class="admin-input"></textarea></label>
+          <div class="grid gap-3 md:grid-cols-2">
+            <label v-for="(_, key) in form.socialLinks" :key="key" class="field">社交链接 {{ key }}<input v-model="form.socialLinks[key]" class="admin-input" /></label>
+          </div>
+        </template>
 
-          <template v-else-if="active === 'theme'">
-            <div class="rounded-[24px] border border-cyan-200/10 bg-white/[0.055] p-4">
-              <div class="grid gap-3 md:grid-cols-3">
-                <label class="grid gap-2 text-sm text-white/65">主题<select v-model="form.theme" class="admin-input"><option>nebula</option><option>sakura</option><option>aurora</option><option>cyber</option></select></label>
-                <label class="grid gap-2 text-sm text-white/65 md:col-span-2">字体族<input v-model="form.themeConfig.fontFamily" class="admin-input" placeholder="留空使用默认字体，也可填写 CSS font-family" /></label>
-                <label class="grid gap-2 text-sm text-white/65">字号档位<select v-model="form.themeConfig.fontScale" class="admin-input"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></label>
-              </div>
+        <template v-else-if="active === 'theme'">
+          <section class="panel">
+            <div class="grid gap-3 md:grid-cols-3">
+              <label class="field">主题<select v-model="form.theme" class="admin-input"><option>nebula</option><option>sakura</option><option>aurora</option><option>cyber</option></select></label>
+              <label class="field md:col-span-2">字体族<input v-model="form.themeConfig.fontFamily" class="admin-input" placeholder="留空则使用默认字体" /></label>
+              <label class="field">字号档位<select v-model="form.themeConfig.fontScale" class="admin-input"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></label>
             </div>
-            <div class="rounded-[24px] border border-white/10 bg-white/[0.055] p-4">
-              <h3 class="font-black text-white">交互点击音效</h3>
-              <div class="mt-4 grid gap-3 md:grid-cols-3">
-                <label class="setting-check"><input v-model="form.interaction.clickSoundEnabled" type="checkbox" />启用点击音效</label>
-                <label class="grid gap-2 text-sm text-white/65">音量<input v-model.number="form.interaction.clickSoundVolume" type="number" min="0" max="1" step="0.01" class="admin-input" /></label>
-                <label class="grid gap-2 text-sm text-white/65 md:col-span-3">音效 URL
-                  <div class="flex gap-2">
-                    <input v-model="form.interaction.clickSoundUrl" class="admin-input min-w-0 flex-1" placeholder="留空使用内置轻量点击声" />
-                    <label class="admin-btn admin-btn-ghost cursor-pointer">上传音效<input type="file" accept="audio/*" class="hidden" @change="uploadClickSound(($event.target as HTMLInputElement).files)" /></label>
+          </section>
+          <section class="panel">
+            <h3 class="font-black text-white">交互点击音效</h3>
+            <div class="mt-4 grid gap-3 md:grid-cols-3">
+              <label class="setting-check"><input v-model="form.interaction.clickSoundEnabled" type="checkbox" />启用音效</label>
+              <label class="field">音量<input v-model.number="form.interaction.clickSoundVolume" type="number" min="0" max="1" step="0.01" class="admin-input" /></label>
+              <label class="field md:col-span-3">音效 URL<div class="flex gap-2"><input v-model="form.interaction.clickSoundUrl" class="admin-input min-w-0 flex-1" /><label class="admin-btn admin-btn-ghost cursor-pointer">上传<input type="file" accept="audio/*" class="hidden" @change="uploadInto('clickSound', ($event.target as HTMLInputElement).files)" /></label></div></label>
+            </div>
+          </section>
+          <div class="grid gap-4 xl:grid-cols-2">
+            <section class="panel">
+              <h3 class="font-black text-white">日间模式颜色</h3>
+              <div class="mt-4 grid gap-3">
+                <label v-for="(_, key) in form.themeConfig.day" :key="String(key)" class="theme-token-row">
+                  <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(form.themeConfig.day[key]) }"></span>
+                  <span class="min-w-0"><b>{{ tokenLabel(String(key)) }}</b><small>{{ key }}</small></span>
+                  <div class="flex min-w-0 flex-1 gap-2">
+                    <input type="color" class="theme-color-input" :value="colorPickerValue(form.themeConfig.day[key])" @input="form.themeConfig.day[key] = ($event.target as HTMLInputElement).value" />
+                    <input v-model="form.themeConfig.day[key]" class="admin-input min-w-0 flex-1" />
                   </div>
                 </label>
               </div>
-              <p class="mt-3 text-xs leading-5 text-white/45">前台只在按钮、链接和表单控件点击时播放；空白点击不播放。音量建议保持 0.03 到 0.08。</p>
-            </div>
-            <div class="grid gap-4 xl:grid-cols-2">
-              <div class="rounded-[28px] border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.035] p-4">
-                <h3 class="font-black text-white">日间模式核心 token</h3>
-                <div class="mt-4 grid gap-3">
-                  <label v-for="(_, key) in form.themeConfig.day" :key="String(key)" class="theme-token-row">
-                    <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(form.themeConfig.day[key]) }"></span>
-                    <span class="min-w-0"><b>{{ tokenLabel(String(key)) }}</b><small>{{ key }}</small></span>
-                    <div class="flex min-w-0 flex-1 gap-2">
-                      <input type="color" class="theme-color-input" :value="colorPickerValue(form.themeConfig.day[key])" @input="form.themeConfig.day[key] = ($event.target as HTMLInputElement).value" />
-                      <input v-model="form.themeConfig.day[key]" class="admin-input min-w-0 flex-1" />
-                    </div>
-                  </label>
-                </div>
+            </section>
+            <section class="panel">
+              <h3 class="font-black text-white">夜间模式颜色</h3>
+              <div class="mt-4 grid gap-3">
+                <label v-for="(_, key) in form.themeConfig.night" :key="String(key)" class="theme-token-row">
+                  <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(form.themeConfig.night[key]) }"></span>
+                  <span class="min-w-0"><b>{{ tokenLabel(String(key)) }}</b><small>{{ key }}</small></span>
+                  <div class="flex min-w-0 flex-1 gap-2">
+                    <input type="color" class="theme-color-input" :value="colorPickerValue(form.themeConfig.night[key])" @input="form.themeConfig.night[key] = ($event.target as HTMLInputElement).value" />
+                    <input v-model="form.themeConfig.night[key]" class="admin-input min-w-0 flex-1" />
+                  </div>
+                </label>
               </div>
-              <div class="rounded-[28px] border border-white/10 bg-gradient-to-br from-slate-950/45 to-white/[0.035] p-4">
-                <h3 class="font-black text-white">夜间模式核心 token</h3>
-                <div class="mt-4 grid gap-3">
-                  <label v-for="(_, key) in form.themeConfig.night" :key="String(key)" class="theme-token-row">
-                    <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(form.themeConfig.night[key]) }"></span>
-                    <span class="min-w-0"><b>{{ tokenLabel(String(key)) }}</b><small>{{ key }}</small></span>
-                    <div class="flex min-w-0 flex-1 gap-2">
-                      <input type="color" class="theme-color-input" :value="colorPickerValue(form.themeConfig.night[key])" @input="form.themeConfig.night[key] = ($event.target as HTMLInputElement).value" />
-                      <input v-model="form.themeConfig.night[key]" class="admin-input min-w-0 flex-1" />
-                    </div>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <p class="text-sm leading-6 text-white/50">这些 token 会进入公开站点配置，用于前台昼夜模式、顶部导航、卡片、首页模块和文字层级；不要在这里填写任何 Secret。</p>
-            <label class="grid gap-2 text-sm text-white/65">背景图列表，每行一个 URL<textarea v-model="form.bgImagesText" rows="6" class="admin-input"></textarea></label>
-            <label class="admin-btn admin-btn-ghost w-fit cursor-pointer">上传背景图并追加 URL<input type="file" accept="image/*" class="hidden" @change="uploadInto('bg', ($event.target as HTMLInputElement).files)" /></label>
-            <label class="grid gap-2 text-sm text-white/65">公开音乐 ID，逗号分隔<input v-model="form.cloudMusicIdsText" class="admin-input" /></label>
-          </template>
-
-          <template v-else-if="active === 'comments'">
-            <div class="rounded-[24px] border border-cyan-200/15 bg-cyan-300/[0.07] p-4 text-sm leading-6 text-cyan-50/78">
-              前台评论仅支持 GitHub 登录。GitHub OAuth Secret 只保存在后端，不会在后台响应或前台构建产物中回显。
-            </div>
-            <div class="grid gap-3 md:grid-cols-2">
-              <label class="setting-check"><input v-model="form.comments.enabled" type="checkbox" />开启留言板</label>
-              <label class="setting-check"><input v-model="form.comments.githubLoginEnabled" type="checkbox" />启用 GitHub 登录留言</label>
-              <label class="grid gap-2 text-sm text-white/65">评论最大长度<input v-model.number="form.comments.maxLength" type="number" min="1" max="5000" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">GitHub Client ID<input v-model="form.comments.gitalkClientID" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">GitHub Repo<input v-model="form.comments.gitalkRepo" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">GitHub Owner<input v-model="form.comments.gitalkOwner" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">Gitalk Admin，逗号分隔<input v-model="form.comments.gitalkAdminText" class="admin-input" /></label>
-              <div class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-sm text-white/60">
-                GitHub OAuth Secret configured:
-                {{ raw.serverSecrets?.githubOAuthConfigured || raw.serverSecrets?.githubOAuthSecretConfigured ? 'true' : 'false' }}
-              </div>
-              <label class="grid gap-2 text-sm text-white/65 md:col-span-2">新的 GitHub OAuth Secret<input v-model="secretInputs.githubOAuthSecret" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保留旧值，不回显明文" /></label>
-            </div>
-          </template>
-
-          <template v-else-if="active === 'image'">
-            <div class="grid gap-3 md:grid-cols-2">
-              <label class="grid gap-2 text-sm text-white/65">Provider<select v-model="form.imageBed.provider" class="admin-input"><option>local</option><option>oss</option><option>custom</option></select></label>
-              <label class="grid gap-2 text-sm text-white/65">Public Base URL<input v-model="form.imageBed.publicBaseUrl" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">Bucket<input v-model="form.imageBed.bucket" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">Region<input v-model="form.imageBed.region" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">Endpoint<input v-model="form.imageBed.endpoint" class="admin-input" /></label>
-              <div class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-sm text-white/60">AccessKey configured: {{ form.imageBed.accessKeyConfigured }}<br />Secret configured: {{ form.imageBed.ossSecretConfigured }}</div>
-              <label class="grid gap-2 text-sm text-white/65">新的 AccessKey ID<input v-model="secretInputs.accessKeyId" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保留旧值" /></label>
-              <label class="grid gap-2 text-sm text-white/65">新的 AccessKey Secret<input v-model="secretInputs.ossSecretInput" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保留旧值" /></label>
-            </div>
-            <button class="admin-btn admin-btn-ghost w-fit" @click="testImageBed">测试配置格式</button>
-          </template>
-
-          <template v-else-if="active === 'ai'">
-            <div class="grid gap-3 md:grid-cols-2">
-              <label class="grid gap-2 text-sm text-white/65">Provider<input v-model="form.ai.provider" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65">Model<input v-model="form.ai.model" class="admin-input" /></label>
-              <label class="grid gap-2 text-sm text-white/65 md:col-span-2">Base URL<input v-model="form.ai.baseUrl" class="admin-input" /></label>
-              <label class="setting-check"><input v-model="form.ai.enableChat" type="checkbox" />启用后台聊天</label>
-              <div class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-sm text-white/60">API Key configured: {{ form.ai.aiKeyConfigured }}</div>
-              <label class="grid gap-2 text-sm text-white/65 md:col-span-2">新的 API Key<input v-model="secretInputs.aiKeyInput" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保留旧值，不进入前台" /></label>
-            </div>
-          </template>
-
-          <template v-else>
-            <div class="grid gap-3">
-              <div v-for="item in productionChecks" :key="item.label" class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-sm" :class="item.ok ? 'text-emerald-100' : 'text-amber-100'">{{ item.ok ? 'OK' : 'CHECK' }} - {{ item.label }}</div>
-              <p class="text-sm leading-6 text-white/55">服务器部署、Nginx、systemd、backend/data 权限和 .env 生产配置请参见 `docs/DEPLOYMENT.md`。</p>
-            </div>
-          </template>
-
-          <div class="flex flex-wrap gap-3">
-            <button :disabled="saving" class="admin-btn admin-btn-primary" @click="save()">{{ saving ? '保存中...' : '保存设置' }}</button>
-            <button :disabled="saving" class="admin-btn admin-btn-ghost" @click="stageSettings">加入暂存（非 Secret）</button>
-            <button class="admin-btn admin-btn-ghost" @click="load">取消未保存修改</button>
+            </section>
           </div>
+          <label class="field">背景图 URL<textarea v-model="form.bgImagesText" rows="6" class="admin-input"></textarea></label>
+          <label class="admin-btn admin-btn-ghost w-fit cursor-pointer">上传背景图<input type="file" accept="image/*" class="hidden" @change="uploadInto('bg', ($event.target as HTMLInputElement).files)" /></label>
+          <label class="field">公开音乐 ID<input v-model="form.cloudMusicIdsText" class="admin-input" /></label>
+        </template>
+
+        <template v-else-if="active === 'comments'">
+          <section class="panel text-sm leading-6 text-cyan-50/78">
+            前台留言板支持 GitHub 和 QQ 登录。OAuth Secret 只保存在服务端，公开设置只返回是否已配置。
+          </section>
+          <div class="grid gap-3 md:grid-cols-2">
+            <label class="setting-check"><input v-model="form.comments.enabled" type="checkbox" />开启留言板</label>
+            <label class="setting-check"><input v-model="form.comments.githubLoginEnabled" type="checkbox" />启用 GitHub 登录留言</label>
+            <label class="setting-check"><input v-model="form.comments.qqLoginEnabled" type="checkbox" />启用 QQ 登录留言</label>
+            <label class="field">留言最大长度<input v-model.number="form.comments.maxLength" type="number" min="1" max="5000" class="admin-input" /></label>
+            <label class="field">GitHub 客户端 ID<input v-model="form.comments.gitalkClientID" class="admin-input" /></label>
+            <label class="field">GitHub 仓库<input v-model="form.comments.gitalkRepo" class="admin-input" /></label>
+            <label class="field">GitHub 所有者<input v-model="form.comments.gitalkOwner" class="admin-input" /></label>
+            <label class="field">Gitalk 管理员 CSV<input v-model="form.comments.gitalkAdminText" class="admin-input" /></label>
+            <div class="status-box">GitHub OAuth Secret 状态：{{ statusText(raw.serverSecrets?.githubOAuthConfigured || raw.serverSecrets?.githubOAuthSecretConfigured) }}</div>
+            <label class="field md:col-span-2">新的 GitHub OAuth Secret<input v-model="secretInputs.githubOAuthSecret" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
+            <label class="field">QQ 应用 ID<input v-model="form.comments.qqAppID" class="admin-input" /></label>
+            <div class="status-box">QQ App Secret 状态：{{ statusText(raw.serverSecrets?.qqOAuthConfigured || raw.serverSecrets?.qqOAuthSecretConfigured) }}</div>
+            <label class="field md:col-span-2">新的 QQ App Secret<input v-model="secretInputs.qqOAuthSecret" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
+          </div>
+        </template>
+
+        <template v-else-if="active === 'image'">
+          <div class="grid gap-3 md:grid-cols-2">
+            <label class="field">存储类型<select v-model="form.imageBed.provider" class="admin-input"><option>local</option><option>oss</option><option>custom</option></select></label>
+            <label class="field">公开访问基础 URL<input v-model="form.imageBed.publicBaseUrl" class="admin-input" /></label>
+            <label class="field">存储桶<input v-model="form.imageBed.bucket" class="admin-input" /></label>
+            <label class="field">Region / 地域<input v-model="form.imageBed.region" class="admin-input" /></label>
+            <label class="field">服务端点<input v-model="form.imageBed.endpoint" class="admin-input" /></label>
+            <div class="status-box">AccessKey 状态：{{ statusText(form.imageBed.accessKeyConfigured) }}<br />Secret 状态：{{ statusText(form.imageBed.ossSecretConfigured) }}</div>
+            <label class="field">新的 AccessKey ID<input v-model="secretInputs.accessKeyId" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
+            <label class="field">新的 AccessKey Secret<input v-model="secretInputs.ossSecretInput" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
+          </div>
+          <button class="admin-btn admin-btn-ghost w-fit" @click="testImageBed">测试配置格式</button>
+        </template>
+
+        <template v-else-if="active === 'ai'">
+          <div class="grid gap-3 md:grid-cols-2">
+            <label class="field">服务商<input v-model="form.ai.provider" class="admin-input" /></label>
+            <label class="field">模型<input v-model="form.ai.model" class="admin-input" /></label>
+            <label class="field md:col-span-2">基础地址 URL<input v-model="form.ai.baseUrl" class="admin-input" /></label>
+            <label class="setting-check"><input v-model="form.ai.enableChat" type="checkbox" />启用后台聊天</label>
+            <div class="status-box">API 密钥状态：{{ statusText(form.ai.aiKeyConfigured) }}</div>
+            <label class="field md:col-span-2">新的 API 密钥<input v-model="secretInputs.aiKeyInput" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="grid gap-3">
+            <div v-for="item in productionChecks" :key="item.label" class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-sm" :class="item.ok ? 'text-emerald-100' : 'text-amber-100'">{{ item.ok ? '通过' : '待检查' }} - {{ item.label }}</div>
+            <p class="text-sm leading-6 text-white/55">Nginx、systemd、数据目录权限和生产环境变量说明见 docs/DEPLOYMENT.md。</p>
+          </div>
+        </template>
+
+        <div class="flex flex-wrap gap-3">
+          <button :disabled="saving" class="admin-btn admin-btn-primary" @click="save()">{{ saving ? '保存中...' : '保存设置' }}</button>
+          <button :disabled="saving" class="admin-btn admin-btn-ghost" @click="stageSettings">暂存非私密设置</button>
+          <button class="admin-btn admin-btn-ghost" @click="load">放弃未保存修改</button>
         </div>
       </div>
+    </div>
 
-      <div class="glass rounded-[30px] p-5">
-        <button class="relative z-[1] flex w-full items-center justify-between text-left" @click="advancedOpen = !advancedOpen">
-          <span class="font-bold text-white">高级 JSON 编辑</span>
-          <span class="text-sm text-white/45">{{ advancedOpen ? '收起' : '展开' }}</span>
-        </button>
-        <div v-if="advancedOpen" class="relative z-[1] mt-4 grid gap-3">
-          <p class="text-sm leading-6 text-amber-100/70">仅作兜底。Secret 仍不会在后台响应中明文回显；留空 Secret 保存时后端会保留旧值。</p>
-          <textarea v-model="jsonText" rows="18" class="admin-input font-mono text-sm"></textarea>
-          <p v-if="jsonError" class="text-sm text-red-200/85">{{ jsonError }}</p>
-          <button :disabled="saving" class="admin-btn admin-btn-ghost w-fit" @click="saveAdvancedJson">保存高级 JSON</button>
-        </div>
+    <div class="glass rounded-[30px] p-5">
+      <button class="relative z-[1] flex w-full items-center justify-between text-left" @click="advancedOpen = !advancedOpen">
+        <span class="font-bold text-white">高级 JSON 编辑</span>
+        <span class="text-sm text-white/45">{{ advancedOpen ? '收起' : '展开' }}</span>
+      </button>
+      <div v-if="advancedOpen" class="relative z-[1] mt-4 grid gap-3">
+        <p class="text-sm leading-6 text-amber-100/70">仅作为兜底入口。Secret 留空由后端保留旧值，后台响应不会回显明文。</p>
+        <textarea v-model="jsonText" rows="18" class="admin-input font-mono text-sm"></textarea>
+        <p v-if="jsonError" class="text-sm text-red-200/85">{{ jsonError }}</p>
+        <button :disabled="saving" class="admin-btn admin-btn-ghost w-fit" @click="saveAdvancedJson">保存高级 JSON</button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.field {
+  display: grid;
+  gap: 0.5rem;
+  color: rgb(255 255 255 / 0.65);
+  font-size: 0.875rem;
+}
 .admin-input {
   width: 100%;
   border-radius: 1rem;
@@ -560,14 +566,22 @@ onMounted(load)
 .admin-input:focus {
   border-color: rgb(103 232 249 / 0.6);
 }
+.panel,
+.status-box,
+.setting-check {
+  border-radius: 1.5rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.06);
+  padding: 1rem;
+}
+.status-box {
+  color: rgb(255 255 255 / 0.6);
+  font-size: 0.875rem;
+}
 .setting-check {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  border-radius: 1rem;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  background: rgb(255 255 255 / 0.06);
-  padding: 0.9rem 1rem;
   color: rgb(255 255 255 / 0.72);
 }
 .theme-token-row {

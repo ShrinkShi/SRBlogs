@@ -6,7 +6,7 @@ import bleach
 from fastapi import APIRouter, Depends, HTTPException
 
 from app.config import get_settings
-from app.api.auth import require_github_user
+from app.api.auth import require_visitor_user
 from app.models.schemas import CommentCreate, CommentIndexItem, CommentItem
 from app.services.audit_service import write_audit
 from app.services.auth_service import require_admin
@@ -16,7 +16,7 @@ from app.services.json_service import JsonStore
 
 router = APIRouter(prefix="/comments", tags=["comments"])
 admin_router = APIRouter(prefix="/admin/comments", tags=["comments"], dependencies=[Depends(require_admin)])
-ALLOWED_RESOURCES = {"posts", "moments", "chatters"}
+ALLOWED_RESOURCES = {"posts", "moments", "chatters", "music", "photos"}
 
 
 def _store(resource: str, slug: str) -> JsonStore:
@@ -92,7 +92,7 @@ def list_comments(resource: str, slug: str):
 
 
 @router.post("/{resource}/{slug}", response_model=CommentItem)
-def create_comment(resource: str, slug: str, payload: CommentCreate, github_user: dict = Depends(require_github_user)):
+def create_comment(resource: str, slug: str, payload: CommentCreate, visitor_user: dict = Depends(require_visitor_user)):
     options = _comment_options()
     if not _comments_enabled(options):
         raise HTTPException(status_code=403, detail="Comments are closed")
@@ -101,12 +101,17 @@ def create_comment(resource: str, slug: str, payload: CommentCreate, github_user
         raise HTTPException(status_code=400, detail=f"Comment content must be at most {max_length} characters")
     store = _store(resource, slug)
     comments = store.read()
+    provider = bleach.clean(str(visitor_user.get("provider") or ""), tags=[], strip=True)
+    provider_id = bleach.clean(str(visitor_user.get("id") or ""), tags=[], strip=True)
+    author = bleach.clean(str(visitor_user.get("name") or provider_id or "Visitor"), tags=[], strip=True)
     item = {
         "id": uuid4().hex,
-        "author": bleach.clean(str(github_user.get("name") or github_user.get("login") or "GitHub User"), tags=[], strip=True),
+        "author": author,
         "email": "",
-        "avatar": bleach.clean(str(github_user.get("avatar") or ""), tags=[], strip=True),
-        "githubLogin": bleach.clean(str(github_user.get("login") or ""), tags=[], strip=True),
+        "avatar": bleach.clean(str(visitor_user.get("avatar") or ""), tags=[], strip=True),
+        "provider": provider,
+        "providerId": provider_id,
+        "githubLogin": provider_id if provider == "github" else "",
         "content": bleach.clean(payload.content, tags=[], strip=True),
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }

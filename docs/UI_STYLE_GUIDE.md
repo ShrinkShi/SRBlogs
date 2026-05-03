@@ -1,4 +1,12 @@
-﻿# UI Style Guide
+# UI Style Guide
+
+## 2026-05-03 多平台留言与搜索框收口规范
+
+- 前台留言板所有访客可见文案必须使用中文。GitHub/QQ 未配置时，只显示“站点暂未开启 GitHub/QQ 留言，请稍后再试或联系站点管理员。”，不得出现后端、Secret、`.env` 等开发者文案。
+- GitHub 与 QQ 登录入口必须独立判断：一个平台未配置时，只禁用或提示该平台，不能影响另一个已配置平台。
+- 后台留言设置使用中文主标签：是否开启留言板、GitHub 登录留言、QQ 登录留言、客户端 ID、应用 ID、密钥已配置状态等；内部字段名可以保持英文。
+- 搜索区域外层保持轻量、无厚重边框和背景；搜索输入框本体保留清晰输入框样式，背景更不透明，高度更紧凑，右侧使用深色搜索图标按钮。
+- 留言板、搜索框、标题区在 390px 下不得产生严重横向溢出。
 
 ## 2026-05-03 列表页与播放器收口补充
 
@@ -218,3 +226,7 @@ P2 视觉增强只有在以下检查通过后才可继续提升状态：
 - Media grid sections must grow naturally. Do not put fixed-height clipping containers around album photo previews.
 - Album thumbnails should use stable preview dimensions and `object-fit: cover`; large source images must not stretch the modal.
 - Scrolling should happen at the modal body level, not inside each small photo section.
+
+## 2026-05-03 Message Board and Search Polish
+
+Message boards use the same glass surface as article comments, music, and photowall album dialogs. Login buttons should be clear platform choices, with disabled states still readable. Search inputs should be compact, more opaque than the surrounding lightweight search area, and keep an icon-only dark search button.

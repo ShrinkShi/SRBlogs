@@ -37,11 +37,11 @@ onMounted(loadSettings)
   <section class="grid gap-5">
     <GlassCard>
       <h1 class="text-4xl font-black">AI 聊天助手</h1>
-      <p class="mt-2 text-white/50">支持 A/B 端点切换。API Key 只从服务端配置读取，后台不回显明文。</p>
+      <p class="mt-2 text-white/50">支持 A/B 端点切换。API 密钥只从服务端配置读取，后台不回显明文。</p>
       <p v-if="settingsLoading" class="mt-3 text-sm text-white/50">AI 设置读取中...</p>
       <p v-if="settingsError" class="mt-3 text-sm text-red-200/80">{{ settingsError }}</p>
       <p v-if="disabled" class="mt-3 rounded-2xl border border-amber-200/20 bg-amber-300/10 p-3 text-sm text-amber-50/80">AI 聊天已在设置中心关闭。</p>
-      <p v-else-if="!aiConfigured" class="mt-3 rounded-2xl border border-white/10 bg-white/[0.06] p-3 text-sm text-white/55">AI Key 未配置或仅存在于服务端环境占位，发送时将返回未配置提示。</p>
+      <p v-else-if="!aiConfigured" class="mt-3 rounded-2xl border border-white/10 bg-white/[0.06] p-3 text-sm text-white/55">AI 密钥未配置或仅存在于服务端环境占位，发送时将返回未配置提示。</p>
     </GlassCard>
     <GlassCard>
       <select v-model="provider" class="mb-4 rounded-2xl border border-white/10 bg-white/10 px-4 py-2"><option value="a">线路 A</option><option value="b">线路 B</option></select>

@@ -81,6 +81,8 @@ class CommentItem(BaseModel):
     created_at: str
     avatar: str = ""
     githubLogin: str = ""
+    provider: str = ""
+    providerId: str = ""
 
 
 class CommentIndexItem(BaseModel):

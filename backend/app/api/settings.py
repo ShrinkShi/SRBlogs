@@ -35,11 +35,28 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
     github_client_secret = settings.github_oauth_client_secret or gitalk.get("clientSecret", "")
     github_login_configured = bool(github_client_id and github_client_secret)
     github_login_enabled = comments.get("githubLoginEnabled", comments.get("githubEnabled", True)) is not False
+    qq = deepcopy(data.get("qqOAuth") or comments.get("qq") or {})
+    qq_app_id = settings.qq_oauth_app_id or qq.get("appID", "") or qq.get("appId", "") or qq.get("clientID", "")
+    qq_app_secret = settings.qq_oauth_app_secret or qq.get("appSecret", "") or qq.get("clientSecret", "")
+    qq_login_configured = bool(qq_app_id and qq_app_secret)
+    qq_login_enabled = comments.get("qqLoginEnabled", True) is not False
     public_comments = {
         "enabled": comments.get("enabled", True),
-        "provider": "github",
+        "provider": "multi",
+        "providers": {
+            "github": {
+                "enabled": github_login_enabled,
+                "configured": github_login_configured,
+            },
+            "qq": {
+                "enabled": qq_login_enabled,
+                "configured": qq_login_configured,
+            },
+        },
         "githubLoginEnabled": github_login_enabled,
         "githubLoginConfigured": github_login_configured,
+        "qqLoginEnabled": qq_login_enabled,
+        "qqLoginConfigured": qq_login_configured,
         "maxLength": comments.get("maxLength", 1000),
         "gitalk": {
             "clientID": gitalk.get("clientID", ""),
@@ -63,6 +80,9 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "githubOAuth": {
             "configured": github_login_configured,
         },
+        "qqOAuth": {
+            "configured": qq_login_configured,
+        },
         "comments": public_comments,
     }
 
@@ -72,6 +92,10 @@ def admin_settings(data: dict[str, Any]) -> dict[str, Any]:
     gitalk = result.get("gitalkConfig")
     if isinstance(gitalk, dict):
         gitalk["clientSecretConfigured"] = _configured(gitalk.pop("clientSecret", ""))
+    qq_oauth = result.get("qqOAuth")
+    if isinstance(qq_oauth, dict):
+        qq_secret = qq_oauth.pop("appSecret", "") or qq_oauth.pop("clientSecret", "")
+        qq_oauth["appSecretConfigured"] = _configured(qq_secret)
     image_bed = result.get("imageBed")
     if isinstance(image_bed, dict):
         access_key = image_bed.pop("accessKeyId", "") or image_bed.pop("accessKey", "")
@@ -99,6 +123,11 @@ def admin_settings(data: dict[str, Any]) -> dict[str, Any]:
             (get_settings().github_oauth_client_id or (data.get("gitalkConfig") or {}).get("clientID", ""))
             and (get_settings().github_oauth_client_secret or (data.get("gitalkConfig") or {}).get("clientSecret", ""))
         ),
+        "qqOAuthSecretConfigured": _configured((data.get("qqOAuth") or {}).get("appSecret", "")),
+        "qqOAuthConfigured": _configured(
+            (get_settings().qq_oauth_app_id or (data.get("qqOAuth") or {}).get("appID", "") or (data.get("qqOAuth") or {}).get("appId", ""))
+            and (get_settings().qq_oauth_app_secret or (data.get("qqOAuth") or {}).get("appSecret", ""))
+        ),
     }
     return result
 
@@ -109,6 +138,9 @@ def _strip_computed_fields(data: dict[str, Any]) -> dict[str, Any]:
     gitalk = cleaned.get("gitalkConfig")
     if isinstance(gitalk, dict):
         gitalk.pop("clientSecretConfigured", None)
+    qq_oauth = cleaned.get("qqOAuth")
+    if isinstance(qq_oauth, dict):
+        qq_oauth.pop("appSecretConfigured", None)
     image_bed = cleaned.get("imageBed")
     if isinstance(image_bed, dict):
         image_bed.pop("ossKeyConfigured", None)
@@ -139,6 +171,8 @@ def write_admin_settings(payload: JsonWrite, actor: str = Depends(require_admin)
     incoming = _strip_computed_fields(payload.data) if isinstance(payload.data, dict) else {}
     for secret_section, secret_key in (
         ("gitalkConfig", "clientSecret"),
+        ("qqOAuth", "appSecret"),
+        ("qqOAuth", "clientSecret"),
         ("imageBed", "accessKeyId"),
         ("imageBed", "accessKey"),
         ("imageBed", "token"),

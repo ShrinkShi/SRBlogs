@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
+import CommentBox from '@/components/CommentBox.vue'
 import { contentApi } from '@/api/content'
 import type { MusicItem, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
@@ -188,5 +189,7 @@ onMounted(load)
         </div>
       </GlassCard>
     </div>
+
+    <CommentBox resource="music" slug="global" />
   </section>
 </template>

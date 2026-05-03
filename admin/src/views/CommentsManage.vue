@@ -14,7 +14,7 @@ const loadingComments = ref(false)
 const deleting = ref('')
 const indexError = ref('')
 const commentsError = ref('')
-const advancedResource = ref<'posts' | 'moments' | 'chatters'>('posts')
+const advancedResource = ref<'posts' | 'moments' | 'chatters' | 'music' | 'photos'>('posts')
 const advancedSlug = ref('')
 
 function readableError(exc: unknown, fallback: string) {
@@ -55,7 +55,7 @@ async function loadIndex(keepSelection = true) {
   }
 }
 
-async function loadComments(resource: 'posts' | 'moments' | 'chatters', slug: string) {
+async function loadComments(resource: 'posts' | 'moments' | 'chatters' | 'music' | 'photos', slug: string) {
   commentsError.value = ''
   comments.value = []
   loadingComments.value = true
@@ -191,6 +191,8 @@ onMounted(() => loadIndex(false))
                 <option value="posts">posts</option>
                 <option value="moments">moments</option>
                 <option value="chatters">chatters</option>
+                <option value="music">music</option>
+                <option value="photos">photos</option>
               </select>
               <input v-model="advancedSlug" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="slug" @keyup.enter="advancedLoad" />
               <button :disabled="loadingComments" class="rounded-2xl border border-white/12 px-5 py-3 font-bold text-white/72 disabled:opacity-50" @click="advancedLoad">

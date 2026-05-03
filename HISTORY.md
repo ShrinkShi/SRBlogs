@@ -1,5 +1,176 @@
 # HISTORY
 
+## 2026-05-03 - 多平台留言登录与中文化回归修复
+
+本轮目标：
+
+- 修复 GitHub / QQ 留言状态互相影响的问题。
+- 修复点击登录进入 Not Found 的风险。
+- 恢复前台留言板与后台设置中心的中文 UI 文案。
+- 继续降低搜索框高度并提高搜索框不透明度。
+
+当前进度估算：
+
+- P0：100%。
+- P1：98%，多平台留言 API、未登录 401 和 OAuth 登录入口路由已通过自动验证；真实第三方授权仍依赖有效 GitHub/QQ 应用配置后做浏览器验收。
+- P2：约 95%，搜索框细节与 UI 中文化已收口，仍需用户做最终浏览器视觉确认。
+
+前台变更：
+
+- `CommentBox` 优先读取 `comments.providers.github` 与 `comments.providers.qq`，GitHub 和 QQ 的 `enabled/configured` 状态独立判断。
+- GitHub 已配置时显示“使用 GitHub 登录后留言”，QQ 未配置不会影响 GitHub。
+- QQ 未配置时只显示“站点暂未开启 QQ 留言，请稍后再试或联系站点管理员。”。
+- 登录跳转会自动补齐 `/api` 前缀，避免 `VITE_API_BASE_URL` 不带 `/api` 时跳到错误路径。
+- 留言板加载、发布、退出、错误和未配置提示均改为中文。
+- `SearchBar` 与搜索页搜索框进一步降低高度，提高背景不透明度，并修复搜索框占位文案乱码。
+
+后台变更：
+
+- `SettingsPanels.vue` 中站点、主题、留言、图床、AI、部署检查、按钮、状态和高级 JSON 入口改为中文展示。
+- Secret 状态显示为“已配置 / 未配置”，不再在 UI 中显示 true/false。
+- 留言设置保留 GitHub 和 QQ 的独立开关、ID、Secret 状态和“留空则保持旧值，不回显明文”提示。
+
+后端/API 变更：
+
+- `GET /api/settings/public` 的 `comments` 增加 `providers.github` 与 `providers.qq` 独立状态：`enabled`、`configured`。
+- 继续保留旧字段 `githubLoginConfigured`、`qqLoginConfigured` 兼容旧前端。
+- GitHub / QQ OAuth callback URL 改为从当前后端请求生成，避免 `PUBLIC_BASE_URL` 指向前台时回调落到前台导致 Not Found。
+- 未登录留言接口返回中文 401 错误信息。
+- OAuth 未配置时返回访客友好的中文错误信息，不暴露 Secret、后端或 `.env` 细节。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient `GET /api/settings/public` 返回 `comments.providers.github.configured` 和 `comments.providers.qq.configured` 布尔值，未泄露 GitHub/QQ Secret。
+- 通过：FastAPI TestClient `GET /api/auth/visitor/me` 返回 GitHub/QQ 独立 configured 状态且不返回 access token。
+- 通过：FastAPI TestClient `GET /api/auth/github/login?returnTo=/posts/test` 返回 307，Location 指向 GitHub OAuth，不再是 404。
+- 通过：FastAPI TestClient `GET /api/auth/qq/login?returnTo=/posts/test` 返回 307，Location 指向 QQ OAuth，不再是 404。
+- 通过：FastAPI TestClient 未登录 `POST /api/comments/posts/vue-fastapi-blog` 返回 401，响应为中文提示。
+- 通过：构建产物 Secret 固定字符串搜索未匹配。
+- 通过：构建产物和源码中未匹配旧英文访客提示 `GitHub messages are not enabled`、`QQ messages are not enabled`、`Please try again later`、`contact the site owner`。
+
+遗留问题：
+
+- 本轮未启动 dev server 做浏览器人工回归；前台留言板按钮、后台设置页中文化、搜索框高度/透明度和 390px 移动端仍需用户在浏览器确认。
+- 真实 GitHub / QQ OAuth code flow 仍依赖有效第三方应用配置和回调地址白名单。
+
+## 2026-05-03 - 多平台留言状态与中文化回归修复
+
+本轮目标：
+
+- 修复 GitHub / QQ 留言状态互相影响的问题。
+- 修复登录跳转出现 Not Found 的风险。
+- 恢复前台留言板和后台设置中心的中文 UI 文案。
+- 继续压低搜索框高度并提升搜索框不透明度。
+
+当前进度估算：
+
+- P0：100%。
+- P1：98%，多平台留言 API 与未登录 401 已通过自动验证；真实 OAuth 授权仍需有效应用配置后浏览器验收。
+- P2：约 95%，搜索框细节和 UI 中文化已收口，仍需用户浏览器确认最终视觉。
+
+前台变更：
+
+- `CommentBox` 改为优先读取 `comments.providers.github` 和 `comments.providers.qq`，GitHub 与 QQ 的 enabled/configured 状态独立判断。
+- GitHub 已配置时显示“使用 GitHub 登录后留言”，QQ 未配置不会再影响 GitHub。
+- QQ 未配置时只显示“站点暂未开启 QQ 留言，请稍后再试或联系站点管理员。”。
+- 登录跳转会自动补齐 `/api` 前缀，避免 `VITE_API_BASE_URL` 不带 `/api` 时跳到错误路径。
+- 留言板加载、发布、退出、错误和未配置提示改为中文。
+- `SearchBar` 与搜索页搜索框进一步降低高度，提高背景不透明度，并修复搜索框占位文案乱码。
+
+后台变更：
+
+- `SettingsPanels.vue` 中站点、主题、留言、图床、AI、部署检查、按钮、状态和高级 JSON 入口改为中文展示。
+- Secret 状态显示为“已配置 / 未配置”，不再在 UI 中显示 true/false。
+- 留言设置保留 GitHub 和 QQ 的独立开关、ID、Secret 状态和“留空则保持旧值，不回显明文”提示。
+
+后端/API 变更：
+
+- `GET /api/settings/public` 的 `comments` 增加 `providers.github` 与 `providers.qq` 独立状态：
+  - `enabled`
+  - `configured`
+- 继续保留旧字段 `githubLoginConfigured`、`qqLoginConfigured` 兼容旧前端。
+- GitHub / QQ OAuth callback URL 改为从当前后端请求生成，避免 `PUBLIC_BASE_URL` 指向前台时回调落到前台导致 Not Found。
+- 未登录留言接口返回中文 401 错误信息。
+- OAuth 未配置时返回访客友好的中文错误信息，不暴露 Secret、后端或 `.env` 细节。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：FastAPI TestClient `GET /api/settings/public` 返回 `comments.providers.github.configured` 和 `comments.providers.qq.configured` 布尔值，未泄露 GitHub/QQ Secret。
+- 通过：FastAPI TestClient `GET /api/auth/visitor/me` 返回 GitHub/QQ 独立 configured 状态且不返回 access token。
+- 通过：FastAPI TestClient `GET /api/auth/github/login?returnTo=/posts/test` 返回 307，Location 指向 GitHub OAuth，不再是 404。
+- 通过：FastAPI TestClient `GET /api/auth/qq/login?returnTo=/posts/test` 返回 307，Location 指向 QQ OAuth，不再是 404。
+- 通过：FastAPI TestClient 未登录 `POST /api/comments/posts/vue-fastapi-blog` 返回 401，响应为中文提示。
+- 通过：构建产物 Secret 固定字符串搜索未匹配。
+- 通过：构建产物中未匹配旧英文访客提示 `GitHub messages are not enabled`、`QQ messages are not enabled`、`Please try again later`、`contact the site owner`。
+
+遗留问题：
+
+- 本轮未启动 dev server 做浏览器人工回归；前台留言板按钮、后台设置页中文化、搜索框高度/透明度和 390px 移动端仍需用户在浏览器确认。
+- 真实 GitHub / QQ OAuth code flow 仍依赖有效第三方应用配置和回调地址白名单。
+
+## 2026-05-03 - Multi-provider message login and search input polish
+
+Goals:
+
+- Extend the frontend message board from GitHub-only login to GitHub + QQ login choices.
+- Add reusable message boards to the music page and photowall album dialog without changing the existing comment storage model.
+- Keep OAuth secrets server-side only and expose only configured booleans to public settings.
+- Reduce the shared search input height to about 75% of the previous size and make the input background more opaque.
+
+Progress estimate:
+
+- P0: 100%.
+- P1: 100%.
+- P2: about 96%. Browser visual QA for the new music/photo message boards and QQ real OAuth callback remains pending.
+
+Frontend changes:
+
+- `CommentBox` now uses generic visitor auth and shows both GitHub and QQ login choices when not logged in.
+- `CommentBox` supports `posts`, `moments`, `chatters`, `music`, and `photos` resources.
+- `/music` now includes a `music/global` message board while preserving global playback, lyrics, playlist, and volume state.
+- `/photowall` album preview dialog now includes a per-album `photos/{albumSlug}` message board.
+- Shared search inputs were tightened and made more opaque while keeping the search icon button.
+
+Admin changes:
+
+- Rebuilt `SettingsPanels.vue` into a stable ASCII-safe component after legacy encoded strings caused TypeScript parse failures.
+- Message settings now include GitHub login enable, QQ login enable, GitHub Client ID, QQ App ID, configured-state display, and blank-secret preservation.
+- Settings staging still excludes secret changes from local `pendingOperations`.
+
+Backend/API changes:
+
+- Added generic visitor auth cookie support while preserving existing GitHub endpoints.
+- Added `GET /api/auth/visitor/me` and `POST /api/auth/visitor/logout`.
+- Added QQ OAuth entry points: `GET /api/auth/qq/login` and `GET /api/auth/qq/callback`.
+- Public settings now expose `comments.provider="multi"`, `githubLoginConfigured`, and `qqLoginConfigured` as booleans only.
+- Comment creation now requires generic visitor login and records `provider` plus `providerId`; old comments remain compatible.
+- Comment resources now include `music` and `photos`.
+- Added `QQ_OAUTH_APP_ID` and `QQ_OAUTH_APP_SECRET` placeholders to env templates.
+
+Verification:
+
+- Passed: `cd frontend && npm run build`.
+- Passed: `cd admin && npm run build`.
+- Passed: `python -m compileall backend\app`.
+- Passed: TestClient `GET /api/settings/public` returns `comments.githubLoginConfigured` and `comments.qqLoginConfigured` as booleans and does not expose OAuth secrets.
+- Passed: TestClient `GET /api/auth/visitor/me` returns configured provider states and no access token.
+- Passed: TestClient `GET /api/auth/qq/login?returnTo=/music` returns 503 when QQ OAuth is not configured, without exposing secret details.
+- Passed: TestClient anonymous `POST /api/comments/music/global` returns 401.
+- Passed: simulated configured QQ login returns 307 to QQ OAuth and sets state cookie.
+- Passed: simulated configured GitHub login still returns 307 to GitHub OAuth and sets state cookie.
+
+Remaining:
+
+- Real QQ OAuth and GitHub OAuth callback flows require valid provider apps and browser QA.
+- Music and photowall message board placement needs browser confirmation.
+- Search input height/opacity needs browser confirmation at desktop and 390px widths.
+
 ## 2026-05-03 - GitHub 留言状态、相册弹窗滚动与中枢链路修复轮
 
 本轮目标：

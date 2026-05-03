@@ -52,7 +52,7 @@
     "admin": [
       "ShrinkShi"
     ],
-    "clientSecret": "8c7e8066298c5b77cce75eb30ff238d659196a41"
+    "clientSecret": "93288f122dc148db558e44f3c65939e7ea32f0cd"
   },
   "buildDate": "2026-03-23T00:00:00",
   "theme": "nebula",
@@ -88,12 +88,13 @@
   },
   "comments": {
     "enabled": true,
-    "provider": "github",
+    "provider": "multi",
     "githubLoginEnabled": true,
-    "requireEmail": false,
+    "qqLoginEnabled": true,
     "maxLength": 1000,
+    "requireEmail": false,
     "showEmail": false,
-    "localEnabled": true,
+    "localEnabled": false,
     "gitalk": {
       "clientID": "Ov23li1eR4q1w8vWvbP5",
       "repo": "SRBlogs",
@@ -101,6 +102,9 @@
       "admin": [
         "ShrinkShi"
       ]
+    },
+    "qq": {
+      "appID": "1112507606"
     }
   },
   "themeConfig": {
@@ -137,5 +141,9 @@
     "clickSoundEnabled": true,
     "clickSoundVolume": 0.05,
     "clickSoundUrl": ""
+  },
+  "qqOAuth": {
+    "appID": "1112507606",
+    "appSecret": ""
   }
 }

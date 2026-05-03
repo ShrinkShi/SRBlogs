@@ -89,6 +89,8 @@ export interface CommentItem {
   created_at: string
   avatar?: string
   githubLogin?: string
+  provider?: 'github' | 'qq' | ''
+  providerId?: string
 }
 
 export interface SiteSettings {
@@ -125,9 +127,21 @@ export interface SiteSettings {
   ai?: Record<string, unknown>
   comments?: {
     enabled?: boolean
-    provider?: 'github'
+    provider?: 'github' | 'multi'
+    providers?: {
+      github?: {
+        enabled?: boolean
+        configured?: boolean
+      }
+      qq?: {
+        enabled?: boolean
+        configured?: boolean
+      }
+    }
     githubLoginEnabled?: boolean
     githubLoginConfigured?: boolean
+    qqLoginEnabled?: boolean
+    qqLoginConfigured?: boolean
     maxLength?: number
     gitalk?: Record<string, unknown>
   }

@@ -2,23 +2,36 @@
 import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
+import CommentBox from '@/components/CommentBox.vue'
 import { contentApi } from '@/api/content'
 import type { PhotoAlbum, PhotoItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 
+type AlbumView = PhotoAlbum & { slug: string }
+
 const rawPhotos = ref<Array<PhotoItem | PhotoAlbum>>([])
-const activeAlbum = ref<PhotoAlbum | null>(null)
+const activeAlbum = ref<AlbumView | null>(null)
 const active = ref<PhotoItem | null>(null)
 const loading = ref(false)
 const error = ref('')
 useSeo({ title: '照片墙', description: 'SRBlogs 的照片墙、图片记录和预览。', path: '/photowall' })
 
-function normalizeAlbum(item: PhotoItem | PhotoAlbum, index: number): PhotoAlbum {
+function slugify(value: string, fallback: string) {
+  const slug = value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug || fallback
+}
+
+function normalizeAlbum(item: PhotoItem | PhotoAlbum, index: number): AlbumView {
   if ('photos' in item && Array.isArray(item.photos)) {
     const photos = item.photos.slice(0, 50)
     return {
       ...item,
       title: item.title || `相册 ${index + 1}`,
+      slug: slugify(item.title || item.cover || `album-${index + 1}`, `album-${index + 1}`),
       cover: item.cover || photos[0]?.url || '',
       photos
     }
@@ -26,6 +39,7 @@ function normalizeAlbum(item: PhotoItem | PhotoAlbum, index: number): PhotoAlbum
   const photo = item as PhotoItem
   return {
     title: photo.title || `相册 ${index + 1}`,
+    slug: slugify(photo.title || photo.url || `album-${index + 1}`, `album-${index + 1}`),
     description: photo.description,
     cover: photo.url,
     date: photo.date,
@@ -122,6 +136,7 @@ onMounted(load)
           </button>
         </div>
         <p class="text-center text-white/70">{{ active?.title }}</p>
+        <CommentBox v-if="activeAlbum" resource="photos" :slug="activeAlbum.slug" />
       </div>
     </div>
   </section>

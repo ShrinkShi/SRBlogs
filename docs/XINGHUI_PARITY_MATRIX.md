@@ -1,5 +1,23 @@
-﻿# XinghuisamaBlogs Parity Matrix
+# XinghuisamaBlogs Parity Matrix
 
+## 2026-05-03 多平台留言状态与中文化回归状态
+
+- 当前进度估算：P0 100%，P1 98%，P2 约 95%。
+- 本轮已修复 `GET /api/settings/public` 的多平台留言状态结构，新增 `comments.providers.github` 与 `comments.providers.qq`，两者 enabled/configured 独立判断。
+- 前台留言板已改为中文文案；GitHub 已配置时显示“使用 GitHub 登录后留言”，QQ 未配置不会影响 GitHub。
+- 后台设置中心留言、主题、图床、AI、部署提示等主流程文案已恢复中文；Secret 状态显示“已配置/未配置”。
+- GitHub/QQ 登录入口后端路由已通过 TestClient 验证不再返回 404；OAuth callback URL 改为根据后端请求生成，避免回调落到前台导致 Not Found。
+- 搜索框已继续降低高度并提高不透明度，保留深色搜索图标按钮。
+- 状态：P1 留言登录链路保持“进行中/待真实 OAuth 浏览器验收”；P2 视觉细节保持“进行中”，待用户确认搜索框和设置页视觉。
+
+## 2026-05-03 Multi-provider message login status
+
+- Current progress estimate: P0 100%, P1 100%, P2 about 96%.
+- This round adds GitHub + QQ visitor login choices to the shared frontend message board while preserving the existing GitHub flow.
+- Public settings now expose only boolean provider state: `comments.githubLoginConfigured` and `comments.qqLoginConfigured`; OAuth secrets remain server-side only.
+- Message board coverage now includes article detail, chatter detail, music page (`music/global`), and photowall album dialog (`photos/{albumSlug}`).
+- P1 is considered closed at API/build level; real QQ/GitHub OAuth callbacks still require provider app credentials and browser QA.
+- P2 remains in progress until the new music/photo message board placement and search input compact style pass browser review.
 ## 2026-05-03 留言板入口、标题轻量化与播放器音量收口状态
 - 当前进度估算：P0 100%，P1 约 98%，P2 约 93%。
 - 本轮已修复：前台留言板 GitHub 登录入口改为 `returnTo` 前台回跳流程，公开 `comments.githubLoginConfigured` 布尔状态用于区分留言板开启和 OAuth 配置；照片编辑弹窗改为 85vh 内部滚动；文章/杂谈/搜索结果卡片标签沉底；文章中枢链路恢复左右交替、贴靠中心线并保持三分之一宽；搜索输入框放大、去掉 `Search` 字样并增加深色搜索图标按钮；首页与音乐页播放器共享音量/静音状态。
