@@ -25,7 +25,7 @@ const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c
             />
             <div class="absolute inset-0 bg-gradient-to-b from-black/0 via-black/10 to-black/45"></div>
           </div>
-          <div class="flex flex-1 flex-col gap-3 p-5">
+          <div class="flex min-h-[16rem] flex-1 flex-col gap-3 p-5">
             <div class="flex items-center justify-between gap-3 text-xs text-white/45">
               <span>{{ formatDate(item.meta.date) }}</span>
               <span>{{ item.content.length }} chars</span>

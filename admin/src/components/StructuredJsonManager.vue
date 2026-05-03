@@ -315,10 +315,10 @@ onMounted(load)
       </GlassCard>
 
       <Teleport to="body">
-      <div v-if="modalOpen" class="fixed inset-0 z-[9990] grid place-items-center bg-slate-950/72 p-4 backdrop-blur-xl" @click.self="closeForm" @keydown.esc="closeForm">
-      <GlassCard class="flex max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden">
+      <div v-if="modalOpen" class="fixed inset-0 z-[9990] grid place-items-center overflow-y-auto bg-slate-950/72 p-4 backdrop-blur-xl" @click.self="closeForm" @keydown.esc="closeForm">
+      <GlassCard class="flex h-[min(85vh,820px)] w-full max-w-5xl flex-col overflow-hidden">
         <h2 class="text-xl font-black text-white">{{ isEditing ? '编辑' : '新增' }}{{ itemName }}</h2>
-        <div class="min-h-0 flex-1 overflow-y-auto pr-1">
+        <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-2">
         <div class="grid gap-3">
           <label v-for="field in fields" :key="field.key" class="grid gap-2 text-sm text-white/68">
             <span>{{ field.label }}<b v-if="field.required" class="text-red-200"> *</b></span>

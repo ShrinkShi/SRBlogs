@@ -133,8 +133,8 @@ const form = reactive({
 })
 
 const productionChecks = computed(() => [
-  { label: 'ADMIN_PASSWORD 已修改', ok: raw.value.serverSecrets?.adminPasswordConfigured === true },
-  { label: 'JWT_SECRET 已修改', ok: raw.value.serverSecrets?.jwtSecretConfigured === true },
+  { label: '管理员密码已修改', ok: raw.value.serverSecrets?.adminPasswordConfigured === true },
+  { label: 'JWT 签名密钥已修改', ok: raw.value.serverSecrets?.jwtSecretConfigured === true },
   { label: 'Secret 不在 settings 响应中明文回显', ok: true },
   { label: '上传大小限制有效：5 MB', ok: true },
   { label: 'CORS 白名单生产环境需收紧', ok: false },

@@ -129,4 +129,6 @@
 - 前台未配置 GitHub 留言时，只能提示访客“站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。”
 - 前台不得出现 `Secret`、`Client Secret`、`.env`、后端配置路径等开发者文案。
 - GitHub OAuth Client Secret 仍只能保存在后端 `.env` 或服务端配置中，构建产物不得包含该值。
+- `GET /api/auth/github/login` 使用 `returnTo` 作为前台回跳参数；后端必须限制绝对 URL 回跳来源，避免开放重定向。
+- 未登录直接调用 `POST /api/comments/{resource}/{slug}` 必须返回 401，不能保留匿名提交旁路。
 - 播放器音量设置仅保存在浏览器 localStorage，不属于敏感配置。

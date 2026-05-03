@@ -443,11 +443,11 @@ GitHub 登录后提交。新评论只允许 GitHub 登录这一种身份；后�
 ### GitHub Auth For Comments
 
 - `GET /auth/github/me`：返回 `{ configured, user }`。不需要 JWT，不返回 OAuth Secret。
-- `GET /auth/github/login?return_to=...`：启动 GitHub OAuth code flow，后端生成并校验 CSRF `state`。
-- `GET /auth/github/callback`：后端使用 GitHub OAuth Secret 换取 access token，读取 GitHub 公开用户信息，写入 HttpOnly 登录 cookie 后跳回 `return_to`。
+- `GET /auth/github/login?returnTo=...`：启动 GitHub OAuth code flow，后端生成并校验 CSRF `state`；兼容旧参数 `return_to`。
+- `GET /auth/github/callback`：后端使用 GitHub OAuth Secret 换取 access token，读取 GitHub 公开用户信息，写入 HttpOnly 登录 cookie 后跳回 `returnTo` 对应页面。
 - `POST /auth/github/logout`：清除评论登录 cookie。
 
-GitHub OAuth Client Secret 只能保存在后端 `.env` 或服务端配置。未配置时，前台评论区必须显示“GitHub 登录未配置”，不能回退到匿名评论。
+GitHub OAuth Client Secret 只能保存在后端 `.env` 或服务端配置。未配置时，前台留言板必须显示访客友好提示，不能回退到匿名评论。
 
 ### DELETE `/comments/{resource}/{slug}/{comment_id}`
 
@@ -640,7 +640,7 @@ Query：
 # 2026-05-03 契约补充：前台 GitHub 评论入口
 
 - GitHub 评论登录入口属于前台文章详情评论区；后台只提供 OAuth 配置和评论管理，不提供访客登录入口。
-- `GET /api/auth/github/me` 供前台评论区判断 `{ configured, user }`。未配置时前台应显示“GitHub 登录未配置，请联系站点管理员”。
+- `GET /api/auth/github/me` 供前台留言板判断 `{ configured, user }`。未配置时前台应显示“站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。”
 - `POST /api/comments/{resource}/{slug}` 对未登录 GitHub 的请求返回 `401`，不得回退到匿名作者或邮箱评论。
 - 前台展示名称统一为“留言板”。接口路径仍保持 `/api/comments/...`，避免破坏既有数据和后台管理契约。
 - OAuth 未配置时，前台文案应面向访客，例如“站点暂未开启 GitHub 登录留言，请稍后再试或联系站点管理员。”，不得要求访客“配置后端”。
@@ -649,5 +649,13 @@ Query：
 ## 2026-05-03 留言板与播放器补充
 
 - 前台留言板使用 `GET /api/auth/github/me` 判断 `{ configured, user }`。`configured=false` 时前台显示访客友好提示，不暴露 OAuth Secret 或服务端配置细节。
+
+## 2026-05-03 GitHub 留言 returnTo 契约修订
+
+- `GET /api/auth/github/login?returnTo=/posts/{slug}` 是前台留言板启动 GitHub 登录的主入口；后端兼容旧参数 `return_to`。
+- `returnTo` 支持前台相对路径。后端会解析为允许的前台来源，并拒绝非白名单绝对 URL 回跳，避免开放重定向。
+- OAuth 未配置时该接口返回统一错误结构，不返回 Client Secret、OAuth Secret、`.env` 路径或 access token。
+- `GET /api/auth/github/me` 返回 `{ "configured": boolean, "user": null | { "login": string, "name": string, "avatar": string, "html_url": string } }`，不返回 access token。
+- `POST /api/comments/{resource}/{slug}` 必须有 GitHub 登录态；未登录返回 `401`，旧留言仍可公开读取。
 - `POST /api/comments/{resource}/{slug}` 继续要求 GitHub 登录态；未登录返回 `401` 统一错误响应。
 - 首页和音乐页音量属于前端本地状态，不新增 API；音量和静音状态写入浏览器 `localStorage`。

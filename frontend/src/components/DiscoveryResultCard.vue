@@ -23,7 +23,8 @@ const typeLabels: Record<string, string> = {
         <span v-if="item.date" class="text-xs text-white/42">{{ item.date }}</span>
       </div>
       <h2 class="mt-3 break-words text-2xl font-black text-white">{{ item.title }}</h2>
-      <p v-if="item.summary" class="mt-3 line-clamp-3 break-words text-sm leading-7 text-white/58">{{ item.summary }}</p>
+      <p v-if="item.summary" class="mt-3 line-clamp-3 flex-1 break-words text-sm leading-7 text-white/58">{{ item.summary }}</p>
+      <div v-else class="flex-1"></div>
       <div v-if="item.tags?.length" class="mt-auto flex flex-wrap gap-2 pt-4">
         <span
           v-for="tag in item.tags"

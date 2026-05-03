@@ -1,6 +1,6 @@
 ﻿# HISTORY
 
-## 2026-05-03 - 留言板入口、标题轻量化与播放器音量收口轮
+## 2026-05-03 - 留言板 GitHub 入口硬修、相册滚动与列表细节收口轮
 
 本轮目标：
 - 修复前台留言板 GitHub 登录入口与访客视角未配置提示。
@@ -10,11 +10,11 @@
 
 当前进度估算：
 - P0：100%。
-- P1：98%，GitHub OAuth 真实授权仍需配置 Client ID/Secret 后做浏览器人工验收。
-- P2：约 93%，本轮完成列表页细节和播放器体验收口，仍需用户确认 390px 与真实浏览器视觉细节。
+- P1：98%，前台留言板入口、匿名 401 和 `returnTo` 登录入口已修复；GitHub OAuth 真实授权仍需配置 Client ID/Secret 后做浏览器人工验收。
+- P2：约 93%，本轮完成列表页细节和相册弹窗滚动收口，仍需用户确认 390px 与真实浏览器视觉细节。
 
 前台变更：
-- `CommentBox` 重写为前台“留言板”组件：未登录时显示“使用 GitHub 登录后留言”，未配置 OAuth 时显示访客友好文案，不暴露后端、Secret、`.env` 等开发者信息。
+- `CommentBox` 重写为前台“留言板”组件：未登录时只显示“使用 GitHub 登录后留言”入口或访客友好的未开启提示，不再显示匿名输入框；登录跳转改为 `/api/auth/github/login?returnTo=当前前台路径`。
 - 首页和 `/music` 播放器新增音量滑杆与静音按钮，复用 `player` 全局状态并写入 `localStorage`，切换页面后音量保持一致。
 - 搜索输入框恢复正常输入框样式，页面标题/搜索区域外层通过 `page-title-block` 取消厚重边框和背景填充。
 - 文章“中枢链路”模式卡片宽度收窄到约三分之一，并改为与矩阵网格一致的上图下文结构。
@@ -22,12 +22,12 @@
 - 非首页主要页面标题区增加轻量化样式，不再使用大毛玻璃卡片包住标题。
 
 后台变更：
-- 结构化内容编辑弹窗改为 `max-height: 85vh`，主体内容可纵向滚动，照片墙相册组大量缩略图不会把操作按钮挤出屏幕。
+- 结构化内容编辑弹窗改为固定 85vh 内部滚动结构，主体内容可纵向滚动，照片墙相册组大量缩略图不会被裁切，也不会把操作按钮挤出屏幕。
 - 相册组编辑的增加、删除、拖动排序和设置封面逻辑保持不变。
 
 后端/API 变更：
-- 本轮未新增后端接口。
-- TestClient 验证：`GET /api/auth/github/me` 当前返回 `configured=false`，匿名留言提交继续返回 401。
+- `GET /api/auth/github/login` 现在优先支持 `returnTo` 参数，同时兼容旧的 `return_to`；相对路径会解析到前台来源，并限制绝对回跳地址只能来自允许来源。
+- TestClient 验证：`GET /api/auth/github/me` 当前返回 `configured=false`，匿名留言提交继续返回 401；模拟已配置 OAuth 时 `/api/auth/github/login?returnTo=/posts/vue-fastapi-blog` 返回 307 并写入回跳 cookie。
 
 文档变更：
 - 更新 `HISTORY.md`、`docs/XINGHUI_PARITY_MATRIX.md`、`docs/UI_STYLE_GUIDE.md`、`docs/MANUAL_QA_CHECKLIST.md`、`docs/API_CONTRACT.md`、`docs/SECURITY_NOTES.md`、`docs/USER_GUIDE.md`、`README.md`。
@@ -39,8 +39,9 @@
 - 通过：FastAPI TestClient `GET /api/health` 返回 200。
 - 通过：FastAPI TestClient `GET /api/settings/public` 返回 200。
 - 通过：FastAPI TestClient `GET /api/auth/github/me` 返回 `{"configured":false,"user":null}`。
+- 通过：FastAPI TestClient `GET /api/auth/github/login?returnTo=/posts/vue-fastapi-blog` 未配置时返回 503，不泄露 Secret；模拟已配置时返回 GitHub 授权 307。
 - 通过：未登录 `POST /api/comments/posts/vue-fastapi-blog` 返回 401。
-- 通过：构建产物 Secret 固定字符串搜索未匹配 `change-me`、`please-change-this-secret`、`JWT_SECRET=`、`ADMIN_PASSWORD=`、`GITHUB_OAUTH_CLIENT_SECRET`、`AI_A_API_KEY`、`OSS_ACCESS_KEY_SECRET`。
+- 通过：构建产物 Secret 固定字符串搜索未匹配 `clientSecret`、`accessKeySecret`、`api_key`、`jwt_secret`、`admin_password`、`github_oauth_client_secret`、`change-me`。
 
 遗留问题：
 - 本轮未启动 dev server 做完整浏览器人工回归；前台留言板 GitHub 真实 OAuth 回跳、照片弹窗滚动、卡片沉底、中枢链路比例、标题轻量化、播放器音量控件和 390px 移动端仍需用户在浏览器中确认。

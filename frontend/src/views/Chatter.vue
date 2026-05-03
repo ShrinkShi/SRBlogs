@@ -43,7 +43,7 @@ onMounted(load)
         <p class="text-xs font-bold uppercase tracking-[.32em] text-fuchsia-100/45">chatters</p>
         <h1 class="mt-2 text-4xl font-black text-white">杂谈</h1>
         <p class="mt-3 text-white/56">长一点的念头，短一点的文章。</p>
-        <div class="mx-auto mt-5 max-w-2xl"><SearchBar v-model="keyword" /></div>
+        <div class="mx-auto mt-5 w-full max-w-4xl md:w-[65%]"><SearchBar v-model="keyword" /></div>
       </div>
     </GlassCard>
     <StateBlock v-if="loading" message="杂谈加载中..." />

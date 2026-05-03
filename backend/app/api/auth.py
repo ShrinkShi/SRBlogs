@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request, Response
@@ -65,7 +66,20 @@ def _github_configured() -> bool:
 def _frontend_url(request: Request) -> str:
     settings = get_settings()
     fallback = settings.cors_list[0] if settings.cors_list else "http://127.0.0.1:5173"
-    return str(request.query_params.get("return_to") or fallback)
+    raw = str(request.query_params.get("returnTo") or request.query_params.get("return_to") or "").strip()
+    if not raw:
+        return fallback
+    if raw.startswith("/") and not raw.startswith("//"):
+        return f"{fallback.rstrip('/')}{raw}"
+    parsed = urlparse(raw)
+    allowed_origins = {origin.rstrip("/") for origin in settings.cors_list}
+    if settings.public_base_url:
+        public = urlparse(settings.public_base_url)
+        allowed_origins.add(f"{public.scheme}://{public.netloc}".rstrip("/"))
+    origin = f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
+    if parsed.scheme in {"http", "https"} and origin in allowed_origins:
+        return raw
+    return fallback
 
 
 def _encode_github_user(user: dict) -> str:

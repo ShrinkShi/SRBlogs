@@ -375,6 +375,7 @@ body::before {
 .article-link-mode {
   position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1.4rem;
   padding: .5rem 0;
 }
@@ -391,7 +392,7 @@ body::before {
 
 .article-link-node {
   position: relative;
-  width: min(34%, 28rem);
+  width: min(72%, 28rem);
   min-width: 0;
 }
 
@@ -407,19 +408,21 @@ body::before {
 }
 
 .article-link-left {
-  justify-self: start;
-}
-
-.article-link-left::before {
-  right: -1.12rem;
-}
-
-.article-link-right {
+  grid-column: 1;
   justify-self: end;
 }
 
+.article-link-left::before {
+  right: -1.82rem;
+}
+
+.article-link-right {
+  grid-column: 2;
+  justify-self: start;
+}
+
 .article-link-right::before {
-  left: -1.12rem;
+  left: -1.82rem;
 }
 
 .home-image-zoom {
@@ -629,6 +632,10 @@ body::before {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .article-link-mode {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .article-link-mode::before {
     left: .35rem;
   }
@@ -640,6 +647,7 @@ body::before {
 
   .article-link-left,
   .article-link-right {
+    grid-column: 1;
     justify-self: stretch;
   }
 
