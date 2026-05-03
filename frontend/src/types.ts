@@ -132,10 +132,14 @@ export interface SiteSettings {
       github?: {
         enabled?: boolean
         configured?: boolean
+        clientIdConfigured?: boolean
+        secretConfigured?: boolean
       }
       qq?: {
         enabled?: boolean
         configured?: boolean
+        appIdConfigured?: boolean
+        secretConfigured?: boolean
       }
     }
     githubLoginEnabled?: boolean

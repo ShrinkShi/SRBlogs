@@ -90,7 +90,7 @@
     "enabled": true,
     "provider": "multi",
     "githubLoginEnabled": true,
-    "qqLoginEnabled": true,
+    "qqLoginEnabled": false,
     "maxLength": 1000,
     "requireEmail": false,
     "showEmail": false,

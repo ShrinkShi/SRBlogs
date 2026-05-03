@@ -33,12 +33,16 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
     gitalk = deepcopy(data.get("gitalkConfig") or comments.get("gitalk") or {})
     github_client_id = settings.github_oauth_client_id or gitalk.get("clientID", "")
     github_client_secret = settings.github_oauth_client_secret or gitalk.get("clientSecret", "")
-    github_login_configured = bool(github_client_id and github_client_secret)
+    github_client_id_configured = _configured(github_client_id)
+    github_secret_configured = _configured(github_client_secret)
+    github_login_configured = github_client_id_configured and github_secret_configured
     github_login_enabled = comments.get("githubLoginEnabled", comments.get("githubEnabled", True)) is not False
     qq = deepcopy(data.get("qqOAuth") or comments.get("qq") or {})
     qq_app_id = settings.qq_oauth_app_id or qq.get("appID", "") or qq.get("appId", "") or qq.get("clientID", "")
     qq_app_secret = settings.qq_oauth_app_secret or qq.get("appSecret", "") or qq.get("clientSecret", "")
-    qq_login_configured = bool(qq_app_id and qq_app_secret)
+    qq_app_id_configured = _configured(qq_app_id)
+    qq_secret_configured = _configured(qq_app_secret)
+    qq_login_configured = qq_app_id_configured and qq_secret_configured
     qq_login_enabled = comments.get("qqLoginEnabled", True) is not False
     public_comments = {
         "enabled": comments.get("enabled", True),
@@ -47,10 +51,14 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
             "github": {
                 "enabled": github_login_enabled,
                 "configured": github_login_configured,
+                "clientIdConfigured": github_client_id_configured,
+                "secretConfigured": github_secret_configured,
             },
             "qq": {
                 "enabled": qq_login_enabled,
                 "configured": qq_login_configured,
+                "appIdConfigured": qq_app_id_configured,
+                "secretConfigured": qq_secret_configured,
             },
         },
         "githubLoginEnabled": github_login_enabled,
@@ -79,9 +87,13 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "interaction": deepcopy(data.get("interaction") or {"clickSoundEnabled": True, "clickSoundVolume": 0.05, "clickSoundUrl": ""}),
         "githubOAuth": {
             "configured": github_login_configured,
+            "clientIdConfigured": github_client_id_configured,
+            "secretConfigured": github_secret_configured,
         },
         "qqOAuth": {
             "configured": qq_login_configured,
+            "appIdConfigured": qq_app_id_configured,
+            "secretConfigured": qq_secret_configured,
         },
         "comments": public_comments,
     }
@@ -118,12 +130,14 @@ def admin_settings(data: dict[str, Any]) -> dict[str, Any]:
         "adminPasswordConfigured": _configured(get_settings().admin_password),
         "ossKeyConfigured": _configured(get_settings().oss_access_key_secret),
         "aiKeyConfigured": _configured(get_settings().ai_a_api_key or get_settings().ai_b_api_key),
-        "githubOAuthSecretConfigured": _configured((data.get("gitalkConfig") or {}).get("clientSecret", "")),
+        "githubOAuthClientIdConfigured": _configured(get_settings().github_oauth_client_id or (data.get("gitalkConfig") or {}).get("clientID", "")),
+        "githubOAuthSecretConfigured": _configured(get_settings().github_oauth_client_secret or (data.get("gitalkConfig") or {}).get("clientSecret", "")),
         "githubOAuthConfigured": _configured(
             (get_settings().github_oauth_client_id or (data.get("gitalkConfig") or {}).get("clientID", ""))
             and (get_settings().github_oauth_client_secret or (data.get("gitalkConfig") or {}).get("clientSecret", ""))
         ),
-        "qqOAuthSecretConfigured": _configured((data.get("qqOAuth") or {}).get("appSecret", "")),
+        "qqOAuthAppIdConfigured": _configured(get_settings().qq_oauth_app_id or (data.get("qqOAuth") or {}).get("appID", "") or (data.get("qqOAuth") or {}).get("appId", "")),
+        "qqOAuthSecretConfigured": _configured(get_settings().qq_oauth_app_secret or (data.get("qqOAuth") or {}).get("appSecret", "")),
         "qqOAuthConfigured": _configured(
             (get_settings().qq_oauth_app_id or (data.get("qqOAuth") or {}).get("appID", "") or (data.get("qqOAuth") or {}).get("appId", ""))
             and (get_settings().qq_oauth_app_secret or (data.get("qqOAuth") or {}).get("appSecret", ""))
@@ -186,7 +200,7 @@ def write_admin_settings(payload: JsonWrite, actor: str = Depends(require_admin)
         if isinstance(current_section, dict) and isinstance(incoming_section, dict):
             current_value = current_section.get(secret_key)
             incoming_value = incoming_section.get(secret_key)
-            if current_value and (incoming_value is None or incoming_value == ""):
+            if secret_key in current_section and (incoming_value is None or incoming_value == ""):
                 incoming_section[secret_key] = current_value
     try:
         _store().write(incoming)

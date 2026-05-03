@@ -34,6 +34,7 @@ def _error_code(status_code: int) -> str:
         409: "CONFLICT",
         413: "PAYLOAD_TOO_LARGE",
         415: "UNSUPPORTED_MEDIA_TYPE",
+        503: "SERVICE_UNAVAILABLE",
         500: "INTERNAL_SERVER_ERROR",
     }.get(status_code, "ERROR")
 

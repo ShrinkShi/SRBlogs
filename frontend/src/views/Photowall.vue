@@ -12,9 +12,10 @@ type AlbumView = PhotoAlbum & { slug: string }
 const rawPhotos = ref<Array<PhotoItem | PhotoAlbum>>([])
 const activeAlbum = ref<AlbumView | null>(null)
 const active = ref<PhotoItem | null>(null)
+const viewMode = ref<'grid' | 'link'>('grid')
 const loading = ref(false)
 const error = ref('')
-useSeo({ title: '照片墙', description: 'SRBlogs 的照片墙、图片记录和预览。', path: '/photowall' })
+useSeo({ title: '图片', description: 'SRBlogs 的相册、图片记录和预览。', path: '/photowall' })
 
 function slugify(value: string, fallback: string) {
   const slug = value
@@ -69,8 +70,12 @@ onMounted(load)
   <section class="grid gap-5">
     <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-pink-100/45">photowall</p>
-      <h1 class="mt-2 text-4xl font-black text-white">照片墙</h1>
-      <p class="mt-3 text-white/56">图片记录从后端 JSON 动态读取，点击图片可放大预览。</p>
+      <h1 class="mt-2 text-4xl font-black text-white">图片</h1>
+      <p class="mt-3 text-white/56">相册记录从后端 JSON 动态读取，点击封面可查看组内照片。</p>
+      <div class="mt-5 inline-flex rounded-full bg-white/[0.05] p-1">
+        <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'grid' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'grid'">矩阵网格</button>
+        <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'link' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'link'">中枢链路</button>
+      </div>
     </GlassCard>
 
     <GlassCard v-if="loading">
@@ -84,7 +89,7 @@ onMounted(load)
       <p class="text-white/60">暂无相册。</p>
     </GlassCard>
 
-    <div v-else class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div v-else-if="viewMode === 'grid'" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       <button
         v-for="album in albums"
         :key="album.title + album.cover"
@@ -93,18 +98,50 @@ onMounted(load)
         :aria-label="`打开相册：${album.title}`"
         @click="activeAlbum = album; active = album.photos[0] || null"
       >
-        <SafeImage :src="album.cover || album.photos[0]?.url" :alt="album.title || 'album'" img-class="relative z-[1] aspect-[4/3] w-full object-cover" />
-        <div class="relative z-[1] p-4">
+        <SafeImage :src="album.cover || album.photos[0]?.url" :alt="album.title || 'album'" img-class="relative z-[1] aspect-[4/3] w-full object-cover transition duration-300 hover:scale-[1.035]" />
+        <div class="relative z-[1] flex min-h-48 flex-col p-4">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h3 class="break-words font-bold text-white">{{ album.title || '未命名相册' }}</h3>
             <span v-if="album.date" class="text-xs text-white/42">{{ album.date }}</span>
           </div>
           <p class="mt-1 text-xs text-white/42">{{ album.photos.length }} 张照片</p>
           <p v-if="album.description" class="mt-1 break-words text-sm leading-6 text-white/55">{{ album.description }}</p>
-          <div v-if="album.tags?.length" class="mt-3 flex flex-wrap gap-2">
+          <div v-if="album.tags?.length" class="mt-auto flex flex-wrap gap-2 pt-3">
             <span v-for="tag in album.tags" :key="tag" class="rounded-full border border-white/10 px-2 py-1 text-[11px] text-white/50">#{{ tag }}</span>
           </div>
         </div>
+      </button>
+    </div>
+
+    <div v-else class="article-link-mode">
+      <button
+        v-for="(album, index) in albums"
+        :key="album.title + album.cover"
+        type="button"
+        class="article-link-node text-left"
+        :class="index % 2 === 0 ? 'article-link-left' : 'article-link-right'"
+        :aria-label="`打开相册：${album.title}`"
+        @click="activeAlbum = album; active = album.photos[0] || null"
+      >
+        <GlassCard hover class="h-full overflow-hidden !p-0">
+          <article class="flex h-full min-w-0 flex-col">
+            <div class="relative h-48 overflow-hidden bg-slate-900/60">
+              <SafeImage :src="album.cover || album.photos[0]?.url" :alt="album.title || 'album'" img-class="h-full w-full object-cover transition duration-300 hover:scale-[1.035]" />
+              <div class="absolute inset-0 bg-gradient-to-b from-black/0 to-black/45"></div>
+            </div>
+            <div class="flex min-h-[14rem] flex-1 flex-col gap-3 p-5">
+              <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-white/45">
+                <span v-if="album.date">{{ album.date }}</span>
+                <span>{{ album.photos.length }} 张照片</span>
+              </div>
+              <h2 class="line-clamp-2 text-xl font-black text-white">{{ album.title || '未命名相册' }}</h2>
+              <p v-if="album.description" class="line-clamp-3 text-sm leading-7 text-white/58">{{ album.description }}</p>
+              <div v-if="album.tags?.length" class="mt-auto flex flex-wrap gap-2 pt-3">
+                <span v-for="tag in album.tags" :key="tag" class="rounded-full border border-cyan-200/15 bg-cyan-200/[0.08] px-3 py-1 text-xs text-cyan-100/65"># {{ tag }}</span>
+              </div>
+            </div>
+          </article>
+        </GlassCard>
       </button>
     </div>
 

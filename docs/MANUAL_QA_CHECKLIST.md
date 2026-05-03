@@ -1,5 +1,41 @@
 # Manual QA Checklist
 
+## 2026-05-03 前台导航、文章整合、图片双模式与工具箱验收
+
+- [ ] 顶部导航顺序为：首页、文章、图片、音乐、项目、友链、关于。
+- [ ] 顶部导航不再显示搜索、杂谈、归档入口。
+- [ ] “图片”入口进入 `/photowall`，旧 `/photowall` 路由不 404。
+- [ ] `/search` 旧路由仍可直接访问，但不在顶部导航展示。
+- [ ] `/chatters` 旧路由不 404，并能进入杂谈兼容入口或杂谈板块。
+- [ ] `/posts` 默认展示“正经”板块，读取公开 posts 数据，不显示草稿。
+- [ ] `/posts?section=chatters` 展示“杂谈”板块，读取公开 chatters 数据。
+- [ ] 正经/杂谈切换开关在桌面和 390px 移动端都可操作，不挤爆布局。
+- [ ] 正经板块的矩阵网格和中枢链路均可切换，文章详情跳转正常。
+- [ ] 杂谈板块的矩阵网格和中枢链路均可切换，杂谈详情跳转正常。
+- [ ] 图片页矩阵网格展示相册封面，点击封面仍能打开相册全部照片。
+- [ ] 图片页中枢链路左右交替、贴近中心线，移动端退化为单列。
+- [ ] 左下角工具箱悬浮球可见，点击后显示计算器、全局搜索、设置。
+- [ ] 工具箱点击空白处或 Esc 可关闭菜单/弹窗。
+- [ ] 计算器支持加减乘除、括号、小数、清空、退格，错误表达式显示中文错误。
+- [ ] 全局搜索弹窗支持关键词、类型筛选、标签筛选、结果跳转、加载/空/错误状态。
+- [ ] 游客设置弹窗可控制昼夜、主题、背景、氛围、弹幕、点击音效、音乐音量和字体大小，并立即生效。
+- [ ] 首页右侧旧主题、背景、氛围、弹幕、点击音效按钮已删除，相关功能未丢失。
+- [ ] 390px 移动端下工具箱、文章切换、图片双模式和搜索弹窗不产生严重横向溢出。
+
+## 2026-05-03 GitHub/QQ 留言登录专项验收
+
+- [ ] `/api/settings/public` 中 `comments.enabled=true`。
+- [ ] `/api/settings/public` 中 `comments.providers.github.enabled=true`。
+- [ ] `/api/settings/public` 中 `comments.providers.github.configured=true`。
+- [ ] `/api/settings/public` 中 `comments.providers.qq.enabled=true`。
+- [ ] `/api/settings/public` 中 `comments.providers.qq.configured=false` 时，GitHub 登录按钮仍可见。
+- [ ] 前台留言板显示“使用 GitHub 登录后留言”按钮。
+- [ ] QQ 未配置时只显示 QQ 未开启提示，不影响 GitHub。
+- [ ] 点击 GitHub 登录按钮访问后端 `/api/auth/github/login?returnTo=当前路径`，不进入前端 404。
+- [ ] `/api/auth/qq/login?returnTo=当前路径` 未配置时返回中文友好错误，不返回 Not Found。
+- [ ] 未登录直接提交留言返回 401，中文提示“请先登录后再留言。”。
+- [ ] 前台不显示 Secret、后端、`.env`、Client Secret 等开发者文案。
+
 ## 2026-05-03 多平台留言与中文化回归
 
 - [ ] `/api/settings/public` 中 `comments.providers.github.configured` 与 `comments.providers.qq.configured` 均为布尔值，且不会返回任何 OAuth Secret。

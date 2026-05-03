@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PostList from '@/components/PostList.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import GlassCard from '@/components/GlassCard.vue'
@@ -10,18 +11,39 @@ import type { ContentItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { formatDate } from '@/utils/date'
 
+type SectionKey = 'posts' | 'chatters'
+
+const route = useRoute()
+const router = useRouter()
 const items = ref<ContentItem[]>([])
 const keyword = ref('')
 const activeTag = ref('全部')
 const displayMode = ref<'grid' | 'link'>('grid')
+const section = ref<SectionKey>(route.query.section === 'chatters' ? 'chatters' : 'posts')
 const loading = ref(true)
 const error = ref('')
 const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop'
 
+const sectionConfig = computed(() => section.value === 'chatters'
+  ? {
+      title: '云端杂谈',
+      eyebrow: 'chatters',
+      subtitle: '长一点的念头，短一点的文章。',
+      base: '/chatters',
+      empty: '暂无杂谈。'
+    }
+  : {
+      title: '文章归档',
+      eyebrow: 'archive',
+      subtitle: '从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。',
+      base: '/posts',
+      empty: '暂无公开文章。'
+    })
+
 useSeo({
-  title: '文章归档',
-  description: '从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。',
-  path: '/posts'
+  title: () => sectionConfig.value.title,
+  description: () => sectionConfig.value.subtitle,
+  path: () => `/posts?section=${section.value}`
 })
 
 const tags = computed(() => ['全部', ...Array.from(new Set(items.value.flatMap((i) => i.meta.tags || [])))])
@@ -38,25 +60,75 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    items.value = await contentApi.list('posts')
+    items.value = await contentApi.list(section.value)
   } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '文章加载失败'
+    error.value = exc instanceof Error ? exc.message : `${sectionConfig.value.title}加载失败`
   } finally {
     loading.value = false
   }
 }
 
-onMounted(load)
+function switchSection(next: SectionKey) {
+  if (section.value === next) return
+  section.value = next
+  activeTag.value = '全部'
+  keyword.value = ''
+  router.replace({ path: '/posts', query: { section: next, mode: displayMode.value } })
+}
+
+function switchMode(next: 'grid' | 'link') {
+  displayMode.value = next
+  router.replace({ path: '/posts', query: { ...route.query, section: section.value, mode: next } })
+}
+
+watch(() => route.query.section, (value) => {
+  const next = value === 'chatters' ? 'chatters' : 'posts'
+  if (next !== section.value) section.value = next
+})
+
+watch(() => route.query.mode, (value) => {
+  if (value === 'grid' || value === 'link') displayMode.value = value
+})
+
+watch(section, load)
+
+onMounted(() => {
+  if (route.query.mode === 'grid' || route.query.mode === 'link') displayMode.value = route.query.mode
+  load()
+})
 </script>
 
 <template>
   <section class="grid gap-5">
     <GlassCard class="page-title-block">
-      <div class="mx-auto max-w-3xl text-center">
-        <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">archive</p>
-        <h1 class="mt-2 text-4xl font-black text-white">文章归档</h1>
-        <p class="mt-3 text-white/56">从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。</p>
-        <div class="mx-auto mt-5 w-full max-w-5xl md:w-[82%]"><SearchBar v-model="keyword" /></div>
+      <div class="mx-auto max-w-5xl text-center">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div class="min-w-0 flex-1 text-center lg:pl-36">
+            <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">{{ sectionConfig.eyebrow }}</p>
+            <h1 class="mt-2 text-4xl font-black text-white">{{ sectionConfig.title }}</h1>
+            <p class="mx-auto mt-3 max-w-2xl text-white/56">{{ sectionConfig.subtitle }}</p>
+          </div>
+          <div class="mx-auto inline-flex shrink-0 rounded-full bg-white/[0.06] p-1 lg:mx-0">
+            <button
+              type="button"
+              class="rounded-full px-4 py-2 text-sm font-bold transition"
+              :class="section === 'posts' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'"
+              @click="switchSection('posts')"
+            >
+              正经
+            </button>
+            <button
+              type="button"
+              class="rounded-full px-4 py-2 text-sm font-bold transition"
+              :class="section === 'chatters' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'"
+              @click="switchSection('chatters')"
+            >
+              杂谈
+            </button>
+          </div>
+        </div>
+
+        <div class="mx-auto mt-5 w-full max-w-5xl md:w-[86%]"><SearchBar v-model="keyword" /></div>
         <div class="mt-4 flex flex-wrap justify-center gap-2">
           <button
             v-for="tag in tags"
@@ -69,19 +141,20 @@ onMounted(load)
           </button>
         </div>
         <div class="mt-5 inline-flex rounded-full bg-white/[0.05] p-1">
-          <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="displayMode === 'grid' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="displayMode = 'grid'">矩阵网格</button>
-          <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="displayMode === 'link' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="displayMode = 'link'">中枢链路</button>
+          <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="displayMode === 'grid' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="switchMode('grid')">矩阵网格</button>
+          <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="displayMode === 'link' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="switchMode('link')">中枢链路</button>
         </div>
       </div>
     </GlassCard>
-    <StateBlock v-if="loading" message="文章加载中..." />
-    <StateBlock v-else-if="error" title="文章加载失败" :message="error" @retry="load" />
-    <PostList v-else-if="displayMode === 'grid'" :items="filtered" base="/posts" empty-text="暂无公开文章。" />
+
+    <StateBlock v-if="loading" :message="`${sectionConfig.title}加载中...`" />
+    <StateBlock v-else-if="error" :title="`${sectionConfig.title}加载失败`" :message="error" @retry="load" />
+    <PostList v-else-if="displayMode === 'grid'" :items="filtered" :base="sectionConfig.base" :empty-text="sectionConfig.empty" />
     <div v-else class="article-link-mode">
       <RouterLink
         v-for="(item, index) in filtered"
         :key="item.slug"
-        :to="`/posts/${item.slug}`"
+        :to="`${sectionConfig.base}/${item.slug}`"
         class="article-link-node"
         :class="index % 2 === 0 ? 'article-link-left' : 'article-link-right'"
       >
@@ -96,8 +169,8 @@ onMounted(load)
                 <span>{{ formatDate(item.meta.date) }}</span>
                 <span>{{ item.content.length }} chars</span>
               </div>
-              <h2 class="line-clamp-2 text-2xl font-black text-white">{{ item.meta.title }}</h2>
-              <p class="line-clamp-3 flex-1 text-sm leading-7 text-white/58">{{ item.meta.summary || item.content.slice(0, 120) }}</p>
+              <h2 class="line-clamp-2 text-xl font-black text-white">{{ item.meta.title }}</h2>
+              <p class="line-clamp-3 text-sm leading-7 text-white/58">{{ item.meta.summary || item.content.slice(0, 120) }}</p>
               <div class="mt-auto flex flex-wrap gap-2 pt-3">
                 <span v-for="tag in item.meta.tags" :key="tag" class="rounded-full border border-cyan-200/15 bg-cyan-200/[0.08] px-3 py-1 text-xs text-cyan-100/65"># {{ tag }}</span>
               </div>
@@ -105,7 +178,7 @@ onMounted(load)
           </article>
         </GlassCard>
       </RouterLink>
-      <GlassCard v-if="!filtered.length"><p class="text-center text-white/55">暂无公开文章。</p></GlassCard>
+      <GlassCard v-if="!filtered.length"><p class="text-center text-white/55">{{ sectionConfig.empty }}</p></GlassCard>
     </div>
   </section>
 </template>

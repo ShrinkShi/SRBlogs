@@ -1,5 +1,14 @@
 # Security Notes
 
+## 2026-05-03 多平台留言登录安全规则
+
+- GitHub OAuth Secret 与 QQ App Secret 只能保存在后端 `.env` 或服务端配置中，不能进入 `frontend/dist`、`admin/dist` 或 `/api/settings/public`。
+- `/api/settings/public` 只能返回 `configured`、`clientIdConfigured`、`appIdConfigured`、`secretConfigured` 等布尔值。
+- GitHub 与 QQ 的配置状态必须独立判断，不能因为 QQ 未配置而禁用 GitHub 留言。
+- OAuth 登录必须由后端生成授权地址，并校验 CSRF `state` 后才创建访客登录 cookie。
+- 前端留言板只能显示访客友好提示，不得出现 Secret、`.env`、后端配置路径、Client Secret 等开发者细节。
+- 未登录提交留言必须返回 401，不允许恢复匿名本地留言入口。
+
 ## 2026-05-03 多平台留言登录安全补充
 
 - GitHub OAuth Secret 和 QQ App Secret 只能保存在后端 `.env` 或服务端配置中，不得进入 `frontend/dist` 或 `admin/dist`。

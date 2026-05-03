@@ -1,0 +1,403 @@
+<script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import DiscoveryResultCard from './DiscoveryResultCard.vue'
+import StateBlock from './StateBlock.vue'
+import { contentApi } from '@/api/content'
+import { themes, useUiStore } from '@/stores/ui'
+import { usePlayerStore } from '@/stores/player'
+import type { DiscoveryType, SearchResponse, SiteSettings, TagItem } from '@/types'
+
+const props = defineProps<{ settings?: SiteSettings | null }>()
+
+type ToolPanel = 'calculator' | 'search' | 'settings'
+type Token = number | string
+
+const ui = useUiStore()
+const player = usePlayerStore()
+
+const menuOpen = ref(false)
+const activePanel = ref<ToolPanel | null>(null)
+const calculatorExpr = ref('')
+const calculatorResult = ref('')
+const calculatorError = ref('')
+
+const searchQ = ref('')
+const searchType = ref<DiscoveryType>('all')
+const searchTag = ref('')
+const searchLoading = ref(false)
+const searchError = ref('')
+const searchResult = ref<SearchResponse>({ items: [], total: 0, limit: 20, offset: 0 })
+const tags = ref<TagItem[]>([])
+
+const typeOptions: { label: string; value: DiscoveryType }[] = [
+  { label: '全部', value: 'all' },
+  { label: '文章', value: 'posts' },
+  { label: '瞬间', value: 'moments' },
+  { label: '杂谈', value: 'chatters' },
+  { label: '项目', value: 'projects' },
+  { label: '图片', value: 'photos' },
+  { label: '友链', value: 'friends' },
+  { label: '音乐', value: 'music' }
+]
+
+const bgCount = computed(() => Math.max(props.settings?.bgImages?.length || 0, themes.length))
+const modalTitle = computed(() => {
+  if (activePanel.value === 'calculator') return '计算器'
+  if (activePanel.value === 'search') return '全局搜索'
+  if (activePanel.value === 'settings') return '游客设置'
+  return ''
+})
+
+function closeAll() {
+  menuOpen.value = false
+  activePanel.value = null
+}
+
+function openPanel(panel: ToolPanel) {
+  activePanel.value = panel
+  menuOpen.value = false
+  if (panel === 'search' && !tags.value.length) loadTags()
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') closeAll()
+}
+
+function onDocumentClick(event: MouseEvent) {
+  const target = event.target as Element | null
+  if (!target?.closest('[data-toolbox-root]') && !target?.closest('[data-toolbox-modal]')) {
+    menuOpen.value = false
+  }
+}
+
+function appendCalc(value: string) {
+  calculatorExpr.value += value
+  calculatorError.value = ''
+}
+
+function backspaceCalc() {
+  calculatorExpr.value = calculatorExpr.value.slice(0, -1)
+}
+
+function clearCalc() {
+  calculatorExpr.value = ''
+  calculatorResult.value = ''
+  calculatorError.value = ''
+}
+
+function tokenize(input: string): Token[] {
+  if (!/^[\d+\-*/().\s]+$/.test(input)) throw new Error('表达式包含不支持的字符')
+  const tokens: Token[] = []
+  let i = 0
+  while (i < input.length) {
+    const char = input[i]
+    const previous = tokens[tokens.length - 1]
+    const unaryMinus = char === '-' && (tokens.length === 0 || ['+', '-', '*', '/', '('].includes(String(previous))) && /[\d.]/.test(input[i + 1] || '')
+    if (/\s/.test(char)) {
+      i += 1
+    } else if (/\d|\./.test(char) || unaryMinus) {
+      let value = unaryMinus ? '-' : ''
+      if (unaryMinus) i += 1
+      while (i < input.length && /[\d.]/.test(input[i])) {
+        value += input[i]
+        i += 1
+      }
+      const number = Number(value)
+      if (!Number.isFinite(number)) throw new Error('数字格式不正确')
+      tokens.push(number)
+    } else if ('+-*/()'.includes(char)) {
+      tokens.push(char)
+      i += 1
+    } else {
+      throw new Error('表达式包含不支持的字符')
+    }
+  }
+  return tokens
+}
+
+function evaluateExpression(input: string) {
+  const precedence: Record<string, number> = { '+': 1, '-': 1, '*': 2, '/': 2 }
+  const values: number[] = []
+  const operators: string[] = []
+  function applyOperator() {
+    const op = operators.pop()
+    const b = values.pop()
+    const a = values.pop()
+    if (!op || a === undefined || b === undefined) throw new Error('表达式不完整')
+    if (op === '+') values.push(a + b)
+    if (op === '-') values.push(a - b)
+    if (op === '*') values.push(a * b)
+    if (op === '/') {
+      if (b === 0) throw new Error('除数不能为 0')
+      values.push(a / b)
+    }
+  }
+  tokenize(input).forEach((token) => {
+    if (typeof token === 'number') values.push(token)
+    else if (token === '(') operators.push(token)
+    else if (token === ')') {
+      while (operators.length && operators[operators.length - 1] !== '(') applyOperator()
+      if (operators.pop() !== '(') throw new Error('括号不匹配')
+    } else {
+      while (operators.length && operators[operators.length - 1] !== '(' && precedence[operators[operators.length - 1]] >= precedence[token]) {
+        applyOperator()
+      }
+      operators.push(token)
+    }
+  })
+  while (operators.length) applyOperator()
+  if (values.length !== 1 || !Number.isFinite(values[0])) throw new Error('表达式不完整')
+  return Number(values[0].toFixed(10)).toString()
+}
+
+function calculate() {
+  try {
+    calculatorError.value = ''
+    calculatorResult.value = evaluateExpression(calculatorExpr.value)
+  } catch (exc) {
+    calculatorResult.value = ''
+    calculatorError.value = exc instanceof Error ? exc.message : '表达式错误'
+  }
+}
+
+async function loadTags() {
+  try {
+    tags.value = await contentApi.tags()
+  } catch {
+    tags.value = []
+  }
+}
+
+async function runSearch() {
+  searchLoading.value = true
+  searchError.value = ''
+  try {
+    searchResult.value = await contentApi.search({
+      q: searchQ.value.trim(),
+      type: searchType.value,
+      tag: searchTag.value.trim(),
+      limit: 30
+    })
+  } catch (exc) {
+    searchError.value = exc instanceof Error ? exc.message : '搜索失败'
+  } finally {
+    searchLoading.value = false
+  }
+}
+
+watch(activePanel, (panel) => {
+  if (panel === 'search' && !searchResult.value.items.length) runSearch()
+})
+
+onMounted(() => {
+  document.addEventListener('keydown', onKeydown)
+  document.addEventListener('click', onDocumentClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onKeydown)
+  document.removeEventListener('click', onDocumentClick)
+})
+</script>
+
+<template>
+  <div data-toolbox-root class="fixed bottom-5 left-5 z-40">
+    <div
+      v-if="menuOpen"
+      class="mb-3 grid min-w-40 gap-2 rounded-[26px] border border-white/15 bg-slate-950/72 p-3 text-sm text-white/78 shadow-2xl backdrop-blur-2xl"
+    >
+      <button type="button" class="toolbox-menu-item" @click="openPanel('calculator')">计算器</button>
+      <button type="button" class="toolbox-menu-item" @click="openPanel('search')">全局搜索</button>
+      <button type="button" class="toolbox-menu-item" @click="openPanel('settings')">设置</button>
+    </div>
+    <button
+      type="button"
+      class="grid h-14 w-14 place-items-center rounded-full border border-cyan-200/25 bg-slate-950/66 text-cyan-100 shadow-[0_18px_48px_rgba(0,0,0,.35),0_0_34px_rgba(103,232,249,.18)] backdrop-blur-2xl transition hover:scale-105"
+      :aria-expanded="menuOpen"
+      aria-label="打开工具箱"
+      @click.stop="menuOpen = !menuOpen"
+    >
+      <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m14.7 6.3 3 3" />
+        <path d="M18.4 2.6a4.2 4.2 0 0 0-5.2 5.2L3 18l3 3L16.2 10.8a4.2 4.2 0 0 0 5.2-5.2l-2.7 2.7-3-3Z" />
+      </svg>
+    </button>
+  </div>
+
+  <Teleport to="body">
+    <div
+      v-if="activePanel"
+      data-toolbox-modal
+      class="fixed inset-0 z-[90] grid place-items-center bg-black/62 p-4 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      @click.self="closeAll"
+    >
+      <section class="toolbox-modal max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/15 bg-slate-950/82 text-white shadow-2xl backdrop-blur-2xl">
+        <header class="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[.28em] text-cyan-100/45">toolbox</p>
+            <h2 class="text-2xl font-black">{{ modalTitle }}</h2>
+          </div>
+          <button type="button" class="rounded-full border border-white/12 px-3 py-2 text-sm text-white/70 hover:bg-white/10" @click="closeAll">关闭</button>
+        </header>
+
+        <div class="max-h-[calc(88vh-5.5rem)] overflow-y-auto p-5">
+          <div v-if="activePanel === 'calculator'" class="mx-auto grid max-w-md gap-4">
+            <div class="rounded-[24px] border border-white/12 bg-white/[0.08] p-4">
+              <p class="min-h-7 break-all text-lg text-white/80">{{ calculatorExpr || '0' }}</p>
+              <p class="mt-2 min-h-8 text-3xl font-black text-cyan-100">{{ calculatorResult }}</p>
+              <p v-if="calculatorError" class="mt-2 text-sm text-red-200">{{ calculatorError }}</p>
+            </div>
+            <div class="grid grid-cols-4 gap-2">
+              <button v-for="key in ['7','8','9','/','4','5','6','*','1','2','3','-','0','.','(',')']" :key="key" type="button" class="toolbox-key" @click="appendCalc(key)">{{ key }}</button>
+              <button type="button" class="toolbox-key" @click="backspaceCalc">退格</button>
+              <button type="button" class="toolbox-key" @click="appendCalc('+')">+</button>
+              <button type="button" class="toolbox-key" @click="clearCalc">清空</button>
+              <button type="button" class="toolbox-key toolbox-key-main" @click="calculate">=</button>
+            </div>
+          </div>
+
+          <div v-else-if="activePanel === 'search'" class="grid gap-4">
+            <form class="mx-auto flex w-full max-w-3xl items-center gap-2 rounded-[22px] border border-white/14 bg-white/[0.30] px-3 py-2" @submit.prevent="runSearch">
+              <input v-model="searchQ" class="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45" placeholder="搜索标题、标签或内容..." aria-label="全局搜索关键词" />
+              <button type="submit" class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950/88 text-cyan-100" aria-label="搜索">
+                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.6-3.6" />
+                </svg>
+              </button>
+            </form>
+            <div class="flex flex-wrap justify-center gap-2">
+              <button v-for="option in typeOptions" :key="option.value" type="button" class="rounded-full border px-3 py-1 text-sm" :class="searchType === option.value ? 'border-cyan-200/50 bg-cyan-200/[0.16] text-cyan-100' : 'border-white/10 text-white/55 hover:bg-white/10'" @click="searchType = option.value; runSearch()">{{ option.label }}</button>
+            </div>
+            <div v-if="tags.length" class="flex flex-wrap justify-center gap-2">
+              <button v-for="item in tags.slice(0, 14)" :key="item.tag" type="button" class="rounded-full border px-3 py-1 text-xs" :class="searchTag === item.tag ? 'border-fuchsia-200/50 bg-fuchsia-200/[0.16] text-fuchsia-100' : 'border-white/10 text-white/50 hover:bg-white/10'" @click="searchTag = searchTag === item.tag ? '' : item.tag; runSearch()"># {{ item.tag }} · {{ item.count }}</button>
+            </div>
+            <StateBlock v-if="searchLoading" message="搜索中..." />
+            <StateBlock v-else-if="searchError" title="搜索失败" :message="searchError" @retry="runSearch" />
+            <div v-else-if="searchResult.items.length" class="grid gap-4 md:grid-cols-2">
+              <div v-for="item in searchResult.items" :key="`${item.type}-${item.url}-${item.title}`" @click.capture="closeAll">
+                <DiscoveryResultCard :item="item" />
+              </div>
+            </div>
+            <div v-else class="rounded-[24px] border border-white/12 bg-white/[0.07] p-5 text-center text-white/60">没有匹配内容。</div>
+          </div>
+
+          <div v-else-if="activePanel === 'settings'" class="grid gap-5 md:grid-cols-2">
+            <label class="toolbox-setting">
+              <span>昼夜模式</span>
+              <select :value="ui.colorMode" @change="ui.setColorMode(($event.target as HTMLSelectElement).value as 'day' | 'night')">
+                <option value="day">日间</option>
+                <option value="night">夜间</option>
+              </select>
+            </label>
+            <label class="toolbox-setting">
+              <span>主题</span>
+              <select :value="ui.theme" @change="ui.setTheme(($event.target as HTMLSelectElement).value)">
+                <option v-for="theme in themes" :key="theme" :value="theme">{{ theme }}</option>
+              </select>
+            </label>
+            <label class="toolbox-setting">
+              <span>背景</span>
+              <select :value="ui.bgIndex" @change="ui.setBgIndex(Number(($event.target as HTMLSelectElement).value))">
+                <option v-for="i in bgCount" :key="i" :value="i - 1">背景 {{ i }}</option>
+              </select>
+            </label>
+            <label class="toolbox-setting">
+              <span>字体大小</span>
+              <select :value="ui.fontScale" @change="ui.setFontScale(($event.target as HTMLSelectElement).value as 'small' | 'medium' | 'large')">
+                <option value="small">小</option>
+                <option value="medium">中</option>
+                <option value="large">大</option>
+              </select>
+            </label>
+            <label class="toolbox-setting toolbox-switch">
+              <span>氛围效果</span>
+              <input type="checkbox" :checked="ui.ambience" @change="ui.toggleAmbience" />
+            </label>
+            <label class="toolbox-setting toolbox-switch">
+              <span>弹幕背景</span>
+              <input type="checkbox" :checked="ui.danmaku" @change="ui.toggleDanmaku" />
+            </label>
+            <label class="toolbox-setting toolbox-switch">
+              <span>点击音效</span>
+              <input type="checkbox" :checked="ui.clickSound" @change="ui.toggleClickSound" />
+            </label>
+            <label class="toolbox-setting">
+              <span>点击音量</span>
+              <input type="range" min="0" max="1" step="0.01" :value="ui.clickSoundVolume" @input="ui.setClickSoundVolume(Number(($event.target as HTMLInputElement).value))" />
+            </label>
+            <label class="toolbox-setting">
+              <span>音乐音量</span>
+              <input type="range" min="0" max="1" step="0.01" :value="player.volume" @input="player.setVolume(Number(($event.target as HTMLInputElement).value))" />
+            </label>
+            <label class="toolbox-setting toolbox-switch">
+              <span>音乐静音</span>
+              <input type="checkbox" :checked="player.muted" @change="player.toggleMuted" />
+            </label>
+          </div>
+        </div>
+      </section>
+    </div>
+  </Teleport>
+</template>
+
+<style scoped>
+.toolbox-menu-item {
+  border-radius: 1rem;
+  padding: .65rem .85rem;
+  text-align: left;
+  transition: transform .2s var(--motion-ease), background .2s var(--motion-ease), color .2s var(--motion-ease);
+}
+.toolbox-menu-item:hover {
+  background: rgba(255,255,255,.1);
+  color: white;
+  transform: scale(1.02);
+}
+.toolbox-key {
+  min-height: 3rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.82);
+  font-weight: 900;
+  transition: transform .18s var(--motion-ease), background .18s var(--motion-ease);
+}
+.toolbox-key:hover {
+  transform: scale(1.025);
+  background: rgba(255,255,255,.13);
+}
+.toolbox-key-main {
+  background: linear-gradient(135deg, #67e8f9, #c084fc);
+  color: #06111f;
+}
+.toolbox-setting {
+  display: grid;
+  gap: .55rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255,255,255,.1);
+  background: rgba(255,255,255,.065);
+  padding: 1rem;
+  color: rgba(255,255,255,.76);
+  font-size: .9rem;
+}
+.toolbox-setting select,
+.toolbox-setting input[type='range'] {
+  min-width: 0;
+  border-radius: .9rem;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(15,23,42,.72);
+  padding: .55rem .7rem;
+  color: white;
+}
+.toolbox-switch {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+.toolbox-switch input {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--accent);
+}
+</style>

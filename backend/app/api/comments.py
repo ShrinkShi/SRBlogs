@@ -21,7 +21,7 @@ ALLOWED_RESOURCES = {"posts", "moments", "chatters", "music", "photos"}
 
 def _store(resource: str, slug: str) -> JsonStore:
     if resource not in ALLOWED_RESOURCES:
-        raise HTTPException(status_code=400, detail="Invalid comment resource")
+        raise HTTPException(status_code=400, detail="留言资源类型无效。")
     try:
         safe_slug = validate_slug(slug)
     except FileStoreError as exc:
@@ -95,10 +95,10 @@ def list_comments(resource: str, slug: str):
 def create_comment(resource: str, slug: str, payload: CommentCreate, visitor_user: dict = Depends(require_visitor_user)):
     options = _comment_options()
     if not _comments_enabled(options):
-        raise HTTPException(status_code=403, detail="Comments are closed")
+        raise HTTPException(status_code=403, detail="留言板暂未开放。")
     max_length = _max_comment_length(options)
     if len(payload.content.strip()) > max_length:
-        raise HTTPException(status_code=400, detail=f"Comment content must be at most {max_length} characters")
+        raise HTTPException(status_code=400, detail=f"留言内容不能超过 {max_length} 个字符。")
     store = _store(resource, slug)
     comments = store.read()
     provider = bleach.clean(str(visitor_user.get("provider") or ""), tags=[], strip=True)
@@ -128,7 +128,7 @@ def delete_comment(resource: str, slug: str, comment_id: str, actor: str = Depen
     next_comments = [item for item in comments if item.get("id") != comment_id]
     if len(next_comments) == len(comments):
         write_audit(actor=actor, action="comment.delete", resource=resource, target=slug, result="failed", message="comment not found", detail={"commentId": comment_id})
-        raise HTTPException(status_code=404, detail="comment not found")
+        raise HTTPException(status_code=404, detail="留言不存在。")
     store.write(next_comments)
     write_audit(actor=actor, action="comment.delete", resource=resource, target=slug, result="success", message="Comment deleted", detail={"commentId": comment_id})
     return {"ok": True}

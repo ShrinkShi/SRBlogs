@@ -2,10 +2,10 @@
 import { onMounted, ref, watch } from 'vue'
 import AppNav from '@/components/AppNav.vue'
 import BackgroundEffects from '@/components/BackgroundEffects.vue'
-import BackgroundSlider from '@/components/BackgroundSlider.vue'
 import ClickEffect from '@/components/ClickEffect.vue'
 import CyberCat from '@/components/CyberCat.vue'
 import Toast from '@/components/Toast.vue'
+import Toolbox from '@/components/Toolbox.vue'
 import DanmakuBackground from '@/components/DanmakuBackground.vue'
 import Sakura from '@/components/Sakura.vue'
 import Fireflies from '@/components/Fireflies.vue'
@@ -24,7 +24,8 @@ function applyTheme() {
   const mode = ui.colorMode || config.mode || 'night'
   const tokens = mode === 'day' ? config.day : config.night
   root.dataset.colorMode = mode
-  const scale = config.fontScale === 'small' ? '15px' : config.fontScale === 'large' ? '17px' : '16px'
+  const preferredScale = ui.fontScale || config.fontScale
+  const scale = preferredScale === 'small' ? '15px' : preferredScale === 'large' ? '17px' : '16px'
   root.style.setProperty('--app-font-size', scale)
   if (config.fontFamily) root.style.setProperty('--app-font-family', config.fontFamily)
   const map: Record<string, string | undefined> = {
@@ -52,7 +53,7 @@ onMounted(async () => {
   try { player.setTracks(await contentApi.json<MusicItem[]>('/music')) } catch { player.setTracks([]) }
   applyTheme()
 })
-watch([settings, () => ui.colorMode], () => {
+watch([settings, () => ui.colorMode, () => ui.fontScale], () => {
   ui.applyInteraction(settings.value?.interaction)
   applyTheme()
 })
@@ -66,7 +67,7 @@ watch([settings, () => ui.colorMode], () => {
   <ClickEffect />
   <div class="relative z-10 min-h-screen">
     <AppNav />
-    <BackgroundSlider :settings="settings" />
+    <Toolbox :settings="settings" />
     <CyberCat />
     <main class="sr-page-shell pb-28 pt-32 md:pt-36">
       <RouterView v-slot="{ Component }">

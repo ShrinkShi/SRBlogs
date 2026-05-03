@@ -1,5 +1,94 @@
 # HISTORY
 
+## 2026-05-03 - 前台导航重组、文章整合与工具箱打磨轮
+
+本轮目标：
+
+- 将前台顶部导航收敛为：首页、文章、图片、音乐、项目、友链、关于。
+- 将原文章列表和杂谈列表整合到 `/posts`，通过“正经 / 杂谈”开关切换。
+- 为文章与杂谈板块统一提供“矩阵网格 / 中枢链路”两种显示模式。
+- 为图片页 `/photowall` 增加“矩阵网格 / 中枢链路”两种相册展示模式。
+- 新增左下角游客工具箱，提供计算器、全局搜索、游客设置弹窗。
+- 移除首页右侧旧的主题、背景、氛围、弹幕、点击音效分散控制按钮。
+
+前台变更：
+
+- `AppNav` 已隐藏搜索、杂谈、归档入口，并将“照片墙”导航文案改为“图片”。
+- `/posts` 默认展示正经文章，`/posts?section=chatters` 展示杂谈；旧 `/chatters` 保持兼容并跳转到杂谈板块。
+- 文章页和杂谈板块共用搜索、标签筛选、矩阵网格和中枢链路显示模式。
+- 图片页保留原 `/photowall` 路由与相册弹窗能力，并新增矩阵/中枢链路切换。
+- 新增 `Toolbox` 全局悬浮球：计算器使用安全字符白名单与表达式解析，不直接执行未处理字符串；全局搜索复用 `/api/search`；游客设置写入 localStorage 并联动昼夜、主题、背景、氛围、弹幕、点击音效、音乐音量和字体大小。
+- 移除 `BackgroundSlider` 在根应用中的渲染，相关游客设置迁移到工具箱。
+
+后台/后端变更：
+
+- 本轮未新增后端接口，未修改后端数据结构。
+- 后台构建保持通过；后台业务页面未做结构性改动。
+
+文档变更：
+
+- 更新 `HISTORY.md`、`docs/XINGHUI_PARITY_MATRIX.md`、`docs/UI_STYLE_GUIDE.md`、`docs/MANUAL_QA_CHECKLIST.md`、`docs/USER_GUIDE.md`、`docs/API_CONTRACT.md`、`README.md`。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`
+- 通过：`cd admin && npm run build`
+- 通过：`python -m compileall backend\app`
+- 通过：构建产物 Secret 静态扫描；未匹配到默认密码、JWT/管理员密码配置键、GitHub/QQ OAuth Secret 配置键或常见真实密钥形态。
+- 未执行：本轮未启动 dev server 做浏览器人工回归；仍需人工检查顶部导航、文章正经/杂谈切换、图片双模式、工具箱三个弹窗、旧 `/search`、`/chatters`、`/photowall` 路由兼容和 390px 移动端表现。
+
+遗留问题：
+
+- 工具箱、文章整合和图片双模式还需要浏览器人工验收后再标记为完全完成。
+- 旧 `/search` 路由保留但不再出现在顶部导航。
+
+## 2026-05-03 - GitHub/QQ 留言登录专项硬修
+
+本轮目标：
+
+- 统一 `/api/settings/public` 的留言 provider 状态结构。
+- 确保 GitHub 已配置时前台显示 GitHub 登录按钮。
+- 确保 QQ 未配置时只影响 QQ，不影响 GitHub。
+- 修复本地开发环境点击登录进入 Not Found 的风险。
+
+当前进度估算：
+
+- P0：100%。
+- P1：98%，provider 状态、auth 路由和未登录 401 已通过自动验证；真实 OAuth 回调仍需有效第三方应用配置后做浏览器验收。
+- P2：96%，本轮不做视觉调整。
+
+前台变更：
+
+- `CommentBox` 优先读取 `comments.providers.github/qq`。
+- GitHub 与 QQ 的 `enabled/configured` 分开判断，不再因为某个平台未配置而禁用全部留言。
+- 前台 HTTP 默认 base 在本地 5173/5174/5175 端口下会兜底指向 `http://127.0.0.1:8000/api`，避免 `/api/auth/...` 落到前台 Vite 导致 404。
+- 登录跳转仍优先使用 `VITE_API_BASE_URL`，生产环境可继续使用 `/api` 反代。
+
+后端/API 变更：
+
+- `GET /api/settings/public` 的 `comments.providers.github` 增加 `clientIdConfigured`、`secretConfigured`。
+- `GET /api/settings/public` 的 `comments.providers.qq` 增加 `appIdConfigured`、`secretConfigured`。
+- `configured` 明确为 ID 与 Secret 都存在时才为 true。
+- `/api/auth/github/login`、`/api/auth/qq/login` 均通过 TestClient 验证真实存在；QQ 未配置时返回中文友好错误，不返回 Not Found。
+- 未登录提交留言返回 401：“请先登录后再留言。”。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`。
+- 通过：`cd admin && npm run build`。
+- 通过：`python -m compileall backend\app`。
+- 通过：`GET /api/settings/public` 返回 `comments.providers.github.configured=true`、`comments.providers.qq.configured=false`，且不含任何 GitHub/QQ Secret 明文。
+- 通过：`GET /api/auth/github/login?returnTo=/posts/test` 返回 307，Location 指向 GitHub OAuth，不是 404。
+- 通过：`GET /api/auth/qq/login?returnTo=/posts/test` 返回 503 中文友好错误，不是 404。
+- 通过：`GET /api/auth/visitor/me` 返回 GitHub/QQ 独立 configured 状态。
+- 通过：未登录 `POST /api/comments/posts/vue-fastapi-blog` 返回 401 中文提示。
+- 通过：构建产物 Secret 固定字符串搜索未匹配。
+
+遗留问题：
+
+- 真实 GitHub OAuth 授权完成回跳需要 GitHub 应用回调地址白名单匹配本地后端地址。
+- 前台按钮可见性和跳转仍需用户重启前后端 dev server 后浏览器确认。
+
 ## 2026-05-03 - 多平台留言登录与中文化回归修复
 
 本轮目标：

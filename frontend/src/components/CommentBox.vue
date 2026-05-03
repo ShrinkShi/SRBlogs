@@ -25,8 +25,22 @@ const boardEnabled = computed(() => options.value.enabled !== false)
 const maxLength = computed(() => Number(options.value.maxLength || 1000))
 const githubEnabled = computed(() => providerOptions.value.github?.enabled ?? options.value.githubLoginEnabled ?? true)
 const qqEnabled = computed(() => providerOptions.value.qq?.enabled ?? options.value.qqLoginEnabled ?? true)
-const githubConfigured = computed(() => providerOptions.value.github?.configured ?? options.value.githubLoginConfigured ?? visitor.value.configured.github)
-const qqConfigured = computed(() => providerOptions.value.qq?.configured ?? options.value.qqLoginConfigured ?? visitor.value.configured.qq)
+const githubConfigured = computed(() => {
+  const github = providerOptions.value.github
+  if (typeof github?.configured === 'boolean') return github.configured
+  if (typeof github?.clientIdConfigured === 'boolean' || typeof github?.secretConfigured === 'boolean') {
+    return github?.clientIdConfigured === true && github?.secretConfigured === true
+  }
+  return options.value.githubLoginConfigured ?? visitor.value.configured.github
+})
+const qqConfigured = computed(() => {
+  const qq = providerOptions.value.qq
+  if (typeof qq?.configured === 'boolean') return qq.configured
+  if (typeof qq?.appIdConfigured === 'boolean' || typeof qq?.secretConfigured === 'boolean') {
+    return qq?.appIdConfigured === true && qq?.secretConfigured === true
+  }
+  return options.value.qqLoginConfigured ?? visitor.value.configured.qq
+})
 const githubReady = computed(() => githubEnabled.value !== false && githubConfigured.value === true)
 const qqReady = computed(() => qqEnabled.value !== false && qqConfigured.value === true)
 
@@ -50,7 +64,11 @@ async function load() {
 }
 
 function loginWith(provider: 'github' | 'qq') {
-  const rawBase = String(import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '')
+  const envBase = String(import.meta.env.VITE_API_BASE_URL || '').trim()
+  const localBackend = `${window.location.protocol}//${window.location.hostname || '127.0.0.1'}:8000/api`
+  const fallbackBase = ['5173', '5174', '5175'].includes(window.location.port) ? localBackend : '/api'
+  const selectedBase = envBase === '/api' && ['5173', '5174', '5175'].includes(window.location.port) ? localBackend : (envBase || fallbackBase)
+  const rawBase = selectedBase.replace(/\/$/, '')
   const apiBase = rawBase.endsWith('/api') ? rawBase : `${rawBase}/api`
   const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`
   window.location.href = `${apiBase}/auth/${provider}/login?returnTo=${encodeURIComponent(returnTo)}`

@@ -13,6 +13,7 @@ export const useUiStore = defineStore('ui', {
     clickSound: localStorage.getItem('sr-click-sound') !== 'off',
     clickSoundVolume: Number(localStorage.getItem('sr-click-volume') || '0.05'),
     clickSoundUrl: localStorage.getItem('sr-click-url') || '',
+    fontScale: (localStorage.getItem('sr-font-scale') || 'medium') as 'small' | 'medium' | 'large',
     toast: '',
     toastKind: 'info' as 'info' | 'success' | 'error'
   }),
@@ -56,6 +57,14 @@ export const useUiStore = defineStore('ui', {
       localStorage.setItem('sr-click-sound', this.clickSound ? 'on' : 'off')
       localStorage.setItem('sr-click-volume', String(this.clickSoundVolume))
       localStorage.setItem('sr-click-url', this.clickSoundUrl)
+    },
+    setClickSoundVolume(volume: number) {
+      this.clickSoundVolume = Math.max(0, Math.min(1, Number.isFinite(volume) ? volume : this.clickSoundVolume))
+      localStorage.setItem('sr-click-volume', String(this.clickSoundVolume))
+    },
+    setFontScale(scale: 'small' | 'medium' | 'large') {
+      this.fontScale = scale
+      localStorage.setItem('sr-font-scale', scale)
     },
     showToast(message: string, kind: 'info' | 'success' | 'error' = 'info') {
       this.toast = message

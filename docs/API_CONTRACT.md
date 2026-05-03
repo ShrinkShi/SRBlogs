@@ -1,5 +1,66 @@
 # API Contract
 
+## 2026-05-03 工具箱与整合页 API 复用说明
+
+本轮未新增后端接口，也未改变现有数据结构。
+
+- `/posts` 正经板块继续读取公开 `GET /api/posts`，草稿不进入公开列表。
+- `/posts?section=chatters` 杂谈板块读取公开 `GET /api/chatters`。
+- 图片页继续读取公开 `GET /api/photos`，并以相册组形式展示。
+- 工具箱全局搜索弹窗复用 `GET /api/search` 和 `GET /api/tags`。
+- 工具箱游客设置只写入浏览器 localStorage，不调用后台私有配置接口。
+- 音乐音量设置复用前端全局播放器状态，不新增 API。
+
+安全边界：
+
+- 工具箱和游客设置不得读取 `/api/admin/settings`。
+- 公开搜索、文章、杂谈、图片接口不得返回后台 Secret。
+- OAuth、OSS、AI 等 Secret 仍只能保存在后端 `.env` 或服务端配置中。
+
+## 2026-05-03 多平台留言 Provider 状态契约修订
+
+`GET /api/settings/public` 的留言配置必须使用稳定结构，并且只暴露布尔状态：
+
+```json
+{
+  "comments": {
+    "enabled": true,
+    "maxLength": 1000,
+    "providers": {
+      "github": {
+        "enabled": true,
+        "configured": true,
+        "clientIdConfigured": true,
+        "secretConfigured": true
+      },
+      "qq": {
+        "enabled": true,
+        "configured": false,
+        "appIdConfigured": true,
+        "secretConfigured": false
+      }
+    }
+  }
+}
+```
+
+- `comments.enabled` 只表示全站留言板是否开放。
+- `providers.github.enabled` 只表示是否允许 GitHub 登录留言。
+- `providers.github.configured = clientIdConfigured && secretConfigured`。
+- `providers.qq.configured = appIdConfigured && secretConfigured`。
+- GitHub 与 QQ 必须独立判断；QQ 未配置不得影响 GitHub。
+- 不得返回 GitHub OAuth Secret、QQ App Secret、access token 或 `.env` 路径。
+
+认证入口：
+
+- `GET /api/auth/github/login?returnTo=/posts/{slug}`：启动 GitHub OAuth。已配置时返回 307 跳转 GitHub；未配置时返回中文友好错误，不返回 404。
+- `GET /api/auth/github/callback`：校验 state，服务端换 token，写入访客登录 cookie，并跳回 `returnTo`。
+- `GET /api/auth/qq/login?returnTo=/posts/{slug}`：启动 QQ OAuth。未配置时返回中文友好错误，不返回 404。
+- `GET /api/auth/qq/callback`：校验 state，服务端换 token，写入访客登录 cookie，并跳回 `returnTo`。
+- `GET /api/auth/visitor/me`：返回 `{ configured: { github, qq }, user }`，不返回 access token。
+- `POST /api/auth/visitor/logout`：清除访客登录态。
+- 未登录 `POST /api/comments/{resource}/{slug}` 返回 `401`，消息为“请先登录后再留言。”。
+
 ## 2026-05-03 多平台留言公开状态修订
 
 `GET /api/settings/public` 的 `comments` 字段优先使用多平台结构：
