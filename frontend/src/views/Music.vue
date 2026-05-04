@@ -8,6 +8,7 @@ import type { MusicItem, PageConfig, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { usePlayerStore } from '@/stores/player'
 import { useUiStore } from '@/stores/ui'
+import { customBlocks, isVisible, layoutBlock, layoutStyle } from '@/utils/pageLayout'
 
 const tracks = ref<MusicItem[]>([])
 const settings = ref<SiteSettings | null>(null)
@@ -21,6 +22,9 @@ const ui = useUiStore()
 
 const pageTitle = computed(() => pageConfig.value?.pageText?.music?.title || '音乐歌单')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.music?.subtitle || '左侧控制播放，右侧查看歌词和歌单。')
+const customLayoutBlocks = computed(() => customBlocks(pageConfig.value, 'music'))
+const blockStyle = (id: string) => layoutStyle(layoutBlock(pageConfig.value, 'music', id))
+const showBlock = (id: string) => isVisible(pageConfig.value, 'music', id)
 useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/music' })
 
 const sortedTracks = computed(() => player.tracks.length ? player.tracks : [...tracks.value].sort((a, b) => Number(b.likes || 0) - Number(a.likes || 0) || Number(a.sort ?? 0) - Number(b.sort ?? 0)))
@@ -130,8 +134,8 @@ onMounted(load)
 </script>
 
 <template>
-  <section class="grid gap-5">
-    <GlassCard class="page-title-block">
+  <section class="page-layout-grid">
+    <GlassCard v-if="showBlock('pageTitle')" class="page-title-block" :style="blockStyle('pageTitle')">
       <div class="mx-auto max-w-3xl text-center">
         <p class="text-xs font-bold uppercase tracking-[.32em] text-fuchsia-100/45">music</p>
         <h1 class="mt-2 text-4xl font-black text-white">{{ pageTitle }}</h1>
@@ -139,21 +143,21 @@ onMounted(load)
       </div>
     </GlassCard>
 
-    <GlassCard v-if="loading">
+    <GlassCard v-if="loading" :style="blockStyle('playerPanel')">
       <p class="text-center text-white/60">歌单加载中...</p>
     </GlassCard>
-    <GlassCard v-else-if="error">
+    <GlassCard v-else-if="error" :style="blockStyle('playerPanel')">
       <p class="text-center text-red-200/85">{{ error }}</p>
       <div class="mt-4 text-center">
         <button class="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/70" @click="load">重试</button>
       </div>
     </GlassCard>
-    <GlassCard v-else-if="!sortedTracks.length">
+    <GlassCard v-else-if="!sortedTracks.length" :style="blockStyle('playerPanel')">
       <p class="text-center text-white/60">暂无歌曲。</p>
     </GlassCard>
 
-    <div v-else class="music-page-grid">
-      <GlassCard hover class="music-player-panel min-w-0">
+    <template v-else>
+      <GlassCard v-if="showBlock('playerPanel')" hover class="music-player-panel min-w-0" :style="blockStyle('playerPanel')">
         <div class="grid justify-items-center gap-5 text-center">
           <div class="record-disc music-page-record rounded-full" :class="{ playing: player.playing }" :style="recordStyle" aria-hidden="true"></div>
           <div class="min-w-0">
@@ -201,7 +205,7 @@ onMounted(load)
         </div>
       </GlassCard>
 
-      <GlassCard hover class="music-lyrics-panel min-w-0">
+      <GlassCard v-if="showBlock('lyricsPlaylistPanel')" hover class="music-lyrics-panel min-w-0" :style="blockStyle('lyricsPlaylistPanel')">
         <div class="flex flex-wrap gap-2">
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'lyrics' ? 'bg-cyan-300 text-slate-950' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'lyrics'">歌词</button>
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'playlist' ? 'bg-cyan-300 text-slate-950' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'playlist'">歌单</button>
@@ -233,8 +237,11 @@ onMounted(load)
           </button>
         </div>
       </GlassCard>
-    </div>
+    </template>
 
-    <CommentBox resource="music" slug="global" />
+    <CommentBox v-if="showBlock('messageBoard')" resource="music" slug="global" :style="blockStyle('messageBoard')" />
+    <GlassCard v-for="block in customLayoutBlocks" :key="block.id" :style="layoutStyle(block)">
+      <p class="text-white/70">{{ block.props?.text || block.label }}</p>
+    </GlassCard>
   </section>
 </template>

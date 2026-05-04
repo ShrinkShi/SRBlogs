@@ -959,3 +959,81 @@ Write behavior:
 
 - Likes are clamped to nonnegative values.
 - Updates use the existing safe JSON write path and backup behavior for `music.json`.
+## 2026-05-04 Multi-Page Page Layout Contract
+
+### GET `/api/pages/config`
+
+公开读取页面文案和布局配置，不需要 JWT，不返回 Secret、access token、服务端绝对路径或后台私有配置。
+
+响应核心结构：
+
+```json
+{
+  "pageText": {
+    "posts": { "title": "文章归档", "subtitle": "..." },
+    "photos": { "title": "图片", "subtitle": "..." }
+  },
+  "homeProfile": {
+    "author": "Shrink",
+    "avatar": "/uploads/avatar.png",
+    "description": "首页简介",
+    "socialLinks": { "github": "https://github.com/ShrinkShi" }
+  },
+  "pageLayouts": {
+    "home": {
+      "layoutVersion": 1,
+      "components": {
+        "profileCard": {
+          "label": "名片",
+          "type": "profileCard",
+          "order": 1,
+          "w": 6,
+          "h": 2,
+          "visible": true,
+          "locked": true,
+          "props": {}
+        }
+      }
+    },
+    "posts": { "layoutVersion": 1, "components": {} },
+    "photos": { "layoutVersion": 1, "components": {} },
+    "music": { "layoutVersion": 1, "components": {} },
+    "projects": { "layoutVersion": 1, "components": {} },
+    "friends": { "layoutVersion": 1, "components": {} },
+    "about": { "layoutVersion": 1, "components": {} }
+  }
+}
+```
+
+布局字段：
+
+- `order`：组件顺序，数值越小越靠前。
+- `w`：桌面端 12 栅格宽度，建议范围 `1..12`，支持小数。
+- `h`：组件最小高度系数，建议范围 `0.5..8`，支持小数。
+- `visible`：是否显示组件。
+- `locked`：核心组件标记。核心组件可隐藏，不应删除内容数据。
+- `type`：组件类型，例如 `pageTitle`、`contentList`、`customText`、`customMarkdown`、`imageBlock`、`linkButton`、`divider`。
+- `props`：组件公开展示参数。不得保存 Secret 或脚本。
+
+兼容规则：
+
+- 旧配置只有 `home` 或 `homeLayout` 时，后端自动补齐 `pageLayouts`。
+- 缺失页面使用默认配置，不返回 404。
+- 前台接口失败时可使用默认布局兜底。
+
+### GET `/api/admin/pages/config`
+
+后台读取完整页面编辑配置，需要管理员 JWT。返回结构与公开接口保持一致，但同样不得返回 Secret 明文。
+
+### PUT `/api/admin/pages/config`
+
+后台保存页面配置，需要管理员 JWT。
+
+要求：
+
+- 写入必须走现有安全 JSON 写入封装。
+- 保存前生成备份或沿用 `JsonStore` 备份机制。
+- 保存操作写审计日志。
+- 保存某个页面时不得覆盖其他页面配置。
+- 删除/隐藏组件只改变页面布局引用，不删除文章、相册、音乐、项目、友链等真实内容数据。
+- 错误响应继续使用 `{ "code": "ERROR_CODE", "message": "用户可读错误", "detail": {} }`。

@@ -229,10 +229,27 @@ export interface PageConfig {
     layoutVersion?: number
     components?: Partial<Record<HomeComponentId, HomeLayoutComponent>>
   }
+  pageLayouts?: Record<string, PageLayout>
   home?: {
     layoutVersion?: number
     components?: Partial<Record<HomeComponentId, HomeLayoutComponent>>
   }
+}
+
+export interface PageLayoutComponent {
+  order: number
+  w: number
+  h: number
+  visible?: boolean
+  label?: string
+  type?: string
+  locked?: boolean
+  props?: Record<string, unknown>
+}
+
+export interface PageLayout {
+  layoutVersion?: number
+  components?: Record<string, PageLayoutComponent>
 }
 
 export type DiscoveryType = 'all' | 'posts' | 'moments' | 'chatters' | 'projects' | 'photos' | 'friends' | 'music'

@@ -6,6 +6,7 @@ import CommentBox from '@/components/CommentBox.vue'
 import { contentApi } from '@/api/content'
 import type { PageConfig, PhotoAlbum, PhotoItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
+import { customBlocks, isVisible, layoutBlock, layoutStyle } from '@/utils/pageLayout'
 
 type AlbumView = PhotoAlbum & { slug: string }
 
@@ -18,6 +19,9 @@ const error = ref('')
 const pageConfig = ref<PageConfig | null>(null)
 const title = computed(() => pageConfig.value?.pageText?.photos?.title || '图片')
 const subtitle = computed(() => pageConfig.value?.pageText?.photos?.subtitle || '相册记录从后端 JSON 动态读取，点击封面可查看组内照片。')
+const customLayoutBlocks = computed(() => customBlocks(pageConfig.value, 'photos'))
+const blockStyle = (id: string) => layoutStyle(layoutBlock(pageConfig.value, 'photos', id))
+const showBlock = (id: string) => isVisible(pageConfig.value, 'photos', id)
 useSeo({ title: () => title.value, description: () => subtitle.value, path: '/photowall' })
 
 function slugify(value: string, fallback: string) {
@@ -71,29 +75,32 @@ onMounted(load)
 </script>
 
 <template>
-  <section class="grid gap-5">
-    <GlassCard class="page-title-block text-center">
+  <section class="page-layout-grid">
+    <GlassCard v-if="showBlock('pageTitle')" class="page-title-block text-center" :style="blockStyle('pageTitle')">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-pink-100/45">photowall</p>
       <h1 class="mt-2 text-4xl font-black text-white">{{ title }}</h1>
       <p class="mt-3 text-white/56">{{ subtitle }}</p>
-      <div class="mt-5 inline-flex rounded-full bg-white/[0.05] p-1">
+    </GlassCard>
+    <div v-if="showBlock('viewModeSwitch')" class="flex justify-center" :style="blockStyle('viewModeSwitch')">
+      <div class="inline-flex rounded-full bg-white/[0.05] p-1">
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'grid' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'grid'">矩阵网格</button>
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'link' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'link'">中枢链路</button>
       </div>
-    </GlassCard>
+    </div>
 
-    <GlassCard v-if="loading">
-      <p class="text-white/60">照片加载中...</p>
-    </GlassCard>
-    <GlassCard v-else-if="error">
-      <p class="text-red-200/85">{{ error }}</p>
-      <button class="mt-4 rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/70" @click="load">重试</button>
-    </GlassCard>
-    <GlassCard v-else-if="!albums.length">
-      <p class="text-white/60">暂无相册。</p>
-    </GlassCard>
+    <div v-if="showBlock('albumList')" :style="blockStyle('albumList')">
+      <GlassCard v-if="loading">
+        <p class="text-white/60">照片加载中...</p>
+      </GlassCard>
+      <GlassCard v-else-if="error">
+        <p class="text-red-200/85">{{ error }}</p>
+        <button class="mt-4 rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/70" @click="load">重试</button>
+      </GlassCard>
+      <GlassCard v-else-if="!albums.length">
+        <p class="text-white/60">暂无相册。</p>
+      </GlassCard>
 
-    <div v-else-if="viewMode === 'grid'" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div v-else-if="viewMode === 'grid'" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       <button
         v-for="album in albums"
         :key="album.title + album.cover"
@@ -115,9 +122,9 @@ onMounted(load)
           </div>
         </div>
       </button>
-    </div>
+      </div>
 
-    <div v-else class="article-link-mode">
+      <div v-else class="article-link-mode">
       <button
         v-for="(album, index) in albums"
         :key="album.title + album.cover"
@@ -147,7 +154,12 @@ onMounted(load)
           </article>
         </GlassCard>
       </button>
+      </div>
     </div>
+
+    <GlassCard v-for="block in customLayoutBlocks" :key="block.id" :style="layoutStyle(block)">
+      <p class="text-white/70">{{ block.props?.text || block.label }}</p>
+    </GlassCard>
 
     <div
       v-if="activeAlbum"

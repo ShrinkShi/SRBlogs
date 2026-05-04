@@ -1,5 +1,120 @@
 # HISTORY
 
+## 2026-05-04 - 页面编辑弹窗化与首页 12 栅格修复轮
+
+本轮目标：
+
+- 修复“页面编辑 > 首页”组件卡片固定三列显示，无法体现真实宽高的问题。
+- 将组件详细设置从卡片内联控件改为点击组件后弹窗编辑，避免小组件内部信息显示不全。
+- 修复前台首页布局解释不一致的问题，使两个 `w=6` 组件在桌面端正好铺满同一行而不顶出页面。
+
+后台变更：
+
+- `admin/src/views/PageEditor.vue` 的组件编辑区改为 12 栅格真实预览，组件卡片按 `w/h/order` 显示实际占位。
+- 组件卡片不再直接展示宽高滑块、order 输入、隐藏/删除等编辑控件；点击组件后打开“组件详细设置”弹窗。
+- 组件详细设置弹窗保留宽度、高度、上移、下移、order、显示/隐藏、删除/隐藏和主题状态摘要。
+- 继续移除拖拽排序作为主交互，避免拖动组件与宽高滑块冲突。
+
+前台变更：
+
+- `frontend/src/views/Home.vue` 将首页组件 `w` 解释为 12 栅格 span，不再使用 120 子列换算。
+- `frontend/src/utils/pageLayout.ts` 将通用页面布局 `w` 同步解释为 12 栅格 span。
+- `frontend/src/styles.css` 将 `.home-layout-grid` 和 `.page-layout-grid` 改为 12 列栅格，确保 `w=6 + w=6` 在同一行内刚好占满内容区。
+
+验证结果：
+
+- 通过：`cd admin && npm run build`
+- 通过：`cd frontend && npm run build`
+- 通过：`python -m compileall backend\app`
+- 已检查：构建产物静态搜索未发现真实 Secret 明文；搜索命中的是前端/后台代码中的配置字段名引用，并非实际密钥值。
+
+遗留问题：
+
+- 未启动常驻 dev server 做浏览器人工回归；请刷新前后台页面确认：页面编辑组件卡片按真实 `w/h` 占位、点击组件弹窗可编辑、前台首页两个 `w=6` 组件不再超出内容区。
+
+## 2026-05-04 - 页面编辑器边界约束与拖拽冲突修复轮
+
+本轮目标：
+
+- 修复后台“页面编辑”组件卡片超出编辑区边界的问题，避免滑块和数值输入把卡片撑破。
+- 移除组件拖拽排序，避免与宽高滑动条冲突；排序先只保留“上移 / 下移 / order 数值”。
+- 降低前台首页对后台 `h` 高度值的映射强度，避免后台调试高度把首页组件拉得过高。
+
+后台变更：
+
+- `admin/src/views/PageEditor.vue` 的组件编辑区从 120 栅格真实预览改为受控 `auto-fit` 卡片网格。
+- 组件卡片设置 `max-width: 100%`、`min-width: 0`，滑块和数值输入被限制在卡片内部自然换行，不再向右顶出或被截断。
+- 宽度/高度控制行改为三列主结构：标签、滑块、数值输入；预设按钮自动换到后续行。
+- 移除 `draggable`、`dragstart`、`dragover`、`drop` 等拖拽排序入口。
+- 页面说明改为“使用上移/下移或 order 数值调整顺序”。
+
+前台变更：
+
+- `frontend/src/views/Home.vue` 降低首页核心组件 `h` 到 `min-height` 的映射比例，并限制前台高度计算上限。
+- `frontend/src/utils/pageLayout.ts` 降低自定义组件 `h` 到 `min-height` 的映射比例，并限制高度计算上限。
+- 保留 `order/w/visible` 的真实生效能力，但避免 `h` 误调后把首页整体视觉拉爆。
+
+验证结果：
+
+- 通过：`cd admin && npm run build`
+- 通过：`cd frontend && npm run build`
+- 通过：`python -m compileall backend\app`
+
+遗留问题：
+
+- 未启动常驻 dev server 做浏览器人工回归；后台页面编辑区是否完全不再顶出边界、前台首页高度是否恢复正常，需要用户刷新浏览器确认。
+
+## 2026-05-04 - 后台设置可读性与多页面页面编辑扩展轮
+
+本轮目标：
+
+- 修复后台黑白灰平面化后设置中心局部文字、输入框、折叠区、滑块等可读性不足的问题。
+- 压缩“页面编辑”组件卡片，默认只展示核心状态，详细状态改为按需展开。
+- 将页面编辑从首页扩展到文章、图片、音乐、项目、友链、关于等页面。
+- 增加页面编辑中的添加组件、隐藏/删除组件能力，并保持保存后前台真实生效。
+
+前台变更：
+
+- 新增 `frontend/src/utils/pageLayout.ts`，统一解析 `pageLayouts`、组件可见性、排序和宽高样式。
+- 首页继续读取 `pageLayouts.home`，并支持渲染后台新增的自定义文本、Markdown、图片、链接和分隔区块。
+- 文章页、图片页、音乐页、项目页、友链页、关于页开始读取各自页面的 layout 配置，并按组件 `order/w/h/visible` 应用布局。
+- 旧页面功能保持：文章/杂谈切换、矩阵网格/中枢链路、照片墙相册、音乐播放器、留言板、关于 Markdown 渲染未改业务逻辑。
+
+后台变更：
+
+- 重写 `admin/src/views/PageEditor.vue` 的页面编辑体验。
+- 页面编辑支持 `home/posts/photos/music/projects/friends/about` 七类页面。
+- 每个组件卡片默认只显示组件名称、key、order、w、h、visible；透明度、日间/夜间背景色、大小档位等详细信息改为折叠查看。
+- 宽度和高度控制压缩为滑块、数值输入和快捷预设组合，避免控制区挤占预览空间。
+- 支持添加自定义组件、隐藏核心组件、删除自定义组件、单页恢复默认布局。
+- 后台设置中心增加更强的 `admin-flat` 文字、输入框、placeholder、折叠区、checkbox/radio/range 可读性覆盖，避免继续继承前台浅色玻璃变量。
+
+后端/API 变更：
+
+- `backend/app/api/pages.py` 扩展默认页面配置，`pageLayouts` 覆盖 `home/posts/photos/music/projects/friends/about`。
+- `GET /api/pages/config` 返回公开页面配置，不需要 JWT，不包含 Secret。
+- `GET /api/admin/pages/config` 和 `PUT /api/admin/pages/config` 保持管理员 JWT 要求。
+- 兼容旧 home-only 配置；缺失页面自动补默认配置，不返回 404。
+- 保存仍走 `JsonStore` / 安全 JSON 写入封装，并写入审计日志。
+
+文档变更：
+
+- 更新 `docs/API_CONTRACT.md`：补充多页面 `pageLayouts` 结构、组件字段和添加/隐藏组件约束。
+- 更新 `docs/UI_STYLE_GUIDE.md`：补充后台设置中心可读性、页面编辑压缩卡片、详情折叠和多页面布局规范。
+- 更新 `docs/MANUAL_QA_CHECKLIST.md`：补充后台设置可读性、多页面编辑、添加/隐藏组件和旧功能回归清单。
+- 更新 `docs/USER_GUIDE.md` 和 `README.md`：补充多页面页面编辑的使用说明。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`
+- 通过：`cd admin && npm run build`
+- 通过：`python -m compileall backend\app`
+- 通过：构建产物 Secret 静态搜索未匹配 `change-me`、`jwt_secret`、`admin_password`、`api_key`、`accessKeySecret`、`clientSecret`、`GITHUB_CLIENT_SECRET`、`QQ_APP_SECRET` 等敏感模式。
+
+遗留问题：
+
+- 未启动常驻 dev server 做浏览器人工回归；页面编辑添加/隐藏组件、多页面布局保存后前台真实变化、后台设置中心各 tab 可读性仍需用户在浏览器确认。
+
 ## 2026-05-04 - 页面编辑精细尺寸控制与后台黑白灰平面化轮
 
 本轮目标：

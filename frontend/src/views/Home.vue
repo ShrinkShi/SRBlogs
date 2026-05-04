@@ -8,6 +8,7 @@ import { useSeo } from '@/composables/useSeo'
 import { useUiStore } from '@/stores/ui'
 import { usePlayerStore } from '@/stores/player'
 import { formatDate } from '@/utils/date'
+import { customBlocks, layoutStyle } from '@/utils/pageLayout'
 
 type UpdateItem = {
   type: 'posts' | 'moments' | 'chatters'
@@ -143,9 +144,10 @@ const defaultHomeLayout: Record<HomeComponentId, { order: number; w: number; h: 
   themeToggle: { order: 7, w: 4, h: 2, visible: true },
   statusBar: { order: 8, w: 12, h: 1, visible: true }
 }
+const homeCustomBlocks = computed(() => customBlocks(pageConfig.value, 'home'))
 
 function componentLayout(id: HomeComponentId) {
-  const components = pageConfig.value?.homeLayout?.components || pageConfig.value?.home?.components || {}
+  const components = pageConfig.value?.pageLayouts?.home?.components || pageConfig.value?.homeLayout?.components || pageConfig.value?.home?.components || {}
   return { ...defaultHomeLayout[id], ...(components[id] || {}) }
 }
 
@@ -155,12 +157,12 @@ function isComponentVisible(id: HomeComponentId) {
 
 function homeComponentStyle(id: HomeComponentId) {
   const item = componentLayout(id)
-  const span = Math.max(10, Math.min(120, Math.round(Number(item.w || 12) * 10)))
-  const h = Math.max(0.5, Number(item.h || 1))
+  const span = Math.max(1, Math.min(12, Math.round(Number(item.w || 12))))
+  const h = Math.max(0.5, Math.min(4, Number(item.h || 1)))
   return {
     order: Number(item.order || defaultHomeLayout[id].order),
     gridColumn: `span ${span} / span ${span}`,
-    minHeight: `${Math.max(5.5, h * 8)}rem`
+    minHeight: `${Math.max(4.25, h * 4)}rem`
   }
 }
 
@@ -397,6 +399,16 @@ onBeforeUnmount(() => {
           <b class="mt-2 block text-sm leading-6 text-white">Vue 3 / Vite / Tailwind CSS / FastAPI</b>
         </div>
       </div>
+    </GlassCard>
+
+    <GlassCard v-for="block in homeCustomBlocks" :key="block.id" hover class="home-card-opacity" :style="layoutStyle(block)">
+      <div v-if="block.type === 'divider'" class="h-px w-full bg-white/15"></div>
+      <a v-else-if="block.type === 'linkButton'" :href="String(block.props?.url || '/')" class="sr-button-primary inline-flex w-fit">{{ block.props?.text || block.label }}</a>
+      <div v-else-if="block.type === 'imageBlock'" class="grid gap-3">
+        <img v-if="block.props?.url" :src="String(block.props.url)" :alt="String(block.props?.title || block.label)" class="max-h-72 w-full rounded-3xl object-cover" loading="lazy" />
+        <h3 class="text-2xl font-black text-white">{{ block.props?.title || block.label }}</h3>
+      </div>
+      <p v-else class="whitespace-pre-wrap text-white/70">{{ block.props?.text || block.label }}</p>
     </GlassCard>
     </div>
   </section>

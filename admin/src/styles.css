@@ -275,6 +275,71 @@ body::before { display: none; }
   background: var(--admin-surface) !important;
 }
 
+.admin-flat h1,
+.admin-flat h2,
+.admin-flat h3,
+.admin-flat h4,
+.admin-flat h5,
+.admin-flat h6,
+.admin-flat label,
+.admin-flat summary,
+.admin-flat .field {
+  color: var(--admin-text) !important;
+}
+
+.admin-flat p,
+.admin-flat span,
+.admin-flat li,
+.admin-flat small,
+.admin-flat dd,
+.admin-flat dt {
+  color: inherit;
+}
+
+.admin-flat input,
+.admin-flat textarea,
+.admin-flat select {
+  color: var(--admin-text) !important;
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border-strong) !important;
+}
+
+.admin-flat input::placeholder,
+.admin-flat textarea::placeholder {
+  color: #6b7280 !important;
+  opacity: 1;
+}
+
+.admin-flat input[type="checkbox"],
+.admin-flat input[type="radio"] {
+  accent-color: var(--admin-black);
+}
+
+.admin-flat input[type="range"] {
+  accent-color: var(--admin-black);
+}
+
+.admin-flat .bg-red-300\/10,
+.admin-flat .bg-red-50 {
+  background-color: #fef2f2 !important;
+}
+
+.admin-flat .text-red-100,
+.admin-flat .text-red-200\/85,
+.admin-flat .text-red-700 {
+  color: #b91c1c !important;
+}
+
+.admin-flat .bg-emerald-300\/10,
+.admin-flat .bg-emerald-50 {
+  background-color: #ecfdf5 !important;
+}
+
+.admin-flat .text-emerald-100,
+.admin-flat .text-emerald-700 {
+  color: #047857 !important;
+}
+
 .toast-shell {
   position: fixed;
   border: 1px solid #bbf7d0;

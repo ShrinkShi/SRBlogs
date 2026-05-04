@@ -44,56 +44,431 @@
       "wechat": ""
     }
   },
+  "pageLayouts": {
+    "home": {
+      "layoutVersion": 1,
+      "components": {
+        "profileCard": {
+          "order": 1,
+          "w": 6.0,
+          "h": 2.0,
+          "visible": true,
+          "label": "名片",
+          "type": "profileCard",
+          "locked": true,
+          "props": {}
+        },
+        "musicPlayer": {
+          "order": 2,
+          "w": 6.0,
+          "h": 2.0,
+          "visible": true,
+          "label": "音乐播放器",
+          "type": "musicPlayer",
+          "locked": true,
+          "props": {}
+        },
+        "lyrics": {
+          "order": 3,
+          "w": 12.0,
+          "h": 1.0,
+          "visible": true,
+          "label": "歌词区",
+          "type": "lyrics",
+          "locked": true,
+          "props": {}
+        },
+        "latestPostsCarousel": {
+          "order": 4,
+          "w": 4.0,
+          "h": 3.0,
+          "visible": true,
+          "label": "最新文章轮播",
+          "type": "latestPostsCarousel",
+          "locked": true,
+          "props": {}
+        },
+        "photoCarousel": {
+          "order": 5,
+          "w": 8.0,
+          "h": 2.0,
+          "visible": true,
+          "label": "图片轮播",
+          "type": "photoCarousel",
+          "locked": true,
+          "props": {}
+        },
+        "updatesCarousel": {
+          "order": 6,
+          "w": 8.0,
+          "h": 2.0,
+          "visible": true,
+          "label": "更新内容轮播",
+          "type": "updatesCarousel",
+          "locked": true,
+          "props": {}
+        },
+        "themeToggle": {
+          "order": 7,
+          "w": 4.0,
+          "h": 2.0,
+          "visible": true,
+          "label": "昼夜切换卡片",
+          "type": "themeToggle",
+          "locked": true,
+          "props": {}
+        },
+        "statusBar": {
+          "order": 8,
+          "w": 12.0,
+          "h": 1.0,
+          "visible": true,
+          "label": "底部状态区",
+          "type": "statusBar",
+          "locked": true,
+          "props": {}
+        },
+        "imageBlock-1777874610622": {
+          "order": 9,
+          "w": 6.0,
+          "h": 2.0,
+          "visible": true,
+          "label": "图片块",
+          "type": "imageBlock",
+          "locked": false,
+          "props": {
+            "url": "",
+            "title": "图片块"
+          }
+        }
+      }
+    },
+    "posts": {
+      "layoutVersion": 1,
+      "components": {
+        "pageTitle": {
+          "order": 1,
+          "w": 12.0,
+          "h": 1.4,
+          "visible": true,
+          "label": "页面标题区",
+          "type": "pageTitle",
+          "locked": true,
+          "props": {}
+        },
+        "sectionSwitch": {
+          "order": 2,
+          "w": 12.0,
+          "h": 0.8,
+          "visible": true,
+          "label": "正经 / 杂谈切换",
+          "type": "sectionSwitch",
+          "locked": true,
+          "props": {}
+        },
+        "searchBox": {
+          "order": 3,
+          "w": 12.0,
+          "h": 0.8,
+          "visible": true,
+          "label": "搜索区",
+          "type": "searchBox",
+          "locked": true,
+          "props": {}
+        },
+        "tagFilter": {
+          "order": 4,
+          "w": 12.0,
+          "h": 0.8,
+          "visible": true,
+          "label": "标签筛选区",
+          "type": "tagFilter",
+          "locked": true,
+          "props": {}
+        },
+        "viewModeSwitch": {
+          "order": 5,
+          "w": 12.0,
+          "h": 0.8,
+          "visible": true,
+          "label": "显示模式切换",
+          "type": "viewModeSwitch",
+          "locked": true,
+          "props": {}
+        },
+        "contentList": {
+          "order": 6,
+          "w": 12.0,
+          "h": 4.0,
+          "visible": true,
+          "label": "内容列表区",
+          "type": "contentList",
+          "locked": true,
+          "props": {}
+        }
+      }
+    },
+    "photos": {
+      "layoutVersion": 1,
+      "components": {
+        "pageTitle": {
+          "order": 1,
+          "w": 12.0,
+          "h": 1.4,
+          "visible": true,
+          "label": "页面标题区",
+          "type": "pageTitle",
+          "locked": true,
+          "props": {}
+        },
+        "viewModeSwitch": {
+          "order": 2,
+          "w": 12.0,
+          "h": 0.8,
+          "visible": true,
+          "label": "显示模式切换",
+          "type": "viewModeSwitch",
+          "locked": true,
+          "props": {}
+        },
+        "albumList": {
+          "order": 3,
+          "w": 12.0,
+          "h": 4.0,
+          "visible": true,
+          "label": "相册列表区",
+          "type": "albumList",
+          "locked": true,
+          "props": {}
+        },
+        "messageBoard": {
+          "order": 4,
+          "w": 12.0,
+          "h": 2.0,
+          "visible": false,
+          "label": "留言板区域",
+          "type": "messageBoard",
+          "locked": true,
+          "props": {}
+        }
+      }
+    },
+    "music": {
+      "layoutVersion": 1,
+      "components": {
+        "pageTitle": {
+          "order": 1,
+          "w": 12.0,
+          "h": 1.4,
+          "visible": true,
+          "label": "页面标题区",
+          "type": "pageTitle",
+          "locked": true,
+          "props": {}
+        },
+        "playerPanel": {
+          "order": 2,
+          "w": 5.0,
+          "h": 4.0,
+          "visible": true,
+          "label": "音乐播放器面板",
+          "type": "playerPanel",
+          "locked": true,
+          "props": {}
+        },
+        "lyricsPlaylistPanel": {
+          "order": 3,
+          "w": 7.0,
+          "h": 4.0,
+          "visible": true,
+          "label": "歌词 / 歌单面板",
+          "type": "lyricsPlaylistPanel",
+          "locked": true,
+          "props": {}
+        },
+        "messageBoard": {
+          "order": 4,
+          "w": 12.0,
+          "h": 2.0,
+          "visible": true,
+          "label": "留言板",
+          "type": "messageBoard",
+          "locked": true,
+          "props": {}
+        }
+      }
+    },
+    "projects": {
+      "layoutVersion": 1,
+      "components": {
+        "pageTitle": {
+          "order": 1,
+          "w": 12.0,
+          "h": 1.4,
+          "visible": true,
+          "label": "页面标题区",
+          "type": "pageTitle",
+          "locked": true,
+          "props": {}
+        },
+        "projectList": {
+          "order": 2,
+          "w": 12.0,
+          "h": 4.0,
+          "visible": true,
+          "label": "项目列表区",
+          "type": "projectList",
+          "locked": true,
+          "props": {}
+        }
+      }
+    },
+    "friends": {
+      "layoutVersion": 1,
+      "components": {
+        "pageTitle": {
+          "order": 1,
+          "w": 12.0,
+          "h": 1.4,
+          "visible": true,
+          "label": "页面标题区",
+          "type": "pageTitle",
+          "locked": true,
+          "props": {}
+        },
+        "friendList": {
+          "order": 2,
+          "w": 12.0,
+          "h": 4.0,
+          "visible": true,
+          "label": "友链列表区",
+          "type": "friendList",
+          "locked": true,
+          "props": {}
+        }
+      }
+    },
+    "about": {
+      "layoutVersion": 1,
+      "components": {
+        "pageTitle": {
+          "order": 1,
+          "w": 12.0,
+          "h": 1.4,
+          "visible": true,
+          "label": "页面标题区",
+          "type": "pageTitle",
+          "locked": true,
+          "props": {}
+        },
+        "markdownContent": {
+          "order": 2,
+          "w": 12.0,
+          "h": 4.0,
+          "visible": true,
+          "label": "Markdown 内容区",
+          "type": "markdownContent",
+          "locked": true,
+          "props": {}
+        }
+      }
+    }
+  },
   "homeLayout": {
     "layoutVersion": 1,
     "components": {
       "profileCard": {
         "order": 1,
-        "w": 6,
-        "h": 2,
-        "visible": true
+        "w": 6.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "名片",
+        "type": "profileCard",
+        "locked": true,
+        "props": {}
       },
       "musicPlayer": {
         "order": 2,
-        "w": 6,
-        "h": 2,
-        "visible": true
+        "w": 6.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "音乐播放器",
+        "type": "musicPlayer",
+        "locked": true,
+        "props": {}
       },
       "lyrics": {
         "order": 3,
-        "w": 12,
-        "h": 1,
-        "visible": true
+        "w": 12.0,
+        "h": 1.0,
+        "visible": true,
+        "label": "歌词区",
+        "type": "lyrics",
+        "locked": true,
+        "props": {}
       },
       "latestPostsCarousel": {
         "order": 4,
-        "w": 4,
-        "h": 3,
-        "visible": true
+        "w": 4.0,
+        "h": 3.0,
+        "visible": true,
+        "label": "最新文章轮播",
+        "type": "latestPostsCarousel",
+        "locked": true,
+        "props": {}
       },
       "photoCarousel": {
         "order": 5,
-        "w": 8,
-        "h": 2,
-        "visible": true
+        "w": 8.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "图片轮播",
+        "type": "photoCarousel",
+        "locked": true,
+        "props": {}
       },
       "updatesCarousel": {
         "order": 6,
-        "w": 8,
-        "h": 2,
-        "visible": true
+        "w": 8.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "更新内容轮播",
+        "type": "updatesCarousel",
+        "locked": true,
+        "props": {}
       },
       "themeToggle": {
         "order": 7,
-        "w": 4,
-        "h": 2,
-        "visible": true
+        "w": 4.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "昼夜切换卡片",
+        "type": "themeToggle",
+        "locked": true,
+        "props": {}
       },
       "statusBar": {
         "order": 8,
-        "w": 12,
-        "h": 1,
-        "visible": true
+        "w": 12.0,
+        "h": 1.0,
+        "visible": true,
+        "label": "底部状态区",
+        "type": "statusBar",
+        "locked": true,
+        "props": {}
+      },
+      "imageBlock-1777874610622": {
+        "order": 9,
+        "w": 6.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "图片块",
+        "type": "imageBlock",
+        "locked": false,
+        "props": {
+          "url": "",
+          "title": "图片块"
+        }
       }
     }
   },
@@ -102,51 +477,96 @@
     "components": {
       "profileCard": {
         "order": 1,
-        "w": 6,
-        "h": 2,
-        "visible": true
+        "w": 6.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "名片",
+        "type": "profileCard",
+        "locked": true,
+        "props": {}
       },
       "musicPlayer": {
         "order": 2,
-        "w": 6,
-        "h": 2,
-        "visible": true
+        "w": 6.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "音乐播放器",
+        "type": "musicPlayer",
+        "locked": true,
+        "props": {}
       },
       "lyrics": {
         "order": 3,
-        "w": 12,
-        "h": 1,
-        "visible": true
+        "w": 12.0,
+        "h": 1.0,
+        "visible": true,
+        "label": "歌词区",
+        "type": "lyrics",
+        "locked": true,
+        "props": {}
       },
       "latestPostsCarousel": {
         "order": 4,
-        "w": 4,
-        "h": 3,
-        "visible": true
+        "w": 4.0,
+        "h": 3.0,
+        "visible": true,
+        "label": "最新文章轮播",
+        "type": "latestPostsCarousel",
+        "locked": true,
+        "props": {}
       },
       "photoCarousel": {
         "order": 5,
-        "w": 8,
-        "h": 2,
-        "visible": true
+        "w": 8.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "图片轮播",
+        "type": "photoCarousel",
+        "locked": true,
+        "props": {}
       },
       "updatesCarousel": {
         "order": 6,
-        "w": 8,
-        "h": 2,
-        "visible": true
+        "w": 8.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "更新内容轮播",
+        "type": "updatesCarousel",
+        "locked": true,
+        "props": {}
       },
       "themeToggle": {
         "order": 7,
-        "w": 4,
-        "h": 2,
-        "visible": true
+        "w": 4.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "昼夜切换卡片",
+        "type": "themeToggle",
+        "locked": true,
+        "props": {}
       },
       "statusBar": {
         "order": 8,
-        "w": 12,
-        "h": 1,
-        "visible": true
+        "w": 12.0,
+        "h": 1.0,
+        "visible": true,
+        "label": "底部状态区",
+        "type": "statusBar",
+        "locked": true,
+        "props": {}
+      },
+      "imageBlock-1777874610622": {
+        "order": 9,
+        "w": 6.0,
+        "h": 2.0,
+        "visible": true,
+        "label": "图片块",
+        "type": "imageBlock",
+        "locked": false,
+        "props": {
+          "url": "",
+          "title": "图片块"
+        }
       }
     }
   }
