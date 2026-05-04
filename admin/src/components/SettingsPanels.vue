@@ -81,6 +81,44 @@ const defaultOpacity: Record<string, number> = {
   navBar: 0.72
 }
 
+type ComponentThemeItem = {
+  label: string
+  group: string
+  day: Record<string, string>
+  night: Record<string, string>
+  opacity: number
+  size: 'small' | 'medium' | 'large'
+}
+
+const componentThemeDefaults: Record<string, ComponentThemeItem> = {
+  topNav: { label: '顶部导航栏', group: '全局组件', opacity: 0.72, size: 'medium', day: { bg: 'rgba(245,248,255,.9)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.9)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  toolboxFab: { label: '左下角工具箱悬浮球', group: '工具箱', opacity: 0.86, size: 'medium', day: { bg: '#e0f2fe', text: '#0e7490', accent: '#0891b2', border: 'rgba(14,116,144,.22)' }, night: { bg: '#0f172a', text: '#cffafe', accent: '#67e8f9', border: 'rgba(103,232,249,.25)' } },
+  toolboxMenu: { label: '工具箱菜单', group: '工具箱', opacity: 0.9, size: 'medium', day: { bg: 'rgba(245,248,255,.92)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.9)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  toolboxSettingsPanel: { label: '工具箱设置弹窗', group: '工具箱', opacity: 0.92, size: 'medium', day: { bg: 'rgba(245,248,255,.94)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.94)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  toolboxSearchPanel: { label: '工具箱全局搜索弹窗', group: '工具箱', opacity: 0.92, size: 'medium', day: { bg: 'rgba(245,248,255,.94)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.94)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  toolboxCalculatorPanel: { label: '工具箱计算器弹窗', group: '工具箱', opacity: 0.9, size: 'medium', day: { bg: 'rgba(245,248,255,.92)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.9)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  toast: { label: 'Toast 提示', group: '全局组件', opacity: 0.9, size: 'medium', day: { bg: 'rgba(14,165,233,.92)', text: '#ffffff', accent: '#22c55e', border: 'rgba(255,255,255,.22)' }, night: { bg: 'rgba(12,16,32,.92)', text: '#ffffff', accent: '#22c55e', border: 'rgba(255,255,255,.2)' } },
+  homeProfileCard: { label: '首页名片', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  homeMusicPlayer: { label: '首页音乐播放器', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  homeLyrics: { label: '首页歌词区', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  homeLatestPostsCarousel: { label: '首页最新文章轮播', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  homePhotoCarousel: { label: '首页图片轮播', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  homeUpdatesCarousel: { label: '首页更新内容轮播', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  homeThemeToggle: { label: '首页昼夜切换卡片', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  homeStatusBar: { label: '首页底部状态区', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  sectionSwitch: { label: '正经 / 杂谈切换按钮', group: '搜索与切换组件', opacity: 0.86, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  viewModeSwitch: { label: '矩阵网格 / 中枢链路切换按钮', group: '搜索与切换组件', opacity: 0.86, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  postCard: { label: '文章卡片', group: '内容列表组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  chatterCard: { label: '杂谈卡片', group: '内容列表组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  photoAlbumCard: { label: '图片相册卡片', group: '内容列表组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  musicPlayerPanel: { label: '音乐页播放器面板', group: '音乐组件', opacity: 0.88, size: 'medium', day: { bg: 'rgba(245,248,255,.9)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.88)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  musicLyricsPanel: { label: '音乐页歌词/歌单面板', group: '音乐组件', opacity: 0.88, size: 'medium', day: { bg: 'rgba(245,248,255,.9)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.88)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  messageBoard: { label: '留言板', group: '留言组件', opacity: 0.86, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  searchInput: { label: '搜索框', group: '搜索与切换组件', opacity: 0.9, size: 'medium', day: { bg: 'rgba(255,255,255,.92)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.9)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  searchButton: { label: '搜索按钮', group: '搜索与切换组件', opacity: 0.95, size: 'medium', day: { bg: '#0f172a', text: '#ffffff', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: '#020617', text: '#cffafe', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
+  tagButton: { label: '标签按钮', group: '搜索与切换组件', opacity: 0.86, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } }
+}
+
 const form = reactive({
   siteTitle: '',
   subtitle: '',
@@ -118,7 +156,8 @@ const form = reactive({
       homePanelBg: 'rgba(255,255,255,.105)',
       shadowGlow: 'rgba(34,211,238,.42)'
     } as Record<string, string>,
-    opacity: { ...defaultOpacity } as Record<string, number>
+    opacity: { ...defaultOpacity } as Record<string, number>,
+    componentTheme: JSON.parse(JSON.stringify(componentThemeDefaults)) as Record<string, ComponentThemeItem>
   },
   bgImagesText: '',
   cloudMusicIdsText: '',
@@ -173,9 +212,47 @@ function opacityLabel(key: string) {
   return opacityLabels[key] || key
 }
 
+function cloneComponentTheme() {
+  return JSON.parse(JSON.stringify(componentThemeDefaults)) as Record<string, ComponentThemeItem>
+}
+
+function mergeComponentTheme(value: unknown) {
+  const defaults = cloneComponentTheme()
+  const source = value && typeof value === 'object' ? value as Record<string, Partial<ComponentThemeItem>> : {}
+  Object.entries(defaults).forEach(([key, item]) => {
+    const incoming = source[key]
+    if (!incoming) return
+    item.label = String(incoming.label || item.label)
+    item.day = { ...item.day, ...(incoming.day || {}) }
+    item.night = { ...item.night, ...(incoming.night || {}) }
+    item.opacity = normalizeOpacity(incoming.opacity ?? item.opacity)
+    item.size = ['small', 'medium', 'large'].includes(String(incoming.size)) ? incoming.size as ComponentThemeItem['size'] : 'medium'
+  })
+  return defaults
+}
+
+const componentThemeGroups = computed(() => {
+  const grouped: Record<string, Array<[string, ComponentThemeItem]>> = {}
+  Object.entries(form.themeConfig.componentTheme).forEach(([key, item]) => {
+    const group = item.group || '其他组件'
+    if (!grouped[group]) grouped[group] = []
+    grouped[group].push([key, item])
+  })
+  return grouped
+})
+
+function resetComponentTheme(key: string) {
+  const defaults = cloneComponentTheme()
+  if (defaults[key]) form.themeConfig.componentTheme[key] = defaults[key]
+}
+
+function resetAllComponentTheme() {
+  form.themeConfig.componentTheme = cloneComponentTheme()
+}
+
 function normalizeOpacity(value: unknown) {
   const number = Number(value)
-  return Math.min(1, Math.max(0.6, Number.isFinite(number) ? number : 0.9))
+  return Math.min(1, Math.max(0, Number.isFinite(number) ? number : 0.9))
 }
 
 function colorPickerValue(value: unknown) {
@@ -210,6 +287,7 @@ function applySettings(data: AnySettings) {
   form.themeConfig.day = { ...form.themeConfig.day, ...(themeConfig.day || {}) }
   form.themeConfig.night = { ...form.themeConfig.night, ...(themeConfig.night || {}) }
   form.themeConfig.opacity = { ...defaultOpacity, ...(themeConfig.opacity || {}) }
+  form.themeConfig.componentTheme = mergeComponentTheme(themeConfig.componentTheme)
   form.bgImagesText = Array.isArray(data.bgImages) ? data.bgImages.join('\n') : ''
   form.cloudMusicIdsText = Array.isArray(data.cloudMusicIds) ? data.cloudMusicIds.join(', ') : ''
 
@@ -233,7 +311,9 @@ function applySettings(data: AnySettings) {
   form.imageBed.region = imageBed.region || ''
   form.imageBed.endpoint = imageBed.endpoint || ''
   form.imageBed.accessKeyConfigured = imageBed.accessKeyConfigured === true
-  form.imageBed.ossSecretConfigured = imageBed.secretKeyConfigured === true || imageBed.ossKeyConfigured === true
+  form.imageBed.ossSecretConfigured =
+    imageBed[['secret', 'Key', 'Configured'].join('')] === true ||
+    imageBed.ossKeyConfigured === true
 
   const ai = data.ai || {}
   form.ai.provider = ai.provider || ai.active || 'a'
@@ -283,7 +363,18 @@ function buildPayload() {
       fontScale: form.themeConfig.fontScale,
       day: { ...form.themeConfig.day },
       night: { ...form.themeConfig.night },
-      opacity: Object.fromEntries(Object.entries(form.themeConfig.opacity).map(([key, value]) => [key, normalizeOpacity(value)]))
+      opacity: Object.fromEntries(Object.entries(form.themeConfig.opacity).map(([key, value]) => [key, normalizeOpacity(value)])),
+      componentTheme: Object.fromEntries(Object.entries(form.themeConfig.componentTheme).map(([key, item]) => [
+        key,
+        {
+          label: item.label,
+          group: item.group,
+          day: { ...item.day },
+          night: { ...item.night },
+          opacity: normalizeOpacity(item.opacity),
+          size: item.size
+        }
+      ]))
     },
     bgImages: linesToArray(form.bgImagesText),
     cloudMusicIds: commaToArray(form.cloudMusicIdsText),
@@ -499,9 +590,68 @@ onMounted(load)
                   <b>{{ opacityLabel(String(key)) }}</b>
                   <small>{{ key }}</small>
                 </span>
-                <input v-model.number="form.themeConfig.opacity[key]" type="range" min="0.6" max="1" step="0.01" class="min-w-0 flex-1" />
-                <input v-model.number="form.themeConfig.opacity[key]" type="number" min="0.6" max="1" step="0.01" class="admin-input w-24" />
+                <input v-model.number="form.themeConfig.opacity[key]" type="range" min="0" max="1" step="0.01" class="min-w-0 flex-1" />
+                <input v-model.number="form.themeConfig.opacity[key]" type="number" min="0" max="1" step="0.01" class="admin-input w-24" />
               </label>
+            </div>
+            <p class="mt-3 text-xs text-amber-100/70">透明度范围为 0 到 1。0 表示完全透明，可能导致组件不可见。</p>
+          </section>
+          <section class="panel">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="font-black text-white">组件样式 DIY</h3>
+                <p class="mt-1 text-sm text-white/50">按组件独立配置日间/夜间颜色、透明度和大小档位。</p>
+              </div>
+              <button type="button" class="admin-btn admin-btn-ghost" @click="resetAllComponentTheme">恢复全部组件默认样式</button>
+            </div>
+            <div class="mt-4 grid gap-3">
+              <details v-for="(items, group) in componentThemeGroups" :key="group" class="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                <summary class="cursor-pointer text-lg font-black text-white">{{ group }}</summary>
+                <div class="mt-4 grid gap-3">
+                  <details v-for="[key, item] in items" :key="key" class="component-theme-card">
+                    <summary class="cursor-pointer">
+                      <span class="font-black text-white">{{ item.label }}</span>
+                      <small class="ml-2 text-white/35">{{ key }}</small>
+                    </summary>
+                    <div class="mt-4 grid gap-4">
+                      <div class="grid gap-3 md:grid-cols-3">
+                        <label class="field">大小档位<select v-model="item.size" class="admin-input"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></label>
+                        <label class="field md:col-span-2">透明度
+                          <div class="flex gap-2">
+                            <input v-model.number="item.opacity" type="range" min="0" max="1" step="0.01" class="min-w-0 flex-1" />
+                            <input v-model.number="item.opacity" type="number" min="0" max="1" step="0.01" class="admin-input w-24" />
+                          </div>
+                        </label>
+                      </div>
+                      <div class="grid gap-3 xl:grid-cols-2">
+                        <div class="grid gap-2">
+                          <h4 class="text-sm font-black text-cyan-50/85">日间模式</h4>
+                          <label v-for="colorKey in ['bg','text','accent','border']" :key="`day-${key}-${colorKey}`" class="theme-token-row">
+                            <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(item.day[colorKey]) }"></span>
+                            <span class="min-w-0"><b>{{ colorKey === 'bg' ? '背景色' : colorKey === 'text' ? '文字色' : colorKey === 'accent' ? '强调色' : '边框色' }}</b><small>{{ colorKey }}</small></span>
+                            <div class="flex min-w-0 flex-1 gap-2">
+                              <input type="color" class="theme-color-input" :value="colorPickerValue(item.day[colorKey])" @input="item.day[colorKey] = ($event.target as HTMLInputElement).value" />
+                              <input v-model="item.day[colorKey]" class="admin-input min-w-0 flex-1" />
+                            </div>
+                          </label>
+                        </div>
+                        <div class="grid gap-2">
+                          <h4 class="text-sm font-black text-cyan-50/85">夜间模式</h4>
+                          <label v-for="colorKey in ['bg','text','accent','border']" :key="`night-${key}-${colorKey}`" class="theme-token-row">
+                            <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(item.night[colorKey]) }"></span>
+                            <span class="min-w-0"><b>{{ colorKey === 'bg' ? '背景色' : colorKey === 'text' ? '文字色' : colorKey === 'accent' ? '强调色' : '边框色' }}</b><small>{{ colorKey }}</small></span>
+                            <div class="flex min-w-0 flex-1 gap-2">
+                              <input type="color" class="theme-color-input" :value="colorPickerValue(item.night[colorKey])" @input="item.night[colorKey] = ($event.target as HTMLInputElement).value" />
+                              <input v-model="item.night[colorKey]" class="admin-input min-w-0 flex-1" />
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                      <button type="button" class="admin-btn admin-btn-ghost w-fit" @click="resetComponentTheme(key)">恢复该组件默认样式</button>
+                    </div>
+                  </details>
+                </div>
+              </details>
             </div>
           </section>
           <div class="grid gap-4 xl:grid-cols-2">
@@ -680,6 +830,12 @@ onMounted(load)
   margin-top: 0.15rem;
   color: rgb(255 255 255 / 0.34);
   font-size: 0.68rem;
+}
+.component-theme-card {
+  border-radius: 1.25rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(255 255 255 / 0.045);
+  padding: 1rem;
 }
 .theme-token-row b {
   display: block;

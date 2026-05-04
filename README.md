@@ -240,3 +240,10 @@ taskkill /PID <PID> /F
 ## 2026-05-03 Message Login Update
 
 SRBlogs message boards support GitHub and QQ visitor login. OAuth secrets are server-side only. Public settings expose only configured booleans. Music uses a global message board target, and photowall album dialogs use per-album message targets.
+## 2026-05-04 打磨补充：组件样式 DIY 与音乐喜欢
+
+- 后台“主题与背景”支持组件级样式 DIY：主要前台组件可以分别配置日间/夜间颜色、透明度 `0..1` 和大小档位。
+- `/api/settings/public` 会返回公开的 `themeConfig.componentTheme`，只包含视觉配置，不包含任何 Secret。
+- 首页和音乐页播放器支持“顺序播放 / 随机播放 / 单曲循环”，状态保存在浏览器本地。
+- 首页和音乐页播放器支持歌曲喜欢按钮；喜欢数写入后端 `music.json`，旧歌曲默认 `likes=0`。
+- 音乐页歌单默认按喜欢数降序展示，喜欢数相同时保持原排序。

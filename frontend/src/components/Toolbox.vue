@@ -203,7 +203,7 @@ onBeforeUnmount(() => {
   <div data-toolbox-root class="fixed bottom-5 left-5 z-40">
     <div
       v-if="menuOpen"
-      class="mb-3 grid min-w-40 gap-2 rounded-[26px] border border-white/15 bg-slate-950/82 p-3 text-sm text-white/82 shadow-2xl backdrop-blur-2xl"
+      class="toolbox-menu mb-3 grid min-w-40 gap-2 rounded-[26px] border border-white/15 bg-slate-950/82 p-3 text-sm text-white/82 shadow-2xl backdrop-blur-2xl"
     >
       <button type="button" data-clickable="true" class="toolbox-menu-item" @click="openPanel('calculator')">计算器</button>
       <button type="button" data-clickable="true" class="toolbox-menu-item" @click="openPanel('search')">全局搜索</button>
@@ -212,7 +212,7 @@ onBeforeUnmount(() => {
     <button
       type="button"
       data-clickable="true"
-      class="grid h-14 w-14 place-items-center rounded-full border border-cyan-200/25 bg-slate-950/72 text-cyan-100 shadow-[0_18px_48px_rgba(0,0,0,.35),0_0_34px_rgba(103,232,249,.18)] backdrop-blur-2xl transition hover:scale-105"
+      class="toolbox-fab grid h-14 w-14 place-items-center rounded-full border border-cyan-200/25 bg-slate-950/72 text-cyan-100 shadow-[0_18px_48px_rgba(0,0,0,.35),0_0_34px_rgba(103,232,249,.18)] backdrop-blur-2xl transition hover:scale-105"
       :aria-expanded="menuOpen"
       aria-label="打开工具箱"
       @click.stop="menuOpen = !menuOpen"
@@ -376,6 +376,21 @@ onBeforeUnmount(() => {
   text-align: left;
   transition: transform .2s var(--motion-ease), background .2s var(--motion-ease), color .2s var(--motion-ease);
 }
+.toolbox-menu {
+  background: color-mix(in srgb, var(--ct-toolbox-menu-bg, rgb(15 23 42)) calc(var(--ct-toolbox-menu-opacity, .9) * 100%), transparent) !important;
+  color: var(--ct-toolbox-menu-text, rgba(255,255,255,.78));
+  border-color: var(--ct-toolbox-menu-border, rgba(255,255,255,.15));
+  transform-origin: bottom left;
+}
+.toolbox-fab {
+  background: color-mix(in srgb, var(--ct-toolbox-fab-bg, rgb(15 23 42)) calc(var(--ct-toolbox-fab-opacity, .86) * 100%), transparent) !important;
+  color: var(--ct-toolbox-fab-text, rgb(207 250 254));
+  border-color: var(--ct-toolbox-fab-border, rgba(103,232,249,.25));
+  transform: scale(var(--ct-toolbox-fab-size, 1));
+}
+.toolbox-menu-item {
+  color: var(--ct-toolbox-menu-text, rgba(255,255,255,.78));
+}
 .toolbox-menu-item:hover {
   background: rgba(255,255,255,.1);
   color: white;
@@ -409,13 +424,16 @@ onBeforeUnmount(() => {
   font-size: .9rem;
 }
 .toolbox-calculator-panel {
-  background: rgb(var(--toolbox-panel-rgb, 12 16 32) / var(--opacity-toolbox-calculator-panel, .9)) !important;
+  background: color-mix(in srgb, var(--ct-toolbox-calculator-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) calc(var(--ct-toolbox-calculator-panel-opacity, var(--opacity-toolbox-calculator-panel, .9)) * 100%), transparent) !important;
+  color: var(--ct-toolbox-calculator-panel-text, currentColor);
 }
 .toolbox-modal-panel-settings {
-  background: rgb(var(--toolbox-panel-rgb, 12 16 32) / var(--opacity-toolbox-settings-panel, .92)) !important;
+  background: color-mix(in srgb, var(--ct-toolbox-settings-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) calc(var(--ct-toolbox-settings-panel-opacity, var(--opacity-toolbox-settings-panel, .92)) * 100%), transparent) !important;
+  color: var(--ct-toolbox-settings-panel-text, currentColor);
 }
 .toolbox-modal-panel-search {
-  background: rgb(var(--toolbox-panel-rgb, 12 16 32) / var(--opacity-toolbox-search-panel, .92)) !important;
+  background: color-mix(in srgb, var(--ct-toolbox-search-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) calc(var(--ct-toolbox-search-panel-opacity, var(--opacity-toolbox-search-panel, .92)) * 100%), transparent) !important;
+  color: var(--ct-toolbox-search-panel-text, currentColor);
 }
 :global(:root[data-color-mode='day']) .toolbox-modal-panel,
 :global(:root[data-color-mode='day']) .toolbox-calculator-panel {

@@ -14,7 +14,7 @@ const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c
 <template>
   <div class="grid min-w-0 gap-5 sm:grid-cols-2 xl:grid-cols-3">
     <RouterLink v-for="item in items" :key="item.slug" :to="`${base}/${item.slug}`" class="block min-w-0">
-      <GlassCard hover class="h-full overflow-hidden !p-0">
+      <GlassCard hover class="post-card-theme h-full overflow-hidden !p-0">
         <article class="flex h-full min-w-0 flex-col">
           <div class="relative h-48 overflow-hidden bg-slate-900/60">
             <SafeImage

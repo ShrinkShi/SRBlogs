@@ -9,10 +9,11 @@ const fields = [
   { key: 'lyricUrl', label: '歌词文件 URL / 本地上传', type: 'upload' as const, accept: '.lrc,.txt,text/plain' },
   { key: 'lyrics', label: '内嵌歌词', type: 'textarea' as const },
   { key: 'id', label: '云音乐 ID' },
-  { key: 'sort', label: '排序', type: 'number' as const }
+  { key: 'sort', label: '排序', type: 'number' as const },
+  { key: 'likes', label: '喜欢数', type: 'number' as const }
 ]
 
-const emptyItem = { title: '', artist: '', cover: '', url: '', lyricUrl: '', lyrics: '', id: '', sort: 0 }
+const emptyItem = { title: '', artist: '', cover: '', url: '', lyricUrl: '', lyrics: '', id: '', sort: 0, likes: 0 }
 </script>
 
 <template>

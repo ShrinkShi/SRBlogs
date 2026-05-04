@@ -289,8 +289,9 @@ body::before {
 }
 
 .app-topbar {
-  background: linear-gradient(135deg, color-mix(in srgb, var(--nav-bg) calc(var(--opacity-nav-bar) * 100%), transparent), rgba(255,255,255,.055));
-  border-bottom: 1px solid var(--border-glass);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ct-top-nav-bg, var(--nav-bg)) calc(var(--ct-top-nav-opacity, var(--opacity-nav-bar)) * 100%), transparent), rgba(255,255,255,.055));
+  border-bottom: 1px solid var(--ct-top-nav-border, var(--border-glass));
+  color: var(--ct-top-nav-text, var(--text-primary));
   backdrop-filter: blur(22px) saturate(150%);
   -webkit-backdrop-filter: blur(22px) saturate(150%);
   box-shadow: 0 18px 55px rgba(0,0,0,.2);
@@ -383,16 +384,72 @@ body::before {
   box-shadow: 0 24px 80px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.15);
 }
 
+.music-compact-card { --component-bg: var(--ct-home-music-player-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-music-player-text, var(--text-primary)); --component-opacity: var(--ct-home-music-player-opacity, var(--opacity-home-card)); --component-scale: var(--ct-home-music-player-size, 1); }
+.home-card-opacity { --component-bg: var(--ct-home-profile-card-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-profile-card-text, var(--text-primary)); --component-opacity: var(--ct-home-profile-card-opacity, var(--opacity-home-card)); --component-scale: var(--ct-home-profile-card-size, 1); }
+.lyrics-compact { --component-bg: var(--ct-home-lyrics-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-lyrics-text, var(--text-primary)); --component-opacity: var(--ct-home-lyrics-opacity, var(--opacity-home-card)); --component-scale: var(--ct-home-lyrics-size, 1); }
+.home-profile-card { --component-bg: var(--ct-home-profile-card-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-profile-card-text, var(--text-primary)); --component-opacity: var(--ct-home-profile-card-opacity, var(--opacity-home-card)); --component-scale: var(--ct-home-profile-card-size, 1); }
+.home-latest-posts-carousel { --component-bg: var(--ct-home-latest-posts-carousel-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-latest-posts-carousel-text, var(--text-primary)); --component-opacity: var(--ct-home-latest-posts-carousel-opacity, var(--opacity-home-carousel)); --component-scale: var(--ct-home-latest-posts-carousel-size, 1); }
+.home-photo-carousel-card { --component-bg: var(--ct-home-photo-carousel-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-photo-carousel-text, var(--text-primary)); --component-opacity: var(--ct-home-photo-carousel-opacity, var(--opacity-home-carousel)); --component-scale: var(--ct-home-photo-carousel-size, 1); }
+.home-updates-carousel-card { --component-bg: var(--ct-home-updates-carousel-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-updates-carousel-text, var(--text-primary)); --component-opacity: var(--ct-home-updates-carousel-opacity, var(--opacity-home-carousel)); --component-scale: var(--ct-home-updates-carousel-size, 1); }
+.home-theme-card { --component-bg: var(--ct-home-theme-toggle-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-theme-toggle-text, var(--text-primary)); --component-opacity: var(--ct-home-theme-toggle-opacity, var(--opacity-home-card)); --component-scale: var(--ct-home-theme-toggle-size, 1); }
+.home-status-card { --component-bg: var(--ct-home-status-bar-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-status-bar-text, var(--text-primary)); --component-opacity: var(--ct-home-status-bar-opacity, var(--opacity-home-card)); --component-scale: var(--ct-home-status-bar-size, 1); }
 .music-compact-card,
 .home-card-opacity,
-.lyrics-compact {
+.home-profile-card,
+.lyrics-compact,
+.home-status-card {
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--bg-card-elevated) calc(var(--opacity-home-card) * 100%), transparent), color-mix(in srgb, var(--home-panel-bg) calc(var(--opacity-home-card) * 100%), transparent)) !important;
+    linear-gradient(135deg, color-mix(in srgb, var(--component-bg) calc(var(--component-opacity) * 100%), transparent), color-mix(in srgb, var(--home-panel-bg) calc(var(--component-opacity) * 100%), transparent)) !important;
+  color: var(--component-text);
+  padding: calc(1.5rem * var(--component-scale, 1));
+}
+
+.home-media-carousel,
+.home-text-carousel,
+.home-theme-card {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--component-bg, var(--bg-card-elevated)) calc(var(--component-opacity, var(--opacity-home-carousel)) * 100%), transparent), color-mix(in srgb, var(--bg-card) calc(var(--component-opacity, var(--opacity-home-carousel)) * 100%), transparent));
+  color: var(--component-text, var(--text-primary));
 }
 
 .comment-board {
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--bg-card-elevated) calc(var(--opacity-message-board) * 100%), transparent), color-mix(in srgb, var(--bg-card) calc(var(--opacity-message-board) * 100%), transparent)) !important;
+    linear-gradient(135deg, color-mix(in srgb, var(--ct-message-board-bg, var(--bg-card-elevated)) calc(var(--ct-message-board-opacity, var(--opacity-message-board)) * 100%), transparent), color-mix(in srgb, var(--bg-card) calc(var(--ct-message-board-opacity, var(--opacity-message-board)) * 100%), transparent)) !important;
+  color: var(--ct-message-board-text, var(--text-primary));
+}
+
+.music-player-panel {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--ct-music-player-panel-bg, var(--bg-card-elevated)) calc(var(--ct-music-player-panel-opacity, var(--opacity-music-panel)) * 100%), transparent), color-mix(in srgb, var(--bg-card) calc(var(--ct-music-player-panel-opacity, var(--opacity-music-panel)) * 100%), transparent)) !important;
+  color: var(--ct-music-player-panel-text, var(--text-primary));
+  padding: calc(1.5rem * var(--ct-music-player-panel-size, 1));
+}
+
+.music-lyrics-panel {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--ct-music-lyrics-panel-bg, var(--bg-card-elevated)) calc(var(--ct-music-lyrics-panel-opacity, var(--opacity-music-panel)) * 100%), transparent), color-mix(in srgb, var(--bg-card) calc(var(--ct-music-lyrics-panel-opacity, var(--opacity-music-panel)) * 100%), transparent)) !important;
+  color: var(--ct-music-lyrics-panel-text, var(--text-primary));
+  padding: calc(1.5rem * var(--ct-music-lyrics-panel-size, 1));
+}
+
+.search-input-theme {
+  background: color-mix(in srgb, var(--ct-search-input-bg, rgba(255,255,255,.32)) calc(var(--ct-search-input-opacity, .9) * 100%), transparent) !important;
+  color: var(--ct-search-input-text, var(--text-primary));
+  border-color: var(--ct-search-input-border, rgba(255,255,255,.14)) !important;
+  padding-block: calc(.5rem * var(--ct-search-input-size, 1));
+}
+
+.search-button-theme {
+  background: color-mix(in srgb, var(--ct-search-button-bg, rgb(15 23 42)) calc(var(--ct-search-button-opacity, .95) * 100%), transparent) !important;
+  color: var(--ct-search-button-text, rgb(207 250 254));
+  transform: scale(var(--ct-search-button-size, 1));
+}
+
+.post-card-theme {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--ct-post-card-bg, var(--bg-card-elevated)) calc(var(--ct-post-card-opacity, var(--opacity-content-card)) * 100%), transparent), color-mix(in srgb, var(--bg-card) calc(var(--ct-post-card-opacity, var(--opacity-content-card)) * 100%), transparent)) !important;
+  color: var(--ct-post-card-text, var(--text-primary));
+  padding: calc(1.5rem * var(--ct-post-card-size, 1));
 }
 
 .home-media-carousel {

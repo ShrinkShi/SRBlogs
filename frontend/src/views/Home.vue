@@ -114,6 +114,10 @@ const runtime = computed(() => {
   return `${days} 天`
 })
 const progressPercent = computed(() => player.duration ? `${Math.min(100, (player.currentTime / player.duration) * 100)}%` : '0%')
+const currentSongId = computed(() => player.songKey(track.value))
+const likedCurrent = computed(() => currentSongId.value ? player.isLiked(currentSongId.value) : false)
+const currentLikes = computed(() => Math.max(0, Number(track.value?.likes || 0)))
+const playModeLabel = computed(() => player.playMode === 'sequence' ? '顺序播放' : player.playMode === 'shuffle' ? '随机播放' : '单曲循环')
 const recordStyle = computed<Record<string, string>>(() => (
   track.value?.cover ? { '--record-cover': `url(${track.value.cover})` } : {} as Record<string, string>
 ))
@@ -200,6 +204,30 @@ function setVolumeFromEvent(event: Event) {
   player.setVolume(Number((event.target as HTMLInputElement).value))
 }
 
+async function toggleLike() {
+  const id = currentSongId.value
+  if (!id) {
+    ui.showToast('当前歌曲缺少稳定 ID，无法喜欢', 'error')
+    return
+  }
+  const nextLiked = !likedCurrent.value
+  const previousLikes = currentLikes.value
+  const nextLikes = Math.max(0, previousLikes + (nextLiked ? 1 : -1))
+  player.setLikedLocal(id, nextLiked)
+  player.updateTrackLikes(id, nextLikes)
+  music.value = music.value.map((item) => player.songKey(item) === id ? { ...item, likes: nextLikes } : item)
+  try {
+    const result = await contentApi.updateMusicLike(id, nextLiked)
+    player.updateTrackLikes(id, result.likes)
+    music.value = music.value.map((item) => player.songKey(item) === id ? { ...item, likes: result.likes } : item)
+  } catch (exc) {
+    player.setLikedLocal(id, !nextLiked)
+    player.updateTrackLikes(id, previousLikes)
+    music.value = music.value.map((item) => player.songKey(item) === id ? { ...item, likes: previousLikes } : item)
+    ui.showToast(exc instanceof Error ? exc.message : '喜欢状态保存失败', 'error')
+  }
+}
+
 onMounted(async () => {
   const [p, m, c, ph, s, mu, pc] = await Promise.allSettled([
     contentApi.list('posts'),
@@ -238,7 +266,7 @@ onBeforeUnmount(() => {
     <div class="home-layout-grid">
       <ProfileCard
         v-if="isComponentVisible('profileCard')"
-        class="home-card-opacity min-w-0 max-w-full"
+        class="home-profile-card home-card-opacity min-w-0 max-w-full"
         :style="homeComponentStyle('profileCard')"
         :settings="homeSettings"
         :posts="posts.length"
@@ -263,7 +291,12 @@ onBeforeUnmount(() => {
                 <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 to-fuchsia-300 transition-all duration-300" :style="{ width: progressPercent }"></div>
               </div>
             </div>
-          <div class="flex items-center justify-center gap-3">
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <button type="button" class="icon-button" :aria-label="playModeLabel" :title="playModeLabel" @click="player.cyclePlayMode()">
+              <svg v-if="player.playMode === 'sequence'" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h12l-3-3 1.4-1.4L20.8 9l-6.4 6.4L13 14l3-3H4V7zm0 10h16v2H4v-2z" /></svg>
+              <svg v-else-if="player.playMode === 'shuffle'" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5h-2V6.4l-4.8 4.8-1.4-1.4L17.6 5H16V3zM4 7h3.5l3.2 3.2-1.4 1.4L6.7 9H4V7zm10.2 5.8 4.8 4.8V16h2v5h-5v-2h1.6l-4.8-4.8 1.4-1.4zM4 17h2.7l10.1-10.1 1.4 1.4L7.5 19H4v-2z" /></svg>
+              <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h8.6l-2.3-2.3L14.7 3 20 8.3l-5.3 5.3-1.4-1.7 2.3-2.3H7a3 3 0 0 0 0 6h1v2H7A5 5 0 0 1 7 7zm10 10h-4v-2h4a3 3 0 0 0 0-6h-1V7h1a5 5 0 0 1 0 10z" /></svg>
+            </button>
             <button type="button" class="icon-button" aria-label="previous track" @click="prevTrack">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h2v12H7zM18 6v12l-8.5-6z" /></svg>
             </button>
@@ -273,6 +306,10 @@ onBeforeUnmount(() => {
             </button>
             <button type="button" class="icon-button" aria-label="next track" @click="nextTrack">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6h2v12h-2zM6 6l8.5 6L6 18z" /></svg>
+            </button>
+            <button type="button" class="icon-button min-w-[4.5rem] gap-1 text-sm" :aria-label="likedCurrent ? '取消喜欢' : '喜欢当前歌曲'" @click="toggleLike">
+              <svg viewBox="0 0 24 24" aria-hidden="true" :class="likedCurrent ? 'text-rose-300' : ''"><path d="M12 21s-7-4.4-9.4-8.6C.8 9.2 2.7 5.5 6.2 5.1c2-.2 3.6.7 4.7 2.1 1.1-1.4 2.8-2.3 4.7-2.1 3.5.4 5.4 4.1 3.6 7.3C19 16.6 12 21 12 21z" /></svg>
+              <span>{{ currentLikes }}</span>
             </button>
           </div>
           <div class="volume-control">
@@ -296,7 +333,7 @@ onBeforeUnmount(() => {
       <RouterLink
         v-if="isComponentVisible('latestPostsCarousel') && currentPost"
         :to="`/posts/${currentPost.slug}`"
-        class="home-media-carousel home-image-zoom home-carousel-tall"
+        class="home-media-carousel home-latest-posts-carousel home-image-zoom home-carousel-tall"
         :style="homeComponentStyle('latestPostsCarousel')"
       >
         <div class="image-layer absolute inset-0 bg-cover bg-center" :style="{ backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,.08), rgba(0,0,0,.72)), url(${currentPost.meta.cover || settings?.defaultPostCover || ''})` }"></div>
@@ -311,7 +348,7 @@ onBeforeUnmount(() => {
       </RouterLink>
       <div v-else-if="isComponentVisible('latestPostsCarousel')" class="home-media-carousel home-carousel-tall grid place-items-center text-white/58" :style="homeComponentStyle('latestPostsCarousel')">暂无公开文章</div>
 
-        <RouterLink v-if="isComponentVisible('photoCarousel') && currentPhoto" to="/photowall" class="home-media-carousel home-image-zoom" :style="homeComponentStyle('photoCarousel')">
+        <RouterLink v-if="isComponentVisible('photoCarousel') && currentPhoto" to="/photowall" class="home-media-carousel home-photo-carousel-card home-image-zoom" :style="homeComponentStyle('photoCarousel')">
           <div class="image-layer absolute inset-0 bg-cover bg-center" :style="{ backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,.08), rgba(0,0,0,.66)), url(${currentPhoto.url})` }"></div>
           <div class="home-carousel-copy">
             <span class="sr-chip px-3 py-1 text-xs">{{ currentPhoto.date || 'photo' }}</span>
@@ -324,7 +361,7 @@ onBeforeUnmount(() => {
         </RouterLink>
         <div v-else-if="isComponentVisible('photoCarousel')" class="home-media-carousel grid place-items-center text-white/58" :style="homeComponentStyle('photoCarousel')">暂无照片</div>
 
-          <RouterLink v-if="isComponentVisible('updatesCarousel') && currentUpdate" :to="currentUpdate.url" class="home-text-carousel sr-card-hover" :style="homeComponentStyle('updatesCarousel')">
+          <RouterLink v-if="isComponentVisible('updatesCarousel') && currentUpdate" :to="currentUpdate.url" class="home-text-carousel home-updates-carousel-card sr-card-hover" :style="homeComponentStyle('updatesCarousel')">
             <div>
               <div class="flex items-center justify-between gap-3">
                 <span class="sr-chip px-3 py-1 text-xs">{{ currentUpdate.label }}</span>
@@ -345,7 +382,7 @@ onBeforeUnmount(() => {
             <span class="mt-3 block text-sm leading-6 text-white/58">点击切换全站昼夜主题</span>
           </button>
 
-    <GlassCard v-if="isComponentVisible('statusBar')" hover class="home-card-opacity" :style="homeComponentStyle('statusBar')">
+    <GlassCard v-if="isComponentVisible('statusBar')" hover class="home-status-card home-card-opacity" :style="homeComponentStyle('statusBar')">
       <div class="home-status-grid">
         <div class="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
           <p class="text-xs uppercase tracking-[.24em] text-white/38">beijing time</p>

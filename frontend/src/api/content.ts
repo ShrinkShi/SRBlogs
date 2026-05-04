@@ -56,5 +56,9 @@ export const contentApi = {
   archive: async () => {
     const { data } = await http.get<ArchiveResponse>('/archive')
     return data
+  },
+  updateMusicLike: async (songId: string, liked: boolean) => {
+    const { data } = await http.post<{ id: string; likes: number; liked: boolean }>(`/music/${encodeURIComponent(songId)}/likes`, { data: { liked } })
+    return data
   }
 }

@@ -40,6 +40,7 @@ export interface MusicItem {
   sort?: number
   lyrics?: string
   lyricUrl?: string
+  likes?: number
 }
 
 export interface ThemeTokens {
@@ -74,6 +75,22 @@ export interface ThemeConfig {
     messageBoard?: number
     navBar?: number
   }
+  componentTheme?: Record<string, ComponentThemeItem>
+}
+
+export interface ComponentThemeItem {
+  label?: string
+  day?: ComponentThemeMode
+  night?: ComponentThemeMode
+  opacity?: number
+  size?: 'small' | 'medium' | 'large'
+}
+
+export interface ComponentThemeMode {
+  bg?: string
+  text?: string
+  accent?: string
+  border?: string
 }
 
 export interface PhotoItem {

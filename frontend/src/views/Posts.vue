@@ -160,7 +160,7 @@ onMounted(() => {
         class="article-link-node"
         :class="index % 2 === 0 ? 'article-link-left' : 'article-link-right'"
       >
-        <GlassCard hover class="h-full overflow-hidden !p-0">
+        <GlassCard hover class="post-card-theme h-full overflow-hidden !p-0">
           <article class="flex h-full min-w-0 flex-col">
             <div class="relative h-48 overflow-hidden">
               <SafeImage :src="item.meta.cover" :fallback="fallbackCover" :alt="item.meta.title" img-class="h-full w-full object-cover transition duration-300 hover:scale-[1.035]" />

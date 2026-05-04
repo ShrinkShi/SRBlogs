@@ -821,3 +821,94 @@ Message endpoints now accept resources `posts`, `moments`, `chatters`, `music`, 
 - `GET /api/comments/{resource}/{slug}` remains public and returns old and new comments.
 - `POST /api/comments/{resource}/{slug}` requires visitor login. Anonymous requests return `401`.
 - New messages store `provider` and `providerId`; older `githubLogin` comments remain display-compatible.
+
+## 2026-05-04 Component Theme and Music Likes
+
+### Settings: component theme
+
+`GET /api/settings/public` and `GET /api/admin/settings` include public component style tokens under `themeConfig.componentTheme`.
+
+The response only contains public style values. It must not include OAuth secrets, AI keys, OSS secrets, admin JWTs, or access tokens.
+
+Example shape:
+
+```json
+{
+  "themeConfig": {
+    "opacity": {
+      "toolboxSettingsPanel": 0.92,
+      "toolboxSearchPanel": 0.92,
+      "toolboxCalculatorPanel": 0.9
+    },
+    "componentTheme": {
+      "topNav": {
+        "label": "顶部导航栏",
+        "day": {
+          "bg": "#f8fbff",
+          "text": "#152033",
+          "accent": "#2563eb",
+          "border": "#d8e3f5"
+        },
+        "night": {
+          "bg": "#121827",
+          "text": "#f4f7fb",
+          "accent": "#67e8f9",
+          "border": "#3a465d"
+        },
+        "opacity": 0.72,
+        "size": "medium"
+      }
+    }
+  }
+}
+```
+
+Rules:
+
+- `opacity` accepts `0..1`; `0` means fully transparent and may make a component visually invisible.
+- `size` is one of `small`, `medium`, `large`.
+- Missing or invalid component tokens are normalized to defaults.
+- Internal keys remain English; user-facing labels are Chinese.
+
+### Music likes
+
+Music items include:
+
+```json
+{
+  "id": "song-id",
+  "title": "歌曲名",
+  "artist": "歌手",
+  "url": "/uploads/song.mp3",
+  "likes": 0
+}
+```
+
+Old songs without `likes` are read as `0`.
+
+#### POST `/api/music/{song_id}/likes`
+
+Updates a public like count for a song. This endpoint does not require visitor login. The frontend uses localStorage to avoid duplicate likes from the same browser in the first stage.
+
+Request:
+
+```json
+{ "data": { "liked": true } }
+```
+
+Response:
+
+```json
+{ "id": "song-id", "likes": 1, "liked": true }
+```
+
+Errors:
+
+- `400` invalid request body.
+- `404` song not found.
+- `500` unexpected write failure.
+
+Write behavior:
+
+- Likes are clamped to nonnegative values.
+- Updates use the existing safe JSON write path and backup behavior for `music.json`.

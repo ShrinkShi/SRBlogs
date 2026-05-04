@@ -2374,3 +2374,46 @@ Remaining manual QA:
 - Browser check for `/admin/photos` create album modal scrolling.
 - Browser check for `/admin/photos` edit album modal scrolling.
 - Browser check that all album photos are visible through the modal right-side scroll area at desktop and 390px.
+
+## 2026-05-04 - Component Theme DIY and Music Playback Polish
+
+Scope:
+- Extended the existing polish round without adding a new business module.
+- Kept the current Vue 3 + Vite + TypeScript + Tailwind CSS + FastAPI stack.
+- Preserved page layout editing, message boards, photowall albums, global music playback, and existing admin flows.
+
+Frontend changes:
+- Added component-theme CSS variables generated from public settings so major frontend components can read per-component background, text, accent, border, opacity, and size values.
+- Applied component theme hooks to the top navigation, toolbox floating button/menu/dialogs, toast, home cards/carousels, message board, search input/button, post cards, and music panels.
+- Added shared music playback mode state: sequence, shuffle, and repeat-one. The state is shared by the home player and music page and persists in `localStorage`.
+- Added a like button and like count to the home player and music page player. Liked song IDs are tracked in `localStorage`; backend likes are updated through the API and rolled back on failure.
+- Music playlists now normalize missing `likes` to 0 and sort by likes descending when any song has likes.
+
+Admin changes:
+- Expanded the theme/background settings UI with a component-level style registry grouped by category.
+- Component DIY supports Chinese labels, day/night background color, day/night text color, day/night accent color, day/night border color, opacity from 0 to 1, and size small/medium/large.
+- Added per-component reset and reset-all-defaults actions.
+- Page Editor home component cards now show order, width, height, visible state, current opacity, day/night background color, and size from the real settings/page config.
+- Music management displays a `likes` field for data visibility while preserving the existing form flow.
+
+Backend/API changes:
+- Public/admin settings now normalize and return `themeConfig.componentTheme` with non-secret component style tokens.
+- Opacity normalization now allows the full `0..1` range.
+- Music JSON reads now backfill missing `likes` values to `0`.
+- Added `POST /api/music/{song_id}/likes` with `{ "data": { "liked": true|false } }`, safe JSON write, nonnegative like counts, and 404 for unknown songs.
+
+Documentation changes:
+- Updated `docs/API_CONTRACT.md`, `docs/SECURITY_NOTES.md`, `docs/UI_STYLE_GUIDE.md`, `docs/MANUAL_QA_CHECKLIST.md`, `docs/USER_GUIDE.md`, and `README.md`.
+
+Validation:
+- Passed: `cd frontend && npm run build`.
+- Passed: `cd admin && npm run build`.
+- Passed: `python -m compileall backend\app`.
+- Passed: TestClient `GET /api/settings/public` returned `themeConfig.componentTheme` with 26 component entries and no Secret value.
+- Passed: TestClient `GET /api/music` returned music items with likes normalized.
+- Passed: TestClient music like/unlike roundtrip on the first song, then restored the count to the original value.
+- Passed: frontend/admin dist Secret scan.
+
+Notes:
+- Admin settings write-back for component theme was not re-tested through login because the current local admin password is no longer the documented default `change-me`; the existing browser-admin flow should be used for final manual verification.
+- Browser manual checks still needed for component color/opacity/size visual results, playback mode icons, liked state synchronization, and 390px mobile layout.

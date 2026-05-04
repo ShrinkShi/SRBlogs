@@ -56,6 +56,7 @@ const success = ref('')
 const dirty = ref(false)
 const configSource = ref('尚未加载')
 const raw = ref<Record<string, any>>({})
+const componentTheme = ref<Record<string, any>>({})
 const summary = ref('')
 const aboutContent = ref('')
 const draggingId = ref<HomeComponentId | null>(null)
@@ -80,6 +81,26 @@ const home = reactive({
 
 const blocks = ref<HomeBlock[]>(defaultHomeBlocks.map((block) => ({ ...block })))
 const sortedBlocks = computed(() => [...blocks.value].sort((a, b) => a.order - b.order))
+const homeThemeKey: Record<HomeComponentId, string> = {
+  profileCard: 'homeProfileCard',
+  musicPlayer: 'homeMusicPlayer',
+  lyrics: 'homeLyrics',
+  latestPostsCarousel: 'homeLatestPostsCarousel',
+  photoCarousel: 'homePhotoCarousel',
+  updatesCarousel: 'homeUpdatesCarousel',
+  themeToggle: 'homeThemeToggle',
+  statusBar: 'homeStatusBar'
+}
+
+function themeInfo(id: HomeComponentId) {
+  const item = componentTheme.value[homeThemeKey[id]] || {}
+  return {
+    opacity: item.opacity ?? '默认',
+    dayBg: item.day?.bg || '默认',
+    nightBg: item.night?.bg || '默认',
+    size: item.size || '默认'
+  }
+}
 
 function hydrate(data: Record<string, any>) {
   const savedText = data.pageText || {}
@@ -131,6 +152,12 @@ async function load() {
   success.value = ''
   try {
     raw.value = await adminApi.json<Record<string, any>>('/admin/pages/config')
+    try {
+      const settings = await adminApi.json<Record<string, any>>('/admin/settings')
+      componentTheme.value = settings.themeConfig?.componentTheme || {}
+    } catch {
+      componentTheme.value = {}
+    }
     hydrate(raw.value)
     configSource.value = '已加载后端配置'
     await loadSummary(pageKey.value)
@@ -325,6 +352,13 @@ watch(pageKey, load, { immediate: true })
               <span class="rounded-full bg-white/10 px-2 py-1 text-xs text-white/55">顺序 {{ block.order }}</span>
             </div>
             <div class="mt-4 grid gap-3">
+              <div class="grid gap-2 rounded-2xl border border-white/10 bg-white/[0.05] p-3 text-xs text-white/55">
+                <p>宽度：{{ block.w }}/12 · 高度：{{ block.h }} · 显示：{{ block.visible === false ? '隐藏' : '显示' }}</p>
+                <p>透明度：{{ themeInfo(block.id).opacity }} · 大小：{{ themeInfo(block.id).size }}</p>
+                <p class="truncate">日间背景：{{ themeInfo(block.id).dayBg }}</p>
+                <p class="truncate">夜间背景：{{ themeInfo(block.id).nightBg }}</p>
+                <button type="button" class="admin-btn admin-btn-ghost w-fit text-xs" @click="router.push('/settings?tab=theme')">打开组件主题设置</button>
+              </div>
               <div class="flex flex-wrap gap-2">
                 <button type="button" class="admin-btn admin-btn-ghost text-xs" @click="moveBlock(block.id, -1)">上移</button>
                 <button type="button" class="admin-btn admin-btn-ghost text-xs" @click="moveBlock(block.id, 1)">下移</button>

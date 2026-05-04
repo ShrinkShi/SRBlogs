@@ -26,6 +26,84 @@ DEFAULT_OPACITY: dict[str, float] = {
     "navBar": 0.72,
 }
 
+COMPONENT_THEME_LABELS: dict[str, str] = {
+    "topNav": "顶部导航栏",
+    "toolboxFab": "左下角工具箱悬浮球",
+    "toolboxMenu": "工具箱菜单",
+    "toolboxSettingsPanel": "工具箱设置弹窗",
+    "toolboxSearchPanel": "工具箱全局搜索弹窗",
+    "toolboxCalculatorPanel": "工具箱计算器弹窗",
+    "toast": "Toast 提示",
+    "homeProfileCard": "首页名片",
+    "homeMusicPlayer": "首页音乐播放器",
+    "homeLyrics": "首页歌词区",
+    "homeLatestPostsCarousel": "首页最新文章轮播",
+    "homePhotoCarousel": "首页图片轮播",
+    "homeUpdatesCarousel": "首页更新内容轮播",
+    "homeThemeToggle": "首页昼夜切换卡片",
+    "homeStatusBar": "首页底部状态区",
+    "sectionSwitch": "正经 / 杂谈切换按钮",
+    "viewModeSwitch": "矩阵网格 / 中枢链路切换按钮",
+    "postCard": "文章卡片",
+    "chatterCard": "杂谈卡片",
+    "photoAlbumCard": "图片相册卡片",
+    "musicPlayerPanel": "音乐页播放器面板",
+    "musicLyricsPanel": "音乐页歌词/歌单面板",
+    "messageBoard": "留言板",
+    "searchInput": "搜索框",
+    "searchButton": "搜索按钮",
+    "tagButton": "标签按钮",
+}
+
+
+def _default_component_theme() -> dict[str, dict[str, Any]]:
+    def item(label: str, opacity: float = 0.86) -> dict[str, Any]:
+        return {
+            "label": label,
+            "day": {
+                "bg": "rgba(245,248,255,.9)",
+                "text": "rgba(15,23,42,.94)",
+                "accent": "#0891b2",
+                "border": "rgba(14,116,144,.18)",
+            },
+            "night": {
+                "bg": "rgba(12,16,32,.9)",
+                "text": "rgba(247,251,255,.94)",
+                "accent": "#67e8f9",
+                "border": "rgba(255,255,255,.18)",
+            },
+            "opacity": opacity,
+            "size": "medium",
+        }
+
+    opacity_overrides = {
+        "topNav": DEFAULT_OPACITY["navBar"],
+        "toolboxSettingsPanel": DEFAULT_OPACITY["toolboxSettingsPanel"],
+        "toolboxSearchPanel": DEFAULT_OPACITY["toolboxSearchPanel"],
+        "toolboxCalculatorPanel": DEFAULT_OPACITY["toolboxCalculatorPanel"],
+        "homeProfileCard": DEFAULT_OPACITY["homeCard"],
+        "homeMusicPlayer": DEFAULT_OPACITY["homeCard"],
+        "homeLyrics": DEFAULT_OPACITY["homeCard"],
+        "homeLatestPostsCarousel": DEFAULT_OPACITY["homeCarousel"],
+        "homePhotoCarousel": DEFAULT_OPACITY["homeCarousel"],
+        "homeUpdatesCarousel": DEFAULT_OPACITY["homeCarousel"],
+        "homeThemeToggle": DEFAULT_OPACITY["homeCard"],
+        "homeStatusBar": DEFAULT_OPACITY["homeCard"],
+        "postCard": DEFAULT_OPACITY["contentCard"],
+        "chatterCard": DEFAULT_OPACITY["contentCard"],
+        "photoAlbumCard": DEFAULT_OPACITY["photoCard"],
+        "musicPlayerPanel": DEFAULT_OPACITY["musicPanel"],
+        "musicLyricsPanel": DEFAULT_OPACITY["musicPanel"],
+        "messageBoard": DEFAULT_OPACITY["messageBoard"],
+    }
+    return {
+        key: item(label, opacity_overrides.get(key, 0.86))
+        for key, label in COMPONENT_THEME_LABELS.items()
+    }
+
+
+DEFAULT_COMPONENT_THEME = _default_component_theme()
+
 
 def _store() -> JsonStore:
     return JsonStore(get_settings().data_path, "settings.json", {})
@@ -49,13 +127,37 @@ def _normalize_opacity(value: Any) -> dict[str, float]:
             number = float(source.get(key, normalized[key]))
         except (TypeError, ValueError):
             number = normalized[key]
-        normalized[key] = min(1.0, max(0.6, number))
+        normalized[key] = min(1.0, max(0.0, number))
+    return normalized
+
+
+def _normalize_component_theme(value: Any) -> dict[str, dict[str, Any]]:
+    source = value if isinstance(value, dict) else {}
+    normalized = deepcopy(DEFAULT_COMPONENT_THEME)
+    for key, fallback in DEFAULT_COMPONENT_THEME.items():
+        incoming = source.get(key)
+        if not isinstance(incoming, dict):
+            continue
+        item = normalized[key]
+        item["label"] = str(incoming.get("label") or fallback["label"])
+        for mode in ("day", "night"):
+            mode_source = incoming.get(mode)
+            if isinstance(mode_source, dict):
+                item[mode] = {**item[mode], **{k: str(v) for k, v in mode_source.items() if v is not None}}
+        try:
+            opacity = float(incoming.get("opacity", item["opacity"]))
+        except (TypeError, ValueError):
+            opacity = item["opacity"]
+        item["opacity"] = min(1.0, max(0.0, opacity))
+        size = str(incoming.get("size") or item["size"])
+        item["size"] = size if size in {"small", "medium", "large"} else "medium"
     return normalized
 
 
 def _theme_config_with_defaults(value: Any) -> dict[str, Any]:
     theme_config = deepcopy(value) if isinstance(value, dict) else {}
     theme_config["opacity"] = _normalize_opacity(theme_config.get("opacity"))
+    theme_config["componentTheme"] = _normalize_component_theme(theme_config.get("componentTheme"))
     return theme_config
 
 

@@ -59,8 +59,21 @@ function applyTheme() {
   const opacity = (config.opacity || {}) as Record<string, number>
   Object.entries(opacityDefaults).forEach(([key, fallback]) => {
     const raw = Number(opacity[key] ?? fallback)
-    const value = Math.min(1, Math.max(0.6, Number.isFinite(raw) ? raw : fallback))
+    const value = Math.min(1, Math.max(0, Number.isFinite(raw) ? raw : fallback))
     root.style.setProperty(`--opacity-${key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)}`, String(value))
+  })
+  const sizeScale: Record<string, number> = { small: 0.92, medium: 1, large: 1.08 }
+  const componentTheme = config.componentTheme || {}
+  Object.entries(componentTheme).forEach(([key, item]) => {
+    const cssKey = key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)
+    const modeTokens = mode === 'day' ? item.day : item.night
+    const opacityValue = Number(item.opacity ?? 0.86)
+    root.style.setProperty(`--ct-${cssKey}-opacity`, String(Math.min(1, Math.max(0, Number.isFinite(opacityValue) ? opacityValue : 0.86))))
+    root.style.setProperty(`--ct-${cssKey}-size`, String(sizeScale[item.size || 'medium'] ?? 1))
+    if (modeTokens?.bg) root.style.setProperty(`--ct-${cssKey}-bg`, modeTokens.bg)
+    if (modeTokens?.text) root.style.setProperty(`--ct-${cssKey}-text`, modeTokens.text)
+    if (modeTokens?.accent) root.style.setProperty(`--ct-${cssKey}-accent`, modeTokens.accent)
+    if (modeTokens?.border) root.style.setProperty(`--ct-${cssKey}-border`, modeTokens.border)
   })
 }
 

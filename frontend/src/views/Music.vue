@@ -7,6 +7,7 @@ import { contentApi } from '@/api/content'
 import type { MusicItem, PageConfig, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { usePlayerStore } from '@/stores/player'
+import { useUiStore } from '@/stores/ui'
 
 const tracks = ref<MusicItem[]>([])
 const settings = ref<SiteSettings | null>(null)
@@ -16,12 +17,13 @@ const error = ref('')
 const activeTab = ref<'lyrics' | 'playlist'>('lyrics')
 const lyricText = ref('')
 const player = usePlayerStore()
+const ui = useUiStore()
 
 const pageTitle = computed(() => pageConfig.value?.pageText?.music?.title || '音乐歌单')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.music?.subtitle || '左侧控制播放，右侧查看歌词和歌单。')
 useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/music' })
 
-const sortedTracks = computed(() => [...tracks.value].sort((a, b) => Number(a.sort ?? 0) - Number(b.sort ?? 0)))
+const sortedTracks = computed(() => player.tracks.length ? player.tracks : [...tracks.value].sort((a, b) => Number(b.likes || 0) - Number(a.likes || 0) || Number(a.sort ?? 0) - Number(b.sort ?? 0)))
 const currentTrack = computed(() => player.track || sortedTracks.value[0])
 const progressPercent = computed(() => {
   if (!player.duration) return '0%'
@@ -30,6 +32,10 @@ const progressPercent = computed(() => {
 const recordStyle = computed(() => ({
   '--record-cover': currentTrack.value?.cover ? `url(${currentTrack.value.cover})` : 'linear-gradient(135deg, rgba(103,232,249,.38), rgba(192,132,252,.38))'
 }))
+const currentSongId = computed(() => player.songKey(currentTrack.value))
+const likedCurrent = computed(() => currentSongId.value ? player.isLiked(currentSongId.value) : false)
+const currentLikes = computed(() => Math.max(0, Number(currentTrack.value?.likes || 0)))
+const playModeLabel = computed(() => player.playMode === 'sequence' ? '顺序播放' : player.playMode === 'shuffle' ? '随机播放' : '单曲循环')
 const displayLyrics = computed(() => {
   const inline = currentTrack.value?.lyrics?.trim()
   const remote = lyricText.value.trim()
@@ -63,6 +69,30 @@ function selectTrack(index: number, autoplay = true) {
   player.duration = 0
   player.syncAudio(autoplay && player.playing)
   if (autoplay && !player.playing) player.play()
+}
+
+async function toggleLike() {
+  const id = currentSongId.value
+  if (!id) {
+    ui.showToast('当前歌曲缺少稳定 ID，无法喜欢', 'error')
+    return
+  }
+  const nextLiked = !likedCurrent.value
+  const previousLikes = currentLikes.value
+  const nextLikes = Math.max(0, previousLikes + (nextLiked ? 1 : -1))
+  player.setLikedLocal(id, nextLiked)
+  player.updateTrackLikes(id, nextLikes)
+  tracks.value = tracks.value.map((item) => player.songKey(item) === id ? { ...item, likes: nextLikes } : item)
+  try {
+    const result = await contentApi.updateMusicLike(id, nextLiked)
+    player.updateTrackLikes(id, result.likes)
+    tracks.value = tracks.value.map((item) => player.songKey(item) === id ? { ...item, likes: result.likes } : item)
+  } catch (exc) {
+    player.setLikedLocal(id, !nextLiked)
+    player.updateTrackLikes(id, previousLikes)
+    tracks.value = tracks.value.map((item) => player.songKey(item) === id ? { ...item, likes: previousLikes } : item)
+    ui.showToast(exc instanceof Error ? exc.message : '喜欢状态保存失败', 'error')
+  }
 }
 
 async function load() {
@@ -123,7 +153,7 @@ onMounted(load)
     </GlassCard>
 
     <div v-else class="music-page-grid">
-      <GlassCard hover class="min-w-0">
+      <GlassCard hover class="music-player-panel min-w-0">
         <div class="grid justify-items-center gap-5 text-center">
           <div class="record-disc music-page-record rounded-full" :class="{ playing: player.playing }" :style="recordStyle" aria-hidden="true"></div>
           <div class="min-w-0">
@@ -139,7 +169,12 @@ onMounted(load)
               <span class="block h-full rounded-full bg-gradient-to-r from-cyan-300 to-fuchsia-300 transition-all duration-300" :style="{ width: progressPercent }"></span>
             </button>
           </div>
-          <div class="flex items-center justify-center gap-3">
+          <div class="flex flex-wrap items-center justify-center gap-3">
+            <button type="button" class="icon-button" :aria-label="playModeLabel" :title="playModeLabel" @click="player.cyclePlayMode()">
+              <svg v-if="player.playMode === 'sequence'" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h12l-3-3 1.4-1.4L20.8 9l-6.4 6.4L13 14l3-3H4V7zm0 10h16v2H4v-2z" /></svg>
+              <svg v-else-if="player.playMode === 'shuffle'" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5h-2V6.4l-4.8 4.8-1.4-1.4L17.6 5H16V3zM4 7h3.5l3.2 3.2-1.4 1.4L6.7 9H4V7zm10.2 5.8 4.8 4.8V16h2v5h-5v-2h1.6l-4.8-4.8 1.4-1.4zM4 17h2.7l10.1-10.1 1.4 1.4L7.5 19H4v-2z" /></svg>
+              <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h8.6l-2.3-2.3L14.7 3 20 8.3l-5.3 5.3-1.4-1.7 2.3-2.3H7a3 3 0 0 0 0 6h1v2H7A5 5 0 0 1 7 7zm10 10h-4v-2h4a3 3 0 0 0 0-6h-1V7h1a5 5 0 0 1 0 10z" /></svg>
+            </button>
             <button type="button" class="icon-button" aria-label="previous track" @click="player.prev()">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h2v12H7zM18 6v12l-8.5-6z" /></svg>
             </button>
@@ -149,6 +184,10 @@ onMounted(load)
             </button>
             <button type="button" class="icon-button" aria-label="next track" @click="player.next()">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6h2v12h-2zM6 6l8.5 6L6 18z" /></svg>
+            </button>
+            <button type="button" class="icon-button min-w-[4.5rem] gap-1 text-sm" :aria-label="likedCurrent ? '取消喜欢' : '喜欢当前歌曲'" @click="toggleLike">
+              <svg viewBox="0 0 24 24" aria-hidden="true" :class="likedCurrent ? 'text-rose-300' : ''"><path d="M12 21s-7-4.4-9.4-8.6C.8 9.2 2.7 5.5 6.2 5.1c2-.2 3.6.7 4.7 2.1 1.1-1.4 2.8-2.3 4.7-2.1 3.5.4 5.4 4.1 3.6 7.3C19 16.6 12 21 12 21z" /></svg>
+              <span>{{ currentLikes }}</span>
             </button>
           </div>
           <div class="volume-control">
@@ -162,7 +201,7 @@ onMounted(load)
         </div>
       </GlassCard>
 
-      <GlassCard hover class="min-w-0">
+      <GlassCard hover class="music-lyrics-panel min-w-0">
         <div class="flex flex-wrap gap-2">
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'lyrics' ? 'bg-cyan-300 text-slate-950' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'lyrics'">歌词</button>
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'playlist' ? 'bg-cyan-300 text-slate-950' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'playlist'">歌单</button>
@@ -189,6 +228,7 @@ onMounted(load)
               <h3 class="truncate text-lg font-black text-white">{{ item.title }}</h3>
               <p class="truncate text-sm text-white/55">{{ item.artist }}</p>
               <p class="mt-1 truncate text-xs text-white/38">{{ item.id || item.url || '未配置 ID 或 URL' }}</p>
+              <p class="mt-1 text-xs text-rose-100/70">喜欢 {{ item.likes || 0 }}</p>
             </div>
           </button>
         </div>

@@ -85,6 +85,15 @@
 - GitHub and QQ login flows must validate CSRF `state` before creating the visitor session cookie.
 - `POST /api/comments/{resource}/{slug}` must reject anonymous requests with `401`; anonymous local message submission must not be restored.
 - Visitor-facing unavailable-provider text must not mention `.env`, Secret, Client Secret, backend configuration, or internal deployment details.
+
+## 2026-05-04 Component Theme And Music Likes Security
+
+- `themeConfig.componentTheme` is public presentation data only. It may include colors, opacity, size, labels, borders, and accent values, but must not include OAuth secrets, AI keys, OSS secrets, admin JWTs, access tokens, server paths, or executable HTML/JS.
+- Component opacity is allowed to be `0..1`; `0` may visually hide a component but must not remove authorization checks or backend validation.
+- Component size settings are presentation hints only. They must not change API permissions, write paths, or upload validation.
+- Music likes are public visitor interactions. The first stage uses browser `localStorage` to avoid duplicate likes from the same browser; this is not a strong identity guarantee.
+- Music likes writes must keep counts nonnegative and use the existing safe JSON write/backup path for `music.json`.
+- The music likes endpoint must not return private visitor identifiers or authentication tokens.
 ## 2026-05-03 Interaction And Page Layout Security
 
 - `/api/settings/public` 可以公开 `interaction.clickEffectEnabled`，但只能作为布尔站点开关，不得携带 Secret、管理员配置或调试信息。

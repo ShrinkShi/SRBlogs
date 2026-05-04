@@ -1,5 +1,16 @@
 # UI Style Guide
 
+## 2026-05-04 Component Theme DIY
+
+- Component opacity ranges from `0` to `1`. `0` is allowed for full transparency, but the UI should warn that the component may become visually invisible.
+- Component theme tokens are grouped by component key. Each key has a Chinese label, day/night color values, opacity, and a size token.
+- First-stage component keys include top navigation, toolbox, toolbox panels, toast, home profile/music/lyrics/carousels/theme/status cards, content switch buttons, post/chatter/photo cards, music panels, message board, search input/button, and tag buttons.
+- Component color settings must use both `input[type=color]` and text input so users can choose quickly or paste exact values.
+- Font size settings and component size settings are separate: font size only changes text; component size may adjust padding or minimum height for that component only.
+- Frontend components should read CSS variables generated from `themeConfig.componentTheme` and fall back to defaults when config is missing.
+- Page Editor home cards should show component state summaries: order, width, height, visible state, opacity, day/night background, and size.
+- Music controls use icon-only buttons for play mode and like state. Play modes are sequence, shuffle, and repeat-one. Like counts are public content metadata and should stay visually compact.
+
 ## 2026-05-04 可配置透明度
 
 - 前台主要玻璃面板透明度不再通过改代码调节，后台“主题与背景 > 前台透明度设置”提供 0.60-1.00 的滑块和数字输入。
