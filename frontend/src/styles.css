@@ -393,6 +393,30 @@ body::before {
 .home-updates-carousel-card { --component-bg: var(--ct-home-updates-carousel-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-updates-carousel-text, var(--text-primary)); --component-opacity: var(--ct-home-updates-carousel-opacity, var(--opacity-home-carousel)); --component-scale: var(--ct-home-updates-carousel-size, 1); }
 .home-theme-card { --component-bg: var(--ct-home-theme-toggle-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-theme-toggle-text, var(--text-primary)); --component-opacity: var(--ct-home-theme-toggle-opacity, var(--opacity-home-card)); --component-scale: var(--ct-home-theme-toggle-size, 1); }
 .home-status-card { --component-bg: var(--ct-home-status-bar-bg, var(--bg-card-elevated)); --component-text: var(--ct-home-status-bar-text, var(--text-primary)); --component-opacity: var(--ct-home-status-bar-opacity, var(--opacity-home-card)); --component-scale: var(--ct-home-status-bar-size, 1); }
+.home-profile-card { --component-font-family: var(--ct-home-profile-card-font-family, var(--app-font-family)); --component-font-size: var(--ct-home-profile-card-font-size, inherit); --component-font-color: var(--ct-home-profile-card-font-color, var(--component-text)); --component-text-align: var(--ct-home-profile-card-text-align, inherit); --component-font-weight: var(--ct-home-profile-card-font-weight, inherit); --component-font-style: var(--ct-home-profile-card-font-style, inherit); }
+.music-compact-card { --component-font-family: var(--ct-home-music-player-font-family, var(--app-font-family)); --component-font-size: var(--ct-home-music-player-font-size, inherit); --component-font-color: var(--ct-home-music-player-font-color, var(--component-text)); --component-text-align: var(--ct-home-music-player-text-align, inherit); --component-font-weight: var(--ct-home-music-player-font-weight, inherit); --component-font-style: var(--ct-home-music-player-font-style, inherit); }
+.lyrics-compact { --component-font-family: var(--ct-home-lyrics-font-family, var(--app-font-family)); --component-font-size: var(--ct-home-lyrics-font-size, inherit); --component-font-color: var(--ct-home-lyrics-font-color, var(--component-text)); --component-text-align: var(--ct-home-lyrics-text-align, inherit); --component-font-weight: var(--ct-home-lyrics-font-weight, inherit); --component-font-style: var(--ct-home-lyrics-font-style, inherit); }
+.home-latest-posts-carousel { --component-font-family: var(--ct-home-latest-posts-carousel-font-family, var(--app-font-family)); --component-font-size: var(--ct-home-latest-posts-carousel-font-size, inherit); --component-font-color: var(--ct-home-latest-posts-carousel-font-color, var(--component-text)); --component-text-align: var(--ct-home-latest-posts-carousel-text-align, inherit); --component-font-weight: var(--ct-home-latest-posts-carousel-font-weight, inherit); --component-font-style: var(--ct-home-latest-posts-carousel-font-style, inherit); }
+.home-photo-carousel-card { --component-font-family: var(--ct-home-photo-carousel-font-family, var(--app-font-family)); --component-font-size: var(--ct-home-photo-carousel-font-size, inherit); --component-font-color: var(--ct-home-photo-carousel-font-color, var(--component-text)); --component-text-align: var(--ct-home-photo-carousel-text-align, inherit); --component-font-weight: var(--ct-home-photo-carousel-font-weight, inherit); --component-font-style: var(--ct-home-photo-carousel-font-style, inherit); }
+.home-updates-carousel-card { --component-font-family: var(--ct-home-updates-carousel-font-family, var(--app-font-family)); --component-font-size: var(--ct-home-updates-carousel-font-size, inherit); --component-font-color: var(--ct-home-updates-carousel-font-color, var(--component-text)); --component-text-align: var(--ct-home-updates-carousel-text-align, inherit); --component-font-weight: var(--ct-home-updates-carousel-font-weight, inherit); --component-font-style: var(--ct-home-updates-carousel-font-style, inherit); }
+.home-theme-card { --component-font-family: var(--ct-home-theme-toggle-font-family, var(--app-font-family)); --component-font-size: var(--ct-home-theme-toggle-font-size, inherit); --component-font-color: var(--ct-home-theme-toggle-font-color, var(--component-text)); --component-text-align: var(--ct-home-theme-toggle-text-align, center); --component-font-weight: var(--ct-home-theme-toggle-font-weight, inherit); --component-font-style: var(--ct-home-theme-toggle-font-style, inherit); }
+.home-status-card { --component-font-family: var(--ct-home-status-bar-font-family, var(--app-font-family)); --component-font-size: var(--ct-home-status-bar-font-size, inherit); --component-font-color: var(--ct-home-status-bar-font-color, var(--component-text)); --component-text-align: var(--ct-home-status-bar-text-align, inherit); --component-font-weight: var(--ct-home-status-bar-font-weight, inherit); --component-font-style: var(--ct-home-status-bar-font-style, inherit); }
+.music-player-panel { --component-font-family: var(--ct-music-player-panel-font-family, var(--app-font-family)); --component-font-size: var(--ct-music-player-panel-font-size, inherit); --component-font-color: var(--ct-music-player-panel-font-color, var(--ct-music-player-panel-text)); --component-text-align: var(--ct-music-player-panel-text-align, inherit); --component-font-weight: var(--ct-music-player-panel-font-weight, inherit); --component-font-style: var(--ct-music-player-panel-font-style, inherit); }
+.music-lyrics-panel { --component-font-family: var(--ct-music-lyrics-panel-font-family, var(--app-font-family)); --component-font-size: var(--ct-music-lyrics-panel-font-size, inherit); --component-font-color: var(--ct-music-lyrics-panel-font-color, var(--ct-music-lyrics-panel-text)); --component-text-align: var(--ct-music-lyrics-panel-text-align, inherit); --component-font-weight: var(--ct-music-lyrics-panel-font-weight, inherit); --component-font-style: var(--ct-music-lyrics-panel-font-style, inherit); }
+.comment-board { --component-font-family: var(--ct-message-board-font-family, var(--app-font-family)); --component-font-size: var(--ct-message-board-font-size, inherit); --component-font-color: var(--ct-message-board-font-color, var(--ct-message-board-text)); --component-text-align: var(--ct-message-board-text-align, inherit); --component-font-weight: var(--ct-message-board-font-weight, inherit); --component-font-style: var(--ct-message-board-font-style, inherit); }
+
+:is(.home-profile-card,.music-compact-card,.lyrics-compact,.home-latest-posts-carousel,.home-photo-carousel-card,.home-updates-carousel-card,.home-theme-card,.home-status-card,.music-player-panel,.music-lyrics-panel,.comment-board),
+:is(.home-profile-card,.music-compact-card,.lyrics-compact,.home-latest-posts-carousel,.home-photo-carousel-card,.home-updates-carousel-card,.home-theme-card,.home-status-card,.music-player-panel,.music-lyrics-panel,.comment-board) :where(h1,h2,h3,h4,p,span,b,a,button,label,small,li) {
+  font-family: var(--component-font-family);
+  color: var(--component-font-color);
+  text-align: var(--component-text-align);
+  font-weight: var(--component-font-weight);
+  font-style: var(--component-font-style);
+}
+
+:is(.home-profile-card,.music-compact-card,.lyrics-compact,.home-latest-posts-carousel,.home-photo-carousel-card,.home-updates-carousel-card,.home-theme-card,.home-status-card,.music-player-panel,.music-lyrics-panel,.comment-board) :where(h1,h2,h3,h4,p,span,b,a,button,label,small,li) {
+  font-size: var(--component-font-size);
+}
 .music-compact-card,
 .home-card-opacity,
 .home-profile-card,
@@ -653,6 +677,14 @@ body::before {
   background: transparent;
   color: rgba(255,255,255,.9);
   box-shadow: none;
+}
+
+.like-button-inline {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .volume-control {

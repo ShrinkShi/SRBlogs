@@ -88,6 +88,12 @@ type ComponentThemeItem = {
   night: Record<string, string>
   opacity: number
   size: 'small' | 'medium' | 'large'
+  fontFamily?: string
+  fontSize?: number
+  textColor?: string
+  textAlign?: 'left' | 'center' | 'right'
+  fontWeight?: string
+  fontStyle?: string
 }
 
 const componentThemeDefaults: Record<string, ComponentThemeItem> = {

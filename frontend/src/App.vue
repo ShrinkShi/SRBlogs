@@ -74,6 +74,18 @@ function applyTheme() {
     if (modeTokens?.text) root.style.setProperty(`--ct-${cssKey}-text`, modeTokens.text)
     if (modeTokens?.accent) root.style.setProperty(`--ct-${cssKey}-accent`, modeTokens.accent)
     if (modeTokens?.border) root.style.setProperty(`--ct-${cssKey}-border`, modeTokens.border)
+    if (item.fontFamily) root.style.setProperty(`--ct-${cssKey}-font-family`, item.fontFamily)
+    else root.style.removeProperty(`--ct-${cssKey}-font-family`)
+    if (item.fontSize) root.style.setProperty(`--ct-${cssKey}-font-size`, `${item.fontSize}px`)
+    else root.style.removeProperty(`--ct-${cssKey}-font-size`)
+    if (item.textColor) root.style.setProperty(`--ct-${cssKey}-font-color`, item.textColor)
+    else root.style.removeProperty(`--ct-${cssKey}-font-color`)
+    if (item.textAlign) root.style.setProperty(`--ct-${cssKey}-text-align`, item.textAlign)
+    else root.style.removeProperty(`--ct-${cssKey}-text-align`)
+    if (item.fontWeight) root.style.setProperty(`--ct-${cssKey}-font-weight`, item.fontWeight)
+    else root.style.removeProperty(`--ct-${cssKey}-font-weight`)
+    if (item.fontStyle) root.style.setProperty(`--ct-${cssKey}-font-style`, item.fontStyle)
+    else root.style.removeProperty(`--ct-${cssKey}-font-style`)
   })
 }
 

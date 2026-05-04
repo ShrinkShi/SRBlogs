@@ -145,9 +145,12 @@ const dirty = ref(false)
 const configSource = ref('尚未加载')
 const raw = ref<Record<string, any>>({})
 const componentTheme = ref<Record<string, any>>({})
+const settingsRaw = ref<Record<string, any>>({})
+const themeDirty = ref(false)
 const summary = ref('')
 const aboutContent = ref('')
 const addDialogOpen = ref(false)
+const fieldDialogOpen = ref(false)
 const selectedBlockId = ref('')
 
 const pageText = reactive<Record<PageTextKey, { title: string; subtitle: string }>>({
@@ -181,6 +184,7 @@ const pageLayouts = reactive<Record<PageKey, EditorBlock[]>>({
 const blocks = computed(() => pageLayouts[pageKey.value])
 const sortedBlocks = computed(() => [...blocks.value].sort((a, b) => a.order - b.order))
 const selectedBlock = computed(() => blocks.value.find((block) => block.id === selectedBlockId.value) || null)
+const fieldEditLabel = computed(() => `编辑${currentPage.value.label}信息`)
 
 function cloneBlock(block: EditorBlock): EditorBlock {
   return { ...block, props: { ...(block.props || {}) } }
@@ -293,8 +297,10 @@ async function load() {
     raw.value = await adminApi.json<Record<string, any>>('/admin/pages/config')
     try {
       const settings = await adminApi.json<Record<string, any>>('/admin/settings')
+      settingsRaw.value = settings
       componentTheme.value = settings.themeConfig?.componentTheme || {}
     } catch {
+      settingsRaw.value = {}
       componentTheme.value = {}
     }
     hydrate(raw.value)
@@ -353,6 +359,19 @@ async function save() {
   error.value = ''
   success.value = ''
   try {
+    if (themeDirty.value) {
+      const settingsPayload = {
+        ...settingsRaw.value,
+        themeConfig: {
+          ...(settingsRaw.value.themeConfig || {}),
+          componentTheme: componentTheme.value
+        }
+      }
+      await adminApi.putJson('/admin/settings', settingsPayload)
+      settingsRaw.value = await adminApi.json<Record<string, any>>('/admin/settings')
+      componentTheme.value = settingsRaw.value.themeConfig?.componentTheme || componentTheme.value
+      themeDirty.value = false
+    }
     await adminApi.putJson('/admin/pages/config', payload())
     if (pageKey.value === 'about') await adminApi.putJson('/about', { content: aboutContent.value })
     raw.value = await adminApi.json<Record<string, any>>('/admin/pages/config')
@@ -397,6 +416,62 @@ function setBlockSize(block: EditorBlock, key: 'w' | 'h', value: number) {
   dirty.value = true
 }
 
+const componentThemeKeyMap: Record<string, string> = {
+  profileCard: 'homeProfileCard',
+  musicPlayer: 'homeMusicPlayer',
+  lyrics: 'homeLyrics',
+  latestPostsCarousel: 'homeLatestPostsCarousel',
+  photoCarousel: 'homePhotoCarousel',
+  updatesCarousel: 'homeUpdatesCarousel',
+  themeToggle: 'homeThemeToggle',
+  statusBar: 'homeStatusBar',
+  playerPanel: 'musicPlayerPanel',
+  lyricsPlaylistPanel: 'musicLyricsPanel',
+  messageBoard: 'messageBoard',
+  searchBox: 'searchInput',
+  sectionSwitch: 'sectionSwitch',
+  viewModeSwitch: 'viewModeSwitch',
+  contentList: 'postCard',
+  albumList: 'photoAlbumCard'
+}
+
+function componentThemeKey(block: EditorBlock) {
+  return componentThemeKeyMap[block.id] || componentThemeKeyMap[block.type] || block.type || block.id
+}
+
+function ensureComponentTheme(block: EditorBlock) {
+  const key = componentThemeKey(block)
+  const current = componentTheme.value[key] || {}
+  const next = {
+    label: current.label || block.label,
+    group: current.group || '页面编辑组件',
+    day: { ...(current.day || {}) },
+    night: { ...(current.night || {}) },
+    opacity: current.opacity ?? 0.86,
+    size: current.size || 'medium',
+    fontFamily: current.fontFamily || '',
+    fontSize: current.fontSize ?? 16,
+    textColor: current.textColor || current.day?.text || '',
+    textAlign: current.textAlign || 'left',
+    fontWeight: current.fontWeight || 'normal',
+    fontStyle: current.fontStyle || 'normal'
+  }
+  componentTheme.value[key] = next
+  return next
+}
+
+function setThemeField(block: EditorBlock, field: string, value: string | number) {
+  const item = ensureComponentTheme(block) as Record<string, string | number | Record<string, string>>
+  item[field] = value
+  themeDirty.value = true
+  dirty.value = true
+}
+
+function colorValue(value: unknown) {
+  const text = String(value || '').trim()
+  return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#111827'
+}
+
 function restoreDefaultLayout() {
   pageLayouts[pageKey.value] = defaultLayouts[pageKey.value].map(cloneBlock)
   dirty.value = true
@@ -413,7 +488,7 @@ function blockStyle(block: EditorBlock) {
 }
 
 function themeInfo(block: EditorBlock) {
-  const item = componentTheme.value[block.type] || componentTheme.value[block.id] || {}
+  const item = componentTheme.value[componentThemeKey(block)] || componentTheme.value[block.type] || componentTheme.value[block.id] || {}
   return {
     opacity: item.opacity ?? '默认',
     dayBg: item.day?.bg || '默认',
@@ -472,7 +547,7 @@ load()
 
 <template>
   <section class="grid gap-5">
-    <GlassCard>
+    <GlassCard class="page-editor-sticky">
       <div class="relative z-[1] flex flex-wrap items-start justify-between gap-4">
         <div>
           <p class="text-xs font-bold uppercase tracking-[.28em]">PAGE EDITOR</p>
@@ -480,7 +555,7 @@ load()
           <p class="mt-2 max-w-3xl text-sm text-slate-600">读取真实页面配置；每个页面都支持组件顺序、宽高、显示状态和基础文案编辑。</p>
         </div>
         <div class="flex flex-wrap gap-2">
-          <button type="button" class="admin-btn admin-btn-ghost" @click="openContentEntry">{{ currentPage.action }}</button>
+          <button type="button" class="admin-btn admin-btn-ghost" @click="fieldDialogOpen = true">{{ fieldEditLabel }}</button>
           <button type="button" class="admin-btn admin-btn-ghost" @click="addDialogOpen = true">添加组件</button>
           <button type="button" class="admin-btn admin-btn-ghost" @click="restoreDefaultLayout">恢复当前页默认布局</button>
           <button type="button" class="admin-btn admin-btn-primary" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存页面配置' }}</button>
@@ -488,7 +563,7 @@ load()
       </div>
     </GlassCard>
 
-    <GlassCard>
+    <GlassCard class="hidden">
       <div class="relative z-[1] grid gap-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -527,6 +602,51 @@ load()
         </div>
       </div>
     </GlassCard>
+
+    <div v-if="fieldDialogOpen" class="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4" @click="fieldDialogOpen = false">
+      <div class="max-h-[86vh] w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl" @click.stop>
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 p-5">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[.2em] text-slate-500">PAGE FIELDS</p>
+            <h2 class="mt-1 text-2xl font-black text-slate-950">{{ fieldEditLabel }}</h2>
+            <p class="mt-1 text-sm text-slate-600">{{ currentPage.path }} · {{ summary }}</p>
+          </div>
+          <button type="button" class="admin-btn admin-btn-ghost" @click="fieldDialogOpen = false">关闭</button>
+        </div>
+        <div class="max-h-[calc(86vh-9rem)] overflow-y-auto p-5">
+          <p v-if="dirty" class="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-700">有未保存修改，请保存页面配置后刷新前台验证。</p>
+          <p v-if="error" class="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{{ error }}</p>
+          <p v-if="success" class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{{ success }}</p>
+
+          <div class="grid gap-4">
+            <div class="grid gap-3 md:grid-cols-2">
+              <label class="field">页面标题<input v-model="pageText[pageKey].title" class="admin-input" @input="dirty = true" /></label>
+              <label class="field">页面副标题<input v-model="pageText[pageKey].subtitle" class="admin-input" @input="dirty = true" /></label>
+            </div>
+
+            <div v-if="pageKey === 'posts'" class="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
+              <label class="field">杂谈板块标题<input v-model="pageText.chatters.title" class="admin-input" @input="dirty = true" /></label>
+              <label class="field">杂谈板块副标题<input v-model="pageText.chatters.subtitle" class="admin-input" @input="dirty = true" /></label>
+            </div>
+
+            <div v-if="pageKey === 'home'" class="grid gap-3 md:grid-cols-2">
+              <label class="field">首页作者<input v-model="home.author" class="admin-input" @input="dirty = true" /></label>
+              <label class="field">头像 URL<input v-model="home.avatar" class="admin-input" @input="dirty = true" /></label>
+              <label class="field md:col-span-2">首页简介<textarea v-model="home.description" rows="3" class="admin-input" @input="dirty = true"></textarea></label>
+              <label v-for="(_, key) in home.socialLinks" :key="key" class="field">社交链接 {{ key }}<input v-model="home.socialLinks[key]" class="admin-input" @input="dirty = true" /></label>
+            </div>
+
+            <label v-if="pageKey === 'about'" class="field">关于页 Markdown
+              <textarea v-model="aboutContent" rows="12" class="admin-input font-mono" @input="dirty = true"></textarea>
+            </label>
+          </div>
+        </div>
+        <div class="flex flex-wrap justify-end gap-2 border-t border-slate-200 p-5">
+          <button type="button" class="admin-btn admin-btn-ghost" @click="fieldDialogOpen = false">关闭</button>
+          <button type="button" class="admin-btn admin-btn-primary" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存页面配置' }}</button>
+        </div>
+      </div>
+    </div>
 
     <GlassCard>
       <div class="relative z-[1] grid gap-4">
@@ -604,8 +724,8 @@ load()
       </div>
     </GlassCard>
 
-    <div v-if="selectedBlock" class="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4" @click="selectedBlockId = ''">
-      <div class="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl" @click.stop>
+    <div v-if="selectedBlock" class="hidden fixed inset-0 z-50 place-items-center bg-black/35 p-4" @click="selectedBlockId = ''">
+      <div class="max-h-[88vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl" @click.stop>
         <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-[.2em] text-slate-500">COMPONENT SETTINGS</p>
@@ -652,6 +772,57 @@ load()
       </div>
     </div>
 
+    <div v-if="selectedBlock" class="fixed inset-0 z-[55] grid place-items-center bg-black/35 p-4" @click="selectedBlockId = ''">
+      <div class="max-h-[88vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl" @click.stop>
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-4">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[.2em] text-slate-500">FONT SETTINGS</p>
+            <h2 class="mt-1 text-2xl font-black text-slate-950">{{ selectedBlock.label }}</h2>
+            <p class="mt-1 font-mono text-xs text-slate-500">{{ componentThemeKey(selectedBlock) }}</p>
+          </div>
+          <button type="button" class="admin-btn admin-btn-ghost" @click="selectedBlockId = ''">关闭</button>
+        </div>
+        <div class="mt-5 grid gap-4">
+          <label class="field">字体族
+            <input class="admin-input" :value="ensureComponentTheme(selectedBlock).fontFamily" placeholder="留空使用默认字体" @input="setThemeField(selectedBlock, 'fontFamily', ($event.target as HTMLInputElement).value)" />
+          </label>
+          <label class="field">字体大小(px)
+            <div class="grid grid-cols-[minmax(0,1fr)_5rem] gap-2">
+              <input type="range" min="10" max="42" step="1" :value="ensureComponentTheme(selectedBlock).fontSize" @input="setThemeField(selectedBlock, 'fontSize', eventNumber($event))" />
+              <input class="admin-input page-number" type="number" min="10" max="42" step="1" :value="ensureComponentTheme(selectedBlock).fontSize" @input="setThemeField(selectedBlock, 'fontSize', eventNumber($event))" />
+            </div>
+          </label>
+          <label class="field">字体颜色
+            <div class="grid grid-cols-[3rem_minmax(0,1fr)] gap-2">
+              <input class="h-10 w-full rounded border border-slate-300" type="color" :value="colorValue(ensureComponentTheme(selectedBlock).textColor)" @input="setThemeField(selectedBlock, 'textColor', ($event.target as HTMLInputElement).value)" />
+              <input class="admin-input" :value="ensureComponentTheme(selectedBlock).textColor" placeholder="#111827" @input="setThemeField(selectedBlock, 'textColor', ($event.target as HTMLInputElement).value)" />
+            </div>
+          </label>
+          <label class="field">文本对齐
+            <select class="admin-input" :value="ensureComponentTheme(selectedBlock).textAlign" @change="setThemeField(selectedBlock, 'textAlign', ($event.target as HTMLSelectElement).value)">
+              <option value="left">靠左</option>
+              <option value="center">居中</option>
+              <option value="right">靠右</option>
+            </select>
+          </label>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
+              <input type="checkbox" :checked="ensureComponentTheme(selectedBlock).fontWeight === '700' || ensureComponentTheme(selectedBlock).fontWeight === 'bold'" @change="setThemeField(selectedBlock, 'fontWeight', ($event.target as HTMLInputElement).checked ? '700' : 'normal')" />
+              加粗
+            </label>
+            <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
+              <input type="checkbox" :checked="ensureComponentTheme(selectedBlock).fontStyle === 'italic'" @change="setThemeField(selectedBlock, 'fontStyle', ($event.target as HTMLInputElement).checked ? 'italic' : 'normal')" />
+              斜体
+            </label>
+          </div>
+          <div class="flex flex-wrap justify-between gap-2 border-t border-slate-200 pt-4">
+            <button type="button" class="admin-btn admin-btn-ghost" @click="selectedBlockId = ''">关闭</button>
+            <button type="button" class="admin-btn admin-btn-primary" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存页面配置' }}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div v-if="addDialogOpen" class="fixed inset-0 z-50 grid place-items-center bg-black/35 p-4" @click="addDialogOpen = false">
       <div class="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-xl" @click.stop>
         <div class="flex items-center justify-between gap-3">
@@ -676,6 +847,11 @@ load()
 </template>
 
 <style scoped>
+.page-editor-sticky {
+  position: sticky;
+  top: .75rem;
+  z-index: 30;
+}
 .page-editor-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));

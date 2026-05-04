@@ -1,3 +1,36 @@
+## 2026-05-05 Component Typography Addendum
+
+组件级主题配置继续通过后台设置接口保存，并通过公开设置接口下发给前台。`themeConfig.componentTheme.{componentKey}` 可以包含以下公开视觉字段：
+
+```json
+{
+  "label": "首页名片",
+  "day": { "bg": "#ffffff", "text": "#111827", "accent": "#111827", "border": "#e5e7eb" },
+  "night": { "bg": "#111827", "text": "#f8fafc", "accent": "#93c5fd", "border": "#334155" },
+  "opacity": 0.9,
+  "size": "medium",
+  "fontFamily": "",
+  "fontSize": 16,
+  "textColor": "#111827",
+  "textAlign": "left",
+  "fontWeight": "normal",
+  "fontStyle": "normal"
+}
+```
+
+字段说明：
+- `fontFamily`：组件字体族，空字符串表示使用全站默认字体。
+- `fontSize`：组件文字字号，单位为 `px`。
+- `textColor`：组件文字颜色，缺失时回退到组件主题文字色。
+- `textAlign`：`left`、`center` 或 `right`。
+- `fontWeight`：`normal`、`700` 或兼容 CSS 字重值。
+- `fontStyle`：`normal` 或 `italic`。
+
+安全边界：
+- 这些字段属于公开视觉配置，可以出现在 `GET /api/settings/public`。
+- `GET /api/admin/settings` 和 `PUT /api/admin/settings` 仍不得回显任何 OAuth、AI、OSS Secret 明文。
+- 旧组件缺失字体字段时，前台必须使用默认值兜底，不得白屏。
+
 ## 2026-05-04 Page Config Precision Addendum
 
 ### GET `/api/pages/config`

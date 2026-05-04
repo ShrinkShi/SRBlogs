@@ -84,6 +84,12 @@ export interface ComponentThemeItem {
   night?: ComponentThemeMode
   opacity?: number
   size?: 'small' | 'medium' | 'large'
+  fontFamily?: string
+  fontSize?: number
+  textColor?: string
+  textAlign?: 'left' | 'center' | 'right'
+  fontWeight?: string
+  fontStyle?: string
 }
 
 export interface ComponentThemeMode {

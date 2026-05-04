@@ -17,7 +17,7 @@ const visitor = ref<{ configured: { github: boolean; qq: boolean }; user: Visito
   configured: { github: false, qq: false },
   user: null
 })
-const showDebug = import.meta.env.DEV
+const showDebug = false
 
 const options = computed(() => settings.value?.comments || {})
 const providerOptions = computed(() => options.value.providers || {})
