@@ -155,8 +155,8 @@ function isComponentVisible(id: HomeComponentId) {
 
 function homeComponentStyle(id: HomeComponentId) {
   const item = componentLayout(id)
-  const span = Math.max(1, Math.min(12, Math.round(Number(item.w || 12))))
-  const h = Math.max(1, Number(item.h || 1))
+  const span = Math.max(10, Math.min(120, Math.round(Number(item.w || 12) * 10)))
+  const h = Math.max(0.5, Number(item.h || 1))
   return {
     order: Number(item.order || defaultHomeLayout[id].order),
     gridColumn: `span ${span} / span ${span}`,

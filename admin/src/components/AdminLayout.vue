@@ -129,7 +129,7 @@ function logout() {
 </script>
 
 <template>
-  <div class="min-h-screen">
+  <div class="admin-flat min-h-screen">
     <div class="grid min-h-screen gap-0 xl:grid-cols-[280px_minmax(0,1fr)]">
       <aside class="admin-sidebar h-screen overflow-auto rounded-none border-y-0 border-l-0 p-3 xl:sticky xl:top-0">
         <div class="mb-4 px-3 py-3">

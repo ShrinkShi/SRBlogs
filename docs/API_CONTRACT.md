@@ -1,3 +1,50 @@
+## 2026-05-04 Page Config Precision Addendum
+
+### GET `/api/pages/config`
+
+公开读取页面文案与首页布局配置，不需要 JWT，不返回 Secret。
+
+首页布局字段补充：
+
+- `homeLayout.components.{componentId}.order`：组件顺序，数值越小越靠前。
+- `homeLayout.components.{componentId}.w`：桌面端逻辑宽度，范围 `1` 到 `12`，支持 `0.1` 精度。前台将其映射到 120 子列布局，即 `grid span = round(w * 10)`。
+- `homeLayout.components.{componentId}.h`：组件高度系数，范围 `0.5` 到 `6`，支持 `0.1` 精度。前台将其映射为组件 `min-height`。
+- `homeLayout.components.{componentId}.visible`：是否显示该组件。
+
+固定首页组件 ID：
+
+- `profileCard`
+- `musicPlayer`
+- `lyrics`
+- `latestPostsCarousel`
+- `photoCarousel`
+- `updatesCarousel`
+- `themeToggle`
+- `statusBar`
+
+### GET `/api/admin/pages/config`
+
+后台读取页面配置，需要管理员 JWT。返回结构与公开接口一致，但仍不得包含 Secret、access token、服务端绝对路径或私有配置明文。
+
+### PUT `/api/admin/pages/config`
+
+后台保存页面配置，需要管理员 JWT。写入必须走安全 JSON 写入封装并生成备份；保存失败返回统一错误结构 `{ code, message, detail }`。
+
+允许保存精细尺寸：
+
+```json
+{
+  "homeLayout": {
+    "layoutVersion": 1,
+    "components": {
+      "profileCard": { "order": 1, "w": 6.5, "h": 2.4, "visible": true }
+    }
+  }
+}
+```
+
+`w`、`h` 超出范围时后端或后台 UI 应归一化到安全范围，前台缺失配置时使用默认布局兜底。
+
 ## 2026-05-03 Pages Config API
 
 ### GET `/api/pages/config`

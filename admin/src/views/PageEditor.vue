@@ -6,18 +6,27 @@ import { adminApi } from '@/api/admin'
 
 type PageKey = 'home' | 'posts' | 'photos' | 'music' | 'projects' | 'friends' | 'about'
 type PageTextKey = PageKey | 'chatters'
-type HomeComponentId = 'profileCard' | 'musicPlayer' | 'lyrics' | 'latestPostsCarousel' | 'photoCarousel' | 'updatesCarousel' | 'themeToggle' | 'statusBar'
+type HomeComponentId =
+  | 'profileCard'
+  | 'musicPlayer'
+  | 'lyrics'
+  | 'latestPostsCarousel'
+  | 'photoCarousel'
+  | 'updatesCarousel'
+  | 'themeToggle'
+  | 'statusBar'
 type HomeBlock = { id: HomeComponentId; label: string; order: number; w: number; h: number; visible: boolean }
 
 const route = useRoute()
 const router = useRouter()
+
 const pageKey = computed<PageKey>(() => {
   const key = String(route.params.page || 'home')
   return ['home', 'posts', 'photos', 'music', 'projects', 'friends', 'about'].includes(key) ? key as PageKey : 'home'
 })
 
 const pages: Array<{ key: PageKey; label: string; path: string; action: string; actionPath: string }> = [
-  { key: 'home', label: '首页', path: '/', action: '编辑首页名片和真实布局', actionPath: '/pages/home' },
+  { key: 'home', label: '首页', path: '/', action: '编辑首页名片和布局', actionPath: '/pages/home' },
   { key: 'posts', label: '文章', path: '/posts', action: '新增文章', actionPath: '/content/editor' },
   { key: 'photos', label: '图片', path: '/photowall', action: '新增相册', actionPath: '/photos' },
   { key: 'music', label: '音乐', path: '/music', action: '新增歌曲', actionPath: '/music' },
@@ -42,11 +51,27 @@ const defaultHomeBlocks: HomeBlock[] = [
   { id: 'musicPlayer', label: '音乐播放器', order: 2, w: 6, h: 2, visible: true },
   { id: 'lyrics', label: '歌词区', order: 3, w: 12, h: 1, visible: true },
   { id: 'latestPostsCarousel', label: '最新文章轮播', order: 4, w: 4, h: 3, visible: true },
-  { id: 'photoCarousel', label: '图片/照片轮播', order: 5, w: 8, h: 2, visible: true },
+  { id: 'photoCarousel', label: '图片轮播', order: 5, w: 8, h: 2, visible: true },
   { id: 'updatesCarousel', label: '更新内容轮播', order: 6, w: 8, h: 2, visible: true },
-  { id: 'themeToggle', label: '昼夜切换开关', order: 7, w: 4, h: 2, visible: true },
+  { id: 'themeToggle', label: '昼夜切换卡片', order: 7, w: 4, h: 2, visible: true },
   { id: 'statusBar', label: '底部状态区', order: 8, w: 12, h: 1, visible: true }
 ]
+
+const sizeLimits = {
+  w: { min: 1, max: 12, step: 0.1 },
+  h: { min: 0.5, max: 6, step: 0.1 }
+}
+
+const homeThemeKey: Record<HomeComponentId, string> = {
+  profileCard: 'homeProfileCard',
+  musicPlayer: 'homeMusicPlayer',
+  lyrics: 'homeLyrics',
+  latestPostsCarousel: 'homeLatestPostsCarousel',
+  photoCarousel: 'homePhotoCarousel',
+  updatesCarousel: 'homeUpdatesCarousel',
+  themeToggle: 'homeThemeToggle',
+  statusBar: 'homeStatusBar'
+}
 
 const currentPage = computed(() => pages.find((page) => page.key === pageKey.value) || pages[0])
 const loading = ref(false)
@@ -81,15 +106,19 @@ const home = reactive({
 
 const blocks = ref<HomeBlock[]>(defaultHomeBlocks.map((block) => ({ ...block })))
 const sortedBlocks = computed(() => [...blocks.value].sort((a, b) => a.order - b.order))
-const homeThemeKey: Record<HomeComponentId, string> = {
-  profileCard: 'homeProfileCard',
-  musicPlayer: 'homeMusicPlayer',
-  lyrics: 'homeLyrics',
-  latestPostsCarousel: 'homeLatestPostsCarousel',
-  photoCarousel: 'homePhotoCarousel',
-  updatesCarousel: 'homeUpdatesCarousel',
-  themeToggle: 'homeThemeToggle',
-  statusBar: 'homeStatusBar'
+
+function clampPrecision(value: unknown, min: number, max: number, fallback: number) {
+  const next = Number(value)
+  if (!Number.isFinite(next)) return fallback
+  return Math.round(Math.min(max, Math.max(min, next)) * 10) / 10
+}
+
+function formatSize(value: number) {
+  return clampPrecision(value, 0, 99, 0).toFixed(1)
+}
+
+function eventNumber(event: Event) {
+  return Number((event.target as HTMLInputElement).value)
 }
 
 function themeInfo(id: HomeComponentId) {
@@ -113,8 +142,18 @@ function hydrate(data: Record<string, any>) {
   home.avatar = profile.avatar || ''
   home.description = profile.description || ''
   home.socialLinks = { github: '', email: '', qq: '', wechat: '', ...(profile.socialLinks || {}) }
-  const components = data.homeLayout?.components || {}
-  blocks.value = defaultHomeBlocks.map((block) => ({ ...block, ...(components[block.id] || {}) }))
+  const components = data.homeLayout?.components || data.home?.components || {}
+  blocks.value = defaultHomeBlocks.map((block) => {
+    const saved = components[block.id] || {}
+    return {
+      ...block,
+      ...saved,
+      order: Number(saved.order || block.order),
+      w: clampPrecision(saved.w, sizeLimits.w.min, sizeLimits.w.max, block.w),
+      h: clampPrecision(saved.h, sizeLimits.h.min, sizeLimits.h.max, block.h),
+      visible: saved.visible !== false
+    }
+  })
 }
 
 async function loadSummary(key: PageKey) {
@@ -184,7 +223,12 @@ function payload() {
       layoutVersion: 1,
       components: Object.fromEntries(blocks.value.map((block) => [
         block.id,
-        { order: block.order, w: block.w, h: block.h, visible: block.visible !== false }
+        {
+          order: block.order,
+          w: clampPrecision(block.w, sizeLimits.w.min, sizeLimits.w.max, block.w),
+          h: clampPrecision(block.h, sizeLimits.h.min, sizeLimits.h.max, block.h),
+          visible: block.visible !== false
+        }
       ]))
     }
   }
@@ -225,8 +269,17 @@ function moveBlock(id: HomeComponentId, direction: -1 | 1) {
   dirty.value = true
 }
 
+function setBlockOrder(block: HomeBlock, value: number) {
+  const target = Math.round(Math.min(blocks.value.length, Math.max(1, value || block.order)))
+  const list = sortedBlocks.value.filter((item) => item.id !== block.id)
+  list.splice(target - 1, 0, block)
+  list.forEach((item, index) => { item.order = index + 1 })
+  dirty.value = true
+}
+
 function setBlockSize(block: HomeBlock, key: 'w' | 'h', value: number) {
-  block[key] = value
+  const limit = sizeLimits[key]
+  block[key] = clampPrecision(value, limit.min, limit.max, block[key])
   dirty.value = true
 }
 
@@ -253,10 +306,12 @@ function restoreDefaultLayout() {
 }
 
 function blockStyle(block: HomeBlock) {
+  const span = Math.max(10, Math.min(120, Math.round(clampPrecision(block.w, sizeLimits.w.min, sizeLimits.w.max, 12) * 10)))
+  const height = clampPrecision(block.h, sizeLimits.h.min, sizeLimits.h.max, 1)
   return {
     order: block.order,
-    gridColumn: `span ${Math.max(1, Math.min(12, Number(block.w)))} / span ${Math.max(1, Math.min(12, Number(block.w)))}`,
-    minHeight: `${Math.max(5.5, Number(block.h) * 5.6)}rem`
+    gridColumn: `span ${span} / span ${span}`,
+    minHeight: `${Math.max(4.5, height * 5.6)}rem`
   }
 }
 
@@ -274,11 +329,11 @@ watch(pageKey, load, { immediate: true })
         <div>
           <p class="text-xs font-bold uppercase tracking-[.28em] text-cyan-100/45">PAGE EDITOR</p>
           <h1 class="mt-2 text-4xl font-black text-white">页面编辑</h1>
-          <p class="mt-2 max-w-3xl text-white/58">读取真实前台配置。首页布局保存到 `page_config.json`，前台通过 `/api/pages/config` 读取并应用。</p>
+          <p class="mt-2 max-w-3xl text-white/58">读取真实前台配置。首页布局保存到页面配置，前台通过 `/api/pages/config` 读取并应用。</p>
         </div>
         <div class="flex flex-wrap gap-2">
           <button type="button" class="admin-btn admin-btn-ghost" @click="openContentEntry">{{ currentPage.action }}</button>
-          <button type="button" class="admin-btn" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存页面配置' }}</button>
+          <button type="button" class="admin-btn admin-btn-primary" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存页面配置' }}</button>
         </div>
       </div>
     </GlassCard>
@@ -328,7 +383,7 @@ watch(pageKey, load, { immediate: true })
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 class="text-2xl font-black text-white">真实组件预览</h2>
-            <p class="mt-1 text-sm text-white/50">首页拆为 8 个真实前台组件。拖动卡片排序，或使用上移/下移和宽高档位；保存后前台刷新生效。</p>
+            <p class="mt-1 text-sm text-white/50">首页拆为 8 个真实前台组件。拖动卡片排序，或使用精确顺序、宽度、高度控件；保存后刷新前台生效。</p>
           </div>
           <button v-if="pageKey === 'home'" type="button" class="admin-btn admin-btn-ghost" @click="restoreDefaultLayout">恢复首页默认布局</button>
         </div>
@@ -351,28 +406,50 @@ watch(pageKey, load, { immediate: true })
               </div>
               <span class="rounded-full bg-white/10 px-2 py-1 text-xs text-white/55">顺序 {{ block.order }}</span>
             </div>
+
             <div class="mt-4 grid gap-3">
               <div class="grid gap-2 rounded-2xl border border-white/10 bg-white/[0.05] p-3 text-xs text-white/55">
-                <p>宽度：{{ block.w }}/12 · 高度：{{ block.h }} · 显示：{{ block.visible === false ? '隐藏' : '显示' }}</p>
+                <p>顺序：{{ block.order }} · 宽度：{{ formatSize(block.w) }}/12 · 高度：{{ formatSize(block.h) }} · 显示：{{ block.visible === false ? '隐藏' : '显示' }}</p>
                 <p>透明度：{{ themeInfo(block.id).opacity }} · 大小：{{ themeInfo(block.id).size }}</p>
                 <p class="truncate">日间背景：{{ themeInfo(block.id).dayBg }}</p>
                 <p class="truncate">夜间背景：{{ themeInfo(block.id).nightBg }}</p>
                 <button type="button" class="admin-btn admin-btn-ghost w-fit text-xs" @click="router.push('/settings?tab=theme')">打开组件主题设置</button>
               </div>
-              <div class="flex flex-wrap gap-2">
+
+              <div class="flex flex-wrap items-end gap-2">
                 <button type="button" class="admin-btn admin-btn-ghost text-xs" @click="moveBlock(block.id, -1)">上移</button>
                 <button type="button" class="admin-btn admin-btn-ghost text-xs" @click="moveBlock(block.id, 1)">下移</button>
+                <label class="inline-grid min-w-[8rem] gap-1 text-xs text-white/45">
+                  精确顺序
+                  <input class="admin-input py-2 text-xs" type="number" min="1" :max="blocks.length" step="1" :value="block.order" @change="setBlockOrder(block, eventNumber($event))" />
+                </label>
               </div>
-              <div class="grid gap-2">
-                <span class="text-xs text-white/45">宽度</span>
+
+              <div class="page-size-control">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-xs text-white/45">宽度 w</span>
+                  <b class="font-mono text-xs text-white">{{ formatSize(block.w) }}/12</b>
+                </div>
+                <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_6.5rem]">
+                  <input type="range" :min="sizeLimits.w.min" :max="sizeLimits.w.max" :step="sizeLimits.w.step" :value="block.w" @input="setBlockSize(block, 'w', eventNumber($event))" />
+                  <input class="admin-input py-2 text-xs" type="number" :min="sizeLimits.w.min" :max="sizeLimits.w.max" :step="sizeLimits.w.step" :value="block.w" @input="setBlockSize(block, 'w', eventNumber($event))" />
+                </div>
                 <div class="flex flex-wrap gap-2">
-                  <button v-for="size in [4, 6, 8, 12]" :key="size" type="button" class="admin-btn admin-btn-ghost text-xs" :class="block.w === size ? 'border-cyan-200/40 text-cyan-100' : ''" @click="setBlockSize(block, 'w', size)">{{ size }}/12</button>
+                  <button v-for="size in [4, 6, 8, 12]" :key="size" type="button" class="admin-btn admin-btn-ghost text-xs" @click="setBlockSize(block, 'w', size)">{{ size }}/12</button>
                 </div>
               </div>
-              <div class="grid gap-2">
-                <span class="text-xs text-white/45">高度</span>
+
+              <div class="page-size-control">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-xs text-white/45">高度 h</span>
+                  <b class="font-mono text-xs text-white">{{ formatSize(block.h) }}</b>
+                </div>
+                <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_6.5rem]">
+                  <input type="range" :min="sizeLimits.h.min" :max="sizeLimits.h.max" :step="sizeLimits.h.step" :value="block.h" @input="setBlockSize(block, 'h', eventNumber($event))" />
+                  <input class="admin-input py-2 text-xs" type="number" :min="sizeLimits.h.min" :max="sizeLimits.h.max" :step="sizeLimits.h.step" :value="block.h" @input="setBlockSize(block, 'h', eventNumber($event))" />
+                </div>
                 <div class="flex flex-wrap gap-2">
-                  <button v-for="size in [1, 2, 3, 4]" :key="size" type="button" class="admin-btn admin-btn-ghost text-xs" :class="block.h === size ? 'border-cyan-200/40 text-cyan-100' : ''" @click="setBlockSize(block, 'h', size)">{{ ['低', '中', '高', '超高'][size - 1] }}</button>
+                  <button v-for="size in [1, 2, 3, 4]" :key="size" type="button" class="admin-btn admin-btn-ghost text-xs" @click="setBlockSize(block, 'h', size)">{{ size }}</button>
                 </div>
               </div>
             </div>
@@ -386,6 +463,7 @@ watch(pageKey, load, { immediate: true })
           <p class="mt-5 rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-white/62">{{ summary }}</p>
           <p class="mt-3 text-sm text-white/42">第一阶段该页面支持真实文案编辑和内容新增入口；拖拽/缩放布局先集中在首页 8 个核心组件。</p>
         </div>
+
         <details class="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
           <summary class="cursor-pointer text-sm font-bold text-white/62">高级：当前首页布局 JSON</summary>
           <pre class="mt-4 max-h-80 overflow-auto rounded-2xl bg-slate-950/70 p-4 text-xs text-cyan-50/70">{{ JSON.stringify(payload().homeLayout, null, 2) }}</pre>
@@ -398,19 +476,31 @@ watch(pageKey, load, { immediate: true })
 <style scoped>
 .page-editor-grid {
   display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-columns: repeat(120, minmax(0, 1fr));
   gap: 1rem;
 }
 .page-editor-block {
   min-width: 0;
-  border-radius: 1.5rem;
-  border: 1px solid rgba(103, 232, 249, .22);
-  background: rgba(103, 232, 249, .08);
+  border-radius: .75rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
   padding: 1rem;
   cursor: grab;
 }
 .page-editor-block:active {
   cursor: grabbing;
+}
+.page-size-control {
+  display: grid;
+  gap: .65rem;
+  border-radius: .75rem;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  padding: .75rem;
+}
+.page-size-control input[type="range"] {
+  width: 100%;
+  accent-color: #111827;
 }
 @media (max-width: 900px) {
   .page-editor-block {

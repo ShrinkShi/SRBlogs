@@ -1,5 +1,45 @@
 # HISTORY
 
+## 2026-05-04 - 页面编辑精细尺寸控制与后台黑白灰平面化轮
+
+本轮目标：
+
+- 将“页面编辑 > 首页”的组件宽高控制从粗颗粒档位改为滑动条 + 精确数值输入。
+- 保持页面编辑保存后前台真实生效的闭环，前台首页继续读取 `/api/pages/config`。
+- 仅重做后台管理端视觉，将后台从毛玻璃风调整为黑白灰平面简约风；前台风格不变。
+
+前台变更：
+
+- 首页桌面布局栅格从 12 列细化为 120 个子列，`w` 按 `round(w * 10)` 映射为真实 grid span。
+- 首页继续读取 `homeLayout.components`，并按组件 `order`、`w`、`h`、`visible` 应用顺序、宽度、最小高度和显示状态。
+- 移动端仍保留单列兜底，避免精细桌面布局导致小屏横向溢出。
+
+后台变更：
+
+- 重写 `admin/src/views/PageEditor.vue` 的首页组件编辑体验。
+- 首页 8 个组件均支持：宽度滑动条、宽度数值输入、高度滑动条、高度数值输入、`order` 数值输入、上移/下移和拖拽排序。
+- 组件状态摘要显示组件 key、order、w、h、visible、透明度、大小、日间/夜间背景色。
+- 后台根布局增加 `admin-flat` 作用域，后台样式改为白底、浅灰卡片、灰色边框、黑色主按钮的平面工具风。
+- 后台卡片、表单、按钮、弹窗、左侧导航、高级 JSON 区域改为黑白灰平面风格；不修改前台主题 CSS。
+
+API/契约变更：
+
+- 页面配置 `homeLayout.components.*.w` 继续表示 12 栅格逻辑宽度，但允许 `1-12` 范围内的 `0.1` 精度。
+- 页面配置 `homeLayout.components.*.h` 允许 `0.5-6` 范围内的 `0.1` 精度，前台映射为组件最小高度。
+- `GET /api/pages/config` 与后台 `GET/PUT /api/admin/pages/config` 契约不变，仅补充精细数值范围说明。
+
+验证结果：
+
+- 通过：`cd frontend && npm run build`
+- 通过：`cd admin && npm run build`
+- 通过：`python -m compileall backend\app`
+- 通过：构建产物敏感值搜索未匹配 `change-me`、`jwt_secret`、`admin_password`、`api_key`、`accessKeySecret`、`clientSecret`、`GITHUB_CLIENT_SECRET`、`QQ_APP_SECRET`。
+
+遗留问题：
+
+- 未启动常驻 dev server 做浏览器人工回归。
+- 页面编辑滑动条/数值同步、保存后前台真实尺寸变化、恢复默认布局、后台黑白灰视觉、390px 后台可用性仍需浏览器人工确认。
+
 ## 2026-05-04 - 页面配置接口与透明度配置硬修轮
 
 本轮目标：
