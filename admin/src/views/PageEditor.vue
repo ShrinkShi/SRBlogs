@@ -467,6 +467,13 @@ function setThemeField(block: EditorBlock, field: string, value: string | number
   dirty.value = true
 }
 
+function setThemeModeField(block: EditorBlock, mode: 'day' | 'night', field: 'bg' | 'text' | 'accent' | 'border', value: string) {
+  const item = ensureComponentTheme(block) as Record<string, any>
+  item[mode] = { ...(item[mode] || {}), [field]: value }
+  themeDirty.value = true
+  dirty.value = true
+}
+
 function colorValue(value: unknown) {
   const text = String(value || '').trim()
   return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#111827'
@@ -678,7 +685,7 @@ load()
               <span class="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">order {{ block.order }}</span>
             </div>
 
-            <p class="mt-3 text-xs text-slate-500">w {{ formatSize(block.w) }} / h {{ formatSize(block.h) }} / {{ block.visible ? '显示' : '隐藏' }}</p>
+            <p class="mt-3 text-xs text-slate-500">w {{ formatSize(block.w) }} / h {{ formatSize(block.h) }} / 透明度 {{ themeInfo(block).opacity }} / {{ block.visible ? '显示' : '隐藏' }}</p>
 
             <div class="mt-3 grid gap-2 page-size-controls">
               <div class="page-size-row">
@@ -724,101 +731,156 @@ load()
       </div>
     </GlassCard>
 
-    <div v-if="selectedBlock" class="hidden fixed inset-0 z-50 place-items-center bg-black/35 p-4" @click="selectedBlockId = ''">
-      <div class="max-h-[88vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl" @click.stop>
+    <div v-if="selectedBlock" class="fixed inset-0 z-[55] grid place-items-center bg-black/35 p-4" @click="selectedBlockId = ''">
+      <div class="flex max-h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl" @click.stop>
         <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-[.2em] text-slate-500">COMPONENT SETTINGS</p>
             <h2 class="mt-1 text-2xl font-black text-slate-950">{{ selectedBlock.label }}</h2>
-            <p class="mt-1 font-mono text-xs text-slate-500">{{ selectedBlock.id }} · order {{ selectedBlock.order }}</p>
+            <p class="mt-1 font-mono text-xs text-slate-500">{{ selectedBlock.id }} · {{ componentThemeKey(selectedBlock) }} · order {{ selectedBlock.order }}</p>
           </div>
           <button type="button" class="admin-btn admin-btn-ghost" @click="selectedBlockId = ''">关闭</button>
         </div>
 
-        <div class="mt-5 grid gap-4">
-          <div class="page-size-row-modal">
-            <span>宽度</span>
-            <input type="range" :min="sizeLimits.w.min" :max="sizeLimits.w.max" :step="sizeLimits.w.step" :value="selectedBlock.w" @input="setBlockSize(selectedBlock, 'w', eventNumber($event))" />
-            <input class="admin-input page-number" type="number" :min="sizeLimits.w.min" :max="sizeLimits.w.max" :step="sizeLimits.w.step" :value="selectedBlock.w" @input="setBlockSize(selectedBlock, 'w', eventNumber($event))" />
-            <button v-for="size in [4, 6, 8, 12]" :key="`modal-w-${size}`" type="button" class="admin-btn admin-btn-ghost page-preset" @click="setBlockSize(selectedBlock, 'w', size)">{{ size }}</button>
-          </div>
-          <div class="page-size-row-modal">
-            <span>高度</span>
-            <input type="range" :min="sizeLimits.h.min" :max="sizeLimits.h.max" :step="sizeLimits.h.step" :value="selectedBlock.h" @input="setBlockSize(selectedBlock, 'h', eventNumber($event))" />
-            <input class="admin-input page-number" type="number" :min="sizeLimits.h.min" :max="sizeLimits.h.max" :step="sizeLimits.h.step" :value="selectedBlock.h" @input="setBlockSize(selectedBlock, 'h', eventNumber($event))" />
-            <button v-for="size in [1, 2, 3, 4]" :key="`modal-h-${size}`" type="button" class="admin-btn admin-btn-ghost page-preset" @click="setBlockSize(selectedBlock, 'h', size)">{{ size }}</button>
-          </div>
+        <div class="grid gap-4 overflow-y-auto p-5">
+          <details open class="component-setting-section">
+            <summary>布局设置</summary>
+            <div class="mt-4 grid gap-4">
+              <div class="page-size-row-modal">
+                <span>宽度</span>
+                <input type="range" :min="sizeLimits.w.min" :max="sizeLimits.w.max" :step="sizeLimits.w.step" :value="selectedBlock.w" @input="setBlockSize(selectedBlock, 'w', eventNumber($event))" />
+                <input class="admin-input page-number" type="number" :min="sizeLimits.w.min" :max="sizeLimits.w.max" :step="sizeLimits.w.step" :value="selectedBlock.w" @input="setBlockSize(selectedBlock, 'w', eventNumber($event))" />
+                <button v-for="size in [4, 6, 8, 12]" :key="`modal-w-${size}`" type="button" class="admin-btn admin-btn-ghost page-preset" @click="setBlockSize(selectedBlock, 'w', size)">{{ size }}</button>
+              </div>
+              <div class="page-size-row-modal">
+                <span>高度</span>
+                <input type="range" :min="sizeLimits.h.min" :max="sizeLimits.h.max" :step="sizeLimits.h.step" :value="selectedBlock.h" @input="setBlockSize(selectedBlock, 'h', eventNumber($event))" />
+                <input class="admin-input page-number" type="number" :min="sizeLimits.h.min" :max="sizeLimits.h.max" :step="sizeLimits.h.step" :value="selectedBlock.h" @input="setBlockSize(selectedBlock, 'h', eventNumber($event))" />
+                <button v-for="size in [1, 2, 3, 4]" :key="`modal-h-${size}`" type="button" class="admin-btn admin-btn-ghost page-preset" @click="setBlockSize(selectedBlock, 'h', size)">{{ size }}</button>
+              </div>
 
-          <div class="grid gap-3 sm:grid-cols-[auto_auto_6rem_1fr]">
-            <button type="button" class="admin-btn admin-btn-ghost" @click="moveBlock(selectedBlock.id, -1)">上移</button>
-            <button type="button" class="admin-btn admin-btn-ghost" @click="moveBlock(selectedBlock.id, 1)">下移</button>
-            <input class="admin-input page-number" type="number" min="1" :max="blocks.length" :value="selectedBlock.order" @change="setBlockOrder(selectedBlock, eventNumber($event))" />
-            <div class="flex flex-wrap gap-2 sm:justify-end">
-              <button type="button" class="admin-btn admin-btn-ghost" @click="selectedBlock.visible = !selectedBlock.visible; dirty = true">{{ selectedBlock.visible ? '隐藏' : '显示' }}</button>
-              <button type="button" class="admin-btn admin-btn-danger" @click="removeBlock(selectedBlock); selectedBlockId = ''">{{ selectedBlock.locked ? '隐藏' : '删除' }}</button>
+              <div class="grid gap-3 sm:grid-cols-[auto_auto_6rem_1fr]">
+                <button type="button" class="admin-btn admin-btn-ghost" @click="moveBlock(selectedBlock.id, -1)">上移</button>
+                <button type="button" class="admin-btn admin-btn-ghost" @click="moveBlock(selectedBlock.id, 1)">下移</button>
+                <input class="admin-input page-number" type="number" min="1" :max="blocks.length" :value="selectedBlock.order" @change="setBlockOrder(selectedBlock, eventNumber($event))" />
+                <div class="flex flex-wrap gap-2 sm:justify-end">
+                  <button type="button" class="admin-btn admin-btn-ghost" @click="selectedBlock.visible = !selectedBlock.visible; dirty = true">{{ selectedBlock.visible ? '隐藏' : '显示' }}</button>
+                  <button type="button" class="admin-btn admin-btn-danger" @click="removeBlock(selectedBlock); selectedBlockId = ''">{{ selectedBlock.locked ? '隐藏' : '删除' }}</button>
+                </div>
+              </div>
             </div>
-          </div>
+          </details>
 
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-            <p class="font-bold text-slate-950">状态摘要</p>
-            <div class="mt-3 grid gap-2 sm:grid-cols-2">
+          <details open class="component-setting-section">
+            <summary>外观设置</summary>
+            <div class="mt-4 grid gap-4">
+              <div class="grid gap-3 md:grid-cols-2">
+                <label class="field">日间背景色
+                  <div class="grid grid-cols-[3rem_minmax(0,1fr)] gap-2">
+                    <input class="h-10 w-full rounded border border-slate-300" type="color" :value="colorValue(ensureComponentTheme(selectedBlock).day?.bg)" @input="setThemeModeField(selectedBlock, 'day', 'bg', ($event.target as HTMLInputElement).value)" />
+                    <input class="admin-input" :value="ensureComponentTheme(selectedBlock).day?.bg" placeholder="rgba(...) 或 #ffffff" @input="setThemeModeField(selectedBlock, 'day', 'bg', ($event.target as HTMLInputElement).value)" />
+                  </div>
+                </label>
+                <label class="field">夜间背景色
+                  <div class="grid grid-cols-[3rem_minmax(0,1fr)] gap-2">
+                    <input class="h-10 w-full rounded border border-slate-300" type="color" :value="colorValue(ensureComponentTheme(selectedBlock).night?.bg)" @input="setThemeModeField(selectedBlock, 'night', 'bg', ($event.target as HTMLInputElement).value)" />
+                    <input class="admin-input" :value="ensureComponentTheme(selectedBlock).night?.bg" placeholder="rgba(...) 或 #0f172a" @input="setThemeModeField(selectedBlock, 'night', 'bg', ($event.target as HTMLInputElement).value)" />
+                  </div>
+                </label>
+                <label class="field">日间文字色
+                  <div class="grid grid-cols-[3rem_minmax(0,1fr)] gap-2">
+                    <input class="h-10 w-full rounded border border-slate-300" type="color" :value="colorValue(ensureComponentTheme(selectedBlock).day?.text)" @input="setThemeModeField(selectedBlock, 'day', 'text', ($event.target as HTMLInputElement).value)" />
+                    <input class="admin-input" :value="ensureComponentTheme(selectedBlock).day?.text" placeholder="#111827" @input="setThemeModeField(selectedBlock, 'day', 'text', ($event.target as HTMLInputElement).value)" />
+                  </div>
+                </label>
+                <label class="field">夜间文字色
+                  <div class="grid grid-cols-[3rem_minmax(0,1fr)] gap-2">
+                    <input class="h-10 w-full rounded border border-slate-300" type="color" :value="colorValue(ensureComponentTheme(selectedBlock).night?.text)" @input="setThemeModeField(selectedBlock, 'night', 'text', ($event.target as HTMLInputElement).value)" />
+                    <input class="admin-input" :value="ensureComponentTheme(selectedBlock).night?.text" placeholder="#f8fafc" @input="setThemeModeField(selectedBlock, 'night', 'text', ($event.target as HTMLInputElement).value)" />
+                  </div>
+                </label>
+              </div>
+              <label class="field">透明度 0-1
+                <div class="grid grid-cols-[minmax(0,1fr)_5rem] gap-2">
+                  <input type="range" min="0" max="1" step="0.01" :value="ensureComponentTheme(selectedBlock).opacity" @input="setThemeField(selectedBlock, 'opacity', eventNumber($event))" />
+                  <input class="admin-input page-number" type="number" min="0" max="1" step="0.01" :value="ensureComponentTheme(selectedBlock).opacity" @input="setThemeField(selectedBlock, 'opacity', eventNumber($event))" />
+                </div>
+              </label>
+              <label class="field">大小档位
+                <select class="admin-input" :value="ensureComponentTheme(selectedBlock).size" @change="setThemeField(selectedBlock, 'size', ($event.target as HTMLSelectElement).value)">
+                  <option value="small">小</option>
+                  <option value="medium">中</option>
+                  <option value="large">大</option>
+                </select>
+              </label>
+            </div>
+          </details>
+
+          <details open class="component-setting-section">
+            <summary>字体设置</summary>
+            <div class="mt-4 grid gap-4">
+              <label class="field">字体族
+                <input class="admin-input" :value="ensureComponentTheme(selectedBlock).fontFamily" placeholder="留空使用默认字体" @input="setThemeField(selectedBlock, 'fontFamily', ($event.target as HTMLInputElement).value)" />
+              </label>
+              <label class="field">字体大小(px)
+                <div class="grid grid-cols-[minmax(0,1fr)_5rem] gap-2">
+                  <input type="range" min="10" max="42" step="1" :value="ensureComponentTheme(selectedBlock).fontSize" @input="setThemeField(selectedBlock, 'fontSize', eventNumber($event))" />
+                  <input class="admin-input page-number" type="number" min="10" max="42" step="1" :value="ensureComponentTheme(selectedBlock).fontSize" @input="setThemeField(selectedBlock, 'fontSize', eventNumber($event))" />
+                </div>
+              </label>
+              <label class="field">字体颜色
+                <div class="grid grid-cols-[3rem_minmax(0,1fr)] gap-2">
+                  <input class="h-10 w-full rounded border border-slate-300" type="color" :value="colorValue(ensureComponentTheme(selectedBlock).textColor)" @input="setThemeField(selectedBlock, 'textColor', ($event.target as HTMLInputElement).value)" />
+                  <input class="admin-input" :value="ensureComponentTheme(selectedBlock).textColor" placeholder="#111827" @input="setThemeField(selectedBlock, 'textColor', ($event.target as HTMLInputElement).value)" />
+                </div>
+              </label>
+              <label class="field">文本对齐
+                <select class="admin-input" :value="ensureComponentTheme(selectedBlock).textAlign" @change="setThemeField(selectedBlock, 'textAlign', ($event.target as HTMLSelectElement).value)">
+                  <option value="left">靠左</option>
+                  <option value="center">居中</option>
+                  <option value="right">靠右</option>
+                </select>
+              </label>
+              <div class="grid gap-2 sm:grid-cols-2">
+                <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
+                  <input type="checkbox" :checked="ensureComponentTheme(selectedBlock).fontWeight === '700' || ensureComponentTheme(selectedBlock).fontWeight === 'bold'" @change="setThemeField(selectedBlock, 'fontWeight', ($event.target as HTMLInputElement).checked ? '700' : 'normal')" />
+                  加粗
+                </label>
+                <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
+                  <input type="checkbox" :checked="ensureComponentTheme(selectedBlock).fontStyle === 'italic'" @change="setThemeField(selectedBlock, 'fontStyle', ($event.target as HTMLInputElement).checked ? 'italic' : 'normal')" />
+                  斜体
+                </label>
+              </div>
+            </div>
+          </details>
+
+          <details class="component-setting-section">
+            <summary>显示设置</summary>
+            <div class="mt-4 grid gap-3">
+              <label class="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
+                <span>当前组件在前台显示</span>
+                <input type="checkbox" :checked="selectedBlock.visible !== false" @change="selectedBlock.visible = ($event.target as HTMLInputElement).checked; dirty = true" />
+              </label>
+              <button type="button" class="admin-btn admin-btn-danger w-fit" @click="removeBlock(selectedBlock); selectedBlockId = ''">{{ selectedBlock.locked ? '隐藏核心组件' : '删除组件引用' }}</button>
+              <p class="text-xs text-slate-500">删除或隐藏只影响页面布局引用，不会删除文章、图片、音乐等真实内容数据。</p>
+            </div>
+          </details>
+
+          <details class="component-setting-section">
+            <summary>状态摘要</summary>
+            <div class="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
+              <p>order：{{ selectedBlock.order }}</p>
+              <p>w/h：{{ formatSize(selectedBlock.w) }} / {{ formatSize(selectedBlock.h) }}</p>
               <p>透明度：{{ themeInfo(selectedBlock).opacity }}</p>
               <p>大小档位：{{ themeInfo(selectedBlock).size }}</p>
               <p>日间背景：<span class="inline-block h-3 w-8 rounded border align-middle" :style="{ background: String(themeInfo(selectedBlock).dayBg) }"></span> {{ themeInfo(selectedBlock).dayBg }}</p>
               <p>夜间背景：<span class="inline-block h-3 w-8 rounded border align-middle" :style="{ background: String(themeInfo(selectedBlock).nightBg) }"></span> {{ themeInfo(selectedBlock).nightBg }}</p>
             </div>
-          </div>
+          </details>
         </div>
-      </div>
-    </div>
-
-    <div v-if="selectedBlock" class="fixed inset-0 z-[55] grid place-items-center bg-black/35 p-4" @click="selectedBlockId = ''">
-      <div class="max-h-[88vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl" @click.stop>
-        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200 pb-4">
-          <div>
-            <p class="text-xs font-bold uppercase tracking-[.2em] text-slate-500">FONT SETTINGS</p>
-            <h2 class="mt-1 text-2xl font-black text-slate-950">{{ selectedBlock.label }}</h2>
-            <p class="mt-1 font-mono text-xs text-slate-500">{{ componentThemeKey(selectedBlock) }}</p>
-          </div>
+        <div class="flex flex-wrap justify-between gap-2 border-t border-slate-200 bg-white p-5">
           <button type="button" class="admin-btn admin-btn-ghost" @click="selectedBlockId = ''">关闭</button>
-        </div>
-        <div class="mt-5 grid gap-4">
-          <label class="field">字体族
-            <input class="admin-input" :value="ensureComponentTheme(selectedBlock).fontFamily" placeholder="留空使用默认字体" @input="setThemeField(selectedBlock, 'fontFamily', ($event.target as HTMLInputElement).value)" />
-          </label>
-          <label class="field">字体大小(px)
-            <div class="grid grid-cols-[minmax(0,1fr)_5rem] gap-2">
-              <input type="range" min="10" max="42" step="1" :value="ensureComponentTheme(selectedBlock).fontSize" @input="setThemeField(selectedBlock, 'fontSize', eventNumber($event))" />
-              <input class="admin-input page-number" type="number" min="10" max="42" step="1" :value="ensureComponentTheme(selectedBlock).fontSize" @input="setThemeField(selectedBlock, 'fontSize', eventNumber($event))" />
-            </div>
-          </label>
-          <label class="field">字体颜色
-            <div class="grid grid-cols-[3rem_minmax(0,1fr)] gap-2">
-              <input class="h-10 w-full rounded border border-slate-300" type="color" :value="colorValue(ensureComponentTheme(selectedBlock).textColor)" @input="setThemeField(selectedBlock, 'textColor', ($event.target as HTMLInputElement).value)" />
-              <input class="admin-input" :value="ensureComponentTheme(selectedBlock).textColor" placeholder="#111827" @input="setThemeField(selectedBlock, 'textColor', ($event.target as HTMLInputElement).value)" />
-            </div>
-          </label>
-          <label class="field">文本对齐
-            <select class="admin-input" :value="ensureComponentTheme(selectedBlock).textAlign" @change="setThemeField(selectedBlock, 'textAlign', ($event.target as HTMLSelectElement).value)">
-              <option value="left">靠左</option>
-              <option value="center">居中</option>
-              <option value="right">靠右</option>
-            </select>
-          </label>
-          <div class="grid gap-2 sm:grid-cols-2">
-            <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
-              <input type="checkbox" :checked="ensureComponentTheme(selectedBlock).fontWeight === '700' || ensureComponentTheme(selectedBlock).fontWeight === 'bold'" @change="setThemeField(selectedBlock, 'fontWeight', ($event.target as HTMLInputElement).checked ? '700' : 'normal')" />
-              加粗
-            </label>
-            <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-700">
-              <input type="checkbox" :checked="ensureComponentTheme(selectedBlock).fontStyle === 'italic'" @change="setThemeField(selectedBlock, 'fontStyle', ($event.target as HTMLInputElement).checked ? 'italic' : 'normal')" />
-              斜体
-            </label>
-          </div>
-          <div class="flex flex-wrap justify-between gap-2 border-t border-slate-200 pt-4">
-            <button type="button" class="admin-btn admin-btn-ghost" @click="selectedBlockId = ''">关闭</button>
-            <button type="button" class="admin-btn admin-btn-primary" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存页面配置' }}</button>
-          </div>
+          <button type="button" class="admin-btn admin-btn-primary" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存页面配置' }}</button>
         </div>
       </div>
     </div>
@@ -929,6 +991,18 @@ load()
   min-height: 2rem !important;
   padding: .3rem .55rem !important;
   font-size: .72rem !important;
+}
+.component-setting-section {
+  border: 1px solid #e5e7eb;
+  border-radius: .9rem;
+  background: #f9fafb;
+  padding: .9rem;
+}
+.component-setting-section > summary {
+  cursor: pointer;
+  font-size: .92rem;
+  font-weight: 800;
+  color: #111827;
 }
 @media (max-width: 1000px) {
   .page-editor-block {

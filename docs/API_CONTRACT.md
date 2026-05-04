@@ -1,3 +1,47 @@
+## 2026-05-05 Page Component Settings Contract
+
+页面编辑组件设置由两类公开配置共同组成：
+
+- 布局配置：`GET /api/pages/config` 与 `GET/PUT /api/admin/pages/config` 中的 `pageLayouts.{page}.components.{componentId}`。
+- 组件主题配置：`GET /api/settings/public` 与 `GET/PUT /api/admin/settings` 中的 `themeConfig.componentTheme.{componentKey}`。
+
+布局字段：
+
+```json
+{
+  "order": 1,
+  "w": 6,
+  "h": 2,
+  "visible": true
+}
+```
+
+组件主题字段：
+
+```json
+{
+  "label": "首页名片",
+  "day": { "bg": "#ffffff", "text": "#111827" },
+  "night": { "bg": "#111827", "text": "#f8fafc" },
+  "opacity": 0.9,
+  "size": "medium",
+  "fontFamily": "",
+  "fontSize": 16,
+  "textColor": "#111827",
+  "textAlign": "left",
+  "fontWeight": "normal",
+  "fontStyle": "normal"
+}
+```
+
+保存规则：
+
+- 保存布局设置时必须保留组件主题字段。
+- 保存外观或字体设置时必须保留 `order/w/h/visible`。
+- 保存字体设置时不得覆盖 `day/night/opacity/size`。
+- 缺失字段必须在前台和后台使用默认值兜底，不得导致白屏。
+- 公开接口只能返回公开视觉配置，不得返回 OAuth、AI、OSS 或其他 Secret 明文。
+
 ## 2026-05-05 Component Typography Addendum
 
 组件级主题配置继续通过后台设置接口保存，并通过公开设置接口下发给前台。`themeConfig.componentTheme.{componentKey}` 可以包含以下公开视觉字段：

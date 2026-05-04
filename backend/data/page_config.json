@@ -81,7 +81,7 @@
         "latestPostsCarousel": {
           "order": 4,
           "w": 4.0,
-          "h": 3.0,
+          "h": 4.0,
           "visible": true,
           "label": "最新文章轮播",
           "type": "latestPostsCarousel",
@@ -100,7 +100,7 @@
         },
         "updatesCarousel": {
           "order": 6,
-          "w": 8.0,
+          "w": 4.0,
           "h": 2.0,
           "visible": true,
           "label": "更新内容轮播",
@@ -127,19 +127,6 @@
           "type": "statusBar",
           "locked": true,
           "props": {}
-        },
-        "imageBlock-1777874610622": {
-          "order": 9,
-          "w": 6.0,
-          "h": 2.0,
-          "visible": true,
-          "label": "图片块",
-          "type": "imageBlock",
-          "locked": false,
-          "props": {
-            "url": "",
-            "title": "图片块"
-          }
         }
       }
     },
@@ -410,7 +397,7 @@
       "latestPostsCarousel": {
         "order": 4,
         "w": 4.0,
-        "h": 3.0,
+        "h": 4.0,
         "visible": true,
         "label": "最新文章轮播",
         "type": "latestPostsCarousel",
@@ -429,7 +416,7 @@
       },
       "updatesCarousel": {
         "order": 6,
-        "w": 8.0,
+        "w": 4.0,
         "h": 2.0,
         "visible": true,
         "label": "更新内容轮播",
@@ -456,19 +443,6 @@
         "type": "statusBar",
         "locked": true,
         "props": {}
-      },
-      "imageBlock-1777874610622": {
-        "order": 9,
-        "w": 6.0,
-        "h": 2.0,
-        "visible": true,
-        "label": "图片块",
-        "type": "imageBlock",
-        "locked": false,
-        "props": {
-          "url": "",
-          "title": "图片块"
-        }
       }
     }
   },
@@ -508,7 +482,7 @@
       "latestPostsCarousel": {
         "order": 4,
         "w": 4.0,
-        "h": 3.0,
+        "h": 4.0,
         "visible": true,
         "label": "最新文章轮播",
         "type": "latestPostsCarousel",
@@ -527,7 +501,7 @@
       },
       "updatesCarousel": {
         "order": 6,
-        "w": 8.0,
+        "w": 4.0,
         "h": 2.0,
         "visible": true,
         "label": "更新内容轮播",
@@ -554,19 +528,6 @@
         "type": "statusBar",
         "locked": true,
         "props": {}
-      },
-      "imageBlock-1777874610622": {
-        "order": 9,
-        "w": 6.0,
-        "h": 2.0,
-        "visible": true,
-        "label": "图片块",
-        "type": "imageBlock",
-        "locked": false,
-        "props": {
-          "url": "",
-          "title": "图片块"
-        }
       }
     }
   }
