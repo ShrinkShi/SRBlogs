@@ -2,7 +2,7 @@
 
 `GET /api/settings/public` 与 `GET/PUT /api/admin/settings` 的公开主题配置新增页面边距与 day/night 背景壁纸组能力。公开接口只返回视觉与布局字段，不返回任何 Secret。
 
-页面边距字段只用于前台主内容容器的左右 padding，不参与页面组件布局计算。前台实现应把 `themeConfig.layout.pagePadding` 映射为 `--page-side-padding-desktop/tablet/mobile`，并只应用在统一页面容器上。`pageLayouts` 中的 `w/h/rowSpan` 继续独立控制组件布局，二者不得互相覆盖。
+前台主体内容最大宽度固定以 `1160px` 为基准，页面编辑组件宽度按 12 栅格比例计算。`themeConfig.layout.pagePadding` 只作为浏览器边缘安全留白配置，不参与页面组件宽度、组件高度、grid row/column 或 `pageLayouts` 计算。`pageLayouts` 中的 `w/h/rowSpan` 继续独立控制组件布局，二者不得互相覆盖。
 
 后端保存时应将边距限制在安全范围内：
 

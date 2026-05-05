@@ -204,7 +204,9 @@ onBeforeUnmount(() => {
                 <svg v-if="player.muted || player.volume <= 0" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.8 3 2.6-2.6-1.4-1.4-2.6 2.6-2.6-2.6-1.4 1.4L14 12l-2.6 2.6 1.4 1.4 2.6-2.6 2.6 2.6 1.4-1.4L16.8 12z" /></svg>
                 <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-9.2v2.1a7.5 7.5 0 0 1 0 14.2v2.1a9.5 9.5 0 0 0 0-18.4z" /></svg>
               </button>
-              <input class="volume-slider" type="range" min="0" max="1" step="0.01" :value="player.muted ? 0 : player.volume" aria-label="音量" :style="{ '--volume-level': `${(player.muted ? 0 : player.volume) * 100}%` }" @input="setVolumeFromEvent" @pointerdown="showVolumeSlider" @pointerup="hideVolumeSliderSoon" />
+              <div class="volume-slider-panel" aria-hidden="false">
+                <input class="volume-range" type="range" min="0" max="1" step="0.01" :value="player.muted ? 0 : player.volume" aria-label="音量" :style="{ '--volume-level': `${(player.muted ? 0 : player.volume) * 100}%` }" @input="setVolumeFromEvent" @pointerdown="showVolumeSlider" @pointerup="hideVolumeSliderSoon" />
+              </div>
             </div>
             <button type="button" class="icon-button" aria-label="previous track" @click="player.prev()">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h2v12H7zM18 6v12l-8.5-6z" /></svg>

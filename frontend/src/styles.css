@@ -46,7 +46,8 @@
   --page-side-padding-desktop: 180px;
   --page-side-padding-tablet: 72px;
   --page-side-padding-mobile: 18px;
-  --page-max-width: 72rem;
+  --page-max-width: 1160px;
+  --page-content-width: 1160px;
   --bg-overlay-color: #000000;
   --bg-overlay-opacity: .68;
   --accent-hover: #fb7185;
@@ -154,9 +155,15 @@ body::before {
 
 .site-page-container {
   width: 100%;
-  padding-left: var(--page-side-padding-desktop);
-  padding-right: var(--page-side-padding-desktop);
+  padding-left: clamp(24px, 4vw, 56px);
+  padding-right: clamp(24px, 4vw, 56px);
   box-sizing: border-box;
+}
+
+.site-page-container > * {
+  width: min(100%, var(--page-content-width));
+  max-width: 100%;
+  margin-inline: auto;
 }
 
 .sr-page-shell {
@@ -167,15 +174,15 @@ body::before {
 
 @media (max-width: 1024px) {
   .site-page-container {
-    padding-left: var(--page-side-padding-tablet);
-    padding-right: var(--page-side-padding-tablet);
+    padding-left: clamp(18px, 4vw, 40px);
+    padding-right: clamp(18px, 4vw, 40px);
   }
 }
 
 @media (max-width: 480px) {
   .site-page-container {
-    padding-left: var(--page-side-padding-mobile);
-    padding-right: var(--page-side-padding-mobile);
+    padding-left: clamp(12px, 4vw, 18px);
+    padding-right: clamp(12px, 4vw, 18px);
   }
 }
 
@@ -751,15 +758,17 @@ body::before {
   place-items: center;
 }
 
-.volume-slider {
+.volume-slider-panel {
   position: absolute;
   left: 50%;
   bottom: calc(100% + .7rem);
   z-index: 12;
-  width: 2.25rem;
+  display: grid;
+  width: 2.5rem;
   height: 9.5rem;
   min-width: 0;
-  padding: 1.05rem .55rem;
+  place-items: center;
+  padding: 1.05rem .6rem;
   border: 1px solid var(--border-glass);
   border-radius: 999px;
   background: color-mix(in srgb, var(--bg-card-elevated) 82%, transparent);
@@ -768,23 +777,31 @@ body::before {
   pointer-events: none;
   transform: translateX(-50%) translateY(.4rem);
   transition: opacity .2s var(--motion-ease), transform .2s var(--motion-ease);
-  -webkit-appearance: none;
-  appearance: none;
-  cursor: pointer;
-  writing-mode: vertical-rl;
-  direction: rtl;
   backdrop-filter: blur(18px) saturate(135%);
   -webkit-backdrop-filter: blur(18px) saturate(135%);
 }
 
-.volume-slider::-webkit-slider-runnable-track {
-  width: .38rem;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(to top, var(--accent) var(--volume-level, 0%), color-mix(in srgb, var(--text-secondary) 28%, transparent) var(--volume-level, 0%));
+.volume-range {
+  width: 7rem;
+  height: 1.35rem;
+  min-width: 7rem;
+  margin: 0;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  background: transparent;
 }
 
-.volume-slider::-webkit-slider-thumb {
+.volume-range::-webkit-slider-runnable-track {
+  width: 100%;
+  height: .42rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent) var(--volume-level, 0%), color-mix(in srgb, var(--text-secondary) 28%, transparent) var(--volume-level, 0%));
+}
+
+.volume-range::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 1rem;
@@ -793,22 +810,23 @@ body::before {
   border-radius: 999px;
   background: var(--accent);
   box-shadow: 0 0 14px var(--shadow-glow);
+  margin-top: -.29rem;
 }
 
-.volume-slider::-moz-range-track {
-  width: .38rem;
-  height: 100%;
+.volume-range::-moz-range-track {
+  width: 100%;
+  height: .42rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--text-secondary) 28%, transparent);
 }
 
-.volume-slider::-moz-range-progress {
-  width: .38rem;
+.volume-range::-moz-range-progress {
+  height: .42rem;
   border-radius: 999px;
   background: var(--accent);
 }
 
-.volume-slider::-moz-range-thumb {
+.volume-range::-moz-range-thumb {
   width: 1rem;
   height: 1rem;
   border: 2px solid var(--bg-card-elevated);
@@ -847,9 +865,9 @@ body::before {
   box-shadow: 0 0 18px var(--shadow-glow);
 }
 
-.volume-control:hover .volume-slider,
-.volume-control:focus-within .volume-slider,
-.volume-control.volume-open .volume-slider {
+.volume-control:hover .volume-slider-panel,
+.volume-control:focus-within .volume-slider-panel,
+.volume-control.volume-open .volume-slider-panel {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);
