@@ -74,7 +74,7 @@ function hideVolumeSliderSoon() {
   if (volumeHideTimer) window.clearTimeout(volumeHideTimer)
   volumeHideTimer = window.setTimeout(() => {
     volumeOpen.value = false
-  }, 2000)
+  }, 500)
 }
 
 async function togglePlay() {

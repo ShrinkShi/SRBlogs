@@ -73,7 +73,7 @@
         "lyrics": {
           "order": 3,
           "w": 12.0,
-          "h": 1.0,
+          "h": 0.6,
           "rowSpan": 1,
           "visible": true,
           "label": "歌词区",
@@ -417,7 +417,7 @@
       "lyrics": {
         "order": 3,
         "w": 12.0,
-        "h": 1.0,
+        "h": 0.6,
         "rowSpan": 1,
         "visible": true,
         "label": "歌词区",
@@ -510,7 +510,7 @@
       "lyrics": {
         "order": 3,
         "w": 12.0,
-        "h": 1.0,
+        "h": 0.6,
         "rowSpan": 1,
         "visible": true,
         "label": "歌词区",

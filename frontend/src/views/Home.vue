@@ -18,6 +18,7 @@ type UpdateItem = {
   summary: string
   url: string
 }
+type LyricEntry = { time: number; text: string }
 
 const posts = ref<ContentItem[]>([])
 const moments = ref<ContentItem[]>([])
@@ -86,9 +87,50 @@ const latestUpdates = computed<UpdateItem[]>(() => {
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 6)
 })
 const currentUpdate = computed(() => latestUpdates.value[updateIndex.value] || latestUpdates.value[0])
+function parseTimeTag(tag: string) {
+  const match = tag.match(/^(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?$/)
+  if (!match) return null
+  const minutes = Number(match[1])
+  const seconds = Number(match[2])
+  const fraction = match[3] ? Number(`0.${match[3].padEnd(3, '0').slice(0, 3)}`) : 0
+  return minutes * 60 + seconds + fraction
+}
+
+function parseLrc(source: string): LyricEntry[] {
+  const entries: LyricEntry[] = []
+  const plainLines: string[] = []
+  source.split('\n').forEach((rawLine) => {
+    const line = rawLine.trim()
+    if (!line) return
+    const tags = [...line.matchAll(/\[([0-9:.]+)\]/g)]
+    const text = line.replace(/\[[^\]]+\]/g, '').trim()
+    if (!tags.length) {
+      if (text) plainLines.push(text)
+      return
+    }
+    tags.forEach((tag) => {
+      const time = parseTimeTag(tag[1])
+      if (time !== null && text) entries.push({ time, text })
+    })
+  })
+  if (!entries.length && plainLines.length) return [{ time: 0, text: plainLines[0] }]
+  return entries.sort((a, b) => a.time - b.time)
+}
+
+const lyricEntries = computed(() => parseLrc(remoteLyrics.value || track.value?.lyrics || ''))
 const lyricLine = computed(() => {
-  if (remoteLyrics.value) return remoteLyrics.value.split('\n').map((line) => line.replace(/^\[[^\]]+\]/, '').trim()).find(Boolean) || `${track.value?.title} - ${track.value?.artist}`
-  if (track.value?.lyrics) return track.value.lyrics.split('\n').map((line) => line.trim()).find(Boolean) || `${track.value.title} - ${track.value.artist}`
+  const entries = lyricEntries.value
+  if (entries.length) {
+    const current = Math.max(0, player.currentTime || 0)
+    if (current < entries[0].time) return track.value ? `${track.value.title} / 等待歌词` : '等待歌词'
+    let active = entries[0]
+    for (const entry of entries) {
+      if (entry.time <= current) active = entry
+      else break
+    }
+    return active.text || '暂无歌词'
+  }
+  if (track.value?.lyricUrl || track.value?.lyrics) return '暂无歌词'
   if (track.value) return `${track.value.title} - ${track.value.artist} / ${player.playing ? '正在播放' : '等待播放'}`
   return '暂无歌词数据，添加歌曲后这里会显示当前播放信息'
 })
@@ -219,7 +261,7 @@ function hideVolumeSliderSoon() {
   if (volumeHideTimer) window.clearTimeout(volumeHideTimer)
   volumeHideTimer = window.setTimeout(() => {
     volumeOpen.value = false
-  }, 2000)
+  }, 500)
 }
 
 async function toggleLike() {

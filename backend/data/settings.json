@@ -117,56 +117,56 @@
     "day": {
       "bgImage": "",
       "overlayColor": "#ffffff",
-      "overlayOpacity": 0.5,
+      "overlayOpacity": 0.3,
       "pageBg": "#f3f4f6",
       "bgPage": "#f3f4f6",
-      "cardBg": "rgba(255,255,255,.7)",
-      "bgCard": "rgba(255,255,255,.7)",
-      "bgCardElevated": "rgba(255,255,255,.9)",
-      "cardOpacity": 0.7,
+      "cardBg": "rgba(255,255,255,.45)",
+      "bgCard": "rgba(255,255,255,.45)",
+      "bgCardElevated": "rgba(255,255,255,.65)",
+      "cardOpacity": 0.45,
       "textPrimary": "#1a1a1a",
-      "textSecondary": "#666666",
-      "accent": "#d90429",
-      "accentHover": "#ef233c",
-      "accentSoft": "rgba(217,4,41,.1)",
-      "border": "rgba(0,0,0,.06)",
-      "borderGlass": "rgba(255,255,255,.6)",
-      "shadow": "rgba(0,0,0,.06)",
-      "shadowGlow": "rgba(217,4,41,.2)",
-      "navBg": "rgba(255,255,255,.65)",
-      "homePanelBg": "rgba(255,255,255,.7)",
+      "textSecondary": "#555555",
+      "accent": "#de2910",
+      "accentHover": "#f03b22",
+      "accentSoft": "rgba(222,41,16,.12)",
+      "border": "rgba(0,0,0,.08)",
+      "borderGlass": "rgba(255,255,255,.7)",
+      "shadow": "rgba(0,0,0,.05)",
+      "shadowGlow": "rgba(222,41,16,.25)",
+      "navBg": "rgba(255,255,255,.5)",
+      "homePanelBg": "rgba(255,255,255,.45)",
       "fontFamily": "",
       "fontSizeBase": 16,
       "titleScale": 1.2,
       "radius": 24,
-      "blur": 24
+      "blur": 32
     },
     "night": {
       "bgImage": "",
       "overlayColor": "#000000",
-      "overlayOpacity": 0.6,
+      "overlayOpacity": 0.45,
       "pageBg": "#0a0a0a",
       "bgPage": "#0a0a0a",
-      "cardBg": "rgba(24,24,28,.65)",
-      "bgCard": "rgba(24,24,28,.65)",
-      "bgCardElevated": "rgba(36,36,42,.8)",
-      "cardOpacity": 0.65,
+      "cardBg": "rgba(16,16,18,.45)",
+      "bgCard": "rgba(16,16,18,.45)",
+      "bgCardElevated": "rgba(26,26,30,.6)",
+      "cardOpacity": 0.45,
       "textPrimary": "#f0f0f0",
-      "textSecondary": "#a3a3a3",
-      "accent": "#ef233c",
-      "accentHover": "#ff4d6d",
-      "accentSoft": "rgba(239,35,60,.15)",
-      "border": "rgba(255,255,255,.06)",
-      "borderGlass": "rgba(255,255,255,.12)",
-      "shadow": "rgba(0,0,0,.6)",
-      "shadowGlow": "rgba(239,35,60,.25)",
-      "navBg": "rgba(10,10,12,.65)",
-      "homePanelBg": "rgba(24,24,28,.65)",
+      "textSecondary": "#a0a0a0",
+      "accent": "#de2910",
+      "accentHover": "#f03b22",
+      "accentSoft": "rgba(222,41,16,.15)",
+      "border": "rgba(255,255,255,.08)",
+      "borderGlass": "rgba(255,255,255,.15)",
+      "shadow": "rgba(0,0,0,.5)",
+      "shadowGlow": "rgba(222,41,16,.3)",
+      "navBg": "rgba(10,10,12,.5)",
+      "homePanelBg": "rgba(16,16,18,.45)",
       "fontFamily": "",
       "fontSizeBase": 16,
       "titleScale": 1.2,
       "radius": 24,
-      "blur": 24
+      "blur": 32
     },
     "opacity": {
       "toolboxSettingsPanel": 0.6,
@@ -184,18 +184,18 @@
       "topNav": {
         "label": "顶部导航栏",
         "day": {
-          "bg": "rgba(255,255,255,.75)",
+          "bg": "rgba(255,255,255,.5)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.75)",
+          "bg": "rgba(16,16,18,.5)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.75,
+        "opacity": 0.5,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -207,18 +207,18 @@
       "toolboxFab": {
         "label": "左下角工具箱悬浮球",
         "day": {
-          "bg": "rgba(255,255,255,.85)",
+          "bg": "rgba(255,255,255,.65)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(36,36,42,.85)",
+          "bg": "rgba(26,26,30,.65)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.85,
+        "opacity": 0.65,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -230,18 +230,18 @@
       "toolboxMenu": {
         "label": "工具箱菜单",
         "day": {
-          "bg": "rgba(255,255,255,.8)",
+          "bg": "rgba(255,255,255,.55)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.8)",
+          "bg": "rgba(16,16,18,.55)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.8,
+        "opacity": 0.55,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -253,18 +253,18 @@
       "toolboxSettingsPanel": {
         "label": "工具箱设置弹窗",
         "day": {
-          "bg": "rgba(255,255,255,.85)",
+          "bg": "rgba(255,255,255,.6)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.85)",
+          "bg": "rgba(20,20,22,.6)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.85,
+        "opacity": 0.6,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -276,18 +276,18 @@
       "toolboxSearchPanel": {
         "label": "工具箱全局搜索弹窗",
         "day": {
-          "bg": "rgba(255,255,255,.85)",
+          "bg": "rgba(255,255,255,.6)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.85)",
+          "bg": "rgba(20,20,22,.6)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.85,
+        "opacity": 0.6,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -299,18 +299,18 @@
       "toolboxCalculatorPanel": {
         "label": "工具箱计算器弹窗",
         "day": {
-          "bg": "rgba(255,255,255,.85)",
+          "bg": "rgba(255,255,255,.6)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.85)",
+          "bg": "rgba(20,20,22,.6)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.85,
+        "opacity": 0.6,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -322,18 +322,18 @@
       "toast": {
         "label": "Toast 提示",
         "day": {
-          "bg": "rgba(255,255,255,.9)",
+          "bg": "rgba(255,255,255,.8)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(36,36,42,.9)",
+          "bg": "rgba(26,26,30,.8)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.9,
+        "opacity": 0.8,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -345,18 +345,18 @@
       "homeProfileCard": {
         "label": "首页名片",
         "day": {
-          "bg": "rgba(255,255,255,.7)",
+          "bg": "rgba(255,255,255,.45)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.65)",
+          "bg": "rgba(16,16,18,.45)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.7,
+        "opacity": 0.45,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -368,18 +368,18 @@
       "homeMusicPlayer": {
         "label": "首页音乐播放器",
         "day": {
-          "bg": "rgba(255,255,255,.7)",
+          "bg": "rgba(255,255,255,.45)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.65)",
+          "bg": "rgba(16,16,18,.45)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.7,
+        "opacity": 0.45,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -391,18 +391,18 @@
       "homeLyrics": {
         "label": "首页歌词区",
         "day": {
-          "bg": "rgba(255,255,255,.7)",
+          "bg": "rgba(255,255,255,.45)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.65)",
+          "bg": "rgba(16,16,18,.45)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.7,
+        "opacity": 0.45,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -414,18 +414,18 @@
       "homeLatestPostsCarousel": {
         "label": "首页最新文章轮播",
         "day": {
-          "bg": "rgba(255,255,255,.7)",
+          "bg": "rgba(255,255,255,.45)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.65)",
+          "bg": "rgba(16,16,18,.45)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.7,
+        "opacity": 0.45,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -437,18 +437,18 @@
       "homePhotoCarousel": {
         "label": "首页图片轮播",
         "day": {
-          "bg": "rgba(255,255,255,.7)",
+          "bg": "rgba(255,255,255,.45)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.65)",
+          "bg": "rgba(16,16,18,.45)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.7,
+        "opacity": 0.45,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -460,18 +460,18 @@
       "homeUpdatesCarousel": {
         "label": "首页更新内容轮播",
         "day": {
-          "bg": "rgba(255,255,255,.7)",
+          "bg": "rgba(255,255,255,.45)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.65)",
+          "bg": "rgba(16,16,18,.45)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.7,
+        "opacity": 0.45,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -483,18 +483,18 @@
       "homeThemeToggle": {
         "label": "首页昼夜切换卡片",
         "day": {
-          "bg": "rgba(255,255,255,.7)",
+          "bg": "rgba(255,255,255,.45)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.65)",
+          "bg": "rgba(16,16,18,.45)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.7,
+        "opacity": 0.45,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -506,18 +506,18 @@
       "homeStatusBar": {
         "label": "首页底部状态区",
         "day": {
-          "bg": "rgba(255,255,255,.7)",
+          "bg": "rgba(255,255,255,.45)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.65)",
+          "bg": "rgba(16,16,18,.45)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.7,
+        "opacity": 0.45,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -529,18 +529,18 @@
       "sectionSwitch": {
         "label": "正经 / 杂谈切换按钮",
         "day": {
-          "bg": "rgba(255,255,255,.8)",
+          "bg": "rgba(255,255,255,.5)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.75)",
+          "bg": "rgba(16,16,18,.5)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.8,
+        "opacity": 0.5,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -552,18 +552,18 @@
       "viewModeSwitch": {
         "label": "矩阵网格 / 中枢链路切换按钮",
         "day": {
-          "bg": "rgba(255,255,255,.8)",
+          "bg": "rgba(255,255,255,.5)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.75)",
+          "bg": "rgba(16,16,18,.5)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.8,
+        "opacity": 0.5,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -575,18 +575,18 @@
       "postCard": {
         "label": "文章卡片",
         "day": {
-          "bg": "rgba(255,255,255,.75)",
+          "bg": "rgba(255,255,255,.5)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.7)",
+          "bg": "rgba(16,16,18,.5)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.75,
+        "opacity": 0.5,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -598,18 +598,18 @@
       "chatterCard": {
         "label": "杂谈卡片",
         "day": {
-          "bg": "rgba(255,255,255,.75)",
+          "bg": "rgba(255,255,255,.5)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.7)",
+          "bg": "rgba(16,16,18,.5)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.75,
+        "opacity": 0.5,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -621,18 +621,18 @@
       "photoAlbumCard": {
         "label": "图片相册卡片",
         "day": {
-          "bg": "rgba(255,255,255,.75)",
+          "bg": "rgba(255,255,255,.5)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.7)",
+          "bg": "rgba(16,16,18,.5)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.75,
+        "opacity": 0.5,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -644,18 +644,18 @@
       "musicPlayerPanel": {
         "label": "音乐页播放器面板",
         "day": {
-          "bg": "rgba(255,255,255,.8)",
+          "bg": "rgba(255,255,255,.55)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.75)",
+          "bg": "rgba(20,20,22,.55)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.8,
+        "opacity": 0.55,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -667,18 +667,18 @@
       "musicLyricsPanel": {
         "label": "音乐页歌词 / 歌单面板",
         "day": {
-          "bg": "rgba(255,255,255,.8)",
+          "bg": "rgba(255,255,255,.55)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.75)",
+          "bg": "rgba(20,20,22,.55)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.8,
+        "opacity": 0.55,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -690,18 +690,18 @@
       "messageBoard": {
         "label": "留言板",
         "day": {
-          "bg": "rgba(255,255,255,.75)",
+          "bg": "rgba(255,255,255,.5)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.7)",
+          "bg": "rgba(16,16,18,.5)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.75,
+        "opacity": 0.5,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -713,18 +713,18 @@
       "searchInput": {
         "label": "搜索框",
         "day": {
-          "bg": "rgba(255,255,255,.8)",
+          "bg": "rgba(255,255,255,.55)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.75)",
+          "bg": "rgba(16,16,18,.55)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.8,
+        "opacity": 0.55,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -736,18 +736,18 @@
       "searchButton": {
         "label": "搜索按钮",
         "day": {
-          "bg": "rgba(255,255,255,.8)",
+          "bg": "rgba(255,255,255,.55)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.75)",
+          "bg": "rgba(16,16,18,.55)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.8,
+        "opacity": 0.55,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -759,18 +759,18 @@
       "tagButton": {
         "label": "标签按钮",
         "day": {
-          "bg": "rgba(255,255,255,.8)",
+          "bg": "rgba(255,255,255,.55)",
           "text": "#1a1a1a",
-          "accent": "#d90429",
-          "border": "rgba(0,0,0,.06)"
+          "accent": "#de2910",
+          "border": "rgba(0,0,0,.08)"
         },
         "night": {
-          "bg": "rgba(24,24,28,.75)",
+          "bg": "rgba(16,16,18,.55)",
           "text": "#f0f0f0",
-          "accent": "#ef233c",
-          "border": "rgba(255,255,255,.06)"
+          "accent": "#de2910",
+          "border": "rgba(255,255,255,.08)"
         },
-        "opacity": 0.8,
+        "opacity": 0.55,
         "size": "medium",
         "fontFamily": "",
         "fontSize": 16.0,
@@ -788,80 +788,80 @@
         "description": "白天白灰红、夜间黑灰红的毛玻璃主题。",
         "version": 1,
         "author": "Shrink",
-        "createdAt": "2026-05-05T03:58:04.752Z",
-        "updatedAt": "2026-05-05T03:58:04.752Z",
+        "createdAt": "2026-05-05T04:10:22.039Z",
+        "updatedAt": "2026-05-05T04:10:22.039Z",
         "modes": {
           "day": {
             "bgImage": "",
             "overlayColor": "#ffffff",
-            "overlayOpacity": 0.5,
+            "overlayOpacity": 0.3,
             "pageBg": "#f3f4f6",
             "bgPage": "#f3f4f6",
-            "cardBg": "rgba(255,255,255,.7)",
-            "bgCard": "rgba(255,255,255,.7)",
-            "bgCardElevated": "rgba(255,255,255,.9)",
-            "cardOpacity": 0.7,
+            "cardBg": "rgba(255,255,255,.45)",
+            "bgCard": "rgba(255,255,255,.45)",
+            "bgCardElevated": "rgba(255,255,255,.65)",
+            "cardOpacity": 0.45,
             "textPrimary": "#1a1a1a",
-            "textSecondary": "#666666",
-            "accent": "#d90429",
-            "accentHover": "#ef233c",
-            "accentSoft": "rgba(217,4,41,.1)",
-            "border": "rgba(0,0,0,.06)",
-            "borderGlass": "rgba(255,255,255,.6)",
-            "shadow": "rgba(0,0,0,.06)",
-            "shadowGlow": "rgba(217,4,41,.2)",
-            "navBg": "rgba(255,255,255,.65)",
-            "homePanelBg": "rgba(255,255,255,.7)",
+            "textSecondary": "#555555",
+            "accent": "#de2910",
+            "accentHover": "#f03b22",
+            "accentSoft": "rgba(222,41,16,.12)",
+            "border": "rgba(0,0,0,.08)",
+            "borderGlass": "rgba(255,255,255,.7)",
+            "shadow": "rgba(0,0,0,.05)",
+            "shadowGlow": "rgba(222,41,16,.25)",
+            "navBg": "rgba(255,255,255,.5)",
+            "homePanelBg": "rgba(255,255,255,.45)",
             "fontFamily": "",
             "fontSizeBase": 16,
             "titleScale": 1.2,
             "radius": 24,
-            "blur": 24
+            "blur": 32
           },
           "night": {
             "bgImage": "",
             "overlayColor": "#000000",
-            "overlayOpacity": 0.6,
+            "overlayOpacity": 0.45,
             "pageBg": "#0a0a0a",
             "bgPage": "#0a0a0a",
-            "cardBg": "rgba(24,24,28,.65)",
-            "bgCard": "rgba(24,24,28,.65)",
-            "bgCardElevated": "rgba(36,36,42,.8)",
-            "cardOpacity": 0.65,
+            "cardBg": "rgba(16,16,18,.45)",
+            "bgCard": "rgba(16,16,18,.45)",
+            "bgCardElevated": "rgba(26,26,30,.6)",
+            "cardOpacity": 0.45,
             "textPrimary": "#f0f0f0",
-            "textSecondary": "#a3a3a3",
-            "accent": "#ef233c",
-            "accentHover": "#ff4d6d",
-            "accentSoft": "rgba(239,35,60,.15)",
-            "border": "rgba(255,255,255,.06)",
-            "borderGlass": "rgba(255,255,255,.12)",
-            "shadow": "rgba(0,0,0,.6)",
-            "shadowGlow": "rgba(239,35,60,.25)",
-            "navBg": "rgba(10,10,12,.65)",
-            "homePanelBg": "rgba(24,24,28,.65)",
+            "textSecondary": "#a0a0a0",
+            "accent": "#de2910",
+            "accentHover": "#f03b22",
+            "accentSoft": "rgba(222,41,16,.15)",
+            "border": "rgba(255,255,255,.08)",
+            "borderGlass": "rgba(255,255,255,.15)",
+            "shadow": "rgba(0,0,0,.5)",
+            "shadowGlow": "rgba(222,41,16,.3)",
+            "navBg": "rgba(10,10,12,.5)",
+            "homePanelBg": "rgba(16,16,18,.45)",
             "fontFamily": "",
             "fontSizeBase": 16,
             "titleScale": 1.2,
             "radius": 24,
-            "blur": 24
+            "blur": 32
           }
         },
         "componentTheme": {
           "topNav": {
             "label": "顶部导航栏",
             "day": {
-              "bg": "rgba(255,255,255,.75)",
+              "bg": "rgba(255,255,255,.5)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.75)",
+              "bg": "rgba(16,16,18,.5)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.75,
+            "opacity": 0.5,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -873,18 +873,18 @@
           "toolboxFab": {
             "label": "左下角工具箱悬浮球",
             "day": {
-              "bg": "rgba(255,255,255,.85)",
+              "bg": "rgba(255,255,255,.65)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(36,36,42,.85)",
+              "bg": "rgba(26,26,30,.65)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.85,
+            "opacity": 0.65,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -896,18 +896,18 @@
           "toolboxMenu": {
             "label": "工具箱菜单",
             "day": {
-              "bg": "rgba(255,255,255,.8)",
+              "bg": "rgba(255,255,255,.55)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.8)",
+              "bg": "rgba(16,16,18,.55)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.8,
+            "opacity": 0.55,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -919,18 +919,18 @@
           "toolboxSettingsPanel": {
             "label": "工具箱设置弹窗",
             "day": {
-              "bg": "rgba(255,255,255,.85)",
+              "bg": "rgba(255,255,255,.6)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.85)",
+              "bg": "rgba(20,20,22,.6)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.85,
+            "opacity": 0.6,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -942,18 +942,18 @@
           "toolboxSearchPanel": {
             "label": "工具箱全局搜索弹窗",
             "day": {
-              "bg": "rgba(255,255,255,.85)",
+              "bg": "rgba(255,255,255,.6)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.85)",
+              "bg": "rgba(20,20,22,.6)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.85,
+            "opacity": 0.6,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -965,18 +965,18 @@
           "toolboxCalculatorPanel": {
             "label": "工具箱计算器弹窗",
             "day": {
-              "bg": "rgba(255,255,255,.85)",
+              "bg": "rgba(255,255,255,.6)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.85)",
+              "bg": "rgba(20,20,22,.6)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.85,
+            "opacity": 0.6,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -988,18 +988,18 @@
           "toast": {
             "label": "Toast 提示",
             "day": {
-              "bg": "rgba(255,255,255,.9)",
+              "bg": "rgba(255,255,255,.8)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(36,36,42,.9)",
+              "bg": "rgba(26,26,30,.8)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.9,
+            "opacity": 0.8,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1011,18 +1011,18 @@
           "homeProfileCard": {
             "label": "首页名片",
             "day": {
-              "bg": "rgba(255,255,255,.7)",
+              "bg": "rgba(255,255,255,.45)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.65)",
+              "bg": "rgba(16,16,18,.45)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.7,
+            "opacity": 0.45,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1034,18 +1034,18 @@
           "homeMusicPlayer": {
             "label": "首页音乐播放器",
             "day": {
-              "bg": "rgba(255,255,255,.7)",
+              "bg": "rgba(255,255,255,.45)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.65)",
+              "bg": "rgba(16,16,18,.45)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.7,
+            "opacity": 0.45,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1057,18 +1057,18 @@
           "homeLyrics": {
             "label": "首页歌词区",
             "day": {
-              "bg": "rgba(255,255,255,.7)",
+              "bg": "rgba(255,255,255,.45)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.65)",
+              "bg": "rgba(16,16,18,.45)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.7,
+            "opacity": 0.45,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1080,18 +1080,18 @@
           "homeLatestPostsCarousel": {
             "label": "首页最新文章轮播",
             "day": {
-              "bg": "rgba(255,255,255,.7)",
+              "bg": "rgba(255,255,255,.45)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.65)",
+              "bg": "rgba(16,16,18,.45)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.7,
+            "opacity": 0.45,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1103,18 +1103,18 @@
           "homePhotoCarousel": {
             "label": "首页图片轮播",
             "day": {
-              "bg": "rgba(255,255,255,.7)",
+              "bg": "rgba(255,255,255,.45)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.65)",
+              "bg": "rgba(16,16,18,.45)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.7,
+            "opacity": 0.45,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1126,18 +1126,18 @@
           "homeUpdatesCarousel": {
             "label": "首页更新内容轮播",
             "day": {
-              "bg": "rgba(255,255,255,.7)",
+              "bg": "rgba(255,255,255,.45)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.65)",
+              "bg": "rgba(16,16,18,.45)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.7,
+            "opacity": 0.45,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1149,18 +1149,18 @@
           "homeThemeToggle": {
             "label": "首页昼夜切换卡片",
             "day": {
-              "bg": "rgba(255,255,255,.7)",
+              "bg": "rgba(255,255,255,.45)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.65)",
+              "bg": "rgba(16,16,18,.45)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.7,
+            "opacity": 0.45,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1172,18 +1172,18 @@
           "homeStatusBar": {
             "label": "首页底部状态区",
             "day": {
-              "bg": "rgba(255,255,255,.7)",
+              "bg": "rgba(255,255,255,.45)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.65)",
+              "bg": "rgba(16,16,18,.45)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.7,
+            "opacity": 0.45,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1195,18 +1195,18 @@
           "sectionSwitch": {
             "label": "正经 / 杂谈切换按钮",
             "day": {
-              "bg": "rgba(255,255,255,.8)",
+              "bg": "rgba(255,255,255,.5)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.75)",
+              "bg": "rgba(16,16,18,.5)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.8,
+            "opacity": 0.5,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1218,18 +1218,18 @@
           "viewModeSwitch": {
             "label": "矩阵网格 / 中枢链路切换按钮",
             "day": {
-              "bg": "rgba(255,255,255,.8)",
+              "bg": "rgba(255,255,255,.5)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.75)",
+              "bg": "rgba(16,16,18,.5)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.8,
+            "opacity": 0.5,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1241,18 +1241,18 @@
           "postCard": {
             "label": "文章卡片",
             "day": {
-              "bg": "rgba(255,255,255,.75)",
+              "bg": "rgba(255,255,255,.5)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.7)",
+              "bg": "rgba(16,16,18,.5)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.75,
+            "opacity": 0.5,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1264,18 +1264,18 @@
           "chatterCard": {
             "label": "杂谈卡片",
             "day": {
-              "bg": "rgba(255,255,255,.75)",
+              "bg": "rgba(255,255,255,.5)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.7)",
+              "bg": "rgba(16,16,18,.5)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.75,
+            "opacity": 0.5,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1287,18 +1287,18 @@
           "photoAlbumCard": {
             "label": "图片相册卡片",
             "day": {
-              "bg": "rgba(255,255,255,.75)",
+              "bg": "rgba(255,255,255,.5)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.7)",
+              "bg": "rgba(16,16,18,.5)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.75,
+            "opacity": 0.5,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1310,18 +1310,18 @@
           "musicPlayerPanel": {
             "label": "音乐页播放器面板",
             "day": {
-              "bg": "rgba(255,255,255,.8)",
+              "bg": "rgba(255,255,255,.55)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.75)",
+              "bg": "rgba(20,20,22,.55)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.8,
+            "opacity": 0.55,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1333,18 +1333,18 @@
           "musicLyricsPanel": {
             "label": "音乐页歌词 / 歌单面板",
             "day": {
-              "bg": "rgba(255,255,255,.8)",
+              "bg": "rgba(255,255,255,.55)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.75)",
+              "bg": "rgba(20,20,22,.55)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.8,
+            "opacity": 0.55,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1356,18 +1356,18 @@
           "messageBoard": {
             "label": "留言板",
             "day": {
-              "bg": "rgba(255,255,255,.75)",
+              "bg": "rgba(255,255,255,.5)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.7)",
+              "bg": "rgba(16,16,18,.5)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.75,
+            "opacity": 0.5,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1379,18 +1379,18 @@
           "searchInput": {
             "label": "搜索框",
             "day": {
-              "bg": "rgba(255,255,255,.8)",
+              "bg": "rgba(255,255,255,.55)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.75)",
+              "bg": "rgba(16,16,18,.55)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.8,
+            "opacity": 0.55,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1402,18 +1402,18 @@
           "searchButton": {
             "label": "搜索按钮",
             "day": {
-              "bg": "rgba(255,255,255,.8)",
+              "bg": "rgba(255,255,255,.55)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.75)",
+              "bg": "rgba(16,16,18,.55)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.8,
+            "opacity": 0.55,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
@@ -1425,18 +1425,18 @@
           "tagButton": {
             "label": "标签按钮",
             "day": {
-              "bg": "rgba(255,255,255,.8)",
+              "bg": "rgba(255,255,255,.55)",
               "text": "#1a1a1a",
-              "accent": "#d90429",
-              "border": "rgba(0,0,0,.06)"
+              "accent": "#de2910",
+              "border": "rgba(0,0,0,.08)"
             },
             "night": {
-              "bg": "rgba(24,24,28,.75)",
+              "bg": "rgba(16,16,18,.55)",
               "text": "#f0f0f0",
-              "accent": "#ef233c",
-              "border": "rgba(255,255,255,.06)"
+              "accent": "#de2910",
+              "border": "rgba(255,255,255,.08)"
             },
-            "opacity": 0.8,
+            "opacity": 0.55,
             "size": "medium",
             "fontFamily": "",
             "fontSize": 16.0,
