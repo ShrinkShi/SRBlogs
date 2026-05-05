@@ -45,6 +45,8 @@ export interface MusicItem {
 
 export interface ThemeTokens {
   bgImage?: string
+  bgImages?: Array<string | { url: string; name?: string; enabled?: boolean }>
+  activeBgIndex?: number
   overlayColor?: string
   overlayOpacity?: number
   pageBg?: string
@@ -85,6 +87,13 @@ export interface ThemePackage {
   }
   componentTheme?: Record<string, ComponentThemeItem>
   pageLayouts?: Record<string, unknown>
+  layout?: {
+    pagePadding?: {
+      desktop?: number
+      tablet?: number
+      mobile?: number
+    }
+  }
 }
 
 export interface ThemeConfig {
@@ -106,6 +115,13 @@ export interface ThemeConfig {
     musicPanel?: number
     messageBoard?: number
     navBar?: number
+  }
+  layout?: {
+    pagePadding?: {
+      desktop?: number
+      tablet?: number
+      mobile?: number
+    }
   }
   componentTheme?: Record<string, ComponentThemeItem>
 }

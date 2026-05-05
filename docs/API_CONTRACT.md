@@ -1,3 +1,59 @@
+## 2026-05-05 Theme Package And Page Padding Addendum
+
+`GET /api/settings/public` 与 `GET/PUT /api/admin/settings` 的公开主题配置新增页面边距与 day/night 背景壁纸组能力。公开接口只返回视觉与布局字段，不返回任何 Secret。
+
+页面边距字段只用于前台主内容容器的左右 padding，不参与页面组件布局计算。前台实现应把 `themeConfig.layout.pagePadding` 映射为 `--page-side-padding-desktop/tablet/mobile`，并只应用在统一页面容器上。`pageLayouts` 中的 `w/h/rowSpan` 继续独立控制组件布局，二者不得互相覆盖。
+
+后端保存时应将边距限制在安全范围内：
+
+- `desktop`: `24..240`
+- `tablet`: `16..120`
+- `mobile`: `8..40`
+
+主题配置字段：
+
+```json
+{
+  "themeConfig": {
+    "activeTheme": "shrink-red-glass",
+    "layout": {
+      "pagePadding": {
+        "desktop": 180,
+        "tablet": 72,
+        "mobile": 18
+      }
+    },
+    "themePackages": {
+      "shrink-red-glass": {
+        "id": "shrink-red-glass",
+        "name": "Shrink 红白黑玻璃主题",
+        "modes": {
+          "day": {
+            "bgImages": [{ "url": "/uploads/day.jpg", "name": "白天背景", "enabled": true }],
+            "activeBgIndex": 0
+          },
+          "night": {
+            "bgImages": [{ "url": "/uploads/night.jpg", "name": "夜间背景", "enabled": true }],
+            "activeBgIndex": 0
+          }
+        },
+        "layout": {
+          "pagePadding": { "desktop": 180, "tablet": 72, "mobile": 18 }
+        },
+        "componentTheme": {},
+        "pageLayouts": {}
+      }
+    }
+  }
+}
+```
+
+规则：
+- `pagePadding.desktop/tablet/mobile` 分别控制前台桌面、平板、移动端内容左右边距，主题导入/导出与一键应用可以携带该字段。
+- `modes.day.bgImages` 与 `modes.night.bgImages` 是当前主题日间/夜间独立背景壁纸组；旧版 `bgImage` 或 `bgImages` 导入时应兼容迁移。
+- 后台主题管理可以新建、编辑、删除主题；当前启用主题不可直接删除。
+- 主题包导出不得包含 GitHub/QQ Secret、AI Key、OSS Secret、管理员 token 或服务端绝对路径。
+
 ## 2026-05-05 Page Layout Row Span 与主题预设补充
 
 ### 页面布局组件字段

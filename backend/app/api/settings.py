@@ -29,6 +29,12 @@ DEFAULT_OPACITY: dict[str, float] = {
     "navBar": 0.72,
 }
 
+DEFAULT_PAGE_PADDING: dict[str, int] = {
+    "desktop": 180,
+    "tablet": 72,
+    "mobile": 18,
+}
+
 COMPONENT_THEME_LABELS: dict[str, str] = {
     "topNav": "顶部导航栏",
     "toolboxFab": "左下角工具箱悬浮球",
@@ -61,6 +67,8 @@ COMPONENT_THEME_LABELS: dict[str, str] = {
 DEFAULT_THEME_MODES: dict[str, dict[str, Any]] = {
     "day": {
         "bgImage": "",
+        "bgImages": [],
+        "activeBgIndex": 0,
         "overlayColor": "#ffffff",
         "overlayOpacity": 0.66,
         "pageBg": "#f7f7f7",
@@ -88,6 +96,8 @@ DEFAULT_THEME_MODES: dict[str, dict[str, Any]] = {
     },
     "night": {
         "bgImage": "",
+        "bgImages": [],
+        "activeBgIndex": 0,
         "overlayColor": "#000000",
         "overlayOpacity": 0.68,
         "pageBg": "#050505",
@@ -180,6 +190,7 @@ DEFAULT_THEME_PACKAGE: dict[str, Any] = {
     "modes": deepcopy(DEFAULT_THEME_MODES),
     "componentTheme": deepcopy(DEFAULT_COMPONENT_THEME),
     "pageLayouts": {},
+    "layout": {"pagePadding": deepcopy(DEFAULT_PAGE_PADDING)},
 }
 
 
@@ -207,6 +218,58 @@ def _normalize_opacity(value: Any) -> dict[str, float]:
             number = normalized[key]
         normalized[key] = min(1.0, max(0.0, number))
     return normalized
+
+
+def _normalize_page_padding(value: Any) -> dict[str, int]:
+    source = value if isinstance(value, dict) else {}
+    ranges = {
+        "desktop": (24, 240),
+        "tablet": (16, 120),
+        "mobile": (8, 40),
+    }
+    normalized = deepcopy(DEFAULT_PAGE_PADDING)
+    for key, (minimum, maximum) in ranges.items():
+        try:
+            number = int(float(source.get(key, normalized[key])))
+        except (TypeError, ValueError):
+            number = normalized[key]
+        normalized[key] = min(maximum, max(minimum, number))
+    return normalized
+
+
+def _normalize_bg_images(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    normalized: list[dict[str, Any]] = []
+    for index, item in enumerate(value):
+        if isinstance(item, str):
+            url = item.strip()
+            if url:
+                normalized.append({"url": url, "name": f"背景 {index + 1}", "enabled": True})
+        elif isinstance(item, dict):
+            url = str(item.get("url") or "").strip()
+            if url:
+                normalized.append({
+                    "url": url,
+                    "name": str(item.get("name") or f"背景 {index + 1}"),
+                    "enabled": item.get("enabled", True) is not False,
+                })
+    return normalized
+
+
+def _normalize_mode_tokens(mode: str, value: Any) -> dict[str, Any]:
+    source = value if isinstance(value, dict) else {}
+    result = {**DEFAULT_THEME_MODES[mode], **source}
+    bg_images = _normalize_bg_images(result.get("bgImages"))
+    if not bg_images and result.get("bgImage"):
+        bg_images = _normalize_bg_images([result.get("bgImage")])
+    result["bgImages"] = bg_images
+    try:
+        index = int(result.get("activeBgIndex", 0))
+    except (TypeError, ValueError):
+        index = 0
+    result["activeBgIndex"] = max(0, min(index, max(0, len(bg_images) - 1)))
+    return result
 
 
 def _normalize_component_theme(value: Any, *, ignore_source: bool = False) -> dict[str, dict[str, Any]]:
@@ -258,11 +321,13 @@ def _normalize_theme_packages(value: Any) -> dict[str, Any]:
         safe.setdefault("version", 1)
         modes = safe.get("modes") if isinstance(safe.get("modes"), dict) else {}
         safe["modes"] = {
-            "day": {**DEFAULT_THEME_MODES["day"], **(modes.get("day") if isinstance(modes.get("day"), dict) else {})},
-            "night": {**DEFAULT_THEME_MODES["night"], **(modes.get("night") if isinstance(modes.get("night"), dict) else {})},
+            "day": _normalize_mode_tokens("day", modes.get("day") if isinstance(modes.get("day"), dict) else {}),
+            "night": _normalize_mode_tokens("night", modes.get("night") if isinstance(modes.get("night"), dict) else {}),
         }
         safe["componentTheme"] = _normalize_component_theme(safe.get("componentTheme"))
         safe["pageLayouts"] = deepcopy(safe.get("pageLayouts") if isinstance(safe.get("pageLayouts"), dict) else {})
+        layout = safe.get("layout") if isinstance(safe.get("layout"), dict) else {}
+        safe["layout"] = {**layout, "pagePadding": _normalize_page_padding(layout.get("pagePadding") if isinstance(layout, dict) else {})}
         packages[package_id] = safe
     return packages
 
@@ -274,16 +339,12 @@ def _theme_config_with_defaults(value: Any) -> dict[str, Any]:
     if theme_config["activeTheme"] in LEGACY_THEME_IDS:
         theme_config["activeTheme"] = DEFAULT_THEME_ID
     theme_config["themePackages"] = _normalize_theme_packages(theme_config.get("themePackages"))
-    theme_config["day"] = {
-        **DEFAULT_THEME_MODES["day"],
-        **({} if legacy else (theme_config.get("day") if isinstance(theme_config.get("day"), dict) else {})),
-    }
-    theme_config["night"] = {
-        **DEFAULT_THEME_MODES["night"],
-        **({} if legacy else (theme_config.get("night") if isinstance(theme_config.get("night"), dict) else {})),
-    }
+    theme_config["day"] = _normalize_mode_tokens("day", {} if legacy else (theme_config.get("day") if isinstance(theme_config.get("day"), dict) else {}))
+    theme_config["night"] = _normalize_mode_tokens("night", {} if legacy else (theme_config.get("night") if isinstance(theme_config.get("night"), dict) else {}))
     theme_config["opacity"] = _normalize_opacity(theme_config.get("opacity"))
     theme_config["componentTheme"] = _normalize_component_theme(theme_config.get("componentTheme"), ignore_source=legacy)
+    layout = theme_config.get("layout") if isinstance(theme_config.get("layout"), dict) else {}
+    theme_config["layout"] = {**layout, "pagePadding": _normalize_page_padding(layout.get("pagePadding") if isinstance(layout, dict) else {})}
     return theme_config
 
 

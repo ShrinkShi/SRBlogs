@@ -252,8 +252,17 @@ const form = reactive({
     themePackages: {} as Record<string, unknown>,
     fontFamily: '',
     fontScale: 'medium',
-    day: { ...defaultDay } as Record<string, string>,
-    night: { ...defaultNight } as Record<string, string>,
+    day: { ...defaultDay } as Record<string, any>,
+    night: { ...defaultNight } as Record<string, any>,
+    dayBgImagesText: '',
+    nightBgImagesText: '',
+    layout: {
+      pagePadding: {
+        desktop: 180,
+        tablet: 72,
+        mobile: 18
+      }
+    },
     opacity: { ...defaultOpacity } as Record<string, number>,
     componentTheme: makeComponentTheme()
   },
@@ -349,6 +358,68 @@ function normalizeOpacity(value: unknown) {
   return Math.min(1, Math.max(0, number))
 }
 
+function clampNumber(value: unknown, fallback: number, min: number, max: number) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return fallback
+  return Math.min(max, Math.max(min, number))
+}
+
+function normalizePagePadding(value: unknown) {
+  const source = value && typeof value === 'object' ? value as AnyRecord : {}
+  return {
+    desktop: Math.round(clampNumber(source.desktop, 180, 24, 240)),
+    tablet: Math.round(clampNumber(source.tablet, 72, 16, 120)),
+    mobile: Math.round(clampNumber(source.mobile, 18, 8, 40))
+  }
+}
+
+function parseBgImagesText(value: string) {
+  return parseLines(value).map((url, index) => ({
+    url,
+    name: `背景 ${index + 1}`,
+    enabled: true
+  }))
+}
+
+function bgImagesToText(value: unknown) {
+  if (!Array.isArray(value)) return ''
+  return value
+    .map((item) => typeof item === 'string' ? item : (item && typeof item === 'object' ? (item as AnyRecord).url : ''))
+    .map((url) => String(url || '').trim())
+    .filter(Boolean)
+    .join('\n')
+}
+
+function currentThemeId() {
+  const id = String(form.theme || form.themeConfig.activeTheme || 'shrink-red-glass').trim()
+  return id || 'shrink-red-glass'
+}
+
+const themeOptions = computed(() => {
+  const packages = form.themeConfig.themePackages || {}
+  const ids = new Set(['shrink-red-glass', ...Object.keys(packages)])
+  return Array.from(ids).map((id) => ({
+    id,
+    name: String((packages[id] as AnyRecord | undefined)?.name || (id === 'shrink-red-glass' ? 'Shrink 红白黑玻璃主题' : id))
+  }))
+})
+
+function activeThemePackage() {
+  const packages = form.themeConfig.themePackages || {}
+  return packages[currentThemeId()] as AnyRecord | undefined
+}
+
+function syncThemeFromPackage() {
+  const packageConfig = activeThemePackage()
+  form.themeConfig.activeTheme = currentThemeId()
+  if (packageConfig?.modes?.day) form.themeConfig.day = { ...defaultDay, ...packageConfig.modes.day }
+  if (packageConfig?.modes?.night) form.themeConfig.night = { ...defaultNight, ...packageConfig.modes.night }
+  if (packageConfig?.componentTheme) form.themeConfig.componentTheme = mergeComponentTheme(packageConfig.componentTheme)
+  form.themeConfig.layout.pagePadding = normalizePagePadding(packageConfig?.layout?.pagePadding || form.themeConfig.layout.pagePadding)
+  form.themeConfig.dayBgImagesText = bgImagesToText(form.themeConfig.day.bgImages)
+  form.themeConfig.nightBgImagesText = bgImagesToText(form.themeConfig.night.bgImages)
+}
+
 function colorPickerValue(value: unknown) {
   const text = String(value || '').trim()
   return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#e11d48'
@@ -360,6 +431,10 @@ function tokenLabel(key: string) {
 
 function opacityLabel(key: string) {
   return opacityLabels[key] || key
+}
+
+function filteredModeTokens(value: Record<string, any>) {
+  return Object.fromEntries(Object.entries(value).filter(([key]) => !['bgImages', 'activeBgIndex'].includes(key)))
 }
 
 function mergeComponentTheme(value: unknown) {
@@ -401,7 +476,73 @@ function redComponentTheme(item: ComponentThemeItem) {
   }
 }
 
-function buildThemePackage(includeLayouts = true) {
+function buildThemePackage(includeLayouts = true, themeId = currentThemeId()) {
+  const existing = (form.themeConfig.themePackages?.[themeId] || {}) as AnyRecord
+  const now = new Date().toISOString()
+  const day = {
+    ...defaultDay,
+    ...form.themeConfig.day,
+    bgImages: parseBgImagesText(form.themeConfig.dayBgImagesText),
+    activeBgIndex: Number(form.themeConfig.day.activeBgIndex || 0)
+  }
+  const night = {
+    ...defaultNight,
+    ...form.themeConfig.night,
+    bgImages: parseBgImagesText(form.themeConfig.nightBgImagesText),
+    activeBgIndex: Number(form.themeConfig.night.activeBgIndex || 0)
+  }
+  return {
+    id: themeId,
+    name: existing.name || (themeId === 'shrink-red-glass' ? 'Shrink \u7ea2\u767d\u9ed1\u73bb\u7483\u4e3b\u9898' : themeId),
+    description: existing.description || '\u767d\u5929\u767d\u7070\u7ea2\uff0c\u591c\u95f4\u9ed1\u7070\u7ea2\u7684\u6bdb\u73bb\u7483\u4e3b\u9898\u3002',
+    version: Number(existing.version || 1),
+    author: existing.author || 'Shrink',
+    createdAt: existing.createdAt || now,
+    updatedAt: now,
+    modes: { day, night },
+    componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme)),
+    pageLayouts: includeLayouts ? (pageConfig.value.pageLayouts || pageConfig.value || {}) : {},
+    layout: {
+      ...(existing.layout || {}),
+      pagePadding: normalizePagePadding(form.themeConfig.layout.pagePadding)
+    }
+  }
+}
+/*
+  return {
+    id: themeId,
+    name: existing.name || (themeId === 'shrink-red-glass' ? 'Shrink 红白黑玻璃主题' : themeId),
+    description: existing.description || '白天白灰红、夜间黑灰红的毛玻璃主题。',
+    version: Number(existing.version || 1),
+    author: existing.author || 'Shrink',
+    createdAt: existing.createdAt || now,
+    updatedAt: now,
+    modes: { day, night },
+    componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme)),
+    pageLayouts: includeLayouts ? (pageConfig.value.pageLayouts || pageConfig.value || {}) : {},
+    layout: {
+      ...(existing.layout || {}),
+      pagePadding: normalizePagePadding(form.themeConfig.layout.pagePadding)
+    }
+  }
+  /*
+  return {
+    id: themeId,
+    name: existing.name || (themeId === 'shrink-red-glass' ? 'Shrink 红白黑玻璃主题' : themeId),
+    description: existing.description || '白天白灰红、夜间黑灰红的毛玻璃主题。',
+    version: Number(existing.version || 1),
+    author: existing.author || 'Shrink',
+    createdAt: existing.createdAt || now,
+    updatedAt: now,
+    modes: { day, night },
+    componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme)),
+    pageLayouts: includeLayouts ? (pageConfig.value.pageLayouts || pageConfig.value || {}) : {},
+    layout: {
+      ...(existing.layout || {}),
+      pagePadding: normalizePagePadding(form.themeConfig.layout.pagePadding)
+    }
+  }
+  /*
   return {
     id: 'shrink-red-glass',
     name: 'Shrink 红白黑玻璃主题',
@@ -419,17 +560,22 @@ function buildThemePackage(includeLayouts = true) {
   }
 }
 
+*/
 function applyRedThemeToForm() {
   form.theme = 'shrink-red-glass'
   form.themeConfig.activeTheme = 'shrink-red-glass'
   form.themeConfig.day = { ...form.themeConfig.day, ...defaultDay }
   form.themeConfig.night = { ...form.themeConfig.night, ...defaultNight }
+  form.themeConfig.dayBgImagesText = bgImagesToText(form.themeConfig.day.bgImages)
+  form.themeConfig.nightBgImagesText = bgImagesToText(form.themeConfig.night.bgImages)
+  form.themeConfig.layout.pagePadding = normalizePagePadding(form.themeConfig.layout.pagePadding)
   form.themeConfig.opacity = { ...form.themeConfig.opacity, ...defaultOpacity }
   form.themeConfig.componentTheme = Object.fromEntries(
     Object.entries(form.themeConfig.componentTheme).map(([key, item]) => [key, redComponentTheme(item)])
   )
   form.themeConfig.themePackages = {
-    'shrink-red-glass': buildThemePackage()
+    ...(form.themeConfig.themePackages || {}),
+    'shrink-red-glass': buildThemePackage(true, 'shrink-red-glass')
   }
 }
 
@@ -442,11 +588,11 @@ async function applyRedThemeNow(includeLayout = false) {
 }
 
 function exportCurrentTheme() {
-  const blob = new Blob([JSON.stringify(buildThemePackage(true), null, 2)], { type: 'application/json' })
+  const blob = new Blob([JSON.stringify(buildThemePackage(true, currentThemeId()), null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = 'shrink-red-glass-theme.json'
+  link.download = `${currentThemeId()}-theme.json`
   link.click()
   URL.revokeObjectURL(url)
   success.value = '主题已导出，导出文件不包含 Secret。'
@@ -470,12 +616,21 @@ async function importThemeFile(event: Event) {
     const applyLayout = window.confirm('是否同时导入主题包中的页面布局？取消则只导入配色和组件样式。')
     form.theme = String(imported.id || 'shrink-red-glass')
     form.themeConfig.activeTheme = form.theme
-    form.themeConfig.day = { ...form.themeConfig.day, ...(imported.modes.day || {}) }
-    form.themeConfig.night = { ...form.themeConfig.night, ...(imported.modes.night || {}) }
+    form.themeConfig.day = { ...defaultDay, ...(imported.modes.day || {}) }
+    form.themeConfig.night = { ...defaultNight, ...(imported.modes.night || {}) }
+    form.themeConfig.dayBgImagesText = bgImagesToText(form.themeConfig.day.bgImages || (form.themeConfig.day.bgImage ? [form.themeConfig.day.bgImage] : []))
+    form.themeConfig.nightBgImagesText = bgImagesToText(form.themeConfig.night.bgImages || (form.themeConfig.night.bgImage ? [form.themeConfig.night.bgImage] : []))
+    form.themeConfig.layout.pagePadding = normalizePagePadding(imported.layout?.pagePadding || form.themeConfig.layout.pagePadding)
     if (imported.componentTheme) form.themeConfig.componentTheme = mergeComponentTheme(imported.componentTheme)
     form.themeConfig.themePackages = {
       ...(form.themeConfig.themePackages || {}),
-      [form.theme]: imported
+      [form.theme]: {
+        ...imported,
+        layout: {
+          ...(imported.layout || {}),
+          pagePadding: normalizePagePadding(imported.layout?.pagePadding)
+        }
+      }
     }
     if (applyLayout && imported.pageLayouts) {
       const current = pageConfig.value || {}
@@ -493,24 +648,28 @@ function applySettings(data: AnyRecord) {
   raw.value = data || {}
   form.siteTitle = data.siteTitle || data.title || ''
   form.subtitle = data.subtitle || ''
-  form.theme = 'shrink-red-glass'
+  form.theme = data.theme || data.themeConfig?.activeTheme || 'shrink-red-glass'
   form.bgImagesText = Array.isArray(data.bgImages) ? data.bgImages.join('\n') : ''
   form.cloudMusicIdsText = Array.isArray(data.cloudMusicIds) ? data.cloudMusicIds.join('\n') : ''
 
   const themeConfig = data.themeConfig || {}
-  form.themeConfig.activeTheme = themeConfig.activeTheme || 'shrink-red-glass'
+  form.themeConfig.activeTheme = form.theme
   form.themeConfig.themePackages = themeConfig.themePackages || {}
   form.themeConfig.fontFamily = themeConfig.fontFamily || ''
   form.themeConfig.fontScale = themeConfig.fontScale || 'medium'
-  form.themeConfig.day = { ...defaultDay, ...(themeConfig.day || {}) }
-  form.themeConfig.night = { ...defaultNight, ...(themeConfig.night || {}) }
+  const packageConfig = form.themeConfig.themePackages[form.theme] as AnyRecord | undefined
+  form.themeConfig.day = { ...defaultDay, ...(themeConfig.day || {}), ...(packageConfig?.modes?.day || {}) }
+  form.themeConfig.night = { ...defaultNight, ...(themeConfig.night || {}), ...(packageConfig?.modes?.night || {}) }
+  form.themeConfig.dayBgImagesText = bgImagesToText(form.themeConfig.day.bgImages || (form.themeConfig.day.bgImage ? [form.themeConfig.day.bgImage] : []))
+  form.themeConfig.nightBgImagesText = bgImagesToText(form.themeConfig.night.bgImages || (form.themeConfig.night.bgImage ? [form.themeConfig.night.bgImage] : []))
+  form.themeConfig.layout.pagePadding = normalizePagePadding(themeConfig.layout?.pagePadding || packageConfig?.layout?.pagePadding)
   form.themeConfig.opacity = { ...defaultOpacity, ...(themeConfig.opacity || {}) }
   Object.keys(form.themeConfig.opacity).forEach((key) => {
     form.themeConfig.opacity[key] = normalizeOpacity(form.themeConfig.opacity[key])
   })
   form.themeConfig.componentTheme = mergeComponentTheme(themeConfig.componentTheme)
   if (!form.themeConfig.themePackages['shrink-red-glass']) {
-    form.themeConfig.themePackages['shrink-red-glass'] = buildThemePackage(false)
+    form.themeConfig.themePackages['shrink-red-glass'] = buildThemePackage(false, 'shrink-red-glass')
   }
 
   const comments = data.comments || {}
@@ -574,22 +733,27 @@ async function load() {
 }
 
 function buildPayload() {
+  const themeId = currentThemeId()
   const payload: AnyRecord = {
     ...raw.value,
     siteTitle: form.siteTitle,
     subtitle: form.subtitle,
-    theme: 'shrink-red-glass',
+    theme: themeId,
     themeConfig: {
       ...(raw.value.themeConfig || {}),
-      activeTheme: form.themeConfig.activeTheme || 'shrink-red-glass',
+      activeTheme: themeId,
       themePackages: {
         ...(form.themeConfig.themePackages || {}),
-        'shrink-red-glass': buildThemePackage(true)
+        [themeId]: buildThemePackage(true, themeId)
       },
       fontFamily: form.themeConfig.fontFamily,
       fontScale: form.themeConfig.fontScale,
-      day: { ...form.themeConfig.day },
-      night: { ...form.themeConfig.night },
+      day: { ...form.themeConfig.day, bgImages: parseBgImagesText(form.themeConfig.dayBgImagesText) },
+      night: { ...form.themeConfig.night, bgImages: parseBgImagesText(form.themeConfig.nightBgImagesText) },
+      layout: {
+        ...(raw.value.themeConfig?.layout || {}),
+        pagePadding: normalizePagePadding(form.themeConfig.layout.pagePadding)
+      },
       opacity: Object.fromEntries(Object.entries(form.themeConfig.opacity).map(([key, value]) => [key, normalizeOpacity(value)])),
       componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme))
     },
@@ -710,6 +874,142 @@ function resetAllComponents() {
   form.themeConfig.componentTheme = makeComponentTheme()
 }
 
+function slugifyThemeIdSafe(value: string) {
+  const text = value.trim().toLowerCase()
+  const slug = text.replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '')
+  return slug || `theme-${Date.now()}`
+}
+
+function createTheme() {
+  const name = window.prompt('请输入主题名称')
+  if (!name) return
+  const suggested = slugifyThemeIdSafe(name)
+  const id = window.prompt('请输入主题 ID', suggested) || suggested
+  if (form.themeConfig.themePackages[id]) {
+    error.value = '主题 ID 已存在，请换一个。'
+    return
+  }
+  const copyCurrent = window.confirm('是否基于当前主题复制？取消则基于默认红白黑主题创建。')
+  const base = copyCurrent ? buildThemePackage(true, currentThemeId()) : buildThemePackage(true, 'shrink-red-glass')
+  const next = {
+    ...base,
+    id,
+    name,
+    description: window.prompt('主题描述', String(base.description || '')) || base.description,
+    author: window.prompt('作者', String(base.author || 'Shrink')) || base.author,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+  form.themeConfig.themePackages = { ...(form.themeConfig.themePackages || {}), [id]: next }
+  form.theme = id
+  syncThemeFromPackage()
+  success.value = '主题已创建，保存设置后写入。'
+}
+
+function editThemeMeta() {
+  const id = currentThemeId()
+  const existing = buildThemePackage(true, id)
+  const name = window.prompt('主题名称', String(existing.name || id))
+  if (!name) return
+  const description = window.prompt('主题描述', String(existing.description || '')) ?? existing.description
+  const author = window.prompt('作者', String(existing.author || '')) ?? existing.author
+  form.themeConfig.themePackages = {
+    ...(form.themeConfig.themePackages || {}),
+    [id]: {
+      ...existing,
+      name,
+      description,
+      author,
+      updatedAt: new Date().toISOString()
+    }
+  }
+  success.value = '主题信息已更新，保存设置后写入。'
+}
+
+function deleteTheme() {
+  const id = currentThemeId()
+  if (id === 'shrink-red-glass') {
+    error.value = '默认主题不能删除。'
+    return
+  }
+  if (!window.confirm(`确认删除主题 ${id}？这不会删除内容数据。`)) return
+  const next = { ...(form.themeConfig.themePackages || {}) }
+  delete next[id]
+  form.themeConfig.themePackages = next
+  form.theme = 'shrink-red-glass'
+  syncThemeFromPackage()
+  success.value = '主题已删除，保存设置后写入。'
+}
+
+/*
+function slugifyThemeId(value: string) {
+  const text = value.trim().toLowerCase()
+  const slug = text.replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-+|-+$/g, '')
+  return slug || `theme-${Date.now()}`
+}
+
+function createTheme() {
+  const name = window.prompt('请输入主题名称')
+  if (!name) return
+  const suggested = slugifyThemeId(name)
+  const id = window.prompt('请输入主题 ID', suggested) || suggested
+  if (form.themeConfig.themePackages[id]) {
+    error.value = '主题 ID 已存在，请换一个。'
+    return
+  }
+  const copyCurrent = window.confirm('是否基于当前主题复制？取消则基于默认红白黑主题创建。')
+  const base = copyCurrent ? buildThemePackage(true, currentThemeId()) : buildThemePackage(true, 'shrink-red-glass')
+  const next = {
+    ...base,
+    id,
+    name,
+    description: window.prompt('主题描述', String(base.description || '')) || base.description,
+    author: window.prompt('作者', String(base.author || 'Shrink')) || base.author,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+  form.themeConfig.themePackages = { ...(form.themeConfig.themePackages || {}), [id]: next }
+  form.theme = id
+  syncThemeFromPackage()
+  success.value = '主题已创建，保存设置后写入。'
+}
+
+function editThemeMeta() {
+  const id = currentThemeId()
+  const existing = buildThemePackage(true, id)
+  const name = window.prompt('主题名称', String(existing.name || id))
+  if (!name) return
+  const description = window.prompt('主题描述', String(existing.description || '')) ?? existing.description
+  const author = window.prompt('作者', String(existing.author || '')) ?? existing.author
+  form.themeConfig.themePackages = {
+    ...(form.themeConfig.themePackages || {}),
+    [id]: {
+      ...existing,
+      name,
+      description,
+      author,
+      updatedAt: new Date().toISOString()
+    }
+  }
+  success.value = '主题信息已更新，保存设置后写入。'
+}
+
+function deleteTheme() {
+  const id = currentThemeId()
+  if (id === 'shrink-red-glass') {
+    error.value = '默认主题不能删除。'
+    return
+  }
+  if (!window.confirm(`确认删除主题 ${id}？这不会删除内容数据。`)) return
+  const next = { ...(form.themeConfig.themePackages || {}) }
+  delete next[id]
+  form.themeConfig.themePackages = next
+  form.theme = 'shrink-red-glass'
+  syncThemeFromPackage()
+  success.value = '主题已删除，保存设置后写入。'
+}
+
+*/
 onMounted(load)
 </script>
 
@@ -763,8 +1063,8 @@ onMounted(load)
       <div class="theme-manager">
         <div class="settings-grid">
           <label class="field">当前主题
-            <select v-model="form.theme" class="admin-input">
-              <option value="shrink-red-glass">Shrink 红白黑玻璃主题</option>
+            <select v-model="form.theme" class="admin-input" @change="syncThemeFromPackage">
+              <option v-for="item in themeOptions" :key="item.id" :value="item.id">{{ item.name }}</option>
             </select>
           </label>
           <label class="field">字体族<input v-model="form.themeConfig.fontFamily" class="admin-input" placeholder="留空则使用默认字体" /></label>
@@ -779,6 +1079,9 @@ onMounted(load)
         <div class="settings-actions compact">
           <button class="admin-btn admin-btn-primary" type="button" @click="applyRedThemeNow(false)">一键应用颜色和字体</button>
           <button class="admin-btn admin-btn-ghost" type="button" @click="applyRedThemeNow(true)">一键应用颜色、字体和布局</button>
+          <button class="admin-btn admin-btn-ghost" type="button" @click="createTheme">新建主题</button>
+          <button class="admin-btn admin-btn-ghost" type="button" @click="editThemeMeta">编辑主题</button>
+          <button class="admin-btn admin-btn-ghost" type="button" @click="deleteTheme">删除主题</button>
           <button class="admin-btn admin-btn-ghost" type="button" @click="exportCurrentTheme">导出当前主题</button>
           <button class="admin-btn admin-btn-ghost" type="button" @click="triggerThemeImport">导入主题 JSON</button>
           <input ref="themeImportInput" class="hidden" type="file" accept="application/json,.json" @change="importThemeFile" />
@@ -786,9 +1089,40 @@ onMounted(load)
       </div>
 
       <details class="settings-details" open>
+        <summary>页面边距设置</summary>
+        <p class="panel-note">边距会跟随主题包导入导出。桌面端调大后，前台内容会更收拢。</p>
+        <div class="opacity-grid">
+          <label class="opacity-row">
+            <span>桌面端左右边距 px</span>
+            <input v-model.number="form.themeConfig.layout.pagePadding.desktop" type="range" min="24" max="240" step="1" />
+            <input v-model.number="form.themeConfig.layout.pagePadding.desktop" type="number" min="24" max="240" step="1" class="admin-input compact-input" />
+          </label>
+          <label class="opacity-row">
+            <span>平板端左右边距 px</span>
+            <input v-model.number="form.themeConfig.layout.pagePadding.tablet" type="range" min="16" max="120" step="1" />
+            <input v-model.number="form.themeConfig.layout.pagePadding.tablet" type="number" min="16" max="120" step="1" class="admin-input compact-input" />
+          </label>
+          <label class="opacity-row">
+            <span>移动端左右边距 px</span>
+            <input v-model.number="form.themeConfig.layout.pagePadding.mobile" type="range" min="8" max="40" step="1" />
+            <input v-model.number="form.themeConfig.layout.pagePadding.mobile" type="number" min="8" max="40" step="1" class="admin-input compact-input" />
+          </label>
+        </div>
+      </details>
+
+      <details class="settings-details">
+        <summary>昼夜背景壁纸组</summary>
+        <p class="panel-note">每行一个 URL。白天和夜间可以使用不同背景组，切换昼夜模式时前台会同步切换。</p>
+        <div class="settings-grid">
+          <label class="field">白天背景壁纸组<textarea v-model="form.themeConfig.dayBgImagesText" rows="4" class="admin-input" placeholder="每行一个白天背景 URL" /></label>
+          <label class="field">夜间背景壁纸组<textarea v-model="form.themeConfig.nightBgImagesText" rows="4" class="admin-input" placeholder="每行一个夜间背景 URL" /></label>
+        </div>
+      </details>
+
+      <details class="settings-details" open>
         <summary>白天模式 token</summary>
         <div class="token-grid">
-          <label v-for="(_, key) in form.themeConfig.day" :key="String(key)" class="token-row">
+          <label v-for="(_, key) in filteredModeTokens(form.themeConfig.day)" :key="String(key)" class="token-row">
             <span>{{ tokenLabel(String(key)) }}</span>
             <input type="color" class="color-input" :value="colorPickerValue(form.themeConfig.day[key])" @input="form.themeConfig.day[key] = ($event.target as HTMLInputElement).value" />
             <input v-model="form.themeConfig.day[key]" class="admin-input" />
@@ -799,7 +1133,7 @@ onMounted(load)
       <details class="settings-details">
         <summary>夜间模式 token</summary>
         <div class="token-grid">
-          <label v-for="(_, key) in form.themeConfig.night" :key="String(key)" class="token-row">
+          <label v-for="(_, key) in filteredModeTokens(form.themeConfig.night)" :key="String(key)" class="token-row">
             <span>{{ tokenLabel(String(key)) }}</span>
             <input type="color" class="color-input" :value="colorPickerValue(form.themeConfig.night[key])" @input="form.themeConfig.night[key] = ($event.target as HTMLInputElement).value" />
             <input v-model="form.themeConfig.night[key]" class="admin-input" />

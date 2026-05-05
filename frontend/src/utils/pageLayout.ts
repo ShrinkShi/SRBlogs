@@ -133,13 +133,13 @@ export function isVisible(config: PageConfig | null | undefined, page: PageKey, 
 export function layoutStyle(block?: PageLayoutComponent | null) {
   const w = clamp(block?.w, 12, 1, 12)
   const h = clamp(block?.h, 1, 0.5, 4)
-  const rowSpan = Math.max(1, Math.min(4, Math.round(clamp(block?.rowSpan, 1, 1, 4))))
+  const rowSpan = Math.max(1, Math.min(32, Math.round(h * 4)))
   const span = Math.max(1, Math.min(12, Math.round(w)))
   return {
     order: block?.order || 99,
     gridColumn: `span ${span} / span ${span}`,
     gridRow: `span ${rowSpan} / span ${rowSpan}`,
-    minHeight: `${Math.max(2.75, h * 3.25)}rem`
+    minHeight: `${Math.max(2.75, h * 4)}rem`
   }
 }
 

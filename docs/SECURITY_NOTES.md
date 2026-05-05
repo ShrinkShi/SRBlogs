@@ -1,5 +1,14 @@
 # Security Notes
 
+## 2026-05-05 主题包与页面边距安全规则
+
+- 主题包属于公开视觉配置，只能保存颜色、字体、透明度、页面边距、背景壁纸 URL、组件样式和页面布局。
+- 主题导入/导出不得包含 GitHub OAuth Secret、QQ App Secret、AI Key、OSS Secret、JWT、管理员密码、访问 token 或服务端绝对路径。
+- `themeConfig.layout.pagePadding` 是公开布局字段，可以出现在 `/api/settings/public` 中。
+- `modes.day.bgImages` 与 `modes.night.bgImages` 只允许保存公开可访问的壁纸 URL、名称、启用状态和默认索引，不得保存本地磁盘绝对路径或私有凭据。
+- 删除主题只删除主题库中的视觉配置，不得删除文章、照片、音乐、留言、备份或上传文件。
+- 当前启用主题禁止直接删除，需先切换到其他主题，避免前台读取不到 active theme。
+
 ## 2026-05-03 页面配置与首页布局安全规则
 
 - `backend/data/page_config.json` 只保存公开页面文案、首页资料卡公开字段和首页模块布局，不得保存 Secret、管理员 Token、OAuth access token、服务端绝对路径、脚本或任意 HTML。

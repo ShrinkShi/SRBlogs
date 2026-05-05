@@ -203,12 +203,12 @@ function homeComponentStyle(id: HomeComponentId) {
   const item = componentLayout(id)
   const span = Math.max(1, Math.min(12, Math.round(Number(item.w || 12))))
   const h = Math.max(0.5, Math.min(4, Number(item.h || 1)))
-  const rowSpan = Math.max(1, Math.min(4, Math.round(Number(item.rowSpan || defaultHomeLayout[id].rowSpan || 1))))
+  const rowSpan = Math.max(1, Math.min(32, Math.round(h * 4)))
   return {
     order: Number(item.order || defaultHomeLayout[id].order),
     gridColumn: `span ${span} / span ${span}`,
     gridRow: `span ${rowSpan} / span ${rowSpan}`,
-    minHeight: `${Math.max(4.25, h * 4)}rem`
+    minHeight: `${Math.max(3, h * 4)}rem`
   }
 }
 
@@ -250,6 +250,11 @@ function formatTime(seconds: number) {
 
 function setVolumeFromEvent(event: Event) {
   player.setVolume(Number((event.target as HTMLInputElement).value))
+}
+
+function seekFromEvent(event: Event) {
+  const value = Number((event.target as HTMLInputElement).value)
+  player.seek(value)
 }
 
 function showVolumeSlider() {
@@ -348,11 +353,9 @@ onBeforeUnmount(() => {
                 <span>{{ formatTime(player.currentTime) }}</span>
                 <span>{{ formatTime(player.duration) }}</span>
               </div>
-              <div class="h-2 overflow-hidden rounded-full border border-white/10 bg-white/10">
-                <div class="h-full rounded-full transition-all duration-300" :style="{ width: progressPercent, background: 'linear-gradient(90deg, var(--accent), #fca5a5)' }"></div>
-              </div>
+              <input class="progress-slider" type="range" min="0" :max="player.duration || 0" step="0.1" :value="player.currentTime" aria-label="播放进度" :style="{ '--progress': progressPercent }" @input="seekFromEvent" />
             </div>
-          <div class="flex flex-wrap items-center justify-center gap-3">
+          <div class="flex items-center justify-center gap-2 whitespace-nowrap">
             <button type="button" class="icon-button" :aria-label="playModeLabel" :title="playModeLabel" @click="player.cyclePlayMode()">
               <svg v-if="player.playMode === 'sequence'" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h12l-3-3 1.4-1.4L20.8 9l-6.4 6.4L13 14l3-3H4V7zm0 10h16v2H4v-2z" /></svg>
               <svg v-else-if="player.playMode === 'shuffle'" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5h-2V6.4l-4.8 4.8-1.4-1.4L17.6 5H16V3zM4 7h3.5l3.2 3.2-1.4 1.4L6.7 9H4V7zm10.2 5.8 4.8 4.8V16h2v5h-5v-2h1.6l-4.8-4.8 1.4-1.4zM4 17h2.7l10.1-10.1 1.4 1.4L7.5 19H4v-2z" /></svg>
@@ -375,7 +378,7 @@ onBeforeUnmount(() => {
             <button type="button" class="icon-button" aria-label="next track" @click="nextTrack">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6h2v12h-2zM6 6l8.5 6L6 18z" /></svg>
             </button>
-            <button type="button" class="icon-button like-button-inline min-w-[4.5rem] gap-1 text-sm" :aria-label="likedCurrent ? '取消喜欢' : '喜欢当前歌曲'" @click="toggleLike">
+            <button type="button" class="icon-button like-button-inline min-w-[4rem] gap-1 text-sm" :aria-label="likedCurrent ? '取消喜欢' : '喜欢当前歌曲'" @click="toggleLike">
               <svg viewBox="0 0 24 24" aria-hidden="true" :class="likedCurrent ? 'text-rose-300' : ''"><path d="M12 21s-7-4.4-9.4-8.6C.8 9.2 2.7 5.5 6.2 5.1c2-.2 3.6.7 4.7 2.1 1.1-1.4 2.8-2.3 4.7-2.1 3.5.4 5.4 4.1 3.6 7.3C19 16.6 12 21 12 21z" /></svg>
               <span>{{ currentLikes }}</span>
             </button>
@@ -386,8 +389,8 @@ onBeforeUnmount(() => {
       </GlassCard>
 
       <GlassCard v-if="isComponentVisible('lyrics')" hover class="sr-hero-panel lyrics-compact" :style="homeComponentStyle('lyrics')">
-      <div class="flex h-full min-h-[38px] flex-col items-center justify-center text-center">
-        <p class="max-w-full truncate px-2 font-black leading-tight text-white/78" :style="lyricStyle">{{ lyricLine }}</p>
+      <div class="flex h-full min-h-[38px] flex-col items-center justify-center px-4 py-3 text-center">
+        <p class="mx-auto max-w-full truncate text-center font-black leading-tight text-white/78" :style="lyricStyle">{{ lyricLine }}</p>
       </div>
     </GlassCard>
 

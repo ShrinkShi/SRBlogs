@@ -129,7 +129,9 @@ export const usePlayerStore = defineStore('player', {
     },
     seek(value: number) {
       if (!this.audio || !this.duration) return
-      this.audio.currentTime = Math.max(0, Math.min(this.duration, value))
+      const next = Math.max(0, Math.min(this.duration, value))
+      this.audio.currentTime = next
+      this.currentTime = next
     },
     loadVolumePreference() {
       if (this.volumeLoaded || typeof localStorage === 'undefined') return

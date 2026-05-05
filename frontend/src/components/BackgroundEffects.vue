@@ -12,7 +12,17 @@ const modeTokens = computed(() => {
   const packageTokens = ui.colorMode === 'day' ? activePackage?.modes?.day : activePackage?.modes?.night
   return { ...(localTokens || {}), ...(packageTokens || {}) }
 })
-const bgImage = computed(() => modeTokens.value.bgImage || props.settings?.bgImages?.[ui.bgIndex % (props.settings?.bgImages?.length || 1)])
+const bgImage = computed(() => {
+  const modeImages = Array.isArray(modeTokens.value.bgImages) ? modeTokens.value.bgImages : []
+  const enabled = modeImages
+    .map((item: unknown) => typeof item === 'string' ? { url: item } : item as { url?: string; enabled?: boolean })
+    .filter((item) => item?.url && item.enabled !== false)
+  if (enabled.length) {
+    const activeIndex = Number(modeTokens.value.activeBgIndex ?? ui.bgIndex)
+    return enabled[Math.max(0, activeIndex) % enabled.length]?.url
+  }
+  return modeTokens.value.bgImage || props.settings?.bgImages?.[ui.bgIndex % (props.settings?.bgImages?.length || 1)]
+})
 const overlayStyle = computed(() => ({
   backgroundColor: modeTokens.value.overlayColor || (ui.colorMode === 'day' ? '#ffffff' : '#000000'),
   opacity: String(Math.min(1, Math.max(0, Number(modeTokens.value.overlayOpacity ?? (ui.colorMode === 'day' ? 0.66 : 0.68)))))
