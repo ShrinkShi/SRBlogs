@@ -5,6 +5,7 @@ dist/
 __pycache__/
 *.pyc
 .DS_Store
+.codex/
 backend/data/uploads/*
 !backend/data/uploads/.gitkeep
 backend/data/.manual_backups/*

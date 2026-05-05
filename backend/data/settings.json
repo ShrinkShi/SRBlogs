@@ -793,7 +793,7 @@
         "version": 1,
         "author": "Shrink",
         "createdAt": "2026-05-05T04:10:22.039Z",
-        "updatedAt": "2026-05-05T10:12:04.126Z",
+        "updatedAt": "2026-05-05T10:55:58.628Z",
         "modes": {
           "day": {
             "bgImage": "",
@@ -1801,7 +1801,7 @@
         },
         "layout": {
           "pagePadding": {
-            "desktop": 240,
+            "desktop": 213,
             "tablet": 72,
             "mobile": 18
           }
@@ -1810,7 +1810,7 @@
     },
     "layout": {
       "pagePadding": {
-        "desktop": 240,
+        "desktop": 213,
         "tablet": 72,
         "mobile": 18
       }

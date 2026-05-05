@@ -367,7 +367,7 @@ function clampNumber(value: unknown, fallback: number, min: number, max: number)
 function normalizePagePadding(value: unknown) {
   const source = value && typeof value === 'object' ? value as AnyRecord : {}
   return {
-    desktop: Math.round(clampNumber(source.desktop, 180, 24, 240)),
+    desktop: Math.round(clampNumber(source.desktop, 180, 24, 480)),
     tablet: Math.round(clampNumber(source.tablet, 72, 16, 120)),
     mobile: Math.round(clampNumber(source.mobile, 18, 8, 40))
   }
@@ -1094,8 +1094,8 @@ onMounted(load)
         <div class="opacity-grid">
           <label class="opacity-row">
             <span>桌面端左右边距 px</span>
-            <input v-model.number="form.themeConfig.layout.pagePadding.desktop" type="range" min="24" max="240" step="1" />
-            <input v-model.number="form.themeConfig.layout.pagePadding.desktop" type="number" min="24" max="240" step="1" class="admin-input compact-input" />
+            <input v-model.number="form.themeConfig.layout.pagePadding.desktop" type="range" min="24" max="480" step="1" />
+            <input v-model.number="form.themeConfig.layout.pagePadding.desktop" type="number" min="24" max="480" step="1" class="admin-input compact-input" />
           </label>
           <label class="opacity-row">
             <span>平板端左右边距 px</span>

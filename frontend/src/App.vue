@@ -61,7 +61,7 @@ function applyTheme() {
   if (tokens?.fontFamily || config.fontFamily) root.style.setProperty('--app-font-family', tokens?.fontFamily || config.fontFamily || '')
   if (tokens?.fontSizeBase) root.style.setProperty('--theme-font-size-base', `${tokens.fontSizeBase}px`)
   const paddingMap: Record<string, { value: unknown; fallback: number; min: number; max: number }> = {
-    '--page-side-padding-desktop': { value: pagePadding.desktop, fallback: 180, min: 24, max: 240 },
+    '--page-side-padding-desktop': { value: pagePadding.desktop, fallback: 180, min: 24, max: 480 },
     '--page-side-padding-tablet': { value: pagePadding.tablet, fallback: 72, min: 16, max: 120 },
     '--page-side-padding-mobile': { value: pagePadding.mobile, fallback: 18, min: 8, max: 40 }
   }

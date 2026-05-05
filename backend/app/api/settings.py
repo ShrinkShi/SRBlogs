@@ -223,7 +223,7 @@ def _normalize_opacity(value: Any) -> dict[str, float]:
 def _normalize_page_padding(value: Any) -> dict[str, int]:
     source = value if isinstance(value, dict) else {}
     ranges = {
-        "desktop": (24, 240),
+        "desktop": (24, 480),
         "tablet": (16, 120),
         "mobile": (8, 40),
     }

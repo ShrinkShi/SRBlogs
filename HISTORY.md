@@ -1,12 +1,19 @@
 # HISTORY
 
+## 2026-05-05 - UI/UX skill 接入、音量条双轨修复与边距上限调整
+
+- 已按前置要求接入 `ui-ux-pro-max` 本地 skill，并在本轮前端 UI 修复前参考其控件清晰度、hover/focus 和可读性建议；`.codex/` 已加入忽略，避免提交本地 skill 缓存。
+- 修复首页和音乐页音量浮层双滑杆问题：音量控件统一为单一 `input[type=range]` 自定义垂直轨道，不再同时显示原生轨道和叠加轨道。
+- 音量轨道保留上下内边距，高亮段使用当前主题红色 accent，首页和音乐页共用同一视觉规则。
+- 桌面端页面边距最大值从 `240px` 提高到 `480px`，前台读取、后台输入和后端保存 clamp 同步更新。
+
 ## 2026-05-05 - 页面边距作用域与首页裁切修复
 
 - 修复页面边距配置导致首页崩坏的问题：边距不再通过 `width: calc(100% - gutter)` 改写页面和组件宽度，改为只作用于前台主内容容器 `site-page-container` 的左右 padding。
 - 前台顶部导航继续使用独立的 `sr-page-shell`，不受页面主体边距配置影响；左下角工具箱固定位置也不随主体边距移动。
 - 页面内部 `.sr-section` 不再二次套用边距计算，避免 App 主容器和页面 section 双重收窄。
 - 修复首页组件裁切：页面布局样式不再给组件写死 `height`，只保留 `min-height` 和 grid span，让名片、音乐播放器、歌词区可以按内容自然撑开。
-- 同步页面边距安全范围：desktop `24-240px`、tablet `16-120px`、mobile `8-40px`；后端、后台表单和前台 CSS 变量 clamp 保持一致。
+- 同步页面边距安全范围：desktop `24-480px`、tablet `16-120px`、mobile `8-40px`；后端、后台表单和前台 CSS 变量 clamp 保持一致。
 - 验证：`cd frontend && npm run build`、`cd admin && npm run build`、`python -m compileall backend\app` 已通过。
 
 ## 2026-05-05 - 主题管理与播放器交互收口
