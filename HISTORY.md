@@ -1,5 +1,33 @@
 # HISTORY
 
+## 2026-05-05 - 前台红色重点色与首页跨行布局打磨轮
+
+本轮目标：
+- 增大全站前台内容容器左右边距，让桌面端内容整体更收拢。
+- 重做首页/音乐页播放器音量交互，音量按钮移动到播放模式与上一首之间，并改为 hover 显示垂直音量条。
+- 统一首页轮播分页指示器到底部。
+- 扩展首页布局模型，支持 `rowSpan`，让左侧高卡片跨两行、右侧上方横向卡片和右下两个小卡片组合成立。
+- 前台导航品牌改为 `Shrinkの小世界🌍`，其中 `の` 使用红色重点色。
+- 前台主题 token 调整为白天白/灰/红、夜间黑/灰/红，同时保留毛玻璃风格。
+- 后台主题设置增加“全局主题预设应用”，支持一键应用“白昼红白主题”和“夜幕红黑主题”，同时保留组件级单独微调。
+
+主要变更：
+- `frontend/src/styles.css` 统一调整页面容器宽度、红色 accent token、轮播分页点底部定位、音量 hover 浮层和首页 CSS Grid 行布局。
+- `frontend/src/views/Home.vue` 和 `frontend/src/utils/pageLayout.ts` 支持 `rowSpan`，首页默认轮播区域改为 4/8/4/4 的跨行网格组合。
+- `frontend/src/views/Music.vue` 同步播放器音量按钮顺序和红色重点色状态。
+- `frontend/src/components/AppNav.vue` 替换前台品牌文案并调整导航间距。
+- `backend/app/api/pages.py` 与 `frontend/src/types.ts` / `admin/src/views/PageEditor.vue` 同步支持页面布局 `rowSpan` 字段。
+- `admin/src/components/SettingsPanels.vue` 增加全局主题预设按钮，并确保组件主题保存时保留字体字段。
+
+验证结果：
+- 通过：`cd frontend && npm run build`
+- 通过：`cd admin && npm run build`
+- 通过：`python -m compileall backend\app`
+- 已执行构建产物 Secret 静态搜索；命中的仅为配置字段名/占位逻辑，不是实际 Secret 明文。
+
+遗留说明：
+- 未在本轮启动常驻 dev server 做浏览器人工回归；需要用户刷新前后台后确认跨行布局、音量 hover、全局主题预设和红色重点色效果。
+
 ## 2026-05-05 - 页面编辑组件设置弹窗回归修复轮
 
 本轮目标：

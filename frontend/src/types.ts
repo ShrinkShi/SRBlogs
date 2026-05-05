@@ -220,6 +220,7 @@ export interface HomeLayoutComponent {
   order: number
   w: number
   h: number
+  rowSpan?: number
   visible?: boolean
 }
 
@@ -246,6 +247,7 @@ export interface PageLayoutComponent {
   order: number
   w: number
   h: number
+  rowSpan?: number
   visible?: boolean
   label?: string
   type?: string

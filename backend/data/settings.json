@@ -6,9 +6,13 @@
   "defaultPostCover": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop",
   "photoWallImage": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
   "bgImages": [
-    "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1600&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop",
-    "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=1600&auto=format&fit=crop"
+    "http://127.0.0.1:8000/uploads/cab0136528aa481f862c3dcf7072d0e8.png",
+    "http://127.0.0.1:8000/uploads/5adf186ad1c04fc5bb3f4e4482f72d6d.png",
+    "http://127.0.0.1:8000/uploads/7572c5156e9445fdbcbd1d749b129933.png",
+    "http://127.0.0.1:8000/uploads/a588bd7613a74c8f99d6c42b97a5080d.png",
+    "http://127.0.0.1:8000/uploads/d648cf14021346908af53ac7598fd715.png",
+    "http://127.0.0.1:8000/uploads/2fd83a6f5e6b42d6bb170ee6e7edf4bc.png",
+    "http://127.0.0.1:8000/uploads/25d7038a79f24135a9a449e24b9e8173.png"
   ],
   "themeColors": [
     "#a18cd1",
@@ -621,8 +625,8 @@
   },
   "interaction": {
     "clickSoundEnabled": true,
-    "clickSoundVolume": 0.05,
-    "clickSoundUrl": "http://127.0.0.1:8000/uploads/3485bb4789374deea810460f7cb1b191.mp3",
+    "clickSoundVolume": 0.25,
+    "clickSoundUrl": "http://127.0.0.1:8000/uploads/3acf0cd20e0e4694a524cc376b78669b.wav",
     "clickEffectEnabled": true
   },
   "qqOAuth": {

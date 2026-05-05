@@ -14,6 +14,7 @@ interface EditorBlock {
   order: number
   w: number
   h: number
+  rowSpan?: number
   visible: boolean
   locked?: boolean
   props?: Record<string, unknown>
@@ -25,6 +26,7 @@ interface AddableBlock {
   unique?: boolean
   w: number
   h: number
+  rowSpan?: number
   props?: Record<string, unknown>
 }
 
@@ -131,9 +133,21 @@ const addableMap: Record<PageKey, AddableBlock[]> = {
   ]
 }
 
+defaultLayouts.home = [
+  { id: 'profileCard', label: '名片', type: 'profileCard', order: 1, w: 6, h: 2, rowSpan: 1, visible: true, locked: true },
+  { id: 'musicPlayer', label: '音乐播放器', type: 'musicPlayer', order: 2, w: 6, h: 2, rowSpan: 1, visible: true, locked: true },
+  { id: 'lyrics', label: '歌词区', type: 'lyrics', order: 3, w: 12, h: 1, rowSpan: 1, visible: true, locked: true },
+  { id: 'latestPostsCarousel', label: '最新文章轮播', type: 'latestPostsCarousel', order: 4, w: 4, h: 4, rowSpan: 2, visible: true, locked: true },
+  { id: 'photoCarousel', label: '图片轮播', type: 'photoCarousel', order: 5, w: 8, h: 2, rowSpan: 1, visible: true, locked: true },
+  { id: 'updatesCarousel', label: '更新内容轮播', type: 'updatesCarousel', order: 6, w: 4, h: 2, rowSpan: 1, visible: true, locked: true },
+  { id: 'themeToggle', label: '昼夜切换卡片', type: 'themeToggle', order: 7, w: 4, h: 2, rowSpan: 1, visible: true, locked: true },
+  { id: 'statusBar', label: '底部状态区', type: 'statusBar', order: 8, w: 12, h: 1, rowSpan: 1, visible: true, locked: true }
+]
+
 const sizeLimits = {
   w: { min: 1, max: 12, step: 0.1 },
-  h: { min: 0.5, max: 8, step: 0.1 }
+  h: { min: 0.5, max: 8, step: 0.1 },
+  rowSpan: { min: 1, max: 4, step: 1 }
 }
 
 const currentPage = computed(() => pages.find((page) => page.key === pageKey.value) || pages[0])
@@ -223,6 +237,7 @@ function hydrateLayouts(data: Record<string, any>) {
         order: Math.round(clampPrecision(current.order, 1, 999, block.order)),
         w: clampPrecision(current.w, sizeLimits.w.min, sizeLimits.w.max, block.w),
         h: clampPrecision(current.h, sizeLimits.h.min, sizeLimits.h.max, block.h),
+        rowSpan: Math.round(clampPrecision(current.rowSpan, sizeLimits.rowSpan.min, sizeLimits.rowSpan.max, block.rowSpan || 1)),
         visible: current.visible !== false,
         locked: current.locked !== false,
         props: { ...(block.props || {}), ...(current.props || {}) }
@@ -237,6 +252,7 @@ function hydrateLayouts(data: Record<string, any>) {
         order: Math.round(clampPrecision(current.order, 1, 999, list.length + 1)),
         w: clampPrecision(current.w, sizeLimits.w.min, sizeLimits.w.max, 12),
         h: clampPrecision(current.h, sizeLimits.h.min, sizeLimits.h.max, 1),
+        rowSpan: Math.round(clampPrecision(current.rowSpan, sizeLimits.rowSpan.min, sizeLimits.rowSpan.max, 1)),
         visible: current.visible !== false,
         locked: false,
         props: current.props || {}
@@ -328,6 +344,7 @@ function serializeLayouts() {
           order: block.order,
           w: clampPrecision(block.w, sizeLimits.w.min, sizeLimits.w.max, block.w),
           h: clampPrecision(block.h, sizeLimits.h.min, sizeLimits.h.max, block.h),
+          rowSpan: Math.round(clampPrecision(block.rowSpan, sizeLimits.rowSpan.min, sizeLimits.rowSpan.max, block.rowSpan || 1)),
           visible: block.visible !== false,
           locked: block.locked !== false,
           props: { ...(block.props || {}) }
@@ -416,6 +433,11 @@ function setBlockSize(block: EditorBlock, key: 'w' | 'h', value: number) {
   dirty.value = true
 }
 
+function setBlockRowSpan(block: EditorBlock, value: number) {
+  block.rowSpan = Math.round(clampPrecision(value, sizeLimits.rowSpan.min, sizeLimits.rowSpan.max, block.rowSpan || 1))
+  dirty.value = true
+}
+
 const componentThemeKeyMap: Record<string, string> = {
   profileCard: 'homeProfileCard',
   musicPlayer: 'homeMusicPlayer',
@@ -487,9 +509,11 @@ function restoreDefaultLayout() {
 function blockStyle(block: EditorBlock) {
   const span = Math.max(1, Math.min(12, Math.round(clampPrecision(block.w, sizeLimits.w.min, sizeLimits.w.max, 12))))
   const height = clampPrecision(block.h, sizeLimits.h.min, sizeLimits.h.max, 1)
+  const rowSpan = Math.max(1, Math.min(4, Math.round(clampPrecision(block.rowSpan, sizeLimits.rowSpan.min, sizeLimits.rowSpan.max, 1))))
   return {
     order: block.order,
     gridColumn: `span ${span} / span ${span}`,
+    gridRow: `span ${rowSpan} / span ${rowSpan}`,
     minHeight: `${Math.max(4, height * 4.2)}rem`
   }
 }
@@ -517,6 +541,7 @@ function addBlock(option: AddableBlock) {
     order: blocks.value.length + 1,
     w: option.w,
     h: option.h,
+    rowSpan: option.rowSpan || 1,
     visible: true,
     locked: false,
     props: { ...(option.props || {}) }
@@ -687,6 +712,8 @@ load()
 
             <p class="mt-3 text-xs text-slate-500">w {{ formatSize(block.w) }} / h {{ formatSize(block.h) }} / 透明度 {{ themeInfo(block).opacity }} / {{ block.visible ? '显示' : '隐藏' }}</p>
 
+            <p class="mt-1 text-xs text-slate-500">跨行 {{ block.rowSpan || 1 }}</p>
+
             <div class="mt-3 grid gap-2 page-size-controls">
               <div class="page-size-row">
                 <span>宽度</span>
@@ -757,6 +784,13 @@ load()
                 <input type="range" :min="sizeLimits.h.min" :max="sizeLimits.h.max" :step="sizeLimits.h.step" :value="selectedBlock.h" @input="setBlockSize(selectedBlock, 'h', eventNumber($event))" />
                 <input class="admin-input page-number" type="number" :min="sizeLimits.h.min" :max="sizeLimits.h.max" :step="sizeLimits.h.step" :value="selectedBlock.h" @input="setBlockSize(selectedBlock, 'h', eventNumber($event))" />
                 <button v-for="size in [1, 2, 3, 4]" :key="`modal-h-${size}`" type="button" class="admin-btn admin-btn-ghost page-preset" @click="setBlockSize(selectedBlock, 'h', size)">{{ size }}</button>
+              </div>
+
+              <div class="page-size-row-modal">
+                <span>跨行</span>
+                <input type="range" :min="sizeLimits.rowSpan.min" :max="sizeLimits.rowSpan.max" :step="sizeLimits.rowSpan.step" :value="selectedBlock.rowSpan || 1" @input="setBlockRowSpan(selectedBlock, eventNumber($event))" />
+                <input class="admin-input page-number" type="number" :min="sizeLimits.rowSpan.min" :max="sizeLimits.rowSpan.max" :step="sizeLimits.rowSpan.step" :value="selectedBlock.rowSpan || 1" @input="setBlockRowSpan(selectedBlock, eventNumber($event))" />
+                <button v-for="size in [1, 2, 3, 4]" :key="`modal-row-${size}`" type="button" class="admin-btn admin-btn-ghost page-preset" @click="setBlockRowSpan(selectedBlock, size)">{{ size }}</button>
               </div>
 
               <div class="grid gap-3 sm:grid-cols-[auto_auto_6rem_1fr]">
@@ -870,7 +904,7 @@ load()
             <summary>状态摘要</summary>
             <div class="mt-4 grid gap-2 text-sm text-slate-700 sm:grid-cols-2">
               <p>order：{{ selectedBlock.order }}</p>
-              <p>w/h：{{ formatSize(selectedBlock.w) }} / {{ formatSize(selectedBlock.h) }}</p>
+              <p>w/h/跨行：{{ formatSize(selectedBlock.w) }} / {{ formatSize(selectedBlock.h) }} / {{ selectedBlock.rowSpan || 1 }}</p>
               <p>透明度：{{ themeInfo(selectedBlock).opacity }}</p>
               <p>大小档位：{{ themeInfo(selectedBlock).size }}</p>
               <p>日间背景：<span class="inline-block h-3 w-8 rounded border align-middle" :style="{ background: String(themeInfo(selectedBlock).dayBg) }"></span> {{ themeInfo(selectedBlock).dayBg }}</p>

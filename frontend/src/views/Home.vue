@@ -134,13 +134,13 @@ const homeSettings = computed<SiteSettings | null>(() => {
   }
 })
 
-const defaultHomeLayout: Record<HomeComponentId, { order: number; w: number; h: number; visible: boolean }> = {
+const defaultHomeLayout: Record<HomeComponentId, { order: number; w: number; h: number; rowSpan?: number; visible: boolean }> = {
   profileCard: { order: 1, w: 6, h: 2, visible: true },
   musicPlayer: { order: 2, w: 6, h: 2, visible: true },
   lyrics: { order: 3, w: 12, h: 1, visible: true },
-  latestPostsCarousel: { order: 4, w: 4, h: 3, visible: true },
+  latestPostsCarousel: { order: 4, w: 4, h: 4, rowSpan: 2, visible: true },
   photoCarousel: { order: 5, w: 8, h: 2, visible: true },
-  updatesCarousel: { order: 6, w: 8, h: 2, visible: true },
+  updatesCarousel: { order: 6, w: 4, h: 2, visible: true },
   themeToggle: { order: 7, w: 4, h: 2, visible: true },
   statusBar: { order: 8, w: 12, h: 1, visible: true }
 }
@@ -159,9 +159,11 @@ function homeComponentStyle(id: HomeComponentId) {
   const item = componentLayout(id)
   const span = Math.max(1, Math.min(12, Math.round(Number(item.w || 12))))
   const h = Math.max(0.5, Math.min(4, Number(item.h || 1)))
+  const rowSpan = Math.max(1, Math.min(4, Math.round(Number(item.rowSpan || defaultHomeLayout[id].rowSpan || 1))))
   return {
     order: Number(item.order || defaultHomeLayout[id].order),
     gridColumn: `span ${span} / span ${span}`,
+    gridRow: `span ${rowSpan} / span ${rowSpan}`,
     minHeight: `${Math.max(4.25, h * 4)}rem`
   }
 }
@@ -290,7 +292,7 @@ onBeforeUnmount(() => {
                 <span>{{ formatTime(player.duration) }}</span>
               </div>
               <div class="h-2 overflow-hidden rounded-full border border-white/10 bg-white/10">
-                <div class="h-full rounded-full bg-gradient-to-r from-cyan-300 to-fuchsia-300 transition-all duration-300" :style="{ width: progressPercent }"></div>
+                <div class="h-full rounded-full transition-all duration-300" :style="{ width: progressPercent, background: 'linear-gradient(90deg, var(--accent), #fca5a5)' }"></div>
               </div>
             </div>
           <div class="flex flex-wrap items-center justify-center gap-3">
@@ -299,6 +301,13 @@ onBeforeUnmount(() => {
               <svg v-else-if="player.playMode === 'shuffle'" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5h-2V6.4l-4.8 4.8-1.4-1.4L17.6 5H16V3zM4 7h3.5l3.2 3.2-1.4 1.4L6.7 9H4V7zm10.2 5.8 4.8 4.8V16h2v5h-5v-2h1.6l-4.8-4.8 1.4-1.4zM4 17h2.7l10.1-10.1 1.4 1.4L7.5 19H4v-2z" /></svg>
               <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h8.6l-2.3-2.3L14.7 3 20 8.3l-5.3 5.3-1.4-1.7 2.3-2.3H7a3 3 0 0 0 0 6h1v2H7A5 5 0 0 1 7 7zm10 10h-4v-2h4a3 3 0 0 0 0-6h-1V7h1a5 5 0 0 1 0 10z" /></svg>
             </button>
+            <div class="volume-control">
+              <button type="button" class="icon-button h-9 w-9" :aria-label="player.muted ? '取消静音' : '静音'" @click="player.toggleMuted()">
+                <svg v-if="player.muted || player.volume <= 0" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.8 3 2.6-2.6-1.4-1.4-2.6 2.6-2.6-2.6-1.4 1.4L14 12l-2.6 2.6 1.4 1.4 2.6-2.6 2.6 2.6 1.4-1.4L16.8 12z" /></svg>
+                <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-9.2v2.1a7.5 7.5 0 0 1 0 14.2v2.1a9.5 9.5 0 0 0 0-18.4z" /></svg>
+              </button>
+              <input class="volume-slider" type="range" min="0" max="1" step="0.01" :value="player.muted ? 0 : player.volume" aria-label="音量" @input="setVolumeFromEvent" />
+            </div>
             <button type="button" class="icon-button" aria-label="previous track" @click="prevTrack">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h2v12H7zM18 6v12l-8.5-6z" /></svg>
             </button>
@@ -313,13 +322,6 @@ onBeforeUnmount(() => {
               <svg viewBox="0 0 24 24" aria-hidden="true" :class="likedCurrent ? 'text-rose-300' : ''"><path d="M12 21s-7-4.4-9.4-8.6C.8 9.2 2.7 5.5 6.2 5.1c2-.2 3.6.7 4.7 2.1 1.1-1.4 2.8-2.3 4.7-2.1 3.5.4 5.4 4.1 3.6 7.3C19 16.6 12 21 12 21z" /></svg>
               <span>{{ currentLikes }}</span>
             </button>
-          </div>
-          <div class="volume-control">
-            <button type="button" class="icon-button h-9 w-9" :aria-label="player.muted ? 'unmute' : 'mute'" @click="player.toggleMuted()">
-              <svg v-if="player.muted || player.volume <= 0" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.8 3 2.6-2.6-1.4-1.4-2.6 2.6-2.6-2.6-1.4 1.4L14 12l-2.6 2.6 1.4 1.4 2.6-2.6 2.6 2.6 1.4-1.4L16.8 12z" /></svg>
-              <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-9.2v2.1a7.5 7.5 0 0 1 0 14.2v2.1a9.5 9.5 0 0 0 0-18.4z" /></svg>
-            </button>
-            <input class="volume-slider" type="range" min="0" max="1" step="0.01" :value="player.muted ? 0 : player.volume" aria-label="volume" @input="setVolumeFromEvent" />
           </div>
           <p v-if="track && !track.url" class="text-xs text-amber-100/70">当前歌曲没有 URL，仅显示信息。</p>
           </div>
@@ -372,7 +374,7 @@ onBeforeUnmount(() => {
               <h2 class="mt-5 line-clamp-2 text-3xl font-black text-white">{{ currentUpdate.title }}</h2>
               <p class="mt-4 line-clamp-3 text-sm leading-7 text-white/60">{{ currentUpdate.summary }}</p>
             </div>
-            <div v-if="latestUpdates.length > 1" class="mt-5 flex gap-2">
+            <div v-if="latestUpdates.length > 1" class="home-carousel-dots">
               <button v-for="(_, index) in latestUpdates" :key="index" type="button" class="carousel-dot" :class="{ 'carousel-dot-active': index === updateIndex }" :aria-label="`切换到第 ${index + 1} 条更新`" @mouseenter="setUpdate(index)" @click.prevent="setUpdate(index)"></button>
             </div>
           </RouterLink>

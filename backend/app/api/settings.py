@@ -61,19 +61,25 @@ def _default_component_theme() -> dict[str, dict[str, Any]]:
         return {
             "label": label,
             "day": {
-                "bg": "rgba(245,248,255,.9)",
-                "text": "rgba(15,23,42,.94)",
-                "accent": "#0891b2",
-                "border": "rgba(14,116,144,.18)",
+                "bg": "rgba(255,255,255,.9)",
+                "text": "rgba(17,24,39,.94)",
+                "accent": "#dc2626",
+                "border": "rgba(17,24,39,.14)",
             },
             "night": {
-                "bg": "rgba(12,16,32,.9)",
-                "text": "rgba(247,251,255,.94)",
-                "accent": "#67e8f9",
-                "border": "rgba(255,255,255,.18)",
+                "bg": "rgba(18,18,18,.88)",
+                "text": "rgba(249,250,251,.94)",
+                "accent": "#f87171",
+                "border": "rgba(255,255,255,.16)",
             },
             "opacity": opacity,
             "size": "medium",
+            "fontFamily": "",
+            "fontSize": 16,
+            "textColor": "",
+            "textAlign": "left",
+            "fontWeight": "normal",
+            "fontStyle": "normal",
         }
 
     opacity_overrides = {
@@ -151,6 +157,17 @@ def _normalize_component_theme(value: Any) -> dict[str, dict[str, Any]]:
         item["opacity"] = min(1.0, max(0.0, opacity))
         size = str(incoming.get("size") or item["size"])
         item["size"] = size if size in {"small", "medium", "large"} else "medium"
+        item["fontFamily"] = str(incoming.get("fontFamily") or item.get("fontFamily") or "")
+        try:
+            font_size = float(incoming.get("fontSize", item.get("fontSize", 16)))
+        except (TypeError, ValueError):
+            font_size = 16
+        item["fontSize"] = min(64, max(8, font_size))
+        item["textColor"] = str(incoming.get("textColor") or item.get("textColor") or "")
+        text_align = str(incoming.get("textAlign") or item.get("textAlign") or "left")
+        item["textAlign"] = text_align if text_align in {"left", "center", "right"} else "left"
+        item["fontWeight"] = str(incoming.get("fontWeight") or item.get("fontWeight") or "normal")
+        item["fontStyle"] = str(incoming.get("fontStyle") or item.get("fontStyle") or "normal")
     return normalized
 
 

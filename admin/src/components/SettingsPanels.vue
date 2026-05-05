@@ -233,6 +233,12 @@ function mergeComponentTheme(value: unknown) {
     item.night = { ...item.night, ...(incoming.night || {}) }
     item.opacity = normalizeOpacity(incoming.opacity ?? item.opacity)
     item.size = ['small', 'medium', 'large'].includes(String(incoming.size)) ? incoming.size as ComponentThemeItem['size'] : 'medium'
+    item.fontFamily = incoming.fontFamily || item.fontFamily || ''
+    item.fontSize = Number(incoming.fontSize || item.fontSize || 16)
+    item.textColor = incoming.textColor || item.textColor || ''
+    item.textAlign = ['left', 'center', 'right'].includes(String(incoming.textAlign)) ? incoming.textAlign as ComponentThemeItem['textAlign'] : item.textAlign || 'left'
+    item.fontWeight = incoming.fontWeight || item.fontWeight || 'normal'
+    item.fontStyle = incoming.fontStyle || item.fontStyle || 'normal'
   })
   return defaults
 }
@@ -256,6 +262,79 @@ function resetAllComponentTheme() {
   form.themeConfig.componentTheme = cloneComponentTheme()
 }
 
+const redWhiteTheme = {
+  day: {
+    bgPage: '#f6f6f6',
+    bgCard: 'rgba(255,255,255,.78)',
+    bgCardElevated: 'rgba(255,255,255,.9)',
+    borderGlass: 'rgba(17,24,39,.14)',
+    textPrimary: 'rgba(17,24,39,.96)',
+    textSecondary: 'rgba(75,85,99,.76)',
+    accent: '#dc2626',
+    accentSoft: 'rgba(220,38,38,.12)',
+    navBg: 'rgba(255,255,255,.82)',
+    homePanelBg: 'rgba(255,255,255,.82)',
+    shadowGlow: 'rgba(220,38,38,.18)'
+  },
+  night: {
+    bgPage: '#050505',
+    bgCard: 'rgba(18,18,18,.78)',
+    bgCardElevated: 'rgba(31,31,31,.88)',
+    borderGlass: 'rgba(255,255,255,.16)',
+    textPrimary: 'rgba(249,250,251,.96)',
+    textSecondary: 'rgba(209,213,219,.74)',
+    accent: '#f87171',
+    accentSoft: 'rgba(248,113,113,.16)',
+    navBg: 'rgba(10,10,10,.78)',
+    homePanelBg: 'rgba(18,18,18,.78)',
+    shadowGlow: 'rgba(248,113,113,.24)'
+  }
+}
+
+function redComponentTheme(item: ComponentThemeItem, variant: 'day' | 'night'): ComponentThemeItem {
+  const isNight = variant === 'night'
+  return {
+    ...item,
+    day: {
+      ...item.day,
+      bg: isNight ? 'rgba(255,255,255,.86)' : 'rgba(255,255,255,.9)',
+      text: '#111827',
+      accent: '#dc2626',
+      border: 'rgba(17,24,39,.14)'
+    },
+    night: {
+      ...item.night,
+      bg: isNight ? 'rgba(10,10,10,.9)' : 'rgba(18,18,18,.86)',
+      text: '#f9fafb',
+      accent: '#f87171',
+      border: 'rgba(255,255,255,.16)'
+    },
+    opacity: typeof item.opacity === 'number' ? item.opacity : 0.88
+  }
+}
+
+function applyThemePreset(variant: 'day' | 'night') {
+  form.themeConfig.day = { ...form.themeConfig.day, ...redWhiteTheme.day }
+  form.themeConfig.night = { ...form.themeConfig.night, ...redWhiteTheme.night }
+  form.themeConfig.opacity = {
+    ...form.themeConfig.opacity,
+    toolboxSettingsPanel: 0.93,
+    toolboxSearchPanel: 0.93,
+    toolboxCalculatorPanel: 0.9,
+    homeCard: 0.84,
+    homeCarousel: 0.84,
+    contentCard: 0.84,
+    photoCard: 0.84,
+    musicPanel: 0.88,
+    messageBoard: 0.88,
+    navBar: 0.78
+  }
+  form.themeConfig.componentTheme = Object.fromEntries(
+    Object.entries(form.themeConfig.componentTheme).map(([key, item]) => [key, redComponentTheme(item, variant)])
+  ) as Record<string, ComponentThemeItem>
+  success.value = variant === 'day' ? '已应用白昼红白主题，保存后前台刷新生效。' : '已应用夜幕红黑主题，保存后前台刷新生效。'
+}
+
 function normalizeOpacity(value: unknown) {
   const number = Number(value)
   return Math.min(1, Math.max(0, Number.isFinite(number) ? number : 0.9))
@@ -263,7 +342,7 @@ function normalizeOpacity(value: unknown) {
 
 function colorPickerValue(value: unknown) {
   const text = String(value || '').trim()
-  return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#67e8f9'
+  return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#dc2626'
 }
 
 function statusText(value: unknown) {
@@ -378,7 +457,13 @@ function buildPayload() {
           day: { ...item.day },
           night: { ...item.night },
           opacity: normalizeOpacity(item.opacity),
-          size: item.size
+          size: item.size,
+          fontFamily: item.fontFamily || '',
+          fontSize: item.fontSize,
+          textColor: item.textColor || '',
+          textAlign: item.textAlign || 'left',
+          fontWeight: item.fontWeight || 'normal',
+          fontStyle: item.fontStyle || 'normal'
         }
       ]))
     },
@@ -572,6 +657,18 @@ onMounted(load)
               <label class="field">主题<select v-model="form.theme" class="admin-input"><option>nebula</option><option>sakura</option><option>aurora</option><option>cyber</option></select></label>
               <label class="field md:col-span-2">字体族<input v-model="form.themeConfig.fontFamily" class="admin-input" placeholder="留空则使用默认字体" /></label>
               <label class="field">字号档位<select v-model="form.themeConfig.fontScale" class="admin-input"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></label>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="font-black text-slate-950">全局主题预设</h3>
+                <p class="mt-1 text-sm text-slate-500">一键应用红色重点色方案，组件仍可继续单独微调。</p>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" class="admin-btn admin-btn-primary" @click="applyThemePreset('day')">应用白昼红白主题</button>
+                <button type="button" class="admin-btn admin-btn-ghost" @click="applyThemePreset('night')">应用夜幕红黑主题</button>
+              </div>
             </div>
           </section>
           <section class="panel">

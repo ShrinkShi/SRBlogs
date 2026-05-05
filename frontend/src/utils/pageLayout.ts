@@ -16,9 +16,10 @@ function block(
   h: number,
   label: string,
   type = id,
-  visible = true
+  visible = true,
+  rowSpan = 1
 ): LayoutBlock {
-  return { id, order, w, h, label, type, visible, locked: true, props: {} }
+  return { id, order, w, h, rowSpan, label, type, visible, locked: true, props: {} }
 }
 
 export const defaultPageLayouts: Record<PageKey, LayoutBlock[]> = {
@@ -66,6 +67,17 @@ export const defaultPageLayouts: Record<PageKey, LayoutBlock[]> = {
   ]
 }
 
+defaultPageLayouts.home = [
+  block('profileCard', 1, 6, 2, '名片'),
+  block('musicPlayer', 2, 6, 2, '音乐播放器'),
+  block('lyrics', 3, 12, 1, '歌词区'),
+  block('latestPostsCarousel', 4, 4, 4, '最新文章轮播', 'latestPostsCarousel', true, 2),
+  block('photoCarousel', 5, 8, 2, '图片轮播'),
+  block('updatesCarousel', 6, 4, 2, '更新内容轮播'),
+  block('themeToggle', 7, 4, 2, '昼夜切换卡片'),
+  block('statusBar', 8, 12, 1, '底部状态区')
+]
+
 function clamp(value: unknown, fallback: number, min: number, max: number) {
   const next = Number(value)
   if (!Number.isFinite(next)) return fallback
@@ -87,6 +99,7 @@ export function layoutBlocks(config: PageConfig | null | undefined, page: PageKe
       order: clamp(current.order, item.order, 1, 999),
       w: clamp(current.w, item.w, 1, 12),
       h: clamp(current.h, item.h, 0.5, 8),
+      rowSpan: clamp(current.rowSpan, item.rowSpan || 1, 1, 4),
       visible: current.visible !== false,
       props: current.props || item.props || {}
     })
@@ -100,6 +113,7 @@ export function layoutBlocks(config: PageConfig | null | undefined, page: PageKe
       order: clamp(current.order, 99, 1, 999),
       w: clamp(current.w, 12, 1, 12),
       h: clamp(current.h, 1, 0.5, 8),
+      rowSpan: clamp(current.rowSpan, 1, 1, 4),
       visible: current.visible !== false,
       locked: false,
       props: current.props || {}
@@ -119,10 +133,12 @@ export function isVisible(config: PageConfig | null | undefined, page: PageKey, 
 export function layoutStyle(block?: PageLayoutComponent | null) {
   const w = clamp(block?.w, 12, 1, 12)
   const h = clamp(block?.h, 1, 0.5, 4)
+  const rowSpan = Math.max(1, Math.min(4, Math.round(clamp(block?.rowSpan, 1, 1, 4))))
   const span = Math.max(1, Math.min(12, Math.round(w)))
   return {
     order: block?.order || 99,
     gridColumn: `span ${span} / span ${span}`,
+    gridRow: `span ${rowSpan} / span ${rowSpan}`,
     minHeight: `${Math.max(2.75, h * 3.25)}rem`
   }
 }

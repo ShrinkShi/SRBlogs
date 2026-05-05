@@ -21,6 +21,7 @@ def _component(
     label: str,
     component_type: str,
     *,
+    row_span: float = 1,
     visible: bool = True,
     locked: bool = True,
     props: dict[str, Any] | None = None,
@@ -29,6 +30,7 @@ def _component(
         "order": order,
         "w": w,
         "h": h,
+        "rowSpan": row_span,
         "visible": visible,
         "label": label,
         "type": component_type,
@@ -129,6 +131,22 @@ DEFAULT_PAGE_CONFIG: dict[str, Any] = {
     "home": deepcopy(DEFAULT_PAGE_LAYOUTS["home"]),
 }
 
+DEFAULT_PAGE_LAYOUTS["home"]["components"].update(
+    {
+        "profileCard": _component(1, 6, 2, "名片", "profileCard"),
+        "musicPlayer": _component(2, 6, 2, "音乐播放器", "musicPlayer"),
+        "lyrics": _component(3, 12, 1, "歌词区", "lyrics"),
+        "latestPostsCarousel": _component(4, 4, 4, "最新文章轮播", "latestPostsCarousel", row_span=2),
+        "photoCarousel": _component(5, 8, 2, "图片轮播", "photoCarousel"),
+        "updatesCarousel": _component(6, 4, 2, "更新内容轮播", "updatesCarousel"),
+        "themeToggle": _component(7, 4, 2, "昼夜切换卡片", "themeToggle"),
+        "statusBar": _component(8, 12, 1, "底部状态区", "statusBar"),
+    }
+)
+DEFAULT_PAGE_CONFIG["pageLayouts"] = deepcopy(DEFAULT_PAGE_LAYOUTS)
+DEFAULT_PAGE_CONFIG["homeLayout"] = deepcopy(DEFAULT_PAGE_LAYOUTS["home"])
+DEFAULT_PAGE_CONFIG["home"] = deepcopy(DEFAULT_PAGE_LAYOUTS["home"])
+
 
 def _store() -> JsonStore:
     return JsonStore(get_settings().data_path, "page_config.json", DEFAULT_PAGE_CONFIG)
@@ -149,10 +167,11 @@ def _number(value: Any, fallback: float, min_value: float, max_value: float) -> 
 def _normalize_component(component_id: str, saved: dict[str, Any] | None, default: dict[str, Any] | None = None) -> dict[str, Any]:
     base = deepcopy(default or _component(99, 12, 1, component_id, saved.get("type", "customText") if isinstance(saved, dict) else "customText", locked=False))
     saved = saved if isinstance(saved, dict) else {}
-    base.update({k: v for k, v in saved.items() if k not in {"w", "h", "order", "visible", "props"}})
+    base.update({k: v for k, v in saved.items() if k not in {"w", "h", "rowSpan", "order", "visible", "props"}})
     base["order"] = int(_number(saved.get("order"), base.get("order", 99), 1, 999))
     base["w"] = _number(saved.get("w"), base.get("w", 12), 1, 12)
     base["h"] = _number(saved.get("h"), base.get("h", 1), 0.5, 8)
+    base["rowSpan"] = int(_number(saved.get("rowSpan"), base.get("rowSpan", 1), 1, 4))
     base["visible"] = saved.get("visible", base.get("visible", True)) is not False
     base["props"] = saved.get("props") if isinstance(saved.get("props"), dict) else base.get("props", {})
     base["label"] = str(base.get("label") or component_id)
@@ -174,7 +193,16 @@ def _merge_layout(page_key: str, saved_layout: Any) -> dict[str, Any]:
         if component_id not in components:
             components[component_id] = _normalize_component(component_id, saved_component, None)
 
-    default_layout["layoutVersion"] = int(saved_layout.get("layoutVersion") or saved_layout.get("layout_version") or default_layout.get("layoutVersion") or 1)
+    if page_key == "home":
+        for component_id in ("latestPostsCarousel", "photoCarousel", "updatesCarousel", "themeToggle"):
+            saved_component = saved_components.get(component_id)
+            default_component = default_components.get(component_id)
+            if isinstance(saved_component, dict) and default_component and "rowSpan" not in saved_component:
+                components[component_id]["w"] = default_component.get("w", components[component_id].get("w", 12))
+                components[component_id]["h"] = default_component.get("h", components[component_id].get("h", 1))
+                components[component_id]["rowSpan"] = default_component.get("rowSpan", components[component_id].get("rowSpan", 1))
+
+    default_layout["layoutVersion"] = max(2 if page_key == "home" else 1, int(saved_layout.get("layoutVersion") or saved_layout.get("layout_version") or default_layout.get("layoutVersion") or 1))
     default_layout["components"] = components
     return default_layout
 

@@ -372,3 +372,36 @@ P2 视觉增强只有在以下检查通过后才可继续提升状态：
 ## 2026-05-03 Message Board and Search Polish
 
 Message boards use the same glass surface as article comments, music, and photowall album dialogs. Login buttons should be clear platform choices, with disabled states still readable. Search inputs should be compact, more opaque than the surrounding lightweight search area, and keep an icon-only dark search button.
+## 2026-05-05 前台红色重点色与跨行布局规范
+
+### 页面容器
+
+- 前台主内容容器桌面端左右留白扩大到上一轮的约 150%，统一通过页面 shell/section 变量或公共类控制。
+- 移动端不得照搬桌面大留白，窄屏继续使用紧凑安全边距，避免内容过窄。
+- 顶部导航和左下角工具箱固定位置不参与主内容宽度计算。
+
+### 色彩方向
+
+- 白天模式：白色、浅灰、深灰文字为主，红色只作为重点色。
+- 夜间模式：黑色、深灰、浅灰文字为主，红色只作为重点色。
+- 红色重点色用于 active、hover、链接重点态、轮播当前点、导航品牌中的 `の` 等小面积强调。
+- 保持前台毛玻璃质感，不改成后台黑白灰平面风。
+
+### 首页布局
+
+- 首页核心模块使用 12 栅格 CSS Grid。
+- 支持 `rowSpan`，不再强制同一行组件等高。
+- 默认四组件区域建议为：左侧 4/12 宽并跨两行，右上 8/12 宽，右下两个 4/12 小组件并排。
+- 后台页面编辑保存的 `w/h/rowSpan/order/visible` 必须在桌面端前台真实应用；移动端可退化为单列。
+
+### 轮播与播放器
+
+- 轮播分页指示器统一放在卡片底部内侧，当前项使用红色重点色，非当前项半透明。
+- 首页和音乐页播放器控制顺序为：播放模式、音量、上一首、播放/暂停、下一首、喜欢。
+- 音量默认只显示图标，hover/focus 时显示垂直悬浮滑杆，不挤占布局。
+
+### 全局主题预设
+
+- 后台提供“白昼红白主题”和“夜幕红黑主题”一键应用。
+- 预设应更新全局 token 和默认组件主题；组件单独设置继续拥有覆盖能力。
+- 组件级自定义仍通过颜色、透明度、大小和字体字段微调，不得散落硬编码颜色。

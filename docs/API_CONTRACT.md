@@ -1,3 +1,38 @@
+## 2026-05-05 Page Layout Row Span 与主题预设补充
+
+### 页面布局组件字段
+
+`GET /api/pages/config`、`GET /api/admin/pages/config` 和 `PUT /api/admin/pages/config` 的页面布局组件继续使用公开布局配置，并新增 `rowSpan` 字段：
+
+```json
+{
+  "order": 1,
+  "w": 4,
+  "h": 4,
+  "rowSpan": 2,
+  "visible": true
+}
+```
+
+字段说明：
+- `w`：桌面端 12 栅格中的列跨度，支持小数输入，但前台会限制在可用栅格范围内。
+- `h`：组件高度系数，用于计算组件最小高度。
+- `rowSpan`：CSS Grid 行跨度，默认 `1`，首页四组件区域可使用 `2` 实现左侧高卡片跨两行。
+- `visible`：是否在前台显示该组件。
+
+兼容规则：
+- 旧配置缺少 `rowSpan` 时按默认值 `1` 兜底。
+- 首页默认布局升级为 `layoutVersion >= 2`，其中 `latestPostsCarousel` 默认 `w=4`、`h=4`、`rowSpan=2`，用于形成左高右分区的四组件布局。
+- 前台公开接口不得返回 Secret、access token、服务端绝对路径或后台私有配置。
+
+### 主题预设
+
+全局主题预设通过现有后台设置保存流程写入 `themeConfig`，未新增单独业务接口：
+- `白昼红白主题`：白/浅灰基底，红色作为强调色。
+- `夜幕红黑主题`：黑/深灰基底，红色作为强调色。
+
+组件级 `themeConfig.componentTheme` 仍保留独立覆盖能力。应用预设时应更新全局 token 和默认组件主题，但不得回显或覆盖任何 OAuth、AI、OSS 等 Secret 字段。
+
 ## 2026-05-05 Page Component Settings Contract
 
 页面编辑组件设置由两类公开配置共同组成：
