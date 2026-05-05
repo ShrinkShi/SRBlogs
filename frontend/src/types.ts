@@ -44,21 +44,53 @@ export interface MusicItem {
 }
 
 export interface ThemeTokens {
+  bgImage?: string
+  overlayColor?: string
+  overlayOpacity?: number
+  pageBg?: string
+  cardBg?: string
+  cardOpacity?: number
   bgPage?: string
   bgCard?: string
   bgCardElevated?: string
+  border?: string
   borderGlass?: string
   textPrimary?: string
   textSecondary?: string
   accent?: string
+  accentHover?: string
   accentSoft?: string
   navBg?: string
   homePanelBg?: string
+  shadow?: string
   shadowGlow?: string
+  fontFamily?: string
+  fontSizeBase?: number
+  titleScale?: number
+  radius?: number
+  blur?: number
+}
+
+export interface ThemePackage {
+  id: string
+  name: string
+  description?: string
+  version?: number
+  author?: string
+  createdAt?: string
+  updatedAt?: string
+  modes?: {
+    day?: ThemeTokens
+    night?: ThemeTokens
+  }
+  componentTheme?: Record<string, ComponentThemeItem>
+  pageLayouts?: Record<string, unknown>
 }
 
 export interface ThemeConfig {
   mode?: 'day' | 'night'
+  activeTheme?: string
+  themePackages?: Record<string, ThemePackage>
   fontFamily?: string
   fontScale?: 'small' | 'medium' | 'large'
   day?: ThemeTokens

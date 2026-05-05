@@ -103,3 +103,12 @@
 - “页面编辑 > 首页”保存的作者、头像、简介和社交链接属于公开资料卡内容，任何私人联系方式应由站点管理员自行判断是否适合公开展示。
 - 页面布局配置通过后台 settings 写入，仍需管理员 JWT；前台游客只能读取公开效果，不能写入布局配置。
 - 鼠标点击视觉特效只在前端渲染临时节点，不应记录用户点击内容，也不应向后端发送点击轨迹。
+## 2026-05-05 Theme Package Security
+
+- Theme packages are presentation data only. They may include colors, opacity, font names, radius, blur, component style tokens, and optional public page layout data.
+- Theme packages must not include GitHub OAuth Secret, QQ App Secret, AI API Key, OSS AccessKey Secret, admin JWT, password, access token, server absolute path, executable HTML, or JavaScript.
+- `GET /api/settings/public` may expose active theme id, public theme packages, component theme tokens, and opacity values only.
+- Admin theme import must validate that the uploaded JSON has a usable `modes.day` and `modes.night` structure before applying it.
+- Theme import must not overwrite backend secret settings. Empty secret preservation rules remain unchanged.
+- If an imported theme contains `pageLayouts`, the admin UI must give the operator a choice before applying layouts.
+- Component opacity may be `0..1`. Opacity `0` can visually hide a component, but it must not bypass authorization, upload checks, comment login rules, or backend validation.

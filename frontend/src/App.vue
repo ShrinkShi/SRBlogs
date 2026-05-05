@@ -22,28 +22,42 @@ function applyTheme() {
   const root = document.documentElement
   const config = settings.value?.themeConfig || {}
   const mode = ui.colorMode || config.mode || 'night'
-  const tokens = mode === 'day' ? config.day : config.night
+  const activeTheme = config.activeTheme || settings.value?.theme || 'shrink-red-glass'
+  const activePackage = config.themePackages?.[activeTheme]
+  const packageTokens = mode === 'day' ? activePackage?.modes?.day : activePackage?.modes?.night
+  const tokens = { ...(mode === 'day' ? config.day : config.night), ...(packageTokens || {}) }
   root.dataset.colorMode = mode
   const preferredScale = ui.fontScale || config.fontScale
   root.dataset.fontScale = preferredScale || 'medium'
   if (config.fontFamily) root.style.setProperty('--app-font-family', config.fontFamily)
   const map: Record<string, string | undefined> = {
-    '--bg-page': tokens?.bgPage,
-    '--bg-card': tokens?.bgCard,
-    '--bg-card-elevated': tokens?.bgCardElevated,
-    '--border-glass': tokens?.borderGlass,
+    '--bg-page': tokens?.bgPage || tokens?.pageBg,
+    '--bg-card': tokens?.bgCard || tokens?.cardBg,
+    '--bg-card-elevated': tokens?.bgCardElevated || tokens?.cardBg,
+    '--border-glass': tokens?.borderGlass || tokens?.border,
     '--text-primary': tokens?.textPrimary,
     '--text-secondary': tokens?.textSecondary,
     '--accent': tokens?.accent,
+    '--accent-hover': tokens?.accentHover,
     '--accent-soft': tokens?.accentSoft,
     '--nav-bg': tokens?.navBg,
     '--home-panel-bg': tokens?.homePanelBg,
-    '--shadow-glow': tokens?.shadowGlow
+    '--shadow-glow': tokens?.shadowGlow || tokens?.shadow,
+    '--bg-overlay-color': tokens?.overlayColor,
+    '--glass-radius': tokens?.radius ? `${tokens.radius}px` : undefined,
+    '--glass-blur': tokens?.blur ? `${tokens.blur}px` : undefined
   }
   Object.entries(map).forEach(([key, value]) => {
     if (value) root.style.setProperty(key, value)
     else root.style.removeProperty(key)
   })
+  if (tokens?.overlayOpacity !== undefined) {
+    root.style.setProperty('--bg-overlay-opacity', String(Math.min(1, Math.max(0, Number(tokens.overlayOpacity)))))
+  } else {
+    root.style.removeProperty('--bg-overlay-opacity')
+  }
+  if (tokens?.fontFamily || config.fontFamily) root.style.setProperty('--app-font-family', tokens?.fontFamily || config.fontFamily || '')
+  if (tokens?.fontSizeBase) root.style.setProperty('--theme-font-size-base', `${tokens.fontSizeBase}px`)
   const opacityDefaults: Record<string, number> = {
     toolboxSettingsPanel: 0.92,
     toolboxSearchPanel: 0.92,
@@ -63,7 +77,7 @@ function applyTheme() {
     root.style.setProperty(`--opacity-${key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)}`, String(value))
   })
   const sizeScale: Record<string, number> = { small: 0.92, medium: 1, large: 1.08 }
-  const componentTheme = config.componentTheme || {}
+  const componentTheme = { ...(activePackage?.componentTheme || {}), ...(config.componentTheme || {}) }
   Object.entries(componentTheme).forEach(([key, item]) => {
     const cssKey = key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)
     const modeTokens = mode === 'day' ? item.day : item.night

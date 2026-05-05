@@ -41,6 +41,7 @@ const typeOptions: { label: string; value: DiscoveryType }[] = [
 ]
 
 const bgCount = computed(() => Math.max(props.settings?.bgImages?.length || 0, themes.length))
+const themeLabel = (theme: string) => theme === 'shrink-red-glass' ? 'Shrink 红白黑玻璃主题' : theme
 const modalTitle = computed(() => activePanel.value === 'search' ? '全局搜索' : activePanel.value === 'settings' ? '游客设置' : '')
 
 function closeAll() {
@@ -309,7 +310,7 @@ onBeforeUnmount(() => {
             <label class="toolbox-setting">
               <span>主题</span>
               <select :value="ui.theme" @change="ui.setTheme(($event.target as HTMLSelectElement).value)">
-                <option v-for="theme in themes" :key="theme" :value="theme">{{ theme }}</option>
+                <option v-for="theme in themes" :key="theme" :value="theme">{{ themeLabel(theme) }}</option>
               </select>
             </label>
             <label class="toolbox-setting">

@@ -2666,3 +2666,30 @@ Validation:
 Notes:
 - Admin settings write-back for component theme was not re-tested through login because the current local admin password is no longer the documented default `change-me`; the existing browser-admin flow should be used for final manual verification.
 - Browser manual checks still needed for component color/opacity/size visual results, playback mode icons, liked state synchronization, and 390px mobile layout.
+## 2026-05-05 - 红白黑玻璃主题与主题包管理收口
+
+Scope:
+- 修复前台红色重点色主题未真正落地的问题。
+- 不改后台黑白灰平面风格，不改现有页面编辑器、留言板、音乐、照片墙和内容管理主流程。
+
+Changes:
+- 前台主题默认迁移为 `shrink-red-glass`，旧 `nebula`、`sakura`、`aurora`、`cyber` 主题 ID 会自动归一到新主题。
+- 新增完整主题包结构，覆盖 day/night 模式 token、背景蒙层、组件主题、透明度、字体和页面布局包字段。
+- 后台“主题与背景”重建为中文表单，支持主题导入、导出、一键应用颜色/字体，以及一键应用颜色/字体/布局。
+- `/api/settings/public` 返回公开主题包和组件主题配置，但不返回 OAuth Secret、AI Key、OSS Secret、JWT 或管理员密码。
+- 前台主题应用统一走 CSS token：背景蒙层、卡片、文字、边框、强调色、导航品牌、轮播分页器、播放进度条等均使用主题变量。
+- 页面主容器左右边距统一放大，桌面端内容更收拢，移动端保留安全窄边距。
+- 首页和音乐页音量滑杆改为 hover/focus 后延迟隐藏；鼠标进入滑杆或拖动时保持显示。
+- 前台导航品牌改为 `Shrinkの小世界🌍`，其中 `の` 使用主题红色重点色。
+
+Validation:
+- Passed: `cd frontend && npm run build`.
+- Passed: `cd admin && npm run build`.
+- Passed: `python -m compileall backend\app`.
+- Passed: `/api/settings/public` 旧主题 ID 会归一为 `shrink-red-glass`.
+- Passed: frontend/admin dist narrow Secret scan.
+
+Manual QA still recommended:
+- 浏览器检查白天模式是否为白/灰/红，夜间模式是否为黑/灰/红。
+- 浏览器检查主题导入/导出 JSON 是否不包含 Secret。
+- 浏览器检查一键应用“颜色和字体”和“一键应用颜色、字体和布局”后前台刷新是否真实生效。

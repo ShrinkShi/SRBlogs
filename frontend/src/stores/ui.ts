@@ -1,11 +1,15 @@
 import { defineStore } from 'pinia'
 
-export const themes = ['nebula', 'sakura', 'aurora', 'cyber'] as const
+export const themes = ['shrink-red-glass'] as const
 export type ThemeName = (typeof themes)[number]
+
+function normalizeTheme(value: string | null): ThemeName {
+  return themes.includes(value as ThemeName) ? value as ThemeName : 'shrink-red-glass'
+}
 
 export const useUiStore = defineStore('ui', {
   state: () => ({
-    theme: (localStorage.getItem('sr-theme') || 'nebula') as ThemeName,
+    theme: normalizeTheme(localStorage.getItem('sr-theme')),
     colorMode: (localStorage.getItem('sr-color-mode') || 'night') as 'day' | 'night',
     bgIndex: Number(localStorage.getItem('sr-bg-index') || '0'),
     danmaku: localStorage.getItem('sr-danmaku') !== 'off',
@@ -22,8 +26,9 @@ export const useUiStore = defineStore('ui', {
   }),
   actions: {
     setTheme(theme: ThemeName | string) {
-      this.theme = theme as ThemeName
-      localStorage.setItem('sr-theme', theme)
+      const normalized = normalizeTheme(theme)
+      this.theme = normalized
+      localStorage.setItem('sr-theme', normalized)
     },
     nextTheme() {
       const i = themes.indexOf(this.theme as ThemeName)

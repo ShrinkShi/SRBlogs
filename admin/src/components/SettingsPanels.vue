@@ -6,12 +6,30 @@ import { useUiStore } from '@/stores/ui'
 import { usePendingStore } from '@/stores/pending'
 
 type SettingsTab = 'site' | 'theme' | 'comments' | 'image' | 'ai' | 'deploy'
-type AnySettings = Record<string, any>
+type SizeValue = 'small' | 'medium' | 'large'
+type AlignValue = 'left' | 'center' | 'right'
+type AnyRecord = Record<string, any>
 
-const ui = useUiStore()
-const pendingStore = usePendingStore()
+interface ComponentThemeItem {
+  label: string
+  group: string
+  day: Record<string, string>
+  night: Record<string, string>
+  opacity: number
+  size: SizeValue
+  fontFamily: string
+  fontSize: number
+  textColor: string
+  textAlign: AlignValue
+  fontWeight: string
+  fontStyle: string
+}
+
 const route = useRoute()
 const router = useRouter()
+const ui = useUiStore()
+const pendingStore = usePendingStore()
+
 const active = ref<SettingsTab>('site')
 const loading = ref(false)
 const saving = ref(false)
@@ -20,8 +38,9 @@ const success = ref('')
 const advancedOpen = ref(false)
 const jsonText = ref('{}')
 const jsonError = ref('')
-const raw = ref<AnySettings>({})
-const uploadProgress = ref<Record<string, number>>({})
+const raw = ref<AnyRecord>({})
+const pageConfig = ref<AnyRecord>({})
+const themeImportInput = ref<HTMLInputElement | null>(null)
 
 const secretInputs = reactive({
   githubOAuthSecret: '',
@@ -31,28 +50,42 @@ const secretInputs = reactive({
   aiKeyInput: ''
 })
 
-const tabs: { key: SettingsTab; label: string }[] = [
-  { key: 'site', label: '站点公开信息' },
-  { key: 'theme', label: '主题与背景' },
-  { key: 'comments', label: '留言设置' },
-  { key: 'image', label: '图床设置' },
-  { key: 'ai', label: 'AI 设置' },
-  { key: 'deploy', label: '部署与安全提示' }
+const tabs: { key: SettingsTab; label: string; hint: string }[] = [
+  { key: 'site', label: '站点公开信息', hint: '全站标题、背景与公开音乐配置' },
+  { key: 'theme', label: '主题与背景', hint: '红白黑主题包、组件样式与交互配置' },
+  { key: 'comments', label: '留言设置', hint: 'GitHub / QQ 访客留言登录配置' },
+  { key: 'image', label: '图床设置', hint: '本地、OSS 或自定义资源配置' },
+  { key: 'ai', label: 'AI 设置', hint: '服务端 AI 配置边界' },
+  { key: 'deploy', label: '部署与安全提示', hint: '上线前检查项' }
 ]
-
 const tabKeys = tabs.map((item) => item.key)
+
 const tokenLabels: Record<string, string> = {
-  bgPage: '页面背景',
-  bgCard: '卡片背景',
+  bgImage: '背景壁纸',
+  overlayColor: '背景蒙层颜色',
+  overlayOpacity: '背景蒙层透明度',
+  pageBg: '页面背景',
+  bgPage: '页面背景兼容字段',
+  cardBg: '卡片背景',
+  bgCard: '卡片背景兼容字段',
   bgCardElevated: '高层卡片背景',
-  borderGlass: '玻璃边框',
+  cardOpacity: '卡片透明度',
   textPrimary: '主文字',
   textSecondary: '次文字',
-  accent: '强调色',
-  accentSoft: '柔和强调色',
+  accent: '重点红色',
+  accentHover: '重点红色悬停',
+  accentSoft: '柔和重点色',
+  border: '边框',
+  borderGlass: '玻璃边框兼容字段',
+  shadow: '阴影',
+  shadowGlow: '发光阴影',
   navBg: '导航背景',
   homePanelBg: '首页面板背景',
-  shadowGlow: '发光阴影'
+  fontFamily: '字体族',
+  fontSizeBase: '基础字号',
+  titleScale: '标题倍率',
+  radius: '圆角',
+  blur: '模糊强度'
 }
 
 const opacityLabels: Record<string, string> = {
@@ -68,10 +101,39 @@ const opacityLabels: Record<string, string> = {
   navBar: '顶部导航栏'
 }
 
+const componentCatalog: { key: string; label: string; group: string }[] = [
+  { key: 'topNav', label: '顶部导航栏', group: '全局组件' },
+  { key: 'toolboxFab', label: '左下角工具箱悬浮球', group: '工具箱' },
+  { key: 'toolboxMenu', label: '工具箱菜单', group: '工具箱' },
+  { key: 'toolboxSettingsPanel', label: '工具箱设置弹窗', group: '工具箱' },
+  { key: 'toolboxSearchPanel', label: '工具箱全局搜索弹窗', group: '工具箱' },
+  { key: 'toolboxCalculatorPanel', label: '工具箱计算器弹窗', group: '工具箱' },
+  { key: 'toast', label: 'Toast 提示', group: '全局组件' },
+  { key: 'homeProfileCard', label: '首页名片', group: '首页组件' },
+  { key: 'homeMusicPlayer', label: '首页音乐播放器', group: '首页组件' },
+  { key: 'homeLyrics', label: '首页歌词区', group: '首页组件' },
+  { key: 'homeLatestPostsCarousel', label: '首页最新文章轮播', group: '首页组件' },
+  { key: 'homePhotoCarousel', label: '首页图片轮播', group: '首页组件' },
+  { key: 'homeUpdatesCarousel', label: '首页更新内容轮播', group: '首页组件' },
+  { key: 'homeThemeToggle', label: '首页昼夜切换卡片', group: '首页组件' },
+  { key: 'homeStatusBar', label: '首页底部状态区', group: '首页组件' },
+  { key: 'sectionSwitch', label: '正经 / 杂谈切换按钮', group: '搜索与切换组件' },
+  { key: 'viewModeSwitch', label: '矩阵网格 / 中枢链路切换按钮', group: '搜索与切换组件' },
+  { key: 'postCard', label: '文章卡片', group: '内容列表组件' },
+  { key: 'chatterCard', label: '杂谈卡片', group: '内容列表组件' },
+  { key: 'photoAlbumCard', label: '图片相册卡片', group: '内容列表组件' },
+  { key: 'musicPlayerPanel', label: '音乐页播放器面板', group: '音乐组件' },
+  { key: 'musicLyricsPanel', label: '音乐页歌词 / 歌单面板', group: '音乐组件' },
+  { key: 'messageBoard', label: '留言板', group: '留言组件' },
+  { key: 'searchInput', label: '搜索框', group: '搜索与切换组件' },
+  { key: 'searchButton', label: '搜索按钮', group: '搜索与切换组件' },
+  { key: 'tagButton', label: '标签按钮', group: '搜索与切换组件' }
+]
+
 const defaultOpacity: Record<string, number> = {
   toolboxSettingsPanel: 0.92,
   toolboxSearchPanel: 0.92,
-  toolboxCalculatorPanel: 0.90,
+  toolboxCalculatorPanel: 0.9,
   homeCard: 0.82,
   homeCarousel: 0.82,
   contentCard: 0.82,
@@ -81,89 +143,119 @@ const defaultOpacity: Record<string, number> = {
   navBar: 0.72
 }
 
-type ComponentThemeItem = {
-  label: string
-  group: string
-  day: Record<string, string>
-  night: Record<string, string>
-  opacity: number
-  size: 'small' | 'medium' | 'large'
-  fontFamily?: string
-  fontSize?: number
-  textColor?: string
-  textAlign?: 'left' | 'center' | 'right'
-  fontWeight?: string
-  fontStyle?: string
+const defaultDay = {
+  bgImage: '',
+  overlayColor: '#ffffff',
+  overlayOpacity: '0.66',
+  pageBg: '#f7f7f7',
+  bgPage: '#f7f7f7',
+  cardBg: 'rgba(255,255,255,.82)',
+  bgCard: 'rgba(255,255,255,.82)',
+  bgCardElevated: 'rgba(255,255,255,.92)',
+  cardOpacity: '0.82',
+  textPrimary: '#111111',
+  textSecondary: '#565656',
+  accent: '#e11d48',
+  accentHover: '#be123c',
+  accentSoft: 'rgba(225,29,72,.14)',
+  border: 'rgba(17,17,17,.14)',
+  borderGlass: 'rgba(17,17,17,.14)',
+  shadow: 'rgba(17,17,17,.16)',
+  shadowGlow: 'rgba(225,29,72,.2)',
+  navBg: 'rgba(255,255,255,.84)',
+  homePanelBg: 'rgba(255,255,255,.82)',
+  fontFamily: '',
+  fontSizeBase: '16',
+  titleScale: '1.2',
+  radius: '24',
+  blur: '18'
 }
 
-const componentThemeDefaults: Record<string, ComponentThemeItem> = {
-  topNav: { label: '顶部导航栏', group: '全局组件', opacity: 0.72, size: 'medium', day: { bg: 'rgba(245,248,255,.9)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.9)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  toolboxFab: { label: '左下角工具箱悬浮球', group: '工具箱', opacity: 0.86, size: 'medium', day: { bg: '#e0f2fe', text: '#0e7490', accent: '#0891b2', border: 'rgba(14,116,144,.22)' }, night: { bg: '#0f172a', text: '#cffafe', accent: '#67e8f9', border: 'rgba(103,232,249,.25)' } },
-  toolboxMenu: { label: '工具箱菜单', group: '工具箱', opacity: 0.9, size: 'medium', day: { bg: 'rgba(245,248,255,.92)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.9)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  toolboxSettingsPanel: { label: '工具箱设置弹窗', group: '工具箱', opacity: 0.92, size: 'medium', day: { bg: 'rgba(245,248,255,.94)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.94)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  toolboxSearchPanel: { label: '工具箱全局搜索弹窗', group: '工具箱', opacity: 0.92, size: 'medium', day: { bg: 'rgba(245,248,255,.94)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.94)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  toolboxCalculatorPanel: { label: '工具箱计算器弹窗', group: '工具箱', opacity: 0.9, size: 'medium', day: { bg: 'rgba(245,248,255,.92)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.9)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  toast: { label: 'Toast 提示', group: '全局组件', opacity: 0.9, size: 'medium', day: { bg: 'rgba(14,165,233,.92)', text: '#ffffff', accent: '#22c55e', border: 'rgba(255,255,255,.22)' }, night: { bg: 'rgba(12,16,32,.92)', text: '#ffffff', accent: '#22c55e', border: 'rgba(255,255,255,.2)' } },
-  homeProfileCard: { label: '首页名片', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  homeMusicPlayer: { label: '首页音乐播放器', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  homeLyrics: { label: '首页歌词区', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  homeLatestPostsCarousel: { label: '首页最新文章轮播', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  homePhotoCarousel: { label: '首页图片轮播', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  homeUpdatesCarousel: { label: '首页更新内容轮播', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  homeThemeToggle: { label: '首页昼夜切换卡片', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  homeStatusBar: { label: '首页底部状态区', group: '首页组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  sectionSwitch: { label: '正经 / 杂谈切换按钮', group: '搜索与切换组件', opacity: 0.86, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  viewModeSwitch: { label: '矩阵网格 / 中枢链路切换按钮', group: '搜索与切换组件', opacity: 0.86, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  postCard: { label: '文章卡片', group: '内容列表组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  chatterCard: { label: '杂谈卡片', group: '内容列表组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  photoAlbumCard: { label: '图片相册卡片', group: '内容列表组件', opacity: 0.82, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  musicPlayerPanel: { label: '音乐页播放器面板', group: '音乐组件', opacity: 0.88, size: 'medium', day: { bg: 'rgba(245,248,255,.9)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.88)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  musicLyricsPanel: { label: '音乐页歌词/歌单面板', group: '音乐组件', opacity: 0.88, size: 'medium', day: { bg: 'rgba(245,248,255,.9)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.88)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  messageBoard: { label: '留言板', group: '留言组件', opacity: 0.86, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  searchInput: { label: '搜索框', group: '搜索与切换组件', opacity: 0.9, size: 'medium', day: { bg: 'rgba(255,255,255,.92)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.9)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  searchButton: { label: '搜索按钮', group: '搜索与切换组件', opacity: 0.95, size: 'medium', day: { bg: '#0f172a', text: '#ffffff', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: '#020617', text: '#cffafe', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } },
-  tagButton: { label: '标签按钮', group: '搜索与切换组件', opacity: 0.86, size: 'medium', day: { bg: 'rgba(245,248,255,.88)', text: '#0f172a', accent: '#0891b2', border: 'rgba(14,116,144,.18)' }, night: { bg: 'rgba(12,16,32,.86)', text: '#f7fbff', accent: '#67e8f9', border: 'rgba(255,255,255,.18)' } }
+const defaultNight = {
+  bgImage: '',
+  overlayColor: '#000000',
+  overlayOpacity: '0.68',
+  pageBg: '#050505',
+  bgPage: '#050505',
+  cardBg: 'rgba(16,16,18,.78)',
+  bgCard: 'rgba(16,16,18,.78)',
+  bgCardElevated: 'rgba(26,26,28,.86)',
+  cardOpacity: '0.78',
+  textPrimary: '#f5f5f5',
+  textSecondary: '#b8b8b8',
+  accent: '#e11d48',
+  accentHover: '#fb7185',
+  accentSoft: 'rgba(225,29,72,.18)',
+  border: 'rgba(255,255,255,.16)',
+  borderGlass: 'rgba(255,255,255,.16)',
+  shadow: 'rgba(0,0,0,.45)',
+  shadowGlow: 'rgba(225,29,72,.28)',
+  navBg: 'rgba(8,8,10,.78)',
+  homePanelBg: 'rgba(16,16,18,.78)',
+  fontFamily: '',
+  fontSizeBase: '16',
+  titleScale: '1.2',
+  radius: '24',
+  blur: '18'
+}
+
+function makeComponentTheme(): Record<string, ComponentThemeItem> {
+  return Object.fromEntries(componentCatalog.map((item) => [
+    item.key,
+    {
+      label: item.label,
+      group: item.group,
+      day: {
+        bg: item.key === 'searchButton' ? '#111827' : 'rgba(255,255,255,.86)',
+        text: item.key === 'searchButton' ? '#ffffff' : '#111111',
+        accent: '#e11d48',
+        border: 'rgba(17,17,17,.14)'
+      },
+      night: {
+        bg: item.key === 'searchButton' ? '#050505' : 'rgba(16,16,18,.82)',
+        text: '#f5f5f5',
+        accent: '#e11d48',
+        border: 'rgba(255,255,255,.16)'
+      },
+      opacity: opacityDefaultFor(item.key),
+      size: 'medium',
+      fontFamily: '',
+      fontSize: 16,
+      textColor: '',
+      textAlign: 'left',
+      fontWeight: 'normal',
+      fontStyle: 'normal'
+    } as ComponentThemeItem
+  ]))
+}
+
+function opacityDefaultFor(key: string) {
+  if (key === 'topNav') return defaultOpacity.navBar
+  if (key.includes('toolboxSettings')) return defaultOpacity.toolboxSettingsPanel
+  if (key.includes('toolboxSearch')) return defaultOpacity.toolboxSearchPanel
+  if (key.includes('toolboxCalculator')) return defaultOpacity.toolboxCalculatorPanel
+  if (key.startsWith('home') && key.includes('Carousel')) return defaultOpacity.homeCarousel
+  if (key.startsWith('home')) return defaultOpacity.homeCard
+  if (key.includes('photo')) return defaultOpacity.photoCard
+  if (key.includes('music')) return defaultOpacity.musicPanel
+  if (key === 'messageBoard') return defaultOpacity.messageBoard
+  if (key.includes('Card')) return defaultOpacity.contentCard
+  return 0.86
 }
 
 const form = reactive({
   siteTitle: '',
   subtitle: '',
-  author: '',
-  avatar: '',
-  description: '',
-  socialLinks: { github: '', gitee: '', email: '', qq: '', wechat: '' } as Record<string, string>,
-  theme: 'nebula',
+  theme: 'shrink-red-glass',
   themeConfig: {
+    activeTheme: 'shrink-red-glass',
+    themePackages: {} as Record<string, unknown>,
     fontFamily: '',
     fontScale: 'medium',
-    day: {
-      bgPage: '#eaf3f8',
-      bgCard: 'rgba(255,255,255,.68)',
-      bgCardElevated: 'rgba(255,255,255,.82)',
-      borderGlass: 'rgba(14,116,144,.16)',
-      textPrimary: 'rgba(15,23,42,.94)',
-      textSecondary: 'rgba(30,41,59,.72)',
-      accent: '#0891b2',
-      accentSoft: 'rgba(8,145,178,.12)',
-      navBg: 'rgba(255,255,255,.72)',
-      homePanelBg: 'rgba(255,255,255,.72)',
-      shadowGlow: 'rgba(8,145,178,.2)'
-    } as Record<string, string>,
-    night: {
-      bgPage: '#050713',
-      bgCard: 'rgba(255,255,255,.105)',
-      bgCardElevated: 'rgba(255,255,255,.16)',
-      borderGlass: 'rgba(255,255,255,.2)',
-      textPrimary: 'rgba(247,251,255,.96)',
-      textSecondary: 'rgba(247,251,255,.74)',
-      accent: '#67e8f9',
-      accentSoft: 'rgba(103,232,249,.16)',
-      navBg: 'rgba(7,12,28,.64)',
-      homePanelBg: 'rgba(255,255,255,.105)',
-      shadowGlow: 'rgba(34,211,238,.42)'
-    } as Record<string, string>,
+    day: { ...defaultDay } as Record<string, string>,
+    night: { ...defaultNight } as Record<string, string>,
     opacity: { ...defaultOpacity } as Record<string, number>,
-    componentTheme: JSON.parse(JSON.stringify(componentThemeDefaults)) as Record<string, ComponentThemeItem>
+    componentTheme: makeComponentTheme()
   },
   bgImagesText: '',
   cloudMusicIdsText: '',
@@ -202,13 +294,65 @@ const form = reactive({
   }
 })
 
+const groupedComponents = computed(() => {
+  const groups: Record<string, [string, ComponentThemeItem][]> = {}
+  Object.entries(form.themeConfig.componentTheme).forEach(([key, item]) => {
+    const group = item.group || '其他组件'
+    if (!groups[group]) groups[group] = []
+    groups[group].push([key, item])
+  })
+  return groups
+})
+
 const productionChecks = computed(() => [
   { label: '管理员密码已配置', ok: raw.value.serverSecrets?.adminPasswordConfigured === true },
   { label: 'JWT 密钥已配置', ok: raw.value.serverSecrets?.jwtSecretConfigured === true },
-  { label: '设置接口不回显私密配置', ok: true },
+  { label: '公开设置不回显 Secret', ok: true },
   { label: '生产环境需要收紧 CORS 白名单', ok: false },
-  { label: '需要确认 backend/data 备份策略', ok: false }
+  { label: '部署前需要确认 backend/data 备份策略', ok: false }
 ])
+
+watch(
+  () => route.query.tab,
+  (tab) => {
+    if (typeof tab === 'string' && tabKeys.includes(tab as SettingsTab)) active.value = tab as SettingsTab
+  },
+  { immediate: true }
+)
+
+function changeTab(tab: SettingsTab) {
+  active.value = tab
+  router.replace({ query: { ...route.query, tab } })
+}
+
+function statusText(value: unknown) {
+  return value ? '已配置' : '未配置'
+}
+
+function parseLines(value: string) {
+  return value
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function commaToArray(value: string) {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function normalizeOpacity(value: unknown) {
+  const number = Number(value)
+  if (!Number.isFinite(number)) return 0.9
+  return Math.min(1, Math.max(0, number))
+}
+
+function colorPickerValue(value: unknown) {
+  const text = String(value || '').trim()
+  return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#e11d48'
+}
 
 function tokenLabel(key: string) {
   return tokenLabels[key] || key
@@ -218,163 +362,156 @@ function opacityLabel(key: string) {
   return opacityLabels[key] || key
 }
 
-function cloneComponentTheme() {
-  return JSON.parse(JSON.stringify(componentThemeDefaults)) as Record<string, ComponentThemeItem>
-}
-
 function mergeComponentTheme(value: unknown) {
-  const defaults = cloneComponentTheme()
-  const source = value && typeof value === 'object' ? value as Record<string, Partial<ComponentThemeItem>> : {}
-  Object.entries(defaults).forEach(([key, item]) => {
-    const incoming = source[key]
-    if (!incoming) return
-    item.label = String(incoming.label || item.label)
-    item.day = { ...item.day, ...(incoming.day || {}) }
-    item.night = { ...item.night, ...(incoming.night || {}) }
-    item.opacity = normalizeOpacity(incoming.opacity ?? item.opacity)
-    item.size = ['small', 'medium', 'large'].includes(String(incoming.size)) ? incoming.size as ComponentThemeItem['size'] : 'medium'
-    item.fontFamily = incoming.fontFamily || item.fontFamily || ''
-    item.fontSize = Number(incoming.fontSize || item.fontSize || 16)
-    item.textColor = incoming.textColor || item.textColor || ''
-    item.textAlign = ['left', 'center', 'right'].includes(String(incoming.textAlign)) ? incoming.textAlign as ComponentThemeItem['textAlign'] : item.textAlign || 'left'
-    item.fontWeight = incoming.fontWeight || item.fontWeight || 'normal'
-    item.fontStyle = incoming.fontStyle || item.fontStyle || 'normal'
+  const defaults = makeComponentTheme()
+  const source = value && typeof value === 'object' ? (value as Record<string, Partial<ComponentThemeItem>>) : {}
+  Object.entries(source).forEach(([key, incoming]) => {
+    if (!defaults[key] || !incoming) return
+    defaults[key] = {
+      ...defaults[key],
+      ...incoming,
+      day: { ...defaults[key].day, ...(incoming.day || {}) },
+      night: { ...defaults[key].night, ...(incoming.night || {}) },
+      opacity: normalizeOpacity(incoming.opacity ?? defaults[key].opacity),
+      size: ['small', 'medium', 'large'].includes(String(incoming.size)) ? (incoming.size as SizeValue) : defaults[key].size,
+      textAlign: ['left', 'center', 'right'].includes(String(incoming.textAlign)) ? (incoming.textAlign as AlignValue) : defaults[key].textAlign
+    }
   })
   return defaults
 }
 
-const componentThemeGroups = computed(() => {
-  const grouped: Record<string, Array<[string, ComponentThemeItem]>> = {}
-  Object.entries(form.themeConfig.componentTheme).forEach(([key, item]) => {
-    const group = item.group || '其他组件'
-    if (!grouped[group]) grouped[group] = []
-    grouped[group].push([key, item])
-  })
-  return grouped
-})
-
-function resetComponentTheme(key: string) {
-  const defaults = cloneComponentTheme()
-  if (defaults[key]) form.themeConfig.componentTheme[key] = defaults[key]
-}
-
-function resetAllComponentTheme() {
-  form.themeConfig.componentTheme = cloneComponentTheme()
-}
-
-const redWhiteTheme = {
-  day: {
-    bgPage: '#f6f6f6',
-    bgCard: 'rgba(255,255,255,.78)',
-    bgCardElevated: 'rgba(255,255,255,.9)',
-    borderGlass: 'rgba(17,24,39,.14)',
-    textPrimary: 'rgba(17,24,39,.96)',
-    textSecondary: 'rgba(75,85,99,.76)',
-    accent: '#dc2626',
-    accentSoft: 'rgba(220,38,38,.12)',
-    navBg: 'rgba(255,255,255,.82)',
-    homePanelBg: 'rgba(255,255,255,.82)',
-    shadowGlow: 'rgba(220,38,38,.18)'
-  },
-  night: {
-    bgPage: '#050505',
-    bgCard: 'rgba(18,18,18,.78)',
-    bgCardElevated: 'rgba(31,31,31,.88)',
-    borderGlass: 'rgba(255,255,255,.16)',
-    textPrimary: 'rgba(249,250,251,.96)',
-    textSecondary: 'rgba(209,213,219,.74)',
-    accent: '#f87171',
-    accentSoft: 'rgba(248,113,113,.16)',
-    navBg: 'rgba(10,10,10,.78)',
-    homePanelBg: 'rgba(18,18,18,.78)',
-    shadowGlow: 'rgba(248,113,113,.24)'
-  }
-}
-
-function redComponentTheme(item: ComponentThemeItem, variant: 'day' | 'night'): ComponentThemeItem {
-  const isNight = variant === 'night'
+function redComponentTheme(item: ComponentThemeItem) {
   return {
     ...item,
     day: {
       ...item.day,
-      bg: isNight ? 'rgba(255,255,255,.86)' : 'rgba(255,255,255,.9)',
-      text: '#111827',
-      accent: '#dc2626',
-      border: 'rgba(17,24,39,.14)'
+      bg: item.day?.bg || 'rgba(255,255,255,.86)',
+      text: item.day?.text || '#111111',
+      accent: '#e11d48',
+      border: item.day?.border || 'rgba(17,17,17,.14)'
     },
     night: {
       ...item.night,
-      bg: isNight ? 'rgba(10,10,10,.9)' : 'rgba(18,18,18,.86)',
-      text: '#f9fafb',
-      accent: '#f87171',
-      border: 'rgba(255,255,255,.16)'
+      bg: item.night?.bg || 'rgba(16,16,18,.82)',
+      text: item.night?.text || '#f5f5f5',
+      accent: '#e11d48',
+      border: item.night?.border || 'rgba(255,255,255,.16)'
     },
-    opacity: typeof item.opacity === 'number' ? item.opacity : 0.88
+    opacity: normalizeOpacity(item.opacity ?? 0.86)
   }
 }
 
-function applyThemePreset(variant: 'day' | 'night') {
-  form.themeConfig.day = { ...form.themeConfig.day, ...redWhiteTheme.day }
-  form.themeConfig.night = { ...form.themeConfig.night, ...redWhiteTheme.night }
-  form.themeConfig.opacity = {
-    ...form.themeConfig.opacity,
-    toolboxSettingsPanel: 0.93,
-    toolboxSearchPanel: 0.93,
-    toolboxCalculatorPanel: 0.9,
-    homeCard: 0.84,
-    homeCarousel: 0.84,
-    contentCard: 0.84,
-    photoCard: 0.84,
-    musicPanel: 0.88,
-    messageBoard: 0.88,
-    navBar: 0.78
+function buildThemePackage(includeLayouts = true) {
+  return {
+    id: 'shrink-red-glass',
+    name: 'Shrink 红白黑玻璃主题',
+    description: '白天白灰红、夜间黑灰红的毛玻璃主题。',
+    version: 1,
+    author: 'Shrink',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    modes: {
+      day: { ...form.themeConfig.day },
+      night: { ...form.themeConfig.night }
+    },
+    componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme)),
+    pageLayouts: includeLayouts ? (pageConfig.value.pageLayouts || pageConfig.value || {}) : {}
   }
+}
+
+function applyRedThemeToForm() {
+  form.theme = 'shrink-red-glass'
+  form.themeConfig.activeTheme = 'shrink-red-glass'
+  form.themeConfig.day = { ...form.themeConfig.day, ...defaultDay }
+  form.themeConfig.night = { ...form.themeConfig.night, ...defaultNight }
+  form.themeConfig.opacity = { ...form.themeConfig.opacity, ...defaultOpacity }
   form.themeConfig.componentTheme = Object.fromEntries(
-    Object.entries(form.themeConfig.componentTheme).map(([key, item]) => [key, redComponentTheme(item, variant)])
-  ) as Record<string, ComponentThemeItem>
-  success.value = variant === 'day' ? '已应用白昼红白主题，保存后前台刷新生效。' : '已应用夜幕红黑主题，保存后前台刷新生效。'
+    Object.entries(form.themeConfig.componentTheme).map(([key, item]) => [key, redComponentTheme(item)])
+  )
+  form.themeConfig.themePackages = {
+    'shrink-red-glass': buildThemePackage()
+  }
 }
 
-function normalizeOpacity(value: unknown) {
-  const number = Number(value)
-  return Math.min(1, Math.max(0, Number.isFinite(number) ? number : 0.9))
+async function applyRedThemeNow(includeLayout = false) {
+  applyRedThemeToForm()
+  if (includeLayout) {
+    form.themeConfig.themePackages['shrink-red-glass'] = buildThemePackage(true)
+  }
+  await save()
 }
 
-function colorPickerValue(value: unknown) {
-  const text = String(value || '').trim()
-  return /^#[0-9a-fA-F]{6}$/.test(text) ? text : '#dc2626'
+function exportCurrentTheme() {
+  const blob = new Blob([JSON.stringify(buildThemePackage(true), null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'shrink-red-glass-theme.json'
+  link.click()
+  URL.revokeObjectURL(url)
+  success.value = '主题已导出，导出文件不包含 Secret。'
 }
 
-function statusText(value: unknown) {
-  return value ? '已配置' : '未配置'
+function triggerThemeImport() {
+  themeImportInput.value?.click()
 }
 
-function linesToArray(value: string) {
-  return value.split('\n').map((item) => item.trim()).filter(Boolean)
+async function importThemeFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+  try {
+    const text = await file.text()
+    const imported = JSON.parse(text)
+    if (!imported || typeof imported !== 'object' || !imported.modes?.day || !imported.modes?.night) {
+      throw new Error('主题文件缺少 day/night 配置。')
+    }
+    const applyLayout = window.confirm('是否同时导入主题包中的页面布局？取消则只导入配色和组件样式。')
+    form.theme = String(imported.id || 'shrink-red-glass')
+    form.themeConfig.activeTheme = form.theme
+    form.themeConfig.day = { ...form.themeConfig.day, ...(imported.modes.day || {}) }
+    form.themeConfig.night = { ...form.themeConfig.night, ...(imported.modes.night || {}) }
+    if (imported.componentTheme) form.themeConfig.componentTheme = mergeComponentTheme(imported.componentTheme)
+    form.themeConfig.themePackages = {
+      ...(form.themeConfig.themePackages || {}),
+      [form.theme]: imported
+    }
+    if (applyLayout && imported.pageLayouts) {
+      const current = pageConfig.value || {}
+      await adminApi.putJson('/admin/pages/config', { ...current, pageLayouts: imported.pageLayouts })
+      pageConfig.value = await adminApi.json<AnyRecord>('/admin/pages/config')
+    }
+    await save()
+    success.value = '主题导入并应用成功。'
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '主题导入失败。'
+  }
 }
 
-function commaToArray(value: string) {
-  return value.split(',').map((item) => item.trim()).filter(Boolean)
-}
-
-function applySettings(data: AnySettings) {
-  raw.value = data
+function applySettings(data: AnyRecord) {
+  raw.value = data || {}
   form.siteTitle = data.siteTitle || data.title || ''
   form.subtitle = data.subtitle || ''
-  form.author = data.author || data.authorName || ''
-  form.avatar = data.avatar || data.avatarUrl || ''
-  form.description = data.description || data.bio || ''
-  form.socialLinks = { github: '', gitee: '', email: '', qq: '', wechat: '', ...(data.socialLinks || data.social || {}) }
-  form.theme = data.theme || 'nebula'
+  form.theme = 'shrink-red-glass'
+  form.bgImagesText = Array.isArray(data.bgImages) ? data.bgImages.join('\n') : ''
+  form.cloudMusicIdsText = Array.isArray(data.cloudMusicIds) ? data.cloudMusicIds.join('\n') : ''
+
   const themeConfig = data.themeConfig || {}
+  form.themeConfig.activeTheme = themeConfig.activeTheme || 'shrink-red-glass'
+  form.themeConfig.themePackages = themeConfig.themePackages || {}
   form.themeConfig.fontFamily = themeConfig.fontFamily || ''
   form.themeConfig.fontScale = themeConfig.fontScale || 'medium'
-  form.themeConfig.day = { ...form.themeConfig.day, ...(themeConfig.day || {}) }
-  form.themeConfig.night = { ...form.themeConfig.night, ...(themeConfig.night || {}) }
+  form.themeConfig.day = { ...defaultDay, ...(themeConfig.day || {}) }
+  form.themeConfig.night = { ...defaultNight, ...(themeConfig.night || {}) }
   form.themeConfig.opacity = { ...defaultOpacity, ...(themeConfig.opacity || {}) }
+  Object.keys(form.themeConfig.opacity).forEach((key) => {
+    form.themeConfig.opacity[key] = normalizeOpacity(form.themeConfig.opacity[key])
+  })
   form.themeConfig.componentTheme = mergeComponentTheme(themeConfig.componentTheme)
-  form.bgImagesText = Array.isArray(data.bgImages) ? data.bgImages.join('\n') : ''
-  form.cloudMusicIdsText = Array.isArray(data.cloudMusicIds) ? data.cloudMusicIds.join(', ') : ''
+  if (!form.themeConfig.themePackages['shrink-red-glass']) {
+    form.themeConfig.themePackages['shrink-red-glass'] = buildThemePackage(false)
+  }
 
   const comments = data.comments || {}
   const gitalk = data.gitalkConfig || comments.gitalk || {}
@@ -396,12 +533,10 @@ function applySettings(data: AnySettings) {
   form.imageBed.region = imageBed.region || ''
   form.imageBed.endpoint = imageBed.endpoint || ''
   form.imageBed.accessKeyConfigured = imageBed.accessKeyConfigured === true
-  form.imageBed.ossSecretConfigured =
-    imageBed[['secret', 'Key', 'Configured'].join('')] === true ||
-    imageBed.ossKeyConfigured === true
+  form.imageBed.ossSecretConfigured = imageBed.secretKeyConfigured === true || imageBed.ossKeyConfigured === true
 
   const ai = data.ai || {}
-  form.ai.provider = ai.provider || ai.active || 'a'
+  form.ai.provider = ai.provider || 'a'
   form.ai.baseUrl = ai.baseUrl || ''
   form.ai.model = ai.model || ''
   form.ai.enableChat = ai.enableChat !== false
@@ -413,80 +548,60 @@ function applySettings(data: AnySettings) {
   form.interaction.clickSoundUrl = interaction.clickSoundUrl || ''
   form.interaction.clickEffectEnabled = interaction.clickEffectEnabled !== false
 
-  jsonText.value = JSON.stringify(data, null, 2)
   secretInputs.githubOAuthSecret = ''
   secretInputs.qqOAuthSecret = ''
   secretInputs.accessKeyId = ''
   secretInputs.ossSecretInput = ''
   secretInputs.aiKeyInput = ''
+  jsonText.value = JSON.stringify(data, null, 2)
 }
 
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    applySettings(await adminApi.json<AnySettings>('/admin/settings'))
+    const [settings, pages] = await Promise.all([
+      adminApi.json<AnyRecord>('/admin/settings'),
+      adminApi.json<AnyRecord>('/admin/pages/config').catch(() => ({}))
+    ])
+    pageConfig.value = pages || {}
+    applySettings(settings)
   } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '设置加载失败'
+    error.value = exc instanceof Error ? exc.message : '设置加载失败。'
   } finally {
     loading.value = false
   }
 }
 
 function buildPayload() {
-  return {
+  const payload: AnyRecord = {
     ...raw.value,
     siteTitle: form.siteTitle,
     subtitle: form.subtitle,
-    author: form.author,
-    avatar: form.avatar,
-    description: form.description,
-    socialLinks: { ...form.socialLinks },
-    theme: form.theme,
+    theme: 'shrink-red-glass',
     themeConfig: {
+      ...(raw.value.themeConfig || {}),
+      activeTheme: form.themeConfig.activeTheme || 'shrink-red-glass',
+      themePackages: {
+        ...(form.themeConfig.themePackages || {}),
+        'shrink-red-glass': buildThemePackage(true)
+      },
       fontFamily: form.themeConfig.fontFamily,
       fontScale: form.themeConfig.fontScale,
       day: { ...form.themeConfig.day },
       night: { ...form.themeConfig.night },
       opacity: Object.fromEntries(Object.entries(form.themeConfig.opacity).map(([key, value]) => [key, normalizeOpacity(value)])),
-      componentTheme: Object.fromEntries(Object.entries(form.themeConfig.componentTheme).map(([key, item]) => [
-        key,
-        {
-          label: item.label,
-          group: item.group,
-          day: { ...item.day },
-          night: { ...item.night },
-          opacity: normalizeOpacity(item.opacity),
-          size: item.size,
-          fontFamily: item.fontFamily || '',
-          fontSize: item.fontSize,
-          textColor: item.textColor || '',
-          textAlign: item.textAlign || 'left',
-          fontWeight: item.fontWeight || 'normal',
-          fontStyle: item.fontStyle || 'normal'
-        }
-      ]))
+      componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme))
     },
-    bgImages: linesToArray(form.bgImagesText),
-    cloudMusicIds: commaToArray(form.cloudMusicIdsText),
+    bgImages: parseLines(form.bgImagesText),
+    cloudMusicIds: parseLines(form.cloudMusicIdsText),
     comments: {
+      ...(raw.value.comments || {}),
       enabled: form.comments.enabled,
       provider: 'multi',
       githubLoginEnabled: form.comments.githubLoginEnabled,
       qqLoginEnabled: form.comments.qqLoginEnabled,
-      maxLength: Number(form.comments.maxLength || 1000),
-      requireEmail: false,
-      showEmail: false,
-      localEnabled: false,
-      gitalk: {
-        clientID: form.comments.gitalkClientID,
-        repo: form.comments.gitalkRepo,
-        owner: form.comments.gitalkOwner,
-        admin: commaToArray(form.comments.gitalkAdminText)
-      },
-      qq: {
-        appID: form.comments.qqAppID
-      }
+      maxLength: Number(form.comments.maxLength || 1000)
     },
     gitalkConfig: {
       ...(raw.value.gitalkConfig || {}),
@@ -494,12 +609,12 @@ function buildPayload() {
       repo: form.comments.gitalkRepo,
       owner: form.comments.gitalkOwner,
       admin: commaToArray(form.comments.gitalkAdminText),
-      [['client', 'Secret'].join('')]: secretInputs.githubOAuthSecret
+      clientSecret: secretInputs.githubOAuthSecret
     },
     qqOAuth: {
       ...(raw.value.qqOAuth || {}),
       appID: form.comments.qqAppID,
-      [['app', 'Secret'].join('')]: secretInputs.qqOAuthSecret
+      appSecret: secretInputs.qqOAuthSecret
     },
     imageBed: {
       ...(raw.value.imageBed || {}),
@@ -510,470 +625,619 @@ function buildPayload() {
       region: form.imageBed.region,
       endpoint: form.imageBed.endpoint,
       accessKeyId: secretInputs.accessKeyId,
-      [['accessKey', 'Secret'].join('')]: secretInputs.ossSecretInput
+      accessKeySecret: secretInputs.ossSecretInput
     },
     ai: {
       ...(raw.value.ai || {}),
       provider: form.ai.provider,
-      active: form.ai.provider,
       baseUrl: form.ai.baseUrl,
       model: form.ai.model,
       enableChat: form.ai.enableChat,
-      [['api', 'Key'].join('')]: secretInputs.aiKeyInput
+      apiKey: secretInputs.aiKeyInput
     },
     interaction: {
+      ...(raw.value.interaction || {}),
       clickSoundEnabled: form.interaction.clickSoundEnabled,
-      clickSoundVolume: Number(form.interaction.clickSoundVolume || 0.05),
+      clickSoundVolume: Number(form.interaction.clickSoundVolume || 0),
       clickSoundUrl: form.interaction.clickSoundUrl,
       clickEffectEnabled: form.interaction.clickEffectEnabled
     }
   }
+  return payload
 }
 
-async function save(payload = buildPayload()) {
+async function save() {
   saving.value = true
   error.value = ''
   success.value = ''
   try {
-    await adminApi.putJson('/admin/settings', payload)
-    applySettings(await adminApi.json<AnySettings>('/admin/settings'))
-    success.value = '设置已保存并重新读取。'
+    await adminApi.putJson('/admin/settings', buildPayload())
+    applySettings(await adminApi.json<AnyRecord>('/admin/settings'))
+    success.value = '设置已保存。'
     ui.show('设置已保存')
   } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '设置保存失败'
+    error.value = exc instanceof Error ? exc.message : '设置保存失败。'
   } finally {
     saving.value = false
   }
 }
 
 function stageSettings() {
-  error.value = ''
-  success.value = ''
-  if (secretInputs.githubOAuthSecret || secretInputs.qqOAuthSecret || secretInputs.accessKeyId || secretInputs.ossSecretInput || secretInputs.aiKeyInput) {
-    error.value = '私密配置不能进入本地暂存队列，请直接保存。'
-    return
-  }
   pendingStore.add({
     kind: 'updateSettings',
-    title: '设置更新',
-    slug: 'settings.json',
+    title: '设置中心修改',
+    slug: 'settings',
     settingsPayload: buildPayload()
   })
-  success.value = '设置更新已加入暂存队列。刷新页面会丢失本地暂存项。'
-  ui.show('设置已加入暂存')
+  ui.show('已加入操作暂存区')
 }
 
-async function saveAdvancedJson() {
+function saveAdvancedJson() {
   jsonError.value = ''
   try {
     const parsed = JSON.parse(jsonText.value)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      jsonError.value = '高级 JSON 必须是对象。'
-      return
+    applySettings(parsed)
+    success.value = '高级 JSON 已应用到表单，保存后写入。'
+  } catch (exc) {
+    jsonError.value = exc instanceof Error ? exc.message : 'JSON 格式错误。'
+  }
+}
+
+async function uploadInto(target: 'clickSoundUrl') {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'audio/*'
+  input.onchange = async () => {
+    const file = input.files?.[0]
+    if (!file) return
+    try {
+      const result = await adminApi.upload(file)
+      form.interaction[target] = result.url
+      success.value = '音效文件已上传并填入 URL。'
+    } catch (exc) {
+      error.value = exc instanceof Error ? exc.message : '上传失败。'
     }
-    await save(parsed)
-  } catch (exc) {
-    jsonError.value = exc instanceof Error ? exc.message : 'JSON 格式无效'
   }
+  input.click()
 }
 
-async function uploadInto(field: 'avatar' | 'bg' | 'clickSound', files: FileList | null) {
-  if (!files?.length) return
-  uploadProgress.value[field] = 0
-  error.value = ''
-  try {
-    const data = await adminApi.upload(files[0], (percent) => { uploadProgress.value[field] = percent })
-    if (field === 'avatar') form.avatar = data.url
-    if (field === 'bg') form.bgImagesText = `${form.bgImagesText.trim()}\n${data.url}`.trim()
-    if (field === 'clickSound') form.interaction.clickSoundUrl = data.url
-    success.value = '上传成功，URL 已自动填入。'
-    ui.show('上传成功')
-  } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '上传失败'
-  }
+function resetComponent(key: string) {
+  const defaults = makeComponentTheme()
+  if (defaults[key]) form.themeConfig.componentTheme[key] = defaults[key]
 }
 
-function testImageBed() {
-  if (!['local', 'oss', 'custom'].includes(form.imageBed.provider)) {
-    error.value = '存储类型必须是 local、oss 或 custom。'
-    return
-  }
-  error.value = ''
-  success.value = form.imageBed.provider === 'local' ? '本地上传配置格式有效。' : '配置格式有效；真实服务连通性需部署后验证。'
+function resetAllComponents() {
+  form.themeConfig.componentTheme = makeComponentTheme()
 }
-
-function syncTabFromRoute() {
-  const tab = String(route.query.tab || '')
-  if (tabKeys.includes(tab as SettingsTab)) active.value = tab as SettingsTab
-}
-
-watch(() => route.query.tab, syncTabFromRoute, { immediate: true })
-watch(active, (tab) => {
-  if (route.query.tab !== tab) router.replace({ query: { ...route.query, tab } })
-})
 
 onMounted(load)
 </script>
 
 <template>
-  <div class="grid gap-4">
-    <div class="glass rounded-[30px] p-5">
-      <div class="relative z-[1] flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="text-2xl font-black text-white">{{ tabs.find((tab) => tab.key === active)?.label }}</h2>
-          <p class="mt-2 text-sm text-white/50">公开字段会进入前台；私密字段不会回显，Secret 留空保存会保留旧值。</p>
-        </div>
-        <button class="admin-btn admin-btn-ghost" @click="load">刷新</button>
+  <div class="settings-shell">
+    <header class="settings-header">
+      <div>
+        <p class="admin-section-title">settings</p>
+        <h1>设置中心</h1>
+        <p>公开配置、主题包、留言、图床、AI 和部署提示集中管理。Secret 不会回显明文。</p>
       </div>
-      <p v-if="loading" class="relative z-[1] mt-4 text-white/55">设置加载中...</p>
-      <p v-if="error" class="relative z-[1] mt-4 text-sm text-red-200/85">{{ error }}</p>
-      <p v-if="success" class="relative z-[1] mt-4 text-sm text-emerald-200/85">{{ success }}</p>
-    </div>
-
-    <div class="glass rounded-[30px] p-5">
-      <div class="relative z-[1] grid gap-4">
-        <template v-if="active === 'site'">
-          <div class="grid gap-3 md:grid-cols-2">
-            <label class="field">站点标题<input v-model="form.siteTitle" class="admin-input" /></label>
-            <label class="field">副标题<input v-model="form.subtitle" class="admin-input" /></label>
-          </div>
-          <div class="rounded-[24px] border border-cyan-200/15 bg-cyan-200/[0.07] p-4 text-sm leading-7 text-cyan-50/75">
-            作者、头像、首页简介和社交链接已迁移到“页面编辑 > 首页”作为主流程。这里不再作为主要入口，避免站点级设置和页面内容混在一起。
-          </div>
-          <details class="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-            <summary class="cursor-pointer text-sm font-bold text-white/70">兼容旧字段：作者、头像、简介和社交链接</summary>
-            <div class="mt-4 grid gap-3 md:grid-cols-2">
-              <label class="field">作者<input v-model="form.author" class="admin-input" /></label>
-              <label class="field">头像 URL<div class="flex gap-2"><input v-model="form.avatar" class="admin-input min-w-0 flex-1" /><label class="admin-btn admin-btn-ghost cursor-pointer">上传<input type="file" accept="image/*" class="hidden" @change="uploadInto('avatar', ($event.target as HTMLInputElement).files)" /></label></div></label>
-              <label class="field md:col-span-2">站点简介<textarea v-model="form.description" rows="4" class="admin-input"></textarea></label>
-              <label v-for="(_, key) in form.socialLinks" :key="key" class="field">社交链接 {{ key }}<input v-model="form.socialLinks[key]" class="admin-input" /></label>
-            </div>
-          </details>
-        </template>
-
-        <template v-else-if="active === 'theme'">
-          <section class="panel">
-            <div class="grid gap-3 md:grid-cols-3">
-              <label class="field">主题<select v-model="form.theme" class="admin-input"><option>nebula</option><option>sakura</option><option>aurora</option><option>cyber</option></select></label>
-              <label class="field md:col-span-2">字体族<input v-model="form.themeConfig.fontFamily" class="admin-input" placeholder="留空则使用默认字体" /></label>
-              <label class="field">字号档位<select v-model="form.themeConfig.fontScale" class="admin-input"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></label>
-            </div>
-          </section>
-          <section class="panel">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 class="font-black text-slate-950">全局主题预设</h3>
-                <p class="mt-1 text-sm text-slate-500">一键应用红色重点色方案，组件仍可继续单独微调。</p>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                <button type="button" class="admin-btn admin-btn-primary" @click="applyThemePreset('day')">应用白昼红白主题</button>
-                <button type="button" class="admin-btn admin-btn-ghost" @click="applyThemePreset('night')">应用夜幕红黑主题</button>
-              </div>
-            </div>
-          </section>
-          <section class="panel">
-            <h3 class="font-black text-white">交互点击音效</h3>
-            <div class="mt-4 grid gap-3 md:grid-cols-3">
-              <label class="setting-check"><input v-model="form.interaction.clickSoundEnabled" type="checkbox" />启用音效</label>
-              <label class="setting-check"><input v-model="form.interaction.clickEffectEnabled" type="checkbox" />启用鼠标点击特效</label>
-              <label class="field">音量<input v-model.number="form.interaction.clickSoundVolume" type="number" min="0" max="1" step="0.01" class="admin-input" /></label>
-              <label class="field md:col-span-3">音效 URL<div class="flex gap-2"><input v-model="form.interaction.clickSoundUrl" class="admin-input min-w-0 flex-1" /><label class="admin-btn admin-btn-ghost cursor-pointer">上传<input type="file" accept="audio/*" class="hidden" @change="uploadInto('clickSound', ($event.target as HTMLInputElement).files)" /></label></div></label>
-            </div>
-          </section>
-          <section class="panel">
-            <div class="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h3 class="font-black text-white">前台透明度设置</h3>
-                <p class="mt-1 text-sm text-white/50">数值越高越不透明。范围限制为 0.60 到 1.00，前台刷新后生效。</p>
-              </div>
-            </div>
-            <div class="mt-4 grid gap-3 md:grid-cols-2">
-              <label v-for="(_, key) in form.themeConfig.opacity" :key="String(key)" class="opacity-token-row">
-                <span class="min-w-0">
-                  <b>{{ opacityLabel(String(key)) }}</b>
-                  <small>{{ key }}</small>
-                </span>
-                <input v-model.number="form.themeConfig.opacity[key]" type="range" min="0" max="1" step="0.01" class="min-w-0 flex-1" />
-                <input v-model.number="form.themeConfig.opacity[key]" type="number" min="0" max="1" step="0.01" class="admin-input w-24" />
-              </label>
-            </div>
-            <p class="mt-3 text-xs text-amber-100/70">透明度范围为 0 到 1。0 表示完全透明，可能导致组件不可见。</p>
-          </section>
-          <section class="panel">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 class="font-black text-white">组件样式 DIY</h3>
-                <p class="mt-1 text-sm text-white/50">按组件独立配置日间/夜间颜色、透明度和大小档位。</p>
-              </div>
-              <button type="button" class="admin-btn admin-btn-ghost" @click="resetAllComponentTheme">恢复全部组件默认样式</button>
-            </div>
-            <div class="mt-4 grid gap-3">
-              <details v-for="(items, group) in componentThemeGroups" :key="group" class="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
-                <summary class="cursor-pointer text-lg font-black text-white">{{ group }}</summary>
-                <div class="mt-4 grid gap-3">
-                  <details v-for="[key, item] in items" :key="key" class="component-theme-card">
-                    <summary class="cursor-pointer">
-                      <span class="font-black text-white">{{ item.label }}</span>
-                      <small class="ml-2 text-white/35">{{ key }}</small>
-                    </summary>
-                    <div class="mt-4 grid gap-4">
-                      <div class="grid gap-3 md:grid-cols-3">
-                        <label class="field">大小档位<select v-model="item.size" class="admin-input"><option value="small">小</option><option value="medium">中</option><option value="large">大</option></select></label>
-                        <label class="field md:col-span-2">透明度
-                          <div class="flex gap-2">
-                            <input v-model.number="item.opacity" type="range" min="0" max="1" step="0.01" class="min-w-0 flex-1" />
-                            <input v-model.number="item.opacity" type="number" min="0" max="1" step="0.01" class="admin-input w-24" />
-                          </div>
-                        </label>
-                      </div>
-                      <div class="grid gap-3 xl:grid-cols-2">
-                        <div class="grid gap-2">
-                          <h4 class="text-sm font-black text-cyan-50/85">日间模式</h4>
-                          <label v-for="colorKey in ['bg','text','accent','border']" :key="`day-${key}-${colorKey}`" class="theme-token-row">
-                            <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(item.day[colorKey]) }"></span>
-                            <span class="min-w-0"><b>{{ colorKey === 'bg' ? '背景色' : colorKey === 'text' ? '文字色' : colorKey === 'accent' ? '强调色' : '边框色' }}</b><small>{{ colorKey }}</small></span>
-                            <div class="flex min-w-0 flex-1 gap-2">
-                              <input type="color" class="theme-color-input" :value="colorPickerValue(item.day[colorKey])" @input="item.day[colorKey] = ($event.target as HTMLInputElement).value" />
-                              <input v-model="item.day[colorKey]" class="admin-input min-w-0 flex-1" />
-                            </div>
-                          </label>
-                        </div>
-                        <div class="grid gap-2">
-                          <h4 class="text-sm font-black text-cyan-50/85">夜间模式</h4>
-                          <label v-for="colorKey in ['bg','text','accent','border']" :key="`night-${key}-${colorKey}`" class="theme-token-row">
-                            <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(item.night[colorKey]) }"></span>
-                            <span class="min-w-0"><b>{{ colorKey === 'bg' ? '背景色' : colorKey === 'text' ? '文字色' : colorKey === 'accent' ? '强调色' : '边框色' }}</b><small>{{ colorKey }}</small></span>
-                            <div class="flex min-w-0 flex-1 gap-2">
-                              <input type="color" class="theme-color-input" :value="colorPickerValue(item.night[colorKey])" @input="item.night[colorKey] = ($event.target as HTMLInputElement).value" />
-                              <input v-model="item.night[colorKey]" class="admin-input min-w-0 flex-1" />
-                            </div>
-                          </label>
-                        </div>
-                      </div>
-                      <button type="button" class="admin-btn admin-btn-ghost w-fit" @click="resetComponentTheme(key)">恢复该组件默认样式</button>
-                    </div>
-                  </details>
-                </div>
-              </details>
-            </div>
-          </section>
-          <div class="grid gap-4 xl:grid-cols-2">
-            <section class="panel">
-              <h3 class="font-black text-white">日间模式颜色</h3>
-              <div class="mt-4 grid gap-3">
-                <label v-for="(_, key) in form.themeConfig.day" :key="String(key)" class="theme-token-row">
-                  <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(form.themeConfig.day[key]) }"></span>
-                  <span class="min-w-0"><b>{{ tokenLabel(String(key)) }}</b><small>{{ key }}</small></span>
-                  <div class="flex min-w-0 flex-1 gap-2">
-                    <input type="color" class="theme-color-input" :value="colorPickerValue(form.themeConfig.day[key])" @input="form.themeConfig.day[key] = ($event.target as HTMLInputElement).value" />
-                    <input v-model="form.themeConfig.day[key]" class="admin-input min-w-0 flex-1" />
-                  </div>
-                </label>
-              </div>
-            </section>
-            <section class="panel">
-              <h3 class="font-black text-white">夜间模式颜色</h3>
-              <div class="mt-4 grid gap-3">
-                <label v-for="(_, key) in form.themeConfig.night" :key="String(key)" class="theme-token-row">
-                  <span class="theme-color-preview" :style="{ backgroundColor: colorPickerValue(form.themeConfig.night[key]) }"></span>
-                  <span class="min-w-0"><b>{{ tokenLabel(String(key)) }}</b><small>{{ key }}</small></span>
-                  <div class="flex min-w-0 flex-1 gap-2">
-                    <input type="color" class="theme-color-input" :value="colorPickerValue(form.themeConfig.night[key])" @input="form.themeConfig.night[key] = ($event.target as HTMLInputElement).value" />
-                    <input v-model="form.themeConfig.night[key]" class="admin-input min-w-0 flex-1" />
-                  </div>
-                </label>
-              </div>
-            </section>
-          </div>
-          <label class="field">背景图 URL<textarea v-model="form.bgImagesText" rows="6" class="admin-input"></textarea></label>
-          <label class="admin-btn admin-btn-ghost w-fit cursor-pointer">上传背景图<input type="file" accept="image/*" class="hidden" @change="uploadInto('bg', ($event.target as HTMLInputElement).files)" /></label>
-          <label class="field">公开音乐 ID<input v-model="form.cloudMusicIdsText" class="admin-input" /></label>
-        </template>
-
-        <template v-else-if="active === 'comments'">
-          <section class="panel text-sm leading-6 text-cyan-50/78">
-            前台留言板支持 GitHub 和 QQ 登录。OAuth Secret 只保存在服务端，公开设置只返回是否已配置。
-          </section>
-          <div class="grid gap-3 md:grid-cols-2">
-            <label class="setting-check"><input v-model="form.comments.enabled" type="checkbox" />开启留言板</label>
-            <label class="setting-check"><input v-model="form.comments.githubLoginEnabled" type="checkbox" />启用 GitHub 登录留言</label>
-            <label class="setting-check"><input v-model="form.comments.qqLoginEnabled" type="checkbox" />启用 QQ 登录留言</label>
-            <label class="field">留言最大长度<input v-model.number="form.comments.maxLength" type="number" min="1" max="5000" class="admin-input" /></label>
-            <label class="field">GitHub 客户端 ID<input v-model="form.comments.gitalkClientID" class="admin-input" /></label>
-            <label class="field">GitHub 仓库<input v-model="form.comments.gitalkRepo" class="admin-input" /></label>
-            <label class="field">GitHub 所有者<input v-model="form.comments.gitalkOwner" class="admin-input" /></label>
-            <label class="field">Gitalk 管理员 CSV<input v-model="form.comments.gitalkAdminText" class="admin-input" /></label>
-            <div class="status-box">GitHub OAuth Secret 状态：{{ statusText(raw.serverSecrets?.githubOAuthConfigured || raw.serverSecrets?.githubOAuthSecretConfigured) }}</div>
-            <label class="field md:col-span-2">新的 GitHub OAuth Secret<input v-model="secretInputs.githubOAuthSecret" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
-            <label class="field">QQ 应用 ID<input v-model="form.comments.qqAppID" class="admin-input" /></label>
-            <div class="status-box">QQ App Secret 状态：{{ statusText(raw.serverSecrets?.qqOAuthConfigured || raw.serverSecrets?.qqOAuthSecretConfigured) }}</div>
-            <label class="field md:col-span-2">新的 QQ App Secret<input v-model="secretInputs.qqOAuthSecret" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
-          </div>
-        </template>
-
-        <template v-else-if="active === 'image'">
-          <div class="grid gap-3 md:grid-cols-2">
-            <label class="field">存储类型<select v-model="form.imageBed.provider" class="admin-input"><option>local</option><option>oss</option><option>custom</option></select></label>
-            <label class="field">公开访问基础 URL<input v-model="form.imageBed.publicBaseUrl" class="admin-input" /></label>
-            <label class="field">存储桶<input v-model="form.imageBed.bucket" class="admin-input" /></label>
-            <label class="field">Region / 地域<input v-model="form.imageBed.region" class="admin-input" /></label>
-            <label class="field">服务端点<input v-model="form.imageBed.endpoint" class="admin-input" /></label>
-            <div class="status-box">AccessKey 状态：{{ statusText(form.imageBed.accessKeyConfigured) }}<br />Secret 状态：{{ statusText(form.imageBed.ossSecretConfigured) }}</div>
-            <label class="field">新的 AccessKey ID<input v-model="secretInputs.accessKeyId" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
-            <label class="field">新的 AccessKey Secret<input v-model="secretInputs.ossSecretInput" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
-          </div>
-          <button class="admin-btn admin-btn-ghost w-fit" @click="testImageBed">测试配置格式</button>
-        </template>
-
-        <template v-else-if="active === 'ai'">
-          <div class="grid gap-3 md:grid-cols-2">
-            <label class="field">服务商<input v-model="form.ai.provider" class="admin-input" /></label>
-            <label class="field">模型<input v-model="form.ai.model" class="admin-input" /></label>
-            <label class="field md:col-span-2">基础地址 URL<input v-model="form.ai.baseUrl" class="admin-input" /></label>
-            <label class="setting-check"><input v-model="form.ai.enableChat" type="checkbox" />启用后台聊天</label>
-            <div class="status-box">API 密钥状态：{{ statusText(form.ai.aiKeyConfigured) }}</div>
-            <label class="field md:col-span-2">新的 API 密钥<input v-model="secretInputs.aiKeyInput" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
-          </div>
-        </template>
-
-        <template v-else>
-          <div class="grid gap-3">
-            <div v-for="item in productionChecks" :key="item.label" class="rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-sm" :class="item.ok ? 'text-emerald-100' : 'text-amber-100'">{{ item.ok ? '通过' : '待检查' }} - {{ item.label }}</div>
-            <p class="text-sm leading-6 text-white/55">Nginx、systemd、数据目录权限和生产环境变量说明见 docs/DEPLOYMENT.md。</p>
-          </div>
-        </template>
-
-        <div class="flex flex-wrap gap-3">
-          <button :disabled="saving" class="admin-btn admin-btn-primary" @click="save()">{{ saving ? '保存中...' : '保存设置' }}</button>
-          <button :disabled="saving" class="admin-btn admin-btn-ghost" @click="stageSettings">暂存非私密设置</button>
-          <button class="admin-btn admin-btn-ghost" @click="load">放弃未保存修改</button>
-        </div>
+      <div class="settings-actions">
+        <button class="admin-btn admin-btn-ghost" type="button" @click="stageSettings">加入暂存</button>
+        <button class="admin-btn admin-btn-primary" type="button" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存设置' }}</button>
       </div>
-    </div>
+    </header>
 
-    <div class="glass rounded-[30px] p-5">
-      <button class="relative z-[1] flex w-full items-center justify-between text-left" @click="advancedOpen = !advancedOpen">
-        <span class="font-bold text-white">高级 JSON 编辑</span>
-        <span class="text-sm text-white/45">{{ advancedOpen ? '收起' : '展开' }}</span>
+    <p v-if="loading" class="status-box">设置加载中...</p>
+    <p v-if="error" class="status-box status-error">{{ error }}</p>
+    <p v-if="success" class="status-box status-success">{{ success }}</p>
+
+    <nav class="settings-tabs" aria-label="设置分区">
+      <button
+        v-for="tab in tabs"
+        :key="tab.key"
+        type="button"
+        class="settings-tab"
+        :class="{ active: active === tab.key }"
+        @click="changeTab(tab.key)"
+      >
+        <span>{{ tab.label }}</span>
+        <small>{{ tab.hint }}</small>
       </button>
-      <div v-if="advancedOpen" class="relative z-[1] mt-4 grid gap-3">
-        <p class="text-sm leading-6 text-amber-100/70">仅作为兜底入口。Secret 留空由后端保留旧值，后台响应不会回显明文。</p>
-        <textarea v-model="jsonText" rows="18" class="admin-input font-mono text-sm"></textarea>
-        <p v-if="jsonError" class="text-sm text-red-200/85">{{ jsonError }}</p>
-        <button :disabled="saving" class="admin-btn admin-btn-ghost w-fit" @click="saveAdvancedJson">保存高级 JSON</button>
+    </nav>
+
+    <section v-if="active === 'site'" class="settings-panel">
+      <h2>站点公开信息</h2>
+      <p class="panel-note">作者、头像、首页简介等首页字段已迁移到“页面编辑 > 首页”。这里保留全站级字段。</p>
+      <div class="settings-grid">
+        <label class="field">站点标题<input v-model="form.siteTitle" class="admin-input" /></label>
+        <label class="field">副标题<input v-model="form.subtitle" class="admin-input" /></label>
+        <label class="field md:col-span-2">背景图列表<textarea v-model="form.bgImagesText" rows="4" class="admin-input" placeholder="每行一个 URL" /></label>
+        <label class="field md:col-span-2">公开音乐 ID / 配置<textarea v-model="form.cloudMusicIdsText" rows="3" class="admin-input" placeholder="每行一个 ID 或公开配置" /></label>
       </div>
-    </div>
+    </section>
+
+    <section v-else-if="active === 'theme'" class="settings-panel">
+      <h2>主题与背景</h2>
+      <p class="panel-note">当前只保留红白黑玻璃主题；组件仍可单独微调颜色、透明度、字体和大小。</p>
+
+      <div class="theme-manager">
+        <div class="settings-grid">
+          <label class="field">当前主题
+            <select v-model="form.theme" class="admin-input">
+              <option value="shrink-red-glass">Shrink 红白黑玻璃主题</option>
+            </select>
+          </label>
+          <label class="field">字体族<input v-model="form.themeConfig.fontFamily" class="admin-input" placeholder="留空则使用默认字体" /></label>
+          <label class="field">前台字号档位
+            <select v-model="form.themeConfig.fontScale" class="admin-input">
+              <option value="small">小</option>
+              <option value="medium">中</option>
+              <option value="large">大</option>
+            </select>
+          </label>
+        </div>
+        <div class="settings-actions compact">
+          <button class="admin-btn admin-btn-primary" type="button" @click="applyRedThemeNow(false)">一键应用颜色和字体</button>
+          <button class="admin-btn admin-btn-ghost" type="button" @click="applyRedThemeNow(true)">一键应用颜色、字体和布局</button>
+          <button class="admin-btn admin-btn-ghost" type="button" @click="exportCurrentTheme">导出当前主题</button>
+          <button class="admin-btn admin-btn-ghost" type="button" @click="triggerThemeImport">导入主题 JSON</button>
+          <input ref="themeImportInput" class="hidden" type="file" accept="application/json,.json" @change="importThemeFile" />
+        </div>
+      </div>
+
+      <details class="settings-details" open>
+        <summary>白天模式 token</summary>
+        <div class="token-grid">
+          <label v-for="(_, key) in form.themeConfig.day" :key="String(key)" class="token-row">
+            <span>{{ tokenLabel(String(key)) }}</span>
+            <input type="color" class="color-input" :value="colorPickerValue(form.themeConfig.day[key])" @input="form.themeConfig.day[key] = ($event.target as HTMLInputElement).value" />
+            <input v-model="form.themeConfig.day[key]" class="admin-input" />
+          </label>
+        </div>
+      </details>
+
+      <details class="settings-details">
+        <summary>夜间模式 token</summary>
+        <div class="token-grid">
+          <label v-for="(_, key) in form.themeConfig.night" :key="String(key)" class="token-row">
+            <span>{{ tokenLabel(String(key)) }}</span>
+            <input type="color" class="color-input" :value="colorPickerValue(form.themeConfig.night[key])" @input="form.themeConfig.night[key] = ($event.target as HTMLInputElement).value" />
+            <input v-model="form.themeConfig.night[key]" class="admin-input" />
+          </label>
+        </div>
+      </details>
+
+      <details class="settings-details" open>
+        <summary>前台透明度设置</summary>
+        <p class="panel-note">范围 0 到 1。0 表示完全透明，可能导致组件不可见。</p>
+        <div class="opacity-grid">
+          <label v-for="(_, key) in form.themeConfig.opacity" :key="String(key)" class="opacity-row">
+            <span>{{ opacityLabel(String(key)) }}</span>
+            <input v-model.number="form.themeConfig.opacity[key]" type="range" min="0" max="1" step="0.01" />
+            <input v-model.number="form.themeConfig.opacity[key]" type="number" min="0" max="1" step="0.01" class="admin-input compact-input" />
+          </label>
+        </div>
+      </details>
+
+      <details class="settings-details">
+        <summary>交互设置</summary>
+        <div class="settings-grid">
+          <label class="setting-check"><input v-model="form.interaction.clickSoundEnabled" type="checkbox" />启用点击音效</label>
+          <label class="setting-check"><input v-model="form.interaction.clickEffectEnabled" type="checkbox" />启用鼠标点击特效</label>
+          <label class="field">点击音效音量<input v-model.number="form.interaction.clickSoundVolume" type="range" min="0" max="1" step="0.01" /></label>
+          <label class="field">点击音效 URL<input v-model="form.interaction.clickSoundUrl" class="admin-input" /></label>
+          <button class="admin-btn admin-btn-ghost" type="button" @click="uploadInto('clickSoundUrl')">上传点击音效</button>
+        </div>
+      </details>
+
+      <details class="settings-details">
+        <summary>组件级样式</summary>
+        <div class="component-groups">
+          <details v-for="(items, group) in groupedComponents" :key="group" class="component-group">
+            <summary>{{ group }}</summary>
+            <article v-for="[key, item] in items" :key="key" class="component-theme-card">
+              <header>
+                <div>
+                  <strong>{{ item.label }}</strong>
+                  <small>{{ key }}</small>
+                </div>
+                <button class="admin-btn admin-btn-ghost small" type="button" @click="resetComponent(key)">恢复默认</button>
+              </header>
+              <div class="settings-grid dense">
+                <label class="field">大小档位
+                  <select v-model="item.size" class="admin-input">
+                    <option value="small">小</option>
+                    <option value="medium">中</option>
+                    <option value="large">大</option>
+                  </select>
+                </label>
+                <label class="field">透明度
+                  <input v-model.number="item.opacity" type="range" min="0" max="1" step="0.01" />
+                  <input v-model.number="item.opacity" type="number" min="0" max="1" step="0.01" class="admin-input compact-input" />
+                </label>
+                <label class="field">字体族<input v-model="item.fontFamily" class="admin-input" /></label>
+                <label class="field">字号<input v-model.number="item.fontSize" type="number" min="8" max="64" class="admin-input" /></label>
+                <label class="field">文字对齐
+                  <select v-model="item.textAlign" class="admin-input">
+                    <option value="left">靠左</option>
+                    <option value="center">居中</option>
+                    <option value="right">靠右</option>
+                  </select>
+                </label>
+                <label class="field">字体颜色
+                  <input type="color" class="color-input" :value="colorPickerValue(item.textColor)" @input="item.textColor = ($event.target as HTMLInputElement).value" />
+                  <input v-model="item.textColor" class="admin-input" />
+                </label>
+                <label class="setting-check"><input v-model="item.fontWeight" true-value="700" false-value="normal" type="checkbox" />加粗</label>
+                <label class="setting-check"><input v-model="item.fontStyle" true-value="italic" false-value="normal" type="checkbox" />斜体</label>
+              </div>
+              <div class="mode-columns">
+                <div>
+                  <h4>日间</h4>
+                  <label class="mini-field">背景<input type="color" class="color-input" :value="colorPickerValue(item.day.bg)" @input="item.day.bg = ($event.target as HTMLInputElement).value" /><input v-model="item.day.bg" class="admin-input" /></label>
+                  <label class="mini-field">文字<input type="color" class="color-input" :value="colorPickerValue(item.day.text)" @input="item.day.text = ($event.target as HTMLInputElement).value" /><input v-model="item.day.text" class="admin-input" /></label>
+                  <label class="mini-field">重点<input type="color" class="color-input" :value="colorPickerValue(item.day.accent)" @input="item.day.accent = ($event.target as HTMLInputElement).value" /><input v-model="item.day.accent" class="admin-input" /></label>
+                  <label class="mini-field">边框<input v-model="item.day.border" class="admin-input" /></label>
+                </div>
+                <div>
+                  <h4>夜间</h4>
+                  <label class="mini-field">背景<input type="color" class="color-input" :value="colorPickerValue(item.night.bg)" @input="item.night.bg = ($event.target as HTMLInputElement).value" /><input v-model="item.night.bg" class="admin-input" /></label>
+                  <label class="mini-field">文字<input type="color" class="color-input" :value="colorPickerValue(item.night.text)" @input="item.night.text = ($event.target as HTMLInputElement).value" /><input v-model="item.night.text" class="admin-input" /></label>
+                  <label class="mini-field">重点<input type="color" class="color-input" :value="colorPickerValue(item.night.accent)" @input="item.night.accent = ($event.target as HTMLInputElement).value" /><input v-model="item.night.accent" class="admin-input" /></label>
+                  <label class="mini-field">边框<input v-model="item.night.border" class="admin-input" /></label>
+                </div>
+              </div>
+            </article>
+          </details>
+          <button class="admin-btn admin-btn-ghost" type="button" @click="resetAllComponents">恢复全部组件默认样式</button>
+        </div>
+      </details>
+    </section>
+
+    <section v-else-if="active === 'comments'" class="settings-panel">
+      <h2>留言设置</h2>
+      <p class="panel-note">前台留言仅支持访客通过 GitHub 或 QQ 登录后留言。Secret 仅保存于服务端，不回显明文。</p>
+      <div class="settings-grid">
+        <label class="setting-check"><input v-model="form.comments.enabled" type="checkbox" />开启留言板</label>
+        <label class="setting-check"><input v-model="form.comments.githubLoginEnabled" type="checkbox" />启用 GitHub 登录留言</label>
+        <label class="setting-check"><input v-model="form.comments.qqLoginEnabled" type="checkbox" />启用 QQ 登录留言</label>
+        <label class="field">留言最大长度<input v-model.number="form.comments.maxLength" type="number" min="1" max="5000" class="admin-input" /></label>
+        <label class="field">GitHub Client ID<input v-model="form.comments.gitalkClientID" class="admin-input" /></label>
+        <label class="field">GitHub 仓库<input v-model="form.comments.gitalkRepo" class="admin-input" /></label>
+        <label class="field">GitHub Owner<input v-model="form.comments.gitalkOwner" class="admin-input" /></label>
+        <label class="field">GitHub 管理员 CSV<input v-model="form.comments.gitalkAdminText" class="admin-input" /></label>
+        <div class="status-box">GitHub OAuth Secret 状态：{{ statusText(raw.serverSecrets?.githubOAuthSecretConfigured || raw.gitalkConfig?.clientSecretConfigured) }}</div>
+        <label class="field md:col-span-2">新的 GitHub OAuth Secret<input v-model="secretInputs.githubOAuthSecret" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
+        <label class="field">QQ App ID<input v-model="form.comments.qqAppID" class="admin-input" /></label>
+        <div class="status-box">QQ App Secret 状态：{{ statusText(raw.serverSecrets?.qqOAuthSecretConfigured || raw.qqOAuth?.appSecretConfigured) }}</div>
+        <label class="field md:col-span-2">新的 QQ App Secret<input v-model="secretInputs.qqOAuthSecret" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
+      </div>
+    </section>
+
+    <section v-else-if="active === 'image'" class="settings-panel">
+      <h2>图床设置</h2>
+      <div class="settings-grid">
+        <label class="field">存储类型
+          <select v-model="form.imageBed.provider" class="admin-input">
+            <option value="local">local</option>
+            <option value="oss">oss</option>
+            <option value="custom">custom</option>
+          </select>
+        </label>
+        <label class="field">公开访问基础 URL<input v-model="form.imageBed.publicBaseUrl" class="admin-input" /></label>
+        <label class="field">Bucket<input v-model="form.imageBed.bucket" class="admin-input" /></label>
+        <label class="field">Region<input v-model="form.imageBed.region" class="admin-input" /></label>
+        <label class="field">Endpoint<input v-model="form.imageBed.endpoint" class="admin-input" /></label>
+        <div class="status-box">AccessKey 状态：{{ statusText(form.imageBed.accessKeyConfigured) }}<br />Secret 状态：{{ statusText(form.imageBed.ossSecretConfigured) }}</div>
+        <label class="field">新的 AccessKey<input v-model="secretInputs.accessKeyId" type="password" class="admin-input" placeholder="留空则保持旧值" /></label>
+        <label class="field">新的 Secret<input v-model="secretInputs.ossSecretInput" type="password" class="admin-input" placeholder="留空则保持旧值" /></label>
+      </div>
+    </section>
+
+    <section v-else-if="active === 'ai'" class="settings-panel">
+      <h2>AI 设置</h2>
+      <div class="settings-grid">
+        <label class="field">Provider<input v-model="form.ai.provider" class="admin-input" /></label>
+        <label class="field">Base URL<input v-model="form.ai.baseUrl" class="admin-input" /></label>
+        <label class="field">Model<input v-model="form.ai.model" class="admin-input" /></label>
+        <label class="setting-check"><input v-model="form.ai.enableChat" type="checkbox" />启用后台聊天入口</label>
+        <div class="status-box">API Key 状态：{{ statusText(form.ai.aiKeyConfigured) }}</div>
+        <label class="field md:col-span-2">新的 API Key<input v-model="secretInputs.aiKeyInput" type="password" autocomplete="new-password" class="admin-input" placeholder="留空则保持旧值，不回显明文" /></label>
+      </div>
+    </section>
+
+    <section v-else class="settings-panel">
+      <h2>部署与安全提示</h2>
+      <div class="deploy-checks">
+        <article v-for="item in productionChecks" :key="item.label" class="deploy-check" :class="{ ok: item.ok }">
+          <span>{{ item.ok ? '通过' : '待确认' }}</span>
+          <strong>{{ item.label }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <details class="settings-details">
+      <summary>高级 JSON 编辑</summary>
+      <p class="panel-note">这是兜底入口。JSON 格式错误会阻止应用；Secret 不会在后台响应中回显。</p>
+      <textarea v-model="jsonText" class="admin-input json-editor" rows="12"></textarea>
+      <p v-if="jsonError" class="status-box status-error">{{ jsonError }}</p>
+      <button class="admin-btn admin-btn-ghost" type="button" @click="saveAdvancedJson">应用 JSON 到表单</button>
+    </details>
   </div>
 </template>
 
 <style scoped>
-.field {
+.settings-shell {
   display: grid;
-  gap: 0.5rem;
-  color: rgb(255 255 255 / 0.65);
-  font-size: 0.875rem;
+  gap: 1rem;
 }
-.admin-input {
-  width: 100%;
-  border-radius: 1rem;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  background: rgb(255 255 255 / 0.1);
-  padding: 0.75rem 1rem;
-  color: white;
-  outline: none;
-}
-.admin-input:focus {
-  border-color: rgb(103 232 249 / 0.6);
-}
-.panel,
-.status-box,
-.setting-check {
-  border-radius: 1.5rem;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  background: rgb(255 255 255 / 0.06);
+
+.settings-header,
+.settings-panel,
+.settings-details {
+  border: 1px solid var(--admin-border);
+  border-radius: .85rem;
+  background: var(--admin-surface);
   padding: 1rem;
 }
-.status-box {
-  color: rgb(255 255 255 / 0.6);
-  font-size: 0.875rem;
+
+.settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
 }
+
+.settings-header h1,
+.settings-panel h2 {
+  margin: .15rem 0;
+  color: var(--admin-text);
+  font-size: 1.35rem;
+  font-weight: 900;
+}
+
+.settings-header p,
+.panel-note {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: .9rem;
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+
+.settings-actions.compact {
+  margin-top: .8rem;
+}
+
+.settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: .6rem;
+}
+
+.settings-tab {
+  border: 1px solid var(--admin-border);
+  border-radius: .7rem;
+  background: var(--admin-surface);
+  padding: .75rem;
+  color: var(--admin-text);
+  text-align: left;
+}
+
+.settings-tab span {
+  display: block;
+  font-weight: 900;
+}
+
+.settings-tab small {
+  display: block;
+  margin-top: .2rem;
+  color: var(--admin-muted);
+  font-size: .72rem;
+}
+
+.settings-tab.active {
+  border-color: var(--admin-black);
+  background: #f3f4f6;
+  box-shadow: inset 3px 0 0 var(--admin-black);
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: .85rem;
+  margin-top: .9rem;
+}
+
+.settings-grid.dense {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: .65rem;
+}
+
 .setting-check {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  color: rgb(255 255 255 / 0.72);
+  gap: .5rem;
+  color: #374151;
+  font-size: .9rem;
+  font-weight: 800;
 }
-.theme-token-row {
+
+.status-box {
+  border: 1px solid var(--admin-border);
+  border-radius: .7rem;
+  background: #f9fafb;
+  padding: .75rem;
+  color: var(--admin-muted);
+  font-weight: 800;
+}
+
+.status-error {
+  border-color: #fecaca;
+  background: #fff1f2;
+  color: #dc2626;
+}
+
+.status-success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.settings-details summary {
+  cursor: pointer;
+  color: var(--admin-text);
+  font-weight: 900;
+}
+
+.token-grid,
+.opacity-grid {
   display: grid;
-  grid-template-columns: 2.25rem minmax(7rem, 0.8fr) minmax(0, 1.4fr);
-  align-items: center;
-  gap: 0.75rem;
-  border-radius: 1.1rem;
-  border: 1px solid rgb(255 255 255 / 0.09);
-  background: rgb(255 255 255 / 0.055);
-  padding: 0.65rem;
+  gap: .65rem;
+  margin-top: .85rem;
 }
-.opacity-token-row {
+
+.token-row,
+.opacity-row {
   display: grid;
-  grid-template-columns: minmax(9rem, 1fr) minmax(10rem, 1.2fr) auto;
+  grid-template-columns: minmax(130px, .7fr) auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.75rem;
-  border-radius: 1.1rem;
-  border: 1px solid rgb(255 255 255 / 0.09);
-  background: rgb(255 255 255 / 0.055);
-  padding: 0.75rem;
+  gap: .6rem;
+  color: #374151;
+  font-size: .85rem;
+  font-weight: 800;
 }
-.opacity-token-row b {
-  display: block;
-  color: rgb(255 255 255 / 0.88);
-  font-size: 0.86rem;
+
+.opacity-row {
+  grid-template-columns: minmax(150px, .7fr) minmax(120px, 1fr) 5.5rem;
 }
-.opacity-token-row small {
-  display: block;
-  margin-top: 0.15rem;
-  color: rgb(255 255 255 / 0.34);
-  font-size: 0.68rem;
-}
-.component-theme-card {
-  border-radius: 1.25rem;
-  border: 1px solid rgb(255 255 255 / 0.1);
-  background: rgb(255 255 255 / 0.045);
-  padding: 1rem;
-}
-.theme-token-row b {
-  display: block;
-  color: rgb(255 255 255 / 0.88);
-  font-size: 0.82rem;
-}
-.theme-token-row small {
-  display: block;
-  margin-top: 0.15rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: rgb(255 255 255 / 0.34);
-  font-size: 0.68rem;
-}
-.theme-color-preview,
-.theme-color-input {
+
+.color-input {
+  width: 2.5rem;
   height: 2.25rem;
-  width: 2.25rem;
-  border-radius: 0.85rem;
-  border: 1px solid rgb(255 255 255 / 0.16);
+  border: 1px solid var(--admin-border-strong);
+  border-radius: .55rem;
+  background: white;
 }
-.theme-color-input {
-  flex-shrink: 0;
-  background: rgb(255 255 255 / 0.1);
-  padding: 0.18rem;
+
+.compact-input {
+  max-width: 6rem;
 }
-@media (max-width: 720px) {
-  .theme-token-row {
-    grid-template-columns: 2.25rem minmax(0, 1fr);
+
+.component-groups {
+  display: grid;
+  gap: .85rem;
+  margin-top: .85rem;
+}
+
+.component-group {
+  border: 1px solid var(--admin-border);
+  border-radius: .75rem;
+  background: #f9fafb;
+  padding: .75rem;
+}
+
+.component-theme-card {
+  display: grid;
+  gap: .75rem;
+  margin-top: .75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: .75rem;
+  background: white;
+  padding: .85rem;
+}
+
+.component-theme-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+}
+
+.component-theme-card strong {
+  display: block;
+  color: var(--admin-text);
+}
+
+.component-theme-card small {
+  display: block;
+  color: var(--admin-muted);
+}
+
+.admin-btn.small {
+  padding: .45rem .65rem;
+  font-size: .78rem;
+}
+
+.mode-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: .75rem;
+}
+
+.mode-columns h4 {
+  margin: 0 0 .5rem;
+  color: var(--admin-text);
+}
+
+.mini-field {
+  display: grid;
+  grid-template-columns: 3rem auto minmax(0, 1fr);
+  align-items: center;
+  gap: .45rem;
+  margin-top: .45rem;
+  color: #374151;
+  font-size: .82rem;
+  font-weight: 800;
+}
+
+.deploy-checks {
+  display: grid;
+  gap: .65rem;
+  margin-top: .9rem;
+}
+
+.deploy-check {
+  border: 1px solid var(--admin-border);
+  border-radius: .7rem;
+  background: #f9fafb;
+  padding: .8rem;
+}
+
+.deploy-check span {
+  color: #b45309;
+  font-size: .75rem;
+  font-weight: 900;
+}
+
+.deploy-check.ok span {
+  color: #15803d;
+}
+
+.deploy-check strong {
+  display: block;
+  margin-top: .15rem;
+}
+
+.json-editor {
+  margin: .85rem 0;
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+  font-size: .85rem;
+}
+
+@media (max-width: 640px) {
+  .settings-header {
+    display: grid;
   }
-  .theme-token-row > div {
-    grid-column: 1 / -1;
-  }
-  .opacity-token-row {
-    grid-template-columns: minmax(0, 1fr);
+
+  .token-row,
+  .opacity-row,
+  .mini-field {
+    grid-template-columns: 1fr;
   }
 }
 </style>

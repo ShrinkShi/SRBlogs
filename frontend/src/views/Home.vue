@@ -36,6 +36,8 @@ const ui = useUiStore()
 const player = usePlayerStore()
 let clockTimer = 0
 let carouselTimer = 0
+let volumeHideTimer = 0
+const volumeOpen = ref(false)
 
 useSeo({
   title: () => settings.value?.siteTitle || settings.value?.title || '首页',
@@ -208,6 +210,18 @@ function setVolumeFromEvent(event: Event) {
   player.setVolume(Number((event.target as HTMLInputElement).value))
 }
 
+function showVolumeSlider() {
+  if (volumeHideTimer) window.clearTimeout(volumeHideTimer)
+  volumeOpen.value = true
+}
+
+function hideVolumeSliderSoon() {
+  if (volumeHideTimer) window.clearTimeout(volumeHideTimer)
+  volumeHideTimer = window.setTimeout(() => {
+    volumeOpen.value = false
+  }, 2000)
+}
+
 async function toggleLike() {
   const id = currentSongId.value
   if (!id) {
@@ -262,6 +276,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   if (clockTimer) window.clearInterval(clockTimer)
   if (carouselTimer) window.clearInterval(carouselTimer)
+  if (volumeHideTimer) window.clearTimeout(volumeHideTimer)
 })
 </script>
 
@@ -301,12 +316,12 @@ onBeforeUnmount(() => {
               <svg v-else-if="player.playMode === 'shuffle'" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5h-2V6.4l-4.8 4.8-1.4-1.4L17.6 5H16V3zM4 7h3.5l3.2 3.2-1.4 1.4L6.7 9H4V7zm10.2 5.8 4.8 4.8V16h2v5h-5v-2h1.6l-4.8-4.8 1.4-1.4zM4 17h2.7l10.1-10.1 1.4 1.4L7.5 19H4v-2z" /></svg>
               <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h8.6l-2.3-2.3L14.7 3 20 8.3l-5.3 5.3-1.4-1.7 2.3-2.3H7a3 3 0 0 0 0 6h1v2H7A5 5 0 0 1 7 7zm10 10h-4v-2h4a3 3 0 0 0 0-6h-1V7h1a5 5 0 0 1 0 10z" /></svg>
             </button>
-            <div class="volume-control">
+            <div class="volume-control" :class="{ 'volume-open': volumeOpen }" @mouseenter="showVolumeSlider" @mouseleave="hideVolumeSliderSoon" @focusin="showVolumeSlider" @focusout="hideVolumeSliderSoon">
               <button type="button" class="icon-button h-9 w-9" :aria-label="player.muted ? '取消静音' : '静音'" @click="player.toggleMuted()">
                 <svg v-if="player.muted || player.volume <= 0" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.8 3 2.6-2.6-1.4-1.4-2.6 2.6-2.6-2.6-1.4 1.4L14 12l-2.6 2.6 1.4 1.4 2.6-2.6 2.6 2.6 1.4-1.4L16.8 12z" /></svg>
                 <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-9.2v2.1a7.5 7.5 0 0 1 0 14.2v2.1a9.5 9.5 0 0 0 0-18.4z" /></svg>
               </button>
-              <input class="volume-slider" type="range" min="0" max="1" step="0.01" :value="player.muted ? 0 : player.volume" aria-label="音量" @input="setVolumeFromEvent" />
+              <input class="volume-slider" type="range" min="0" max="1" step="0.01" :value="player.muted ? 0 : player.volume" aria-label="音量" @input="setVolumeFromEvent" @pointerdown="showVolumeSlider" @pointerup="hideVolumeSliderSoon" />
             </div>
             <button type="button" class="icon-button" aria-label="previous track" @click="prevTrack">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h2v12H7zM18 6v12l-8.5-6z" /></svg>

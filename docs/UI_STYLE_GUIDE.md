@@ -405,3 +405,32 @@ Message boards use the same glass surface as article comments, music, and photow
 - 后台提供“白昼红白主题”和“夜幕红黑主题”一键应用。
 - 预设应更新全局 token 和默认组件主题；组件单独设置继续拥有覆盖能力。
 - 组件级自定义仍通过颜色、透明度、大小和字体字段微调，不得散落硬编码颜色。
+## 2026-05-05 Red/White/Black Glass Theme Rules
+
+Frontend visual direction:
+
+- Keep the frontend glass style. Do not flatten it into the admin black/white/gray tool style.
+- Default theme is `Shrink 红白黑玻璃主题`.
+- Day mode uses white, light gray, dark text, and red as the only accent.
+- Night mode uses black, dark gray, light text, and red as the only accent.
+- Red accent is used for active states, hover emphasis, links, current carousel dot, progress highlights, important button accents, and the `の` in `Shrinkの小世界🌍`.
+- Red must stay an accent, not a large surface color.
+
+Layout and spacing:
+
+- Main frontend page containers use shared side padding variables and are visually more centered than previous rounds.
+- Desktop side margin is about 150% of the previous page shell spacing.
+- Tablet and mobile use reduced padding so content remains readable.
+- Fixed elements such as the top navigation and toolbox do not participate in the page content width calculation.
+
+Theme package:
+
+- Theme packages contain day/night tokens, component theme defaults, and optional page layout data.
+- Component overrides remain supported and take priority over global token defaults.
+- Admin theme preset actions should update global tokens first; they should not remove the ability to fine-tune individual components.
+
+Player and carousel:
+
+- Home and music player controls are ordered as playback mode, volume, previous, play/pause, next, like.
+- The volume slider is vertical, floating, and remains visible while hovered or dragged.
+- Carousel indicators are placed at the bottom inside the card. The active indicator uses the red accent.

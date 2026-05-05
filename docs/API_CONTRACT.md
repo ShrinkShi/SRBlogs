@@ -1149,3 +1149,82 @@ Write behavior:
 - 保存某个页面时不得覆盖其他页面配置。
 - 删除/隐藏组件只改变页面布局引用，不删除文章、相册、音乐、项目、友链等真实内容数据。
 - 错误响应继续使用 `{ "code": "ERROR_CODE", "message": "用户可读错误", "detail": {} }`。
+## 2026-05-05 Theme Package Contract
+
+### Theme package shape
+
+Theme packages are public presentation configuration. They must not contain secrets, access tokens, backend paths, executable HTML, or scripts.
+
+```json
+{
+  "id": "shrink-red-glass",
+  "name": "Shrink 红白黑玻璃主题",
+  "description": "白天白灰红，夜间黑灰红的毛玻璃主题。",
+  "version": 1,
+  "author": "Shrink",
+  "createdAt": "2026-05-05T00:00:00Z",
+  "updatedAt": "2026-05-05T00:00:00Z",
+  "modes": {
+    "day": {
+      "bgImage": "",
+      "overlayColor": "#ffffff",
+      "overlayOpacity": 0.62,
+      "pageBg": "#f7f7f7",
+      "cardBg": "#ffffff",
+      "cardOpacity": 0.72,
+      "textPrimary": "#111111",
+      "textSecondary": "#555555",
+      "accent": "#e11d48",
+      "accentHover": "#be123c",
+      "border": "rgba(0,0,0,0.12)",
+      "shadow": "rgba(0,0,0,0.14)",
+      "fontFamily": "",
+      "fontSizeBase": 16,
+      "titleScale": 1.2,
+      "radius": 24,
+      "blur": 18
+    },
+    "night": {
+      "bgImage": "",
+      "overlayColor": "#000000",
+      "overlayOpacity": 0.62,
+      "pageBg": "#050505",
+      "cardBg": "#111111",
+      "cardOpacity": 0.72,
+      "textPrimary": "#f5f5f5",
+      "textSecondary": "#b5b5b5",
+      "accent": "#e11d48",
+      "accentHover": "#fb7185",
+      "border": "rgba(255,255,255,0.16)",
+      "shadow": "rgba(0,0,0,0.45)",
+      "fontFamily": "",
+      "fontSizeBase": 16,
+      "titleScale": 1.2,
+      "radius": 24,
+      "blur": 18
+    }
+  },
+  "componentTheme": {},
+  "pageLayouts": {}
+}
+```
+
+### `GET /api/settings/public`
+
+Public settings include the active red/white/black glass theme package and component style tokens:
+
+- `theme`: active theme id. Legacy ids `nebula`, `sakura`, `aurora`, and `cyber` are normalized to `shrink-red-glass`.
+- `themeConfig.themePackages`: public theme package registry.
+- `themeConfig.activeTheme`: active package id.
+- `themeConfig.componentTheme`: public per-component visual overrides.
+- `themeConfig.opacity`: public opacity shortcuts retained for compatibility.
+
+No secret fields may be returned.
+
+### `PUT /api/admin/settings`
+
+Admin settings can save theme packages, active theme, component overrides, and theme opacity values. Empty secret fields still preserve previous secret values. Theme package import/export is handled by the admin UI using this settings contract plus the existing page config contract when layouts are included.
+
+### Page layouts inside theme packages
+
+Theme export may include `pageLayouts`. Import/apply can choose whether to write those layouts to `/api/admin/pages/config`. If the user imports colors only, `pageLayouts` must not overwrite the current page layout configuration.

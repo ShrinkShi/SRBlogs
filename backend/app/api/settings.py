@@ -13,6 +13,9 @@ from app.services.json_service import JsonStore
 
 router = APIRouter(tags=["settings"])
 
+DEFAULT_THEME_ID = "shrink-red-glass"
+LEGACY_THEME_IDS = {"nebula", "sakura", "aurora", "cyber"}
+
 DEFAULT_OPACITY: dict[str, float] = {
     "toolboxSettingsPanel": 0.92,
     "toolboxSearchPanel": 0.92,
@@ -48,11 +51,68 @@ COMPONENT_THEME_LABELS: dict[str, str] = {
     "chatterCard": "杂谈卡片",
     "photoAlbumCard": "图片相册卡片",
     "musicPlayerPanel": "音乐页播放器面板",
-    "musicLyricsPanel": "音乐页歌词/歌单面板",
+    "musicLyricsPanel": "音乐页歌词 / 歌单面板",
     "messageBoard": "留言板",
     "searchInput": "搜索框",
     "searchButton": "搜索按钮",
     "tagButton": "标签按钮",
+}
+
+DEFAULT_THEME_MODES: dict[str, dict[str, Any]] = {
+    "day": {
+        "bgImage": "",
+        "overlayColor": "#ffffff",
+        "overlayOpacity": 0.66,
+        "pageBg": "#f7f7f7",
+        "bgPage": "#f7f7f7",
+        "cardBg": "rgba(255,255,255,.82)",
+        "bgCard": "rgba(255,255,255,.82)",
+        "bgCardElevated": "rgba(255,255,255,.92)",
+        "cardOpacity": 0.82,
+        "textPrimary": "#111111",
+        "textSecondary": "#565656",
+        "accent": "#e11d48",
+        "accentHover": "#be123c",
+        "accentSoft": "rgba(225,29,72,.14)",
+        "border": "rgba(17,17,17,.14)",
+        "borderGlass": "rgba(17,17,17,.14)",
+        "shadow": "rgba(17,17,17,.16)",
+        "shadowGlow": "rgba(225,29,72,.2)",
+        "navBg": "rgba(255,255,255,.84)",
+        "homePanelBg": "rgba(255,255,255,.82)",
+        "fontFamily": "",
+        "fontSizeBase": 16,
+        "titleScale": 1.2,
+        "radius": 24,
+        "blur": 18,
+    },
+    "night": {
+        "bgImage": "",
+        "overlayColor": "#000000",
+        "overlayOpacity": 0.68,
+        "pageBg": "#050505",
+        "bgPage": "#050505",
+        "cardBg": "rgba(16,16,18,.78)",
+        "bgCard": "rgba(16,16,18,.78)",
+        "bgCardElevated": "rgba(26,26,28,.86)",
+        "cardOpacity": 0.78,
+        "textPrimary": "#f5f5f5",
+        "textSecondary": "#b8b8b8",
+        "accent": "#e11d48",
+        "accentHover": "#fb7185",
+        "accentSoft": "rgba(225,29,72,.18)",
+        "border": "rgba(255,255,255,.16)",
+        "borderGlass": "rgba(255,255,255,.16)",
+        "shadow": "rgba(0,0,0,.45)",
+        "shadowGlow": "rgba(225,29,72,.28)",
+        "navBg": "rgba(8,8,10,.78)",
+        "homePanelBg": "rgba(16,16,18,.78)",
+        "fontFamily": "",
+        "fontSizeBase": 16,
+        "titleScale": 1.2,
+        "radius": 24,
+        "blur": 18,
+    },
 }
 
 
@@ -61,15 +121,15 @@ def _default_component_theme() -> dict[str, dict[str, Any]]:
         return {
             "label": label,
             "day": {
-                "bg": "rgba(255,255,255,.9)",
-                "text": "rgba(17,24,39,.94)",
-                "accent": "#dc2626",
-                "border": "rgba(17,24,39,.14)",
+                "bg": "rgba(255,255,255,.86)",
+                "text": "#111111",
+                "accent": "#e11d48",
+                "border": "rgba(17,17,17,.14)",
             },
             "night": {
-                "bg": "rgba(18,18,18,.88)",
-                "text": "rgba(249,250,251,.94)",
-                "accent": "#f87171",
+                "bg": "rgba(16,16,18,.82)",
+                "text": "#f5f5f5",
+                "accent": "#e11d48",
                 "border": "rgba(255,255,255,.16)",
             },
             "opacity": opacity,
@@ -109,6 +169,18 @@ def _default_component_theme() -> dict[str, dict[str, Any]]:
 
 
 DEFAULT_COMPONENT_THEME = _default_component_theme()
+DEFAULT_THEME_PACKAGE: dict[str, Any] = {
+    "id": DEFAULT_THEME_ID,
+    "name": "Shrink 红白黑玻璃主题",
+    "description": "白天白灰红、夜间黑灰红的毛玻璃主题。",
+    "version": 1,
+    "author": "Shrink",
+    "createdAt": "2026-05-05T00:00:00+08:00",
+    "updatedAt": "2026-05-05T00:00:00+08:00",
+    "modes": deepcopy(DEFAULT_THEME_MODES),
+    "componentTheme": deepcopy(DEFAULT_COMPONENT_THEME),
+    "pageLayouts": {},
+}
 
 
 def _store() -> JsonStore:
@@ -137,8 +209,8 @@ def _normalize_opacity(value: Any) -> dict[str, float]:
     return normalized
 
 
-def _normalize_component_theme(value: Any) -> dict[str, dict[str, Any]]:
-    source = value if isinstance(value, dict) else {}
+def _normalize_component_theme(value: Any, *, ignore_source: bool = False) -> dict[str, dict[str, Any]]:
+    source = {} if ignore_source else (value if isinstance(value, dict) else {})
     normalized = deepcopy(DEFAULT_COMPONENT_THEME)
     for key, fallback in DEFAULT_COMPONENT_THEME.items():
         incoming = source.get(key)
@@ -171,10 +243,47 @@ def _normalize_component_theme(value: Any) -> dict[str, dict[str, Any]]:
     return normalized
 
 
+def _normalize_theme_packages(value: Any) -> dict[str, Any]:
+    source = value if isinstance(value, dict) else {}
+    packages = {DEFAULT_THEME_ID: deepcopy(DEFAULT_THEME_PACKAGE)}
+    for key, package in source.items():
+        if not isinstance(package, dict):
+            continue
+        package_id = str(package.get("id") or key).strip()
+        if not package_id:
+            continue
+        safe = deepcopy(package)
+        safe["id"] = package_id
+        safe.setdefault("name", package_id)
+        safe.setdefault("version", 1)
+        modes = safe.get("modes") if isinstance(safe.get("modes"), dict) else {}
+        safe["modes"] = {
+            "day": {**DEFAULT_THEME_MODES["day"], **(modes.get("day") if isinstance(modes.get("day"), dict) else {})},
+            "night": {**DEFAULT_THEME_MODES["night"], **(modes.get("night") if isinstance(modes.get("night"), dict) else {})},
+        }
+        safe["componentTheme"] = _normalize_component_theme(safe.get("componentTheme"))
+        safe["pageLayouts"] = deepcopy(safe.get("pageLayouts") if isinstance(safe.get("pageLayouts"), dict) else {})
+        packages[package_id] = safe
+    return packages
+
+
 def _theme_config_with_defaults(value: Any) -> dict[str, Any]:
     theme_config = deepcopy(value) if isinstance(value, dict) else {}
+    legacy = not theme_config.get("activeTheme")
+    theme_config["activeTheme"] = str(theme_config.get("activeTheme") or DEFAULT_THEME_ID)
+    if theme_config["activeTheme"] in LEGACY_THEME_IDS:
+        theme_config["activeTheme"] = DEFAULT_THEME_ID
+    theme_config["themePackages"] = _normalize_theme_packages(theme_config.get("themePackages"))
+    theme_config["day"] = {
+        **DEFAULT_THEME_MODES["day"],
+        **({} if legacy else (theme_config.get("day") if isinstance(theme_config.get("day"), dict) else {})),
+    }
+    theme_config["night"] = {
+        **DEFAULT_THEME_MODES["night"],
+        **({} if legacy else (theme_config.get("night") if isinstance(theme_config.get("night"), dict) else {})),
+    }
     theme_config["opacity"] = _normalize_opacity(theme_config.get("opacity"))
-    theme_config["componentTheme"] = _normalize_component_theme(theme_config.get("componentTheme"))
+    theme_config["componentTheme"] = _normalize_component_theme(theme_config.get("componentTheme"), ignore_source=legacy)
     return theme_config
 
 
@@ -231,6 +340,9 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
             "admin": gitalk.get("admin", []),
         },
     }
+    theme = data.get("theme", DEFAULT_THEME_ID)
+    if theme in LEGACY_THEME_IDS:
+        theme = DEFAULT_THEME_ID
     return {
         "siteTitle": data.get("siteTitle") or data.get("title", "SRBlogs"),
         "subtitle": data.get("subtitle", ""),
@@ -238,7 +350,7 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "avatar": data.get("avatar") or data.get("avatarUrl", ""),
         "description": data.get("description") or data.get("bio", ""),
         "socialLinks": deepcopy(data.get("socialLinks") or data.get("social") or {}),
-        "theme": data.get("theme", "nebula"),
+        "theme": theme,
         "themeConfig": _theme_config_with_defaults(data.get("themeConfig")),
         "bgImages": deepcopy(data.get("bgImages") or []),
         "cloudMusicIds": deepcopy(data.get("cloudMusicIds") or []),
@@ -261,6 +373,7 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
 
 def admin_settings(data: dict[str, Any]) -> dict[str, Any]:
     result = deepcopy(data)
+    result["theme"] = DEFAULT_THEME_ID if result.get("theme") in LEGACY_THEME_IDS else result.get("theme", DEFAULT_THEME_ID)
     result["themeConfig"] = _theme_config_with_defaults(result.get("themeConfig"))
     gitalk = result.get("gitalkConfig")
     if isinstance(gitalk, dict):
@@ -344,6 +457,10 @@ def read_admin_settings():
 def write_admin_settings(payload: JsonWrite, actor: str = Depends(require_admin)):
     current = _store().read()
     incoming = _strip_computed_fields(payload.data) if isinstance(payload.data, dict) else {}
+    if incoming.get("theme") in LEGACY_THEME_IDS:
+        incoming["theme"] = DEFAULT_THEME_ID
+    if isinstance(incoming.get("themeConfig"), dict):
+        incoming["themeConfig"] = _theme_config_with_defaults(incoming.get("themeConfig"))
     for secret_section, secret_key in (
         ("gitalkConfig", "clientSecret"),
         ("qqOAuth", "appSecret"),
