@@ -1,14 +1,14 @@
 ﻿<script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import CommentBox from '@/components/CommentBox.vue'
+import PlayerVolumeControl from '@/components/PlayerVolumeControl.vue'
 import { contentApi } from '@/api/content'
 import type { MusicItem, PageConfig, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { usePlayerStore } from '@/stores/player'
 import { useUiStore } from '@/stores/ui'
-import { customBlocks, isVisible, layoutBlock, layoutStyle } from '@/utils/pageLayout'
 
 const tracks = ref<MusicItem[]>([])
 const settings = ref<SiteSettings | null>(null)
@@ -17,16 +17,11 @@ const loading = ref(false)
 const error = ref('')
 const activeTab = ref<'lyrics' | 'playlist'>('lyrics')
 const lyricText = ref('')
-const volumeOpen = ref(false)
 const player = usePlayerStore()
 const ui = useUiStore()
-let volumeHideTimer = 0
 
 const pageTitle = computed(() => pageConfig.value?.pageText?.music?.title || '音乐歌单')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.music?.subtitle || '左侧控制播放，右侧查看歌词和歌单。')
-const customLayoutBlocks = computed(() => customBlocks(pageConfig.value, 'music'))
-const blockStyle = (id: string) => layoutStyle(layoutBlock(pageConfig.value, 'music', id))
-const showBlock = (id: string) => isVisible(pageConfig.value, 'music', id)
 useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/music' })
 
 const sortedTracks = computed(() => player.tracks.length ? player.tracks : [...tracks.value].sort((a, b) => Number(b.likes || 0) - Number(a.likes || 0) || Number(a.sort ?? 0) - Number(b.sort ?? 0)))
@@ -61,24 +56,8 @@ function formatTime(value: number) {
   return `${minutes}:${seconds}`
 }
 
-function setVolumeFromEvent(event: Event) {
-  player.setVolume(Number((event.target as HTMLInputElement).value))
-}
-
 function seekFromEvent(event: Event) {
   player.seek(Number((event.target as HTMLInputElement).value))
-}
-
-function showVolumeSlider() {
-  if (volumeHideTimer) window.clearTimeout(volumeHideTimer)
-  volumeOpen.value = true
-}
-
-function hideVolumeSliderSoon() {
-  if (volumeHideTimer) window.clearTimeout(volumeHideTimer)
-  volumeHideTimer = window.setTimeout(() => {
-    volumeOpen.value = false
-  }, 500)
 }
 
 async function togglePlay() {
@@ -150,14 +129,11 @@ watch(() => currentTrack.value?.lyricUrl, async (url) => {
 
 onMounted(load)
 
-onBeforeUnmount(() => {
-  if (volumeHideTimer) window.clearTimeout(volumeHideTimer)
-})
 </script>
 
 <template>
   <section class="page-layout-grid">
-    <GlassCard v-if="showBlock('pageTitle')" class="page-title-block" :style="blockStyle('pageTitle')">
+    <GlassCard class="page-title-block">
       <div class="mx-auto max-w-3xl text-center">
         <p class="text-xs font-bold uppercase tracking-[.32em] text-fuchsia-100/45">music</p>
         <h1 class="mt-2 text-4xl font-black text-white">{{ pageTitle }}</h1>
@@ -165,21 +141,21 @@ onBeforeUnmount(() => {
       </div>
     </GlassCard>
 
-    <GlassCard v-if="loading" :style="blockStyle('playerPanel')">
+    <GlassCard v-if="loading">
       <p class="text-center text-white/60">歌单加载中...</p>
     </GlassCard>
-    <GlassCard v-else-if="error" :style="blockStyle('playerPanel')">
+    <GlassCard v-else-if="error">
       <p class="text-center text-red-200/85">{{ error }}</p>
       <div class="mt-4 text-center">
         <button class="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/70" @click="load">重试</button>
       </div>
     </GlassCard>
-    <GlassCard v-else-if="!sortedTracks.length" :style="blockStyle('playerPanel')">
+    <GlassCard v-else-if="!sortedTracks.length">
       <p class="text-center text-white/60">暂无歌曲。</p>
     </GlassCard>
 
-    <template v-else>
-      <GlassCard v-if="showBlock('playerPanel')" hover class="music-player-panel min-w-0" :style="blockStyle('playerPanel')">
+    <div v-else class="music-page-grid">
+      <GlassCard hover class="music-player-panel min-w-0">
         <div class="grid justify-items-center gap-5 text-center">
           <div class="record-disc music-page-record rounded-full" :class="{ playing: player.playing }" :style="recordStyle" aria-hidden="true"></div>
           <div class="min-w-0">
@@ -199,15 +175,7 @@ onBeforeUnmount(() => {
               <svg v-else-if="player.playMode === 'shuffle'" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5h-2V6.4l-4.8 4.8-1.4-1.4L17.6 5H16V3zM4 7h3.5l3.2 3.2-1.4 1.4L6.7 9H4V7zm10.2 5.8 4.8 4.8V16h2v5h-5v-2h1.6l-4.8-4.8 1.4-1.4zM4 17h2.7l10.1-10.1 1.4 1.4L7.5 19H4v-2z" /></svg>
               <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h8.6l-2.3-2.3L14.7 3 20 8.3l-5.3 5.3-1.4-1.7 2.3-2.3H7a3 3 0 0 0 0 6h1v2H7A5 5 0 0 1 7 7zm10 10h-4v-2h4a3 3 0 0 0 0-6h-1V7h1a5 5 0 0 1 0 10z" /></svg>
             </button>
-            <div class="volume-control" :class="{ 'volume-open': volumeOpen }" @mouseenter="showVolumeSlider" @mouseleave="hideVolumeSliderSoon" @focusin="showVolumeSlider" @focusout="hideVolumeSliderSoon">
-              <button type="button" class="icon-button h-9 w-9" :aria-label="player.muted ? '取消静音' : '静音'" @click="player.toggleMuted()">
-                <svg v-if="player.muted || player.volume <= 0" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.8 3 2.6-2.6-1.4-1.4-2.6 2.6-2.6-2.6-1.4 1.4L14 12l-2.6 2.6 1.4 1.4 2.6-2.6 2.6 2.6 1.4-1.4L16.8 12z" /></svg>
-                <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zm-2.5-9.2v2.1a7.5 7.5 0 0 1 0 14.2v2.1a9.5 9.5 0 0 0 0-18.4z" /></svg>
-              </button>
-              <div class="volume-slider-panel" aria-hidden="false">
-                <input class="volume-range" type="range" min="0" max="1" step="0.01" :value="player.muted ? 0 : player.volume" aria-label="音量" :style="{ '--volume-level': `${(player.muted ? 0 : player.volume) * 100}%` }" @input="setVolumeFromEvent" @pointerdown="showVolumeSlider" @pointerup="hideVolumeSliderSoon" />
-              </div>
-            </div>
+            <PlayerVolumeControl />
             <button type="button" class="icon-button" aria-label="previous track" @click="player.prev()">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h2v12H7zM18 6v12l-8.5-6z" /></svg>
             </button>
@@ -227,7 +195,7 @@ onBeforeUnmount(() => {
         </div>
       </GlassCard>
 
-      <GlassCard v-if="showBlock('lyricsPlaylistPanel')" hover class="music-lyrics-panel min-w-0" :style="blockStyle('lyricsPlaylistPanel')">
+      <GlassCard hover class="music-lyrics-panel min-w-0">
         <div class="flex flex-wrap gap-2">
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'lyrics' ? 'bg-[var(--accent)] text-white' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'lyrics'">歌词</button>
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'playlist' ? 'bg-[var(--accent)] text-white' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'playlist'">歌单</button>
@@ -259,11 +227,8 @@ onBeforeUnmount(() => {
           </button>
         </div>
       </GlassCard>
-    </template>
+    </div>
 
-    <CommentBox v-if="showBlock('messageBoard')" resource="music" slug="global" :style="blockStyle('messageBoard')" />
-    <GlassCard v-for="block in customLayoutBlocks" :key="block.id" :style="layoutStyle(block)">
-      <p class="text-white/70">{{ block.props?.text || block.label }}</p>
-    </GlassCard>
+    <CommentBox resource="music" slug="global" />
   </section>
 </template>

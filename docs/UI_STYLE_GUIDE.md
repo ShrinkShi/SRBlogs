@@ -1,15 +1,28 @@
-# UI Style Guide
+﻿# UI Style Guide
+
+## 2026-05-05 1100px 内容框与音量控件规范
+
+- 前台主要页面不再依赖“继续增大左右边距”来收窄内容，统一使用 `--page-content-width: 1100px` 作为桌面端主内容最大宽度。
+- 2026-05-06 起，前台布局回归 Vue/CSS 固定实现：后台不再控制组件宽度、高度、跨行、排序、添加或删除。`pageLayouts` 只作为 legacy compatibility 字段保留，不再参与前台实际布局。
+- 首页固定布局：首行名片 + 音乐播放器各半且约 290px 高；歌词区全宽居中；轮播区使用固定 mosaic CSS Grid；390px 移动端单列。
+- 主题包只管理昼夜配色、背景壁纸组、蒙层、毛玻璃强度、全局字体、全局字号、强调色和背景轮播，不再承载页面布局。
+- 页面编辑组件使用 12 栅格映射：`w=12` 约为 `1100px`，`w=6` 约为半宽，`w=4` 约为三分之一宽。页面安全边距只保护内容不贴浏览器边缘，不参与组件宽高和 grid 计算。
+- `.site-page-container` 只提供基础安全 padding；实际内容宽度由其直接子级居中限制到 `--page-content-width`。
+- 音量控件必须是独立的自定义垂直滑杆浮层：一个轨道、一个填充层、一个 thumb，不得与播放进度条共用轨道，也不得叠加第二条幽灵轨道。
+- 音量浮层锚定音量按钮向上弹出，白天/夜间都使用主题 token；轨道居中，thumb 始终位于轨道中心线上，上下保留内边距。
+- 背景图轮播使用轻量淡入淡出过渡，后台站点级开关优先，游客工具箱开关只在站点允许时生效。
+- 首页名片和首页音乐播放器默认高度约 `290px`；高度来自页面编辑 `h` 映射，不能通过裁切内容来强行压缩。
 
 ## 2026-05-05 页面边距作用域修复
 
-- 前台主体内容使用统一 `1160px` 内容宽度基准，路由根内容应通过 `--page-content-width` 居中限制到该宽度。
-- 页面编辑组件宽度按 12 栅格计算：`w=12` 约为 `1160px`，`w=6` 约为半宽，`w=4` 约为三分之一。
+- 前台主体内容使用统一 `1100px` 内容宽度基准，路由根内容应通过 `--page-content-width` 居中限制到该宽度。
+- 页面编辑组件宽度按 12 栅格计算：`w=12` 约为 `1100px`，`w=6` 约为半宽，`w=4` 约为三分之一。
 - 前台页面左右边距只作为浏览器边缘安全留白，不再作为主要内容收窄方案。
 - 页面边距配置不得参与首页 grid、组件 `w/h`、`rowSpan`、组件内部 padding、播放器宽高或歌词区高度计算。
 - `.sr-section` 不再叠加页面边距，避免主内容容器和页面段落双重收窄。
 - 页面编辑的组件高度配置在前台应作为 `min-height` 或安全高度映射使用，不得用固定 `height` 裁切名片、播放器、歌词或轮播内容。
 - 顶部导航和左下角工具箱固定位置不跟随页面边距变化。
-- 后台页面边距输入需要 clamp 到安全范围：桌面 `24-480px`，平板 `16-120px`，移动端 `8-40px`。
+- 后台不再提供页面边距作为主内容宽度控制入口；旧主题包中的 `pagePadding` 只作为兼容字段处理。
 
 ## 2026-05-05 UI/UX skill 与音量控件规范
 
@@ -19,7 +32,7 @@
 
 ## 2026-05-05 主题边距、背景组与播放器细节
 
-- 前台内容区宽度由 `--page-content-width: 1160px` 控制；`themeConfig.layout.pagePadding` 继续保留为安全留白配置和主题包字段，但不应替代 1160px 内容宽度模型。
+- 前台内容区宽度由 `--page-content-width: 1100px` 控制；`themeConfig.layout.pagePadding` 继续作为旧主题包兼容字段保留，但不应替代 1100px 内容宽度模型。
 - 主题包需要同时包含 day/night 背景壁纸组。日间模式读取 `modes.day.bgImages`，夜间模式读取 `modes.night.bgImages`，切换昼夜时背景和蒙层同步切换。
 - 音量浮层应保持毛玻璃风格，但上下必须留出内边距；鼠标离开按钮和浮层后约 0.5 秒隐藏，拖动时不得消失。
 - 音乐播放进度条必须可点击和拖动，进度高亮使用当前主题 accent，拖动后歌词状态立即跟随当前播放时间。
@@ -28,7 +41,7 @@
 
 ## 前台红白黑主题收口
 
-- 前台内容容器统一使用 `sr-page-shell` 和页面边距变量；桌面端留白继续加大，平板/移动端使用较小边距兜底。
+- 前台内容容器统一使用 `sr-page-shell` / `site-page-container` 的安全留白与 `1100px` 内容框；不要再通过继续加大页面边距来收窄主内容。
 - 白天模式文字必须使用深色主题 token，夜间模式文字使用浅色主题 token；文章详情、关于页和 Markdown 正文不得固定写死白色。
 - 播放器图标按钮使用 `--text-primary` / `--text-secondary`，hover、进度条、已喜欢和轮播激活点使用 `--accent` 红色重点色。
 - 首页歌词区只展示当前播放时间对应的单句歌词；长句允许缩小字体但不展示完整歌词列表。
@@ -467,3 +480,4 @@ Player and carousel:
 - Home and music player controls are ordered as playback mode, volume, previous, play/pause, next, like.
 - The volume slider is vertical, floating, and remains visible while hovered or dragged.
 - Carousel indicators are placed at the bottom inside the card. The active indicator uses the red accent.
+

@@ -1,5 +1,14 @@
 # Security Notes
 
+## 2026-05-05 主题包与内容布局安全规则
+
+- 主题包属于公开视觉配置，只能保存颜色、字体、透明度、背景壁纸 URL、组件样式和页面布局。
+- 主题导入、导出和一键应用不得包含 GitHub/QQ Secret、AI Key、OSS Secret、JWT、管理员密码、access token 或服务端私有路径。
+- `themeConfig.layout.pagePadding` 仅作为旧主题包兼容字段处理，可以出现在 `/api/settings/public` 中，但不再作为前台主内容宽度控制入口。
+- 主题包导出不再包含 `pageLayouts`、页面布局或组件级低代码样式。导入旧主题包时如包含 `pageLayouts` / `componentTheme`，后台只做兼容提示并忽略这些字段，不写入前台布局。
+- `/api/pages/config` 中历史布局字段只作为 legacy compatibility 保留，前台不再使用它们渲染页面结构；该配置仍不得保存脚本、Secret、access token、服务器绝对路径或任意可执行代码。
+- `modes.day.bgImages` 与 `modes.night.bgImages` 只允许保存公开可访问的壁纸 URL、名称、启用状态和默认索引，不得保存本地磁盘绝对路径或私有凭据。
+
 ## 2026-05-05 主题包与页面边距安全规则
 
 - 主题包属于公开视觉配置，只能保存颜色、字体、透明度、页面边距、背景壁纸 URL、组件样式和页面布局。

@@ -28,9 +28,9 @@ const expanded = ref('pages')
 const groups: NavGroup[] = [
   {
     key: 'pages',
-    title: '页面编辑',
+    title: '页面信息编辑',
     items: [
-      { label: '首页', path: '/pages/home', note: '布局' },
+      { label: '首页', path: '/pages/home', note: '信息' },
       { label: '文章', path: '/pages/posts', note: '标题' },
       { label: '图片', path: '/pages/photos', note: '相册' },
       { label: '音乐', path: '/pages/music', note: '播放' },

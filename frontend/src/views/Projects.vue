@@ -5,7 +5,6 @@ import SafeImage from '@/components/SafeImage.vue'
 import { contentApi } from '@/api/content'
 import type { PageConfig, ProjectItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
-import { customBlocks, isVisible, layoutBlock, layoutStyle } from '@/utils/pageLayout'
 
 const projects = ref<ProjectItem[]>([])
 const loading = ref(false)
@@ -13,9 +12,6 @@ const error = ref('')
 const pageConfig = ref<PageConfig | null>(null)
 const pageTitle = computed(() => pageConfig.value?.pageText?.projects?.title || '项目陈列柜')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.projects?.subtitle || '项目数据来自后端 JSON，可在后台表单化维护。')
-const customLayoutBlocks = computed(() => customBlocks(pageConfig.value, 'projects'))
-const blockStyle = (id: string) => layoutStyle(layoutBlock(pageConfig.value, 'projects', id))
-const showBlock = (id: string) => isVisible(pageConfig.value, 'projects', id)
 useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/projects' })
 
 async function load() {
@@ -40,13 +36,13 @@ onMounted(load)
 
 <template>
   <section class="page-layout-grid">
-    <GlassCard v-if="showBlock('pageTitle')" class="page-title-block text-center" :style="blockStyle('pageTitle')">
+    <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">projects</p>
       <h1 class="mt-2 text-4xl font-black text-white">{{ pageTitle }}</h1>
       <p class="mt-3 text-white/56">{{ pageSubtitle }}</p>
     </GlassCard>
 
-    <div v-if="showBlock('projectList')" :style="blockStyle('projectList')">
+    <div>
       <GlassCard v-if="loading">
         <p class="text-white/60">项目加载中...</p>
       </GlassCard>
@@ -78,9 +74,5 @@ onMounted(load)
         </GlassCard>
       </div>
     </div>
-
-    <GlassCard v-for="block in customLayoutBlocks" :key="block.id" :style="layoutStyle(block)">
-      <p class="text-white/70">{{ block.props?.text || block.label }}</p>
-    </GlassCard>
   </section>
 </template>

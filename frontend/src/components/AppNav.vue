@@ -46,12 +46,9 @@ onBeforeUnmount(() => {
 <template>
   <header class="app-topbar fixed left-0 right-0 top-0 z-40" :class="hidden ? 'app-topbar-hidden' : ''">
     <nav class="sr-page-shell flex min-w-0 items-center justify-between gap-4 py-3" aria-label="前台导航">
-      <RouterLink to="/" class="group flex min-w-0 items-center gap-3" aria-label="返回首页">
-        <span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-white/15 bg-white/[0.08] shadow-[0_0_35px_rgba(239,68,68,.14)]">
-          <span class="h-3 w-3 rounded-full bg-[var(--accent)] shadow-[0_0_18px_var(--shadow-glow)]"></span>
-        </span>
-        <span class="min-w-0">
-          <span class="block truncate text-lg font-black leading-tight text-white">Shrink<span class="text-[var(--accent)]">の</span>小世界🌍</span>
+      <RouterLink to="/" class="group flex min-w-0 items-center" aria-label="返回首页">
+        <span class="block min-w-0 truncate text-lg font-black leading-tight text-[var(--text-primary)]">
+          Shrink<span class="text-[var(--accent)]">の</span>小世界🌍
         </span>
       </RouterLink>
 

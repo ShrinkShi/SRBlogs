@@ -1,12 +1,12 @@
 ﻿<script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import CommentBox from '@/components/CommentBox.vue'
 import { contentApi } from '@/api/content'
 import type { PageConfig, PhotoAlbum, PhotoItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
-import { customBlocks, isVisible, layoutBlock, layoutStyle } from '@/utils/pageLayout'
+import { detectImageTone, type ImageTone } from '@/utils/imageTone'
 
 type AlbumView = PhotoAlbum & { slug: string }
 
@@ -17,11 +17,9 @@ const viewMode = ref<'grid' | 'link'>('grid')
 const loading = ref(false)
 const error = ref('')
 const pageConfig = ref<PageConfig | null>(null)
+const toneMap = reactive<Record<string, ImageTone>>({})
 const title = computed(() => pageConfig.value?.pageText?.photos?.title || '图片')
 const subtitle = computed(() => pageConfig.value?.pageText?.photos?.subtitle || '相册记录从后端 JSON 动态读取，点击封面可查看组内照片。')
-const customLayoutBlocks = computed(() => customBlocks(pageConfig.value, 'photos'))
-const blockStyle = (id: string) => layoutStyle(layoutBlock(pageConfig.value, 'photos', id))
-const showBlock = (id: string) => isVisible(pageConfig.value, 'photos', id)
 useSeo({ title: () => title.value, description: () => subtitle.value, path: '/photowall' })
 
 function slugify(value: string, fallback: string) {
@@ -58,6 +56,12 @@ function normalizeAlbum(item: PhotoItem | PhotoAlbum, index: number): AlbumView 
 
 const albums = computed(() => rawPhotos.value.map(normalizeAlbum).filter((album) => album.photos.length || album.cover))
 
+watch(albums, (list) => {
+  list.forEach(async (album) => {
+    toneMap[album.slug] = await detectImageTone(album.cover || album.photos[0]?.url, 'dark')
+  })
+}, { immediate: true })
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -76,19 +80,19 @@ onMounted(load)
 
 <template>
   <section class="page-layout-grid">
-    <GlassCard v-if="showBlock('pageTitle')" class="page-title-block text-center" :style="blockStyle('pageTitle')">
+    <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-pink-100/45">photowall</p>
       <h1 class="mt-2 text-4xl font-black text-white">{{ title }}</h1>
       <p class="mt-3 text-white/56">{{ subtitle }}</p>
     </GlassCard>
-    <div v-if="showBlock('viewModeSwitch')" class="flex justify-center" :style="blockStyle('viewModeSwitch')">
+    <div class="flex justify-center">
       <div class="inline-flex rounded-full bg-white/[0.05] p-1">
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'grid' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'grid'">矩阵网格</button>
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'link' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'link'">中枢链路</button>
       </div>
     </div>
 
-    <div v-if="showBlock('albumList')" :style="blockStyle('albumList')">
+    <div>
       <GlassCard v-if="loading">
         <p class="text-white/60">照片加载中...</p>
       </GlassCard>
@@ -106,6 +110,7 @@ onMounted(load)
         :key="album.title + album.cover"
         type="button"
         class="glass glass-hover block w-full overflow-hidden rounded-[30px] text-left"
+        :class="toneMap[album.slug] === 'light' ? 'image-tone-light' : 'image-tone-dark'"
         :aria-label="`打开相册：${album.title}`"
         @click="activeAlbum = album; active = album.photos[0] || null"
       >
@@ -134,11 +139,11 @@ onMounted(load)
         :aria-label="`打开相册：${album.title}`"
         @click="activeAlbum = album; active = album.photos[0] || null"
       >
-        <GlassCard hover class="h-full overflow-hidden !p-0">
+        <GlassCard hover class="h-full overflow-hidden !p-0" :class="toneMap[album.slug] === 'light' ? 'image-tone-light' : 'image-tone-dark'">
           <article class="flex h-full min-w-0 flex-col">
             <div class="relative h-48 overflow-hidden bg-slate-900/60">
               <SafeImage :src="album.cover || album.photos[0]?.url" :alt="album.title || 'album'" img-class="h-full w-full object-cover transition duration-300 hover:scale-[1.035]" />
-              <div class="absolute inset-0 bg-gradient-to-b from-black/0 to-black/45"></div>
+              <div class="image-contrast-overlay absolute inset-0"></div>
             </div>
             <div class="flex min-h-[14rem] flex-1 flex-col gap-3 p-5">
               <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-white/45">
@@ -156,11 +161,6 @@ onMounted(load)
       </button>
       </div>
     </div>
-
-    <GlassCard v-for="block in customLayoutBlocks" :key="block.id" :style="layoutStyle(block)">
-      <p class="text-white/70">{{ block.props?.text || block.label }}</p>
-    </GlassCard>
-
     <div
       v-if="activeAlbum"
       class="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm"

@@ -41,6 +41,7 @@ const typeOptions: { label: string; value: DiscoveryType }[] = [
 ]
 
 const bgCount = computed(() => Math.max(props.settings?.bgImages?.length || 0, themes.length))
+const siteBgSlideshowEnabled = computed(() => props.settings?.themeConfig?.backgroundSlideshowEnabled !== false)
 const themeLabel = (theme: string) => theme === 'shrink-red-glass' ? 'Shrink 红白黑玻璃主题' : theme
 const modalTitle = computed(() => activePanel.value === 'search' ? '全局搜索' : activePanel.value === 'settings' ? '游客设置' : '')
 
@@ -318,6 +319,15 @@ onBeforeUnmount(() => {
               <select :value="ui.bgIndex" @change="ui.setBgIndex(Number(($event.target as HTMLSelectElement).value))">
                 <option v-for="i in bgCount" :key="i" :value="i - 1">背景 {{ i }}</option>
               </select>
+            </label>
+            <label class="toolbox-setting toolbox-switch">
+              <span>背景轮播</span>
+              <input
+                type="checkbox"
+                :checked="siteBgSlideshowEnabled && ui.bgSlideshow"
+                :disabled="!siteBgSlideshowEnabled"
+                @change="ui.setBgSlideshow(($event.target as HTMLInputElement).checked)"
+              />
             </label>
             <label class="toolbox-setting">
               <span>字体大小</span>

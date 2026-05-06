@@ -5,16 +5,12 @@ import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import { contentApi } from '@/api/content'
 import { useSeo } from '@/composables/useSeo'
 import type { PageConfig } from '@/types'
-import { customBlocks, isVisible, layoutBlock, layoutStyle } from '@/utils/pageLayout'
 const content = ref('')
 const loading = ref(true)
 const error = ref('')
 const pageConfig = ref<PageConfig | null>(null)
 const pageTitle = computed(() => pageConfig.value?.pageText?.about?.title || '关于')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.about?.subtitle || '关于 SRBlogs 与站点作者。')
-const customLayoutBlocks = computed(() => customBlocks(pageConfig.value, 'about'))
-const blockStyle = (id: string) => layoutStyle(layoutBlock(pageConfig.value, 'about', id))
-const showBlock = (id: string) => isVisible(pageConfig.value, 'about', id)
 useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/about' })
 async function load() {
   loading.value = true
@@ -36,12 +32,12 @@ onMounted(load)
 </script>
 <template>
   <section class="page-layout-grid">
-    <GlassCard v-if="showBlock('pageTitle')" class="page-title-block text-center" :style="blockStyle('pageTitle')">
+    <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">about</p>
       <h1 class="mt-2 text-4xl font-black text-white">{{ pageTitle }}</h1>
       <p class="mt-3 text-white/56">{{ pageSubtitle }}</p>
     </GlassCard>
-    <div v-if="showBlock('markdownContent')" :style="blockStyle('markdownContent')">
+    <div>
       <GlassCard v-if="loading"><p class="text-white/60">关于页面加载中...</p></GlassCard>
       <GlassCard v-else-if="error">
         <p class="text-red-200/85">{{ error }}</p>
@@ -56,8 +52,5 @@ onMounted(load)
         <MarkdownRenderer :content="content" />
       </GlassCard>
     </div>
-    <GlassCard v-for="block in customLayoutBlocks" :key="block.id" :style="layoutStyle(block)">
-      <p class="text-white/70">{{ block.props?.text || block.label }}</p>
-    </GlassCard>
   </section>
 </template>

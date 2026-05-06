@@ -12,6 +12,7 @@ export const useUiStore = defineStore('ui', {
     theme: normalizeTheme(localStorage.getItem('sr-theme')),
     colorMode: (localStorage.getItem('sr-color-mode') || 'night') as 'day' | 'night',
     bgIndex: Number(localStorage.getItem('sr-bg-index') || '0'),
+    bgSlideshow: localStorage.getItem('sr-bg-slideshow') !== 'off',
     danmaku: localStorage.getItem('sr-danmaku') !== 'off',
     ambience: localStorage.getItem('sr-ambience') !== 'off',
     clickSound: localStorage.getItem('sr-click-sound') !== 'off',
@@ -44,6 +45,13 @@ export const useUiStore = defineStore('ui', {
     setBgIndex(index: number) {
       this.bgIndex = index
       localStorage.setItem('sr-bg-index', String(index))
+    },
+    setBgSlideshow(enabled: boolean) {
+      this.bgSlideshow = enabled
+      localStorage.setItem('sr-bg-slideshow', enabled ? 'on' : 'off')
+    },
+    toggleBgSlideshow() {
+      this.setBgSlideshow(!this.bgSlideshow)
     },
     toggleDanmaku() {
       this.danmaku = !this.danmaku

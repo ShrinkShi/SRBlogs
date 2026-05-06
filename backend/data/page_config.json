@@ -51,7 +51,7 @@
         "profileCard": {
           "order": 1,
           "w": 6.0,
-          "h": 2.0,
+          "h": 1.4,
           "rowSpan": 1,
           "visible": true,
           "label": "名片",
@@ -62,7 +62,7 @@
         "musicPlayer": {
           "order": 2,
           "w": 6.0,
-          "h": 2.0,
+          "h": 1.4,
           "rowSpan": 1,
           "visible": true,
           "label": "音乐播放器",
@@ -84,7 +84,7 @@
         "latestPostsCarousel": {
           "order": 4,
           "w": 4.0,
-          "h": 4.0,
+          "h": 2.0,
           "rowSpan": 2,
           "visible": true,
           "label": "最新文章轮播",
@@ -95,7 +95,7 @@
         "photoCarousel": {
           "order": 5,
           "w": 8.0,
-          "h": 2.0,
+          "h": 1.0,
           "rowSpan": 1,
           "visible": true,
           "label": "图片轮播",
@@ -106,7 +106,7 @@
         "updatesCarousel": {
           "order": 6,
           "w": 4.0,
-          "h": 2.0,
+          "h": 1.0,
           "rowSpan": 1,
           "visible": true,
           "label": "更新内容轮播",
@@ -117,7 +117,7 @@
         "themeToggle": {
           "order": 7,
           "w": 4.0,
-          "h": 2.0,
+          "h": 1.0,
           "rowSpan": 1,
           "visible": true,
           "label": "昼夜切换卡片",
@@ -128,7 +128,7 @@
         "statusBar": {
           "order": 8,
           "w": 12.0,
-          "h": 1.0,
+          "h": 0.5,
           "rowSpan": 1,
           "visible": true,
           "label": "底部状态区",
@@ -395,7 +395,7 @@
       "profileCard": {
         "order": 1,
         "w": 6.0,
-        "h": 2.0,
+        "h": 1.4,
         "rowSpan": 1,
         "visible": true,
         "label": "名片",
@@ -406,7 +406,7 @@
       "musicPlayer": {
         "order": 2,
         "w": 6.0,
-        "h": 2.0,
+        "h": 1.4,
         "rowSpan": 1,
         "visible": true,
         "label": "音乐播放器",
@@ -428,7 +428,7 @@
       "latestPostsCarousel": {
         "order": 4,
         "w": 4.0,
-        "h": 4.0,
+        "h": 2.0,
         "rowSpan": 2,
         "visible": true,
         "label": "最新文章轮播",
@@ -439,7 +439,7 @@
       "photoCarousel": {
         "order": 5,
         "w": 8.0,
-        "h": 2.0,
+        "h": 1.0,
         "rowSpan": 1,
         "visible": true,
         "label": "图片轮播",
@@ -450,7 +450,7 @@
       "updatesCarousel": {
         "order": 6,
         "w": 4.0,
-        "h": 2.0,
+        "h": 1.0,
         "rowSpan": 1,
         "visible": true,
         "label": "更新内容轮播",
@@ -461,7 +461,7 @@
       "themeToggle": {
         "order": 7,
         "w": 4.0,
-        "h": 2.0,
+        "h": 1.0,
         "rowSpan": 1,
         "visible": true,
         "label": "昼夜切换卡片",
@@ -472,7 +472,7 @@
       "statusBar": {
         "order": 8,
         "w": 12.0,
-        "h": 1.0,
+        "h": 0.5,
         "rowSpan": 1,
         "visible": true,
         "label": "底部状态区",
@@ -488,7 +488,7 @@
       "profileCard": {
         "order": 1,
         "w": 6.0,
-        "h": 2.0,
+        "h": 1.4,
         "rowSpan": 1,
         "visible": true,
         "label": "名片",
@@ -499,7 +499,7 @@
       "musicPlayer": {
         "order": 2,
         "w": 6.0,
-        "h": 2.0,
+        "h": 1.4,
         "rowSpan": 1,
         "visible": true,
         "label": "音乐播放器",
@@ -521,7 +521,7 @@
       "latestPostsCarousel": {
         "order": 4,
         "w": 4.0,
-        "h": 4.0,
+        "h": 2.0,
         "rowSpan": 2,
         "visible": true,
         "label": "最新文章轮播",
@@ -532,7 +532,7 @@
       "photoCarousel": {
         "order": 5,
         "w": 8.0,
-        "h": 2.0,
+        "h": 1.0,
         "rowSpan": 1,
         "visible": true,
         "label": "图片轮播",
@@ -543,7 +543,7 @@
       "updatesCarousel": {
         "order": 6,
         "w": 4.0,
-        "h": 2.0,
+        "h": 1.0,
         "rowSpan": 1,
         "visible": true,
         "label": "更新内容轮播",
@@ -554,7 +554,7 @@
       "themeToggle": {
         "order": 7,
         "w": 4.0,
-        "h": 2.0,
+        "h": 1.0,
         "rowSpan": 1,
         "visible": true,
         "label": "昼夜切换卡片",
@@ -565,7 +565,7 @@
       "statusBar": {
         "order": 8,
         "w": 12.0,
-        "h": 1.0,
+        "h": 0.5,
         "rowSpan": 1,
         "visible": true,
         "label": "底部状态区",

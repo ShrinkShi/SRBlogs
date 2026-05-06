@@ -26,8 +26,6 @@ function applyTheme() {
   const activePackage = config.themePackages?.[activeTheme]
   const packageTokens = mode === 'day' ? activePackage?.modes?.day : activePackage?.modes?.night
   const tokens = { ...(mode === 'day' ? config.day : config.night), ...(packageTokens || {}) }
-  const layoutConfig = { ...(config.layout || {}), ...(activePackage?.layout || {}) }
-  const pagePadding = layoutConfig.pagePadding || {}
   root.dataset.colorMode = mode
   const preferredScale = ui.fontScale || config.fontScale
   root.dataset.fontScale = preferredScale || 'medium'
@@ -60,16 +58,6 @@ function applyTheme() {
   }
   if (tokens?.fontFamily || config.fontFamily) root.style.setProperty('--app-font-family', tokens?.fontFamily || config.fontFamily || '')
   if (tokens?.fontSizeBase) root.style.setProperty('--theme-font-size-base', `${tokens.fontSizeBase}px`)
-  const paddingMap: Record<string, { value: unknown; fallback: number; min: number; max: number }> = {
-    '--page-side-padding-desktop': { value: pagePadding.desktop, fallback: 180, min: 24, max: 480 },
-    '--page-side-padding-tablet': { value: pagePadding.tablet, fallback: 72, min: 16, max: 120 },
-    '--page-side-padding-mobile': { value: pagePadding.mobile, fallback: 18, min: 8, max: 40 }
-  }
-  Object.entries(paddingMap).forEach(([key, config]) => {
-    const next = Number(config.value ?? config.fallback)
-    const clamped = Math.min(config.max, Math.max(config.min, Number.isFinite(next) ? next : config.fallback))
-    root.style.setProperty(key, `${clamped}px`)
-  })
   const opacityDefaults: Record<string, number> = {
     toolboxSettingsPanel: 0.92,
     toolboxSearchPanel: 0.92,
@@ -88,31 +76,9 @@ function applyTheme() {
     const value = Math.min(1, Math.max(0, Number.isFinite(raw) ? raw : fallback))
     root.style.setProperty(`--opacity-${key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)}`, String(value))
   })
-  const sizeScale: Record<string, number> = { small: 0.92, medium: 1, large: 1.08 }
-  const componentTheme = { ...(activePackage?.componentTheme || {}), ...(config.componentTheme || {}) }
-  Object.entries(componentTheme).forEach(([key, item]) => {
-    const cssKey = key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)
-    const modeTokens = mode === 'day' ? item.day : item.night
-    const opacityValue = Number(item.opacity ?? 0.86)
-    root.style.setProperty(`--ct-${cssKey}-opacity`, String(Math.min(1, Math.max(0, Number.isFinite(opacityValue) ? opacityValue : 0.86))))
-    root.style.setProperty(`--ct-${cssKey}-size`, String(sizeScale[item.size || 'medium'] ?? 1))
-    if (modeTokens?.bg) root.style.setProperty(`--ct-${cssKey}-bg`, modeTokens.bg)
-    if (modeTokens?.text) root.style.setProperty(`--ct-${cssKey}-text`, modeTokens.text)
-    if (modeTokens?.accent) root.style.setProperty(`--ct-${cssKey}-accent`, modeTokens.accent)
-    if (modeTokens?.border) root.style.setProperty(`--ct-${cssKey}-border`, modeTokens.border)
-    if (item.fontFamily) root.style.setProperty(`--ct-${cssKey}-font-family`, item.fontFamily)
-    else root.style.removeProperty(`--ct-${cssKey}-font-family`)
-    if (item.fontSize) root.style.setProperty(`--ct-${cssKey}-font-size`, `${item.fontSize}px`)
-    else root.style.removeProperty(`--ct-${cssKey}-font-size`)
-    if (item.textColor) root.style.setProperty(`--ct-${cssKey}-font-color`, item.textColor)
-    else root.style.removeProperty(`--ct-${cssKey}-font-color`)
-    if (item.textAlign) root.style.setProperty(`--ct-${cssKey}-text-align`, item.textAlign)
-    else root.style.removeProperty(`--ct-${cssKey}-text-align`)
-    if (item.fontWeight) root.style.setProperty(`--ct-${cssKey}-font-weight`, item.fontWeight)
-    else root.style.removeProperty(`--ct-${cssKey}-font-weight`)
-    if (item.fontStyle) root.style.setProperty(`--ct-${cssKey}-font-style`, item.fontStyle)
-    else root.style.removeProperty(`--ct-${cssKey}-font-style`)
-  })
+  // componentTheme is kept as legacy configuration only. Frontend layout and visual
+  // structure now use fixed Vue/CSS plus global theme tokens, not per-component
+  // low-code overrides.
 }
 
 onMounted(async () => {

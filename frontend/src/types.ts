@@ -99,6 +99,7 @@ export interface ThemePackage {
 export interface ThemeConfig {
   mode?: 'day' | 'night'
   activeTheme?: string
+  backgroundSlideshowEnabled?: boolean
   themePackages?: Record<string, ThemePackage>
   fontFamily?: string
   fontScale?: 'small' | 'medium' | 'large'

@@ -1,14 +1,30 @@
-## 2026-05-05 Theme Package And Page Padding Addendum
+﻿## 2026-05-05 Layout And Background Slideshow Contract
 
-`GET /api/settings/public` 与 `GET/PUT /api/admin/settings` 的公开主题配置新增页面边距与 day/night 背景壁纸组能力。公开接口只返回视觉与布局字段，不返回任何 Secret。
+前台主内容宽度以 `1100px` 为桌面端最大宽度基准。2026-05-06 起，前台布局回归 Vue/CSS 固定实现，`pageLayouts`、`rowSpan`、`colSpan`、`order`、`w`、`h` 仅作为 legacy compatibility 字段保留，不再驱动首页、文章、图片、音乐、项目、友链、关于的实际渲染。`themeConfig.layout.pagePadding` 仅作为旧主题包兼容字段保留，不再提供后台主流程编辑入口，也不参与前台组件宽度、组件高度或 grid 计算。
 
-前台主体内容最大宽度固定以 `1160px` 为基准，页面编辑组件宽度按 12 栅格比例计算。`themeConfig.layout.pagePadding` 只作为浏览器边缘安全留白配置，不参与页面组件宽度、组件高度、grid row/column 或 `pageLayouts` 计算。`pageLayouts` 中的 `w/h/rowSpan` 继续独立控制组件布局，二者不得互相覆盖。
+当前主题包导出契约：新导出的主题 JSON 只包含 day/night 配色、背景图组、蒙层、毛玻璃强度、全局字体、全局字号、强调色和背景轮播相关公开字段；不得包含 `pageLayouts`、页面布局、GitHub/QQ Secret、AI Key、OSS Secret、管理员 token 或服务端绝对路径。导入旧主题 JSON 时，如果发现 `pageLayouts` 或旧版 `componentTheme`，后台会给出中文兼容提示并忽略这些字段。
 
-后端保存时应将边距限制在安全范围内：
+`GET /api/settings/public` 的公开主题配置新增：
 
-- `desktop`: `24..480`
-- `tablet`: `16..120`
-- `mobile`: `8..40`
+```json
+{
+  "themeConfig": {
+    "backgroundSlideshowEnabled": true
+  }
+}
+```
+
+- `backgroundSlideshowEnabled=false` 时，前台背景图轮播被站点级关闭，游客工具箱不能强制开启。
+- `backgroundSlideshowEnabled=true` 且当前主题 day/night 背景组存在多张启用图片时，前台可按游客本地设置轮播背景，并使用淡入淡出切换。
+- 该字段是公开视觉配置，不包含 Secret。
+
+## 2026-05-05 Theme Package Compatibility Addendum
+
+`GET /api/settings/public` 与 `GET/PUT /api/admin/settings` 的公开主题配置保留旧主题包的 `pagePadding` 兼容字段，并支持 day/night 背景壁纸组。公开接口只返回视觉与布局字段，不返回任何 Secret。
+
+前台主体内容最大宽度固定以 `1100px` 为基准，页面编辑组件宽度按 12 栅格比例计算。`themeConfig.layout.pagePadding` 只作为浏览器边缘安全留白配置，不参与页面组件宽度、组件高度、grid row/column 或 `pageLayouts` 计算。`pageLayouts` 中的 `w/h/rowSpan` 继续独立控制组件布局，二者不得互相覆盖。
+
+当前后台主流程不再展示页面边距调节入口；导入旧主题包时仍会安全兼容该字段，避免旧 JSON 导入失败。
 
 主题配置字段：
 
@@ -49,7 +65,7 @@
 ```
 
 规则：
-- `pagePadding.desktop/tablet/mobile` 分别控制前台桌面、平板、移动端内容左右边距，主题导入/导出与一键应用可以携带该字段。
+- `pagePadding.desktop/tablet/mobile` 仅为旧主题包兼容字段；当前后台主流程不再提供页面边距编辑入口，前台主布局以 `1100px` 内容框为准。
 - `modes.day.bgImages` 与 `modes.night.bgImages` 是当前主题日间/夜间独立背景壁纸组；旧版 `bgImage` 或 `bgImages` 导入时应兼容迁移。
 - 后台主题管理可以新建、编辑、删除主题；当前启用主题不可直接删除。
 - 主题包导出不得包含 GitHub/QQ Secret、AI Key、OSS Secret、管理员 token 或服务端绝对路径。
@@ -1284,3 +1300,5 @@ Admin settings can save theme packages, active theme, component overrides, and t
 ### Page layouts inside theme packages
 
 Theme export may include `pageLayouts`. Import/apply can choose whether to write those layouts to `/api/admin/pages/config`. If the user imports colors only, `pageLayouts` must not overwrite the current page layout configuration.
+
+

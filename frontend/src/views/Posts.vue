@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PostList from '@/components/PostList.vue'
 import SearchBar from '@/components/SearchBar.vue'
@@ -10,7 +10,7 @@ import { contentApi } from '@/api/content'
 import type { ContentItem, PageConfig } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { formatDate } from '@/utils/date'
-import { customBlocks, isVisible, layoutBlock, layoutStyle } from '@/utils/pageLayout'
+import { detectImageTone, type ImageTone } from '@/utils/imageTone'
 
 type SectionKey = 'posts' | 'chatters'
 
@@ -25,6 +25,7 @@ const loading = ref(true)
 const error = ref('')
 const pageConfig = ref<PageConfig | null>(null)
 const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop'
+const toneMap = reactive<Record<string, ImageTone>>({})
 
 const sectionConfig = computed(() => section.value === 'chatters'
   ? {
@@ -58,10 +59,11 @@ const filtered = computed(() => {
   })
 })
 
-const pageLayoutKey = 'posts'
-const customLayoutBlocks = computed(() => customBlocks(pageConfig.value, pageLayoutKey))
-const blockStyle = (id: string) => layoutStyle(layoutBlock(pageConfig.value, pageLayoutKey, id))
-const showBlock = (id: string) => isVisible(pageConfig.value, pageLayoutKey, id)
+watch(filtered, (list) => {
+  list.forEach(async (item) => {
+    toneMap[item.slug] = await detectImageTone(item.meta.cover || fallbackCover, 'dark')
+  })
+}, { immediate: true })
 
 async function load() {
   loading.value = true
@@ -108,7 +110,7 @@ onMounted(() => {
 
 <template>
   <section class="page-layout-grid">
-    <GlassCard v-if="showBlock('pageTitle')" class="page-title-block" :style="blockStyle('pageTitle')">
+    <GlassCard class="page-title-block">
       <div class="mx-auto max-w-5xl text-center">
         <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">{{ sectionConfig.eyebrow }}</p>
         <h1 class="mt-2 text-4xl font-black text-white">{{ sectionConfig.title }}</h1>
@@ -116,18 +118,18 @@ onMounted(() => {
       </div>
     </GlassCard>
 
-    <div v-if="showBlock('sectionSwitch')" class="flex justify-center" :style="blockStyle('sectionSwitch')">
+    <div class="flex justify-center">
       <div class="inline-flex shrink-0 rounded-full bg-white/[0.06] p-1">
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="section === 'posts' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="switchSection('posts')">正经</button>
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="section === 'chatters' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="switchSection('chatters')">杂谈</button>
       </div>
     </div>
 
-    <div v-if="showBlock('searchBox')" class="mx-auto w-full max-w-5xl md:w-[86%]" :style="blockStyle('searchBox')">
+    <div class="mx-auto w-full max-w-5xl md:w-[86%]">
       <SearchBar v-model="keyword" />
     </div>
 
-    <div v-if="showBlock('tagFilter')" class="flex flex-wrap justify-center gap-2" :style="blockStyle('tagFilter')">
+    <div class="flex flex-wrap justify-center gap-2">
       <button
         v-for="tag in tags"
         :key="tag"
@@ -139,14 +141,14 @@ onMounted(() => {
       </button>
     </div>
 
-    <div v-if="showBlock('viewModeSwitch')" class="flex justify-center" :style="blockStyle('viewModeSwitch')">
+    <div class="flex justify-center">
       <div class="inline-flex rounded-full bg-white/[0.05] p-1">
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="displayMode === 'grid' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="switchMode('grid')">矩阵网格</button>
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="displayMode === 'link' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="switchMode('link')">中枢链路</button>
       </div>
     </div>
 
-    <div v-if="showBlock('contentList')" :style="blockStyle('contentList')">
+    <div>
       <StateBlock v-if="loading" :message="`${sectionConfig.title}加载中...`" />
       <StateBlock v-else-if="error" :title="`${sectionConfig.title}加载失败`" :message="error" @retry="load" />
       <PostList v-else-if="displayMode === 'grid'" :items="filtered" :base="sectionConfig.base" :empty-text="sectionConfig.empty" />
@@ -158,11 +160,11 @@ onMounted(() => {
           class="article-link-node"
           :class="index % 2 === 0 ? 'article-link-left' : 'article-link-right'"
         >
-          <GlassCard hover class="post-card-theme h-full overflow-hidden !p-0">
+          <GlassCard hover class="post-card-theme h-full overflow-hidden !p-0" :class="toneMap[item.slug] === 'light' ? 'image-tone-light' : 'image-tone-dark'">
             <article class="flex h-full min-w-0 flex-col">
               <div class="relative h-48 overflow-hidden">
                 <SafeImage :src="item.meta.cover" :fallback="fallbackCover" :alt="item.meta.title" img-class="h-full w-full object-cover transition duration-300 hover:scale-[1.035]" />
-                <div class="absolute inset-0 bg-gradient-to-b from-black/0 to-black/45"></div>
+                <div class="image-contrast-overlay absolute inset-0"></div>
               </div>
               <div class="flex min-h-[16rem] flex-1 flex-col gap-3 p-5">
                 <div class="flex flex-wrap items-center gap-2 text-xs text-white/45">
@@ -181,9 +183,5 @@ onMounted(() => {
         <GlassCard v-if="!filtered.length"><p class="text-center text-white/55">{{ sectionConfig.empty }}</p></GlassCard>
       </div>
     </div>
-
-    <GlassCard v-for="block in customLayoutBlocks" :key="block.id" :style="layoutStyle(block)">
-      <p class="text-white/70">{{ block.props?.text || block.label }}</p>
-    </GlassCard>
   </section>
 </template>

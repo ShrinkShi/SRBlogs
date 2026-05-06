@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { adminApi } from '@/api/admin'
@@ -414,8 +414,8 @@ function syncThemeFromPackage() {
   form.themeConfig.activeTheme = currentThemeId()
   if (packageConfig?.modes?.day) form.themeConfig.day = { ...defaultDay, ...packageConfig.modes.day }
   if (packageConfig?.modes?.night) form.themeConfig.night = { ...defaultNight, ...packageConfig.modes.night }
-  if (packageConfig?.componentTheme) form.themeConfig.componentTheme = mergeComponentTheme(packageConfig.componentTheme)
-  form.themeConfig.layout.pagePadding = normalizePagePadding(packageConfig?.layout?.pagePadding || form.themeConfig.layout.pagePadding)
+  form.themeConfig.componentTheme = makeComponentTheme()
+  form.themeConfig.layout.pagePadding = normalizePagePadding(form.themeConfig.layout.pagePadding)
   form.themeConfig.dayBgImagesText = bgImagesToText(form.themeConfig.day.bgImages)
   form.themeConfig.nightBgImagesText = bgImagesToText(form.themeConfig.night.bgImages)
 }
@@ -476,7 +476,7 @@ function redComponentTheme(item: ComponentThemeItem) {
   }
 }
 
-function buildThemePackage(includeLayouts = true, themeId = currentThemeId()) {
+function buildThemePackage(_includeLayouts = false, themeId = currentThemeId()) {
   const existing = (form.themeConfig.themePackages?.[themeId] || {}) as AnyRecord
   const now = new Date().toISOString()
   const day = {
@@ -499,68 +499,9 @@ function buildThemePackage(includeLayouts = true, themeId = currentThemeId()) {
     author: existing.author || 'Shrink',
     createdAt: existing.createdAt || now,
     updatedAt: now,
-    modes: { day, night },
-    componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme)),
-    pageLayouts: includeLayouts ? (pageConfig.value.pageLayouts || pageConfig.value || {}) : {},
-    layout: {
-      ...(existing.layout || {}),
-      pagePadding: normalizePagePadding(form.themeConfig.layout.pagePadding)
-    }
+    modes: { day, night }
   }
 }
-/*
-  return {
-    id: themeId,
-    name: existing.name || (themeId === 'shrink-red-glass' ? 'Shrink 红白黑玻璃主题' : themeId),
-    description: existing.description || '白天白灰红、夜间黑灰红的毛玻璃主题。',
-    version: Number(existing.version || 1),
-    author: existing.author || 'Shrink',
-    createdAt: existing.createdAt || now,
-    updatedAt: now,
-    modes: { day, night },
-    componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme)),
-    pageLayouts: includeLayouts ? (pageConfig.value.pageLayouts || pageConfig.value || {}) : {},
-    layout: {
-      ...(existing.layout || {}),
-      pagePadding: normalizePagePadding(form.themeConfig.layout.pagePadding)
-    }
-  }
-  /*
-  return {
-    id: themeId,
-    name: existing.name || (themeId === 'shrink-red-glass' ? 'Shrink 红白黑玻璃主题' : themeId),
-    description: existing.description || '白天白灰红、夜间黑灰红的毛玻璃主题。',
-    version: Number(existing.version || 1),
-    author: existing.author || 'Shrink',
-    createdAt: existing.createdAt || now,
-    updatedAt: now,
-    modes: { day, night },
-    componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme)),
-    pageLayouts: includeLayouts ? (pageConfig.value.pageLayouts || pageConfig.value || {}) : {},
-    layout: {
-      ...(existing.layout || {}),
-      pagePadding: normalizePagePadding(form.themeConfig.layout.pagePadding)
-    }
-  }
-  /*
-  return {
-    id: 'shrink-red-glass',
-    name: 'Shrink 红白黑玻璃主题',
-    description: '白天白灰红、夜间黑灰红的毛玻璃主题。',
-    version: 1,
-    author: 'Shrink',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    modes: {
-      day: { ...form.themeConfig.day },
-      night: { ...form.themeConfig.night }
-    },
-    componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme)),
-    pageLayouts: includeLayouts ? (pageConfig.value.pageLayouts || pageConfig.value || {}) : {}
-  }
-}
-
-*/
 function applyRedThemeToForm() {
   form.theme = 'shrink-red-glass'
   form.themeConfig.activeTheme = 'shrink-red-glass'
@@ -570,20 +511,14 @@ function applyRedThemeToForm() {
   form.themeConfig.nightBgImagesText = bgImagesToText(form.themeConfig.night.bgImages)
   form.themeConfig.layout.pagePadding = normalizePagePadding(form.themeConfig.layout.pagePadding)
   form.themeConfig.opacity = { ...form.themeConfig.opacity, ...defaultOpacity }
-  form.themeConfig.componentTheme = Object.fromEntries(
-    Object.entries(form.themeConfig.componentTheme).map(([key, item]) => [key, redComponentTheme(item)])
-  )
   form.themeConfig.themePackages = {
     ...(form.themeConfig.themePackages || {}),
     'shrink-red-glass': buildThemePackage(true, 'shrink-red-glass')
   }
 }
 
-async function applyRedThemeNow(includeLayout = false) {
+async function applyRedThemeNow(_includeLayout = false) {
   applyRedThemeToForm()
-  if (includeLayout) {
-    form.themeConfig.themePackages['shrink-red-glass'] = buildThemePackage(true)
-  }
   await save()
 }
 
@@ -613,32 +548,35 @@ async function importThemeFile(event: Event) {
     if (!imported || typeof imported !== 'object' || !imported.modes?.day || !imported.modes?.night) {
       throw new Error('主题文件缺少 day/night 配置。')
     }
-    const applyLayout = window.confirm('是否同时导入主题包中的页面布局？取消则只导入配色和组件样式。')
+    const ignored: string[] = []
+    if (imported.pageLayouts) ignored.push('已忽略旧版页面布局字段 pageLayouts。')
+    if (imported.componentTheme) ignored.push('已忽略旧版组件级样式字段 componentTheme。')
+    if (imported.layout?.pagePadding) ignored.push('已忽略旧版页面边距字段 pagePadding。')
     form.theme = String(imported.id || 'shrink-red-glass')
     form.themeConfig.activeTheme = form.theme
     form.themeConfig.day = { ...defaultDay, ...(imported.modes.day || {}) }
     form.themeConfig.night = { ...defaultNight, ...(imported.modes.night || {}) }
     form.themeConfig.dayBgImagesText = bgImagesToText(form.themeConfig.day.bgImages || (form.themeConfig.day.bgImage ? [form.themeConfig.day.bgImage] : []))
     form.themeConfig.nightBgImagesText = bgImagesToText(form.themeConfig.night.bgImages || (form.themeConfig.night.bgImage ? [form.themeConfig.night.bgImage] : []))
-    form.themeConfig.layout.pagePadding = normalizePagePadding(imported.layout?.pagePadding || form.themeConfig.layout.pagePadding)
-    if (imported.componentTheme) form.themeConfig.componentTheme = mergeComponentTheme(imported.componentTheme)
+    form.themeConfig.componentTheme = makeComponentTheme()
     form.themeConfig.themePackages = {
       ...(form.themeConfig.themePackages || {}),
       [form.theme]: {
-        ...imported,
-        layout: {
-          ...(imported.layout || {}),
-          pagePadding: normalizePagePadding(imported.layout?.pagePadding)
+        id: form.theme,
+        name: imported.name || form.theme,
+        description: imported.description || '',
+        version: Number(imported.version || 1),
+        author: imported.author || '',
+        createdAt: imported.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        modes: {
+          day: form.themeConfig.day,
+          night: form.themeConfig.night
         }
       }
     }
-    if (applyLayout && imported.pageLayouts) {
-      const current = pageConfig.value || {}
-      await adminApi.putJson('/admin/pages/config', { ...current, pageLayouts: imported.pageLayouts })
-      pageConfig.value = await adminApi.json<AnyRecord>('/admin/pages/config')
-    }
     await save()
-    success.value = '主题导入并应用成功。'
+    success.value = ['主题导入并应用成功。', ...ignored].join(' ')
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '主题导入失败。'
   }
@@ -667,7 +605,7 @@ function applySettings(data: AnyRecord) {
   Object.keys(form.themeConfig.opacity).forEach((key) => {
     form.themeConfig.opacity[key] = normalizeOpacity(form.themeConfig.opacity[key])
   })
-  form.themeConfig.componentTheme = mergeComponentTheme(themeConfig.componentTheme)
+  form.themeConfig.componentTheme = makeComponentTheme()
   if (!form.themeConfig.themePackages['shrink-red-glass']) {
     form.themeConfig.themePackages['shrink-red-glass'] = buildThemePackage(false, 'shrink-red-glass')
   }
@@ -755,7 +693,7 @@ function buildPayload() {
         pagePadding: normalizePagePadding(form.themeConfig.layout.pagePadding)
       },
       opacity: Object.fromEntries(Object.entries(form.themeConfig.opacity).map(([key, value]) => [key, normalizeOpacity(value)])),
-      componentTheme: JSON.parse(JSON.stringify(form.themeConfig.componentTheme))
+      componentTheme: {}
     },
     bgImages: parseLines(form.bgImagesText),
     cloudMusicIds: parseLines(form.cloudMusicIdsText),
@@ -1058,7 +996,7 @@ onMounted(load)
 
     <section v-else-if="active === 'theme'" class="settings-panel">
       <h2>主题与背景</h2>
-      <p class="panel-note">当前只保留红白黑玻璃主题；组件仍可单独微调颜色、透明度、字体和大小。</p>
+      <p class="panel-note">主题包只管理昼夜配色、背景壁纸组、蒙层、毛玻璃强度、全局字体、字号和强调色。页面布局由前台 Vue/CSS 固定实现，旧版布局字段仅兼容忽略。</p>
 
       <div class="theme-manager">
         <div class="settings-grid">
@@ -1078,7 +1016,6 @@ onMounted(load)
         </div>
         <div class="settings-actions compact">
           <button class="admin-btn admin-btn-primary" type="button" @click="applyRedThemeNow(false)">一键应用颜色和字体</button>
-          <button class="admin-btn admin-btn-ghost" type="button" @click="applyRedThemeNow(true)">一键应用颜色、字体和布局</button>
           <button class="admin-btn admin-btn-ghost" type="button" @click="createTheme">新建主题</button>
           <button class="admin-btn admin-btn-ghost" type="button" @click="editThemeMeta">编辑主题</button>
           <button class="admin-btn admin-btn-ghost" type="button" @click="deleteTheme">删除主题</button>
@@ -1087,28 +1024,6 @@ onMounted(load)
           <input ref="themeImportInput" class="hidden" type="file" accept="application/json,.json" @change="importThemeFile" />
         </div>
       </div>
-
-      <details class="settings-details" open>
-        <summary>页面边距设置</summary>
-        <p class="panel-note">边距会跟随主题包导入导出。桌面端调大后，前台内容会更收拢。</p>
-        <div class="opacity-grid">
-          <label class="opacity-row">
-            <span>桌面端左右边距 px</span>
-            <input v-model.number="form.themeConfig.layout.pagePadding.desktop" type="range" min="24" max="480" step="1" />
-            <input v-model.number="form.themeConfig.layout.pagePadding.desktop" type="number" min="24" max="480" step="1" class="admin-input compact-input" />
-          </label>
-          <label class="opacity-row">
-            <span>平板端左右边距 px</span>
-            <input v-model.number="form.themeConfig.layout.pagePadding.tablet" type="range" min="16" max="120" step="1" />
-            <input v-model.number="form.themeConfig.layout.pagePadding.tablet" type="number" min="16" max="120" step="1" class="admin-input compact-input" />
-          </label>
-          <label class="opacity-row">
-            <span>移动端左右边距 px</span>
-            <input v-model.number="form.themeConfig.layout.pagePadding.mobile" type="range" min="8" max="40" step="1" />
-            <input v-model.number="form.themeConfig.layout.pagePadding.mobile" type="number" min="8" max="40" step="1" class="admin-input compact-input" />
-          </label>
-        </div>
-      </details>
 
       <details class="settings-details">
         <summary>昼夜背景壁纸组</summary>
@@ -1141,18 +1056,6 @@ onMounted(load)
         </div>
       </details>
 
-      <details class="settings-details" open>
-        <summary>前台透明度设置</summary>
-        <p class="panel-note">范围 0 到 1。0 表示完全透明，可能导致组件不可见。</p>
-        <div class="opacity-grid">
-          <label v-for="(_, key) in form.themeConfig.opacity" :key="String(key)" class="opacity-row">
-            <span>{{ opacityLabel(String(key)) }}</span>
-            <input v-model.number="form.themeConfig.opacity[key]" type="range" min="0" max="1" step="0.01" />
-            <input v-model.number="form.themeConfig.opacity[key]" type="number" min="0" max="1" step="0.01" class="admin-input compact-input" />
-          </label>
-        </div>
-      </details>
-
       <details class="settings-details">
         <summary>交互设置</summary>
         <div class="settings-grid">
@@ -1164,68 +1067,6 @@ onMounted(load)
         </div>
       </details>
 
-      <details class="settings-details">
-        <summary>组件级样式</summary>
-        <div class="component-groups">
-          <details v-for="(items, group) in groupedComponents" :key="group" class="component-group">
-            <summary>{{ group }}</summary>
-            <article v-for="[key, item] in items" :key="key" class="component-theme-card">
-              <header>
-                <div>
-                  <strong>{{ item.label }}</strong>
-                  <small>{{ key }}</small>
-                </div>
-                <button class="admin-btn admin-btn-ghost small" type="button" @click="resetComponent(key)">恢复默认</button>
-              </header>
-              <div class="settings-grid dense">
-                <label class="field">大小档位
-                  <select v-model="item.size" class="admin-input">
-                    <option value="small">小</option>
-                    <option value="medium">中</option>
-                    <option value="large">大</option>
-                  </select>
-                </label>
-                <label class="field">透明度
-                  <input v-model.number="item.opacity" type="range" min="0" max="1" step="0.01" />
-                  <input v-model.number="item.opacity" type="number" min="0" max="1" step="0.01" class="admin-input compact-input" />
-                </label>
-                <label class="field">字体族<input v-model="item.fontFamily" class="admin-input" /></label>
-                <label class="field">字号<input v-model.number="item.fontSize" type="number" min="8" max="64" class="admin-input" /></label>
-                <label class="field">文字对齐
-                  <select v-model="item.textAlign" class="admin-input">
-                    <option value="left">靠左</option>
-                    <option value="center">居中</option>
-                    <option value="right">靠右</option>
-                  </select>
-                </label>
-                <label class="field">字体颜色
-                  <input type="color" class="color-input" :value="colorPickerValue(item.textColor)" @input="item.textColor = ($event.target as HTMLInputElement).value" />
-                  <input v-model="item.textColor" class="admin-input" />
-                </label>
-                <label class="setting-check"><input v-model="item.fontWeight" true-value="700" false-value="normal" type="checkbox" />加粗</label>
-                <label class="setting-check"><input v-model="item.fontStyle" true-value="italic" false-value="normal" type="checkbox" />斜体</label>
-              </div>
-              <div class="mode-columns">
-                <div>
-                  <h4>日间</h4>
-                  <label class="mini-field">背景<input type="color" class="color-input" :value="colorPickerValue(item.day.bg)" @input="item.day.bg = ($event.target as HTMLInputElement).value" /><input v-model="item.day.bg" class="admin-input" /></label>
-                  <label class="mini-field">文字<input type="color" class="color-input" :value="colorPickerValue(item.day.text)" @input="item.day.text = ($event.target as HTMLInputElement).value" /><input v-model="item.day.text" class="admin-input" /></label>
-                  <label class="mini-field">重点<input type="color" class="color-input" :value="colorPickerValue(item.day.accent)" @input="item.day.accent = ($event.target as HTMLInputElement).value" /><input v-model="item.day.accent" class="admin-input" /></label>
-                  <label class="mini-field">边框<input v-model="item.day.border" class="admin-input" /></label>
-                </div>
-                <div>
-                  <h4>夜间</h4>
-                  <label class="mini-field">背景<input type="color" class="color-input" :value="colorPickerValue(item.night.bg)" @input="item.night.bg = ($event.target as HTMLInputElement).value" /><input v-model="item.night.bg" class="admin-input" /></label>
-                  <label class="mini-field">文字<input type="color" class="color-input" :value="colorPickerValue(item.night.text)" @input="item.night.text = ($event.target as HTMLInputElement).value" /><input v-model="item.night.text" class="admin-input" /></label>
-                  <label class="mini-field">重点<input type="color" class="color-input" :value="colorPickerValue(item.night.accent)" @input="item.night.accent = ($event.target as HTMLInputElement).value" /><input v-model="item.night.accent" class="admin-input" /></label>
-                  <label class="mini-field">边框<input v-model="item.night.border" class="admin-input" /></label>
-                </div>
-              </div>
-            </article>
-          </details>
-          <button class="admin-btn admin-btn-ghost" type="button" @click="resetAllComponents">恢复全部组件默认样式</button>
-        </div>
-      </details>
     </section>
 
     <section v-else-if="active === 'comments'" class="settings-panel">

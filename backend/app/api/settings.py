@@ -338,6 +338,7 @@ def _theme_config_with_defaults(value: Any) -> dict[str, Any]:
     theme_config["activeTheme"] = str(theme_config.get("activeTheme") or DEFAULT_THEME_ID)
     if theme_config["activeTheme"] in LEGACY_THEME_IDS:
         theme_config["activeTheme"] = DEFAULT_THEME_ID
+    theme_config["backgroundSlideshowEnabled"] = theme_config.get("backgroundSlideshowEnabled") is not False
     theme_config["themePackages"] = _normalize_theme_packages(theme_config.get("themePackages"))
     theme_config["day"] = _normalize_mode_tokens("day", {} if legacy else (theme_config.get("day") if isinstance(theme_config.get("day"), dict) else {}))
     theme_config["night"] = _normalize_mode_tokens("night", {} if legacy else (theme_config.get("night") if isinstance(theme_config.get("night"), dict) else {}))

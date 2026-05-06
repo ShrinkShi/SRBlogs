@@ -1,20 +1,29 @@
 <script setup lang="ts">
+import { reactive, watch } from 'vue'
 import type { ContentItem } from '@/types'
 import GlassCard from './GlassCard.vue'
 import SafeImage from './SafeImage.vue'
 import { formatDate } from '@/utils/date'
+import { detectImageTone, type ImageTone } from '@/utils/imageTone'
 
-withDefaults(defineProps<{ items: ContentItem[]; base: string; emptyText?: string }>(), {
+const props = withDefaults(defineProps<{ items: ContentItem[]; base: string; emptyText?: string }>(), {
   emptyText: '没有匹配内容。'
 })
 
 const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop'
+const toneMap = reactive<Record<string, ImageTone>>({})
+
+watch(() => props.items, (items) => {
+  items.forEach(async (item) => {
+    toneMap[item.slug] = await detectImageTone(item.meta.cover || fallbackCover, 'dark')
+  })
+}, { immediate: true, deep: true })
 </script>
 
 <template>
   <div class="grid min-w-0 gap-5 sm:grid-cols-2 xl:grid-cols-3">
     <RouterLink v-for="item in items" :key="item.slug" :to="`${base}/${item.slug}`" class="block min-w-0">
-      <GlassCard hover class="post-card-theme h-full overflow-hidden !p-0">
+      <GlassCard hover class="post-card-theme h-full overflow-hidden !p-0" :class="toneMap[item.slug] === 'light' ? 'image-tone-light' : 'image-tone-dark'">
         <article class="flex h-full min-w-0 flex-col">
           <div class="relative h-48 overflow-hidden bg-slate-900/60">
             <SafeImage
@@ -23,7 +32,7 @@ const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c
               :alt="item.meta.title"
               img-class="h-full w-full object-cover opacity-90 transition duration-300 hover:scale-[1.035]"
             />
-            <div class="absolute inset-0 bg-gradient-to-b from-black/0 via-black/10 to-black/45"></div>
+            <div class="image-contrast-overlay absolute inset-0"></div>
           </div>
           <div class="flex min-h-[16rem] flex-1 flex-col gap-3 p-5">
             <div class="flex items-center justify-between gap-3 text-xs text-white/45">
