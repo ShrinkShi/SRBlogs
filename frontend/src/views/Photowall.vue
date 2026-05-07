@@ -109,13 +109,13 @@ onMounted(load)
         v-for="album in albums"
         :key="album.title + album.cover"
         type="button"
-        class="glass glass-hover block w-full overflow-hidden rounded-[30px] text-left"
+        class="photo-card-theme glass glass-hover block w-full overflow-hidden rounded-[30px] text-left"
         :class="toneMap[album.slug] === 'light' ? 'image-tone-light' : 'image-tone-dark'"
         :aria-label="`打开相册：${album.title}`"
         @click="activeAlbum = album; active = album.photos[0] || null"
       >
         <SafeImage :src="album.cover || album.photos[0]?.url" :alt="album.title || 'album'" img-class="relative z-[1] aspect-[4/3] w-full object-cover transition duration-300 hover:scale-[1.035]" />
-        <div class="relative z-[1] flex min-h-48 flex-col p-4">
+        <div class="photo-card-content relative z-[1] flex min-h-48 flex-col p-4">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h3 class="break-words font-bold text-white">{{ album.title || '未命名相册' }}</h3>
             <span v-if="album.date" class="text-xs text-white/42">{{ album.date }}</span>
@@ -123,7 +123,7 @@ onMounted(load)
           <p class="mt-1 text-xs text-white/42">{{ album.photos.length }} 张照片</p>
           <p v-if="album.description" class="mt-1 break-words text-sm leading-6 text-white/55">{{ album.description }}</p>
           <div v-if="album.tags?.length" class="mt-auto flex flex-wrap gap-2 pt-3">
-            <span v-for="tag in album.tags" :key="tag" class="rounded-full border border-white/10 px-2 py-1 text-[11px] text-white/50">#{{ tag }}</span>
+            <span v-for="tag in album.tags" :key="tag" class="content-tag rounded-full border px-2 py-1 text-[11px]">#{{ tag }}</span>
           </div>
         </div>
       </button>
@@ -139,13 +139,13 @@ onMounted(load)
         :aria-label="`打开相册：${album.title}`"
         @click="activeAlbum = album; active = album.photos[0] || null"
       >
-        <GlassCard hover class="h-full overflow-hidden !p-0" :class="toneMap[album.slug] === 'light' ? 'image-tone-light' : 'image-tone-dark'">
+        <GlassCard hover class="photo-card-theme h-full overflow-hidden !p-0" :class="toneMap[album.slug] === 'light' ? 'image-tone-light' : 'image-tone-dark'">
           <article class="flex h-full min-w-0 flex-col">
             <div class="relative h-48 overflow-hidden bg-slate-900/60">
               <SafeImage :src="album.cover || album.photos[0]?.url" :alt="album.title || 'album'" img-class="h-full w-full object-cover transition duration-300 hover:scale-[1.035]" />
               <div class="image-contrast-overlay absolute inset-0"></div>
             </div>
-            <div class="flex min-h-[14rem] flex-1 flex-col gap-3 p-5">
+            <div class="photo-card-content flex min-h-[14rem] flex-1 flex-col gap-3 p-5">
               <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-white/45">
                 <span v-if="album.date">{{ album.date }}</span>
                 <span>{{ album.photos.length }} 张照片</span>
@@ -153,7 +153,7 @@ onMounted(load)
               <h2 class="line-clamp-2 text-xl font-black text-white">{{ album.title || '未命名相册' }}</h2>
               <p v-if="album.description" class="line-clamp-3 text-sm leading-7 text-white/58">{{ album.description }}</p>
               <div v-if="album.tags?.length" class="mt-auto flex flex-wrap gap-2 pt-3">
-                <span v-for="tag in album.tags" :key="tag" class="rounded-full border border-cyan-200/15 bg-cyan-200/[0.08] px-3 py-1 text-xs text-cyan-100/65"># {{ tag }}</span>
+                <span v-for="tag in album.tags" :key="tag" class="content-tag rounded-full border px-3 py-1 text-xs"># {{ tag }}</span>
               </div>
             </div>
           </article>

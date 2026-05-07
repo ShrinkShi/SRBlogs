@@ -29,7 +29,7 @@ function applyTheme() {
   root.dataset.colorMode = mode
   const preferredScale = ui.fontScale || config.fontScale
   root.dataset.fontScale = preferredScale || 'medium'
-  if (config.fontFamily) root.style.setProperty('--app-font-family', config.fontFamily)
+  root.style.setProperty('--app-font-family', '"Consolas-with-Yahei", Consolas, "Microsoft YaHei", "微软雅黑", "Courier New", monospace')
   const map: Record<string, string | undefined> = {
     '--bg-page': tokens?.bgPage || tokens?.pageBg,
     '--bg-card': tokens?.bgCard || tokens?.cardBg,
@@ -56,24 +56,21 @@ function applyTheme() {
   } else {
     root.style.removeProperty('--bg-overlay-opacity')
   }
-  if (tokens?.fontFamily || config.fontFamily) root.style.setProperty('--app-font-family', tokens?.fontFamily || config.fontFamily || '')
   if (tokens?.fontSizeBase) root.style.setProperty('--theme-font-size-base', `${tokens.fontSizeBase}px`)
   const opacityDefaults: Record<string, number> = {
-    toolboxSettingsPanel: 0.92,
-    toolboxSearchPanel: 0.92,
-    toolboxCalculatorPanel: 0.90,
-    homeCard: 0.82,
-    homeCarousel: 0.82,
-    contentCard: 0.82,
-    photoCard: 0.82,
-    musicPanel: 0.88,
-    messageBoard: 0.86,
-    navBar: 0.72
+    toolboxSettingsPanel: 0.05,
+    toolboxSearchPanel: 0.05,
+    toolboxCalculatorPanel: 0.05,
+    homeCard: 0.05,
+    homeCarousel: 0.05,
+    contentCard: 0.05,
+    photoCard: 0.05,
+    musicPanel: 0.05,
+    messageBoard: 0.05,
+    navBar: 0.05
   }
-  const opacity = (config.opacity || {}) as Record<string, number>
   Object.entries(opacityDefaults).forEach(([key, fallback]) => {
-    const raw = Number(opacity[key] ?? fallback)
-    const value = Math.min(1, Math.max(0, Number.isFinite(raw) ? raw : fallback))
+    const value = Math.min(1, Math.max(0, fallback))
     root.style.setProperty(`--opacity-${key.replace(/[A-Z]/g, (char) => `-${char.toLowerCase()}`)}`, String(value))
   })
   // componentTheme is kept as legacy configuration only. Frontend layout and visual

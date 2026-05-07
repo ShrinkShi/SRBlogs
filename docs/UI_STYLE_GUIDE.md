@@ -1,4 +1,23 @@
-﻿# UI Style Guide
+# UI Style Guide
+## 2026-05-07 背景蒙层透明度规范
+
+- 壁纸是前台背景的主要视觉来源，昼夜蒙层只负责统一色调，默认不应超过 `0.28`。
+- 当前红白黑玻璃主题建议：日间蒙层约 `0.08`，夜间蒙层约 `0.24`；如导入主题给出更高值，前台需要做安全上限以避免壁纸被压成纯色。
+- 径向装饰层应保持很低透明度，只做氛围补充，不得覆盖壁纸细节。
+## 2026-05-07 前台壁纸轮播背景规范
+
+- 前台背景必须优先保持壁纸氛围，不得把主题背景误处理成纯色页面背景。
+- 背景图来源顺序为：当前昼夜模式壁纸组、单张模式壁纸、旧版全站壁纸列表；当前模式未配置壁纸时必须回退旧版壁纸列表。
+- 白天/夜间蒙层只用于统一红白黑玻璃主题色调，不能遮蔽到看不出壁纸。
+- 背景切换继续使用淡入淡出动画；游客工具箱里的背景选择数量应按当前有效壁纸列表计算。
+
+## 2026-05-06 前台可读性与分段控件规范
+
+- 前台普通内容文字必须走主题 token：白天使用 `--text-primary` / `--text-secondary`，夜间使用对应浅色 token；不要在非图片背景正文里固定 `text-white`。
+- 以图片为背景的卡片、轮播和封面继续使用图片明暗判断：深图白字、浅图黑字，并配合轻微遮罩和 text-shadow 保证可读。
+- “正经 / 杂谈”“矩阵网格 / 中枢链路”“歌词 / 歌单”等切换控件统一使用分段按钮样式：文字水平垂直居中，active 使用红色 `--accent` 和高对比文字，inactive 读取主题文字色。
+- 搜索框输入文字、placeholder 和搜索按钮必须读取主题 token，白天模式不得出现不可读白字。
+- 音乐页固定布局需保持左侧播放器、右侧歌词/歌单面板、下方留言板完整显示；面板不得使用过小高度或 `overflow:hidden` 裁切核心内容。
 
 ## 2026-05-05 1100px 内容框与音量控件规范
 
@@ -430,7 +449,7 @@ Message boards use the same glass surface as article comments, music, and photow
 
 - 白天模式：白色、浅灰、深灰文字为主，红色只作为重点色。
 - 夜间模式：黑色、深灰、浅灰文字为主，红色只作为重点色。
-- 红色重点色用于 active、hover、链接重点态、轮播当前点、导航品牌中的 `の` 等小面积强调。
+- 红色重点色用于 active、hover、链接重点态、轮播当前点、导航品牌中的 `<`、`/`、`>` 等小面积强调。
 - 保持前台毛玻璃质感，不改成后台黑白灰平面风。
 
 ### 首页布局
@@ -459,7 +478,7 @@ Frontend visual direction:
 - Default theme is `Shrink 红白黑玻璃主题`.
 - Day mode uses white, light gray, dark text, and red as the only accent.
 - Night mode uses black, dark gray, light text, and red as the only accent.
-- Red accent is used for active states, hover emphasis, links, current carousel dot, progress highlights, important button accents, and the `の` in `Shrinkの小世界🌍`.
+- Red accent is used for active states, hover emphasis, links, current carousel dot, progress highlights, important button accents, and the `<`, `/`, `>` symbols in `<Shrink/>`.
 - Red must stay an accent, not a large surface color.
 
 Layout and spacing:
@@ -481,3 +500,16 @@ Player and carousel:
 - The volume slider is vertical, floating, and remains visible while hovered or dragged.
 - Carousel indicators are placed at the bottom inside the card. The active indicator uses the red accent.
 
+## 2026-05-06 前台卡片文字与音乐页布局规则
+
+- 图片明暗自适应只用于压在图片上的标题、摘要和轮播覆盖文案。
+- 文章卡片、杂谈卡片、相册卡片的图片下方正文必须跟随主题文字 token：白天深色，夜间浅色。
+- 内容卡片标签使用透明背景、边框和主题文字色，不使用红色实心填充。
+- 分段切换控件统一使用居中对齐、红色 active 背景和高对比文字。
+- 音乐页保持固定两栏：左播放器、右歌词/歌单面板；面板不得塌陷或裁切内容。
+
+## 2026-05-07 工具箱与背景层规则
+
+- 游客工具箱必须显式区分日间和夜间状态：日间使用浅色玻璃面板、深色文字和深色表单控件文字；夜间使用深色玻璃面板、浅色文字。
+- 左下角工具箱悬浮球和展开菜单也要随昼夜模式切换背景、边框和文字色，不允许日间仍保留深色菜单加白字造成风格断层。
+- 前台背景不是纯色背景。主题应使用“壁纸图层 + 昼夜蒙层 + 毛玻璃内容”的结构，壁纸图层必须保持可辨识，只由蒙层负责统一白/灰/红或黑/灰/红氛围。

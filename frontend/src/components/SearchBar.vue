@@ -11,13 +11,13 @@ const inputRef = ref<HTMLInputElement | null>(null)
       ref="inputRef"
       v-model="model"
       aria-label="搜索标题、标签或内容"
-      class="w-full bg-transparent text-sm text-white outline-none placeholder:text-white/45"
+      class="w-full bg-transparent text-sm outline-none"
       placeholder="搜索标题、标签或内容..."
     />
     <button
       type="button"
       aria-label="搜索"
-      class="search-button-theme grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950/88 text-cyan-100 shadow-[0_8px_18px_rgba(0,0,0,.22)] transition hover:scale-105 hover:text-white"
+      class="search-button-theme grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950/88 shadow-[0_8px_18px_rgba(0,0,0,.22)] transition hover:scale-105"
       @click="inputRef?.focus()"
     >
       <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

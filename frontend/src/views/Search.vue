@@ -84,9 +84,9 @@ onMounted(async () => {
     <GlassCard class="page-title-block text-center">
       <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">search</p>
       <h1 class="mt-2 text-4xl font-black text-white">全站搜索</h1>
-      <form class="mx-auto mt-5 flex w-full max-w-5xl items-center gap-2 rounded-[22px] border border-white/12 bg-white/[0.28] px-3 py-2 shadow-inner shadow-white/[0.04] transition focus-within:border-cyan-200/55 focus-within:bg-white/[0.34] md:w-[82%]" @submit.prevent="syncQuery(); load()">
-        <input v-model="q" aria-label="搜索关键词" class="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45" placeholder="搜索文章、瞬间、项目、音乐..." />
-        <button type="submit" class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950/88 text-cyan-100 shadow-[0_8px_18px_rgba(0,0,0,.22)] transition hover:scale-105 hover:text-white" aria-label="搜索">
+      <form class="search-input-theme mx-auto mt-5 flex w-full max-w-5xl items-center gap-2 rounded-[22px] border px-3 py-2 shadow-inner shadow-white/[0.04] transition md:w-[82%]" @submit.prevent="syncQuery(); load()">
+        <input v-model="q" aria-label="搜索关键词" class="min-w-0 flex-1 bg-transparent text-sm outline-none" placeholder="搜索文章、瞬间、项目、音乐..." />
+        <button type="submit" class="search-button-theme grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950/88 shadow-[0_8px_18px_rgba(0,0,0,.22)] transition hover:scale-105" aria-label="搜索">
           <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-3.6-3.6" />
@@ -94,10 +94,10 @@ onMounted(async () => {
         </button>
       </form>
       <div class="mt-4 flex flex-wrap gap-2">
-        <button v-for="option in typeOptions" :key="option.value" class="rounded-full border px-3 py-1 text-sm" :class="type === option.value ? 'border-cyan-200/50 bg-cyan-200/[0.16] text-cyan-100' : 'border-white/10 text-white/55 hover:bg-white/10'" @click="type = option.value; syncQuery(); load()">{{ option.label }}</button>
+        <button v-for="option in typeOptions" :key="option.value" class="filter-chip" :class="type === option.value ? 'filter-chip-active' : ''" @click="type = option.value; syncQuery(); load()">{{ option.label }}</button>
       </div>
       <div v-if="tags.length" class="mt-4 flex flex-wrap gap-2">
-        <button v-for="item in tags.slice(0, 12)" :key="item.tag" class="rounded-full border px-3 py-1 text-xs" :class="tag === item.tag ? 'border-fuchsia-200/50 bg-fuchsia-200/[0.16] text-fuchsia-100' : 'border-white/10 text-white/50 hover:bg-white/10'" @click="chooseTag(item.tag)"># {{ item.tag }} · {{ item.count }}</button>
+        <button v-for="item in tags.slice(0, 12)" :key="item.tag" class="filter-chip text-xs" :class="tag === item.tag ? 'filter-chip-active' : ''" @click="chooseTag(item.tag)"># {{ item.tag }} · {{ item.count }}</button>
       </div>
     </GlassCard>
 

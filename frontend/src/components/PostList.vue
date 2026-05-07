@@ -34,15 +34,15 @@ watch(() => props.items, (items) => {
             />
             <div class="image-contrast-overlay absolute inset-0"></div>
           </div>
-          <div class="flex min-h-[16rem] flex-1 flex-col gap-3 p-5">
+          <div class="post-card-content flex min-h-[16rem] flex-1 flex-col gap-3 p-5">
             <div class="flex items-center justify-between gap-3 text-xs text-white/45">
               <span>{{ formatDate(item.meta.date) }}</span>
               <span>{{ item.content.length }} chars</span>
             </div>
             <h2 class="line-clamp-2 text-xl font-black text-white">{{ item.meta.title }}</h2>
             <p class="line-clamp-3 text-sm leading-7 text-white/58">{{ item.meta.summary || item.content.slice(0, 120) }}</p>
-            <div class="mt-auto flex flex-wrap gap-2 pt-3">
-              <span v-for="tag in item.meta.tags" :key="tag" class="rounded-full border border-cyan-200/15 bg-cyan-200/[0.08] px-3 py-1 text-xs text-cyan-100/65"># {{ tag }}</span>
+            <div class="content-card-tags mt-auto flex flex-wrap gap-2 pt-3">
+              <span v-for="tag in item.meta.tags" :key="tag" class="content-tag rounded-full border px-3 py-1 text-xs"># {{ tag }}</span>
             </div>
           </div>
         </article>

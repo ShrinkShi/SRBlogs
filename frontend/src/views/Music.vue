@@ -156,7 +156,7 @@ onMounted(load)
 
     <div v-else class="music-page-grid">
       <GlassCard hover class="music-player-panel min-w-0">
-        <div class="grid justify-items-center gap-5 text-center">
+        <div class="music-player-core">
           <div class="record-disc music-page-record rounded-full" :class="{ playing: player.playing }" :style="recordStyle" aria-hidden="true"></div>
           <div class="min-w-0">
             <h2 class="break-words text-3xl font-black text-white">{{ currentTrack?.title }}</h2>
@@ -196,22 +196,22 @@ onMounted(load)
       </GlassCard>
 
       <GlassCard hover class="music-lyrics-panel min-w-0">
-        <div class="flex flex-wrap gap-2">
+        <div class="music-tab-header flex flex-wrap gap-2">
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'lyrics' ? 'bg-[var(--accent)] text-white' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'lyrics'">歌词</button>
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'playlist' ? 'bg-[var(--accent)] text-white' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'playlist'">歌单</button>
         </div>
 
-        <div v-if="activeTab === 'lyrics'" class="mt-5 max-h-[32rem] overflow-auto whitespace-pre-line rounded-[24px] bg-white/[0.05] p-5 text-center text-sm leading-8 text-white/68">
+        <div v-if="activeTab === 'lyrics'" class="music-tab-content mt-5 max-h-[32rem] overflow-auto whitespace-pre-line rounded-[24px] p-5 text-center text-sm leading-8">
           {{ displayLyrics }}
         </div>
 
-        <div v-else class="mt-5 grid gap-3">
+        <div v-else class="music-tab-content mt-5 grid max-h-[32rem] gap-3 overflow-auto rounded-[24px] p-3">
           <button
             v-for="(item, index) in sortedTracks"
             :key="`${item.id || item.url}-${item.title}`"
             type="button"
-            class="flex min-w-0 items-center gap-4 rounded-[24px] bg-white/[0.055] p-3 text-left transition hover:scale-[1.015] hover:bg-white/[0.08]"
-            :class="player.current === index ? 'ring-1 ring-[var(--accent)]/40' : ''"
+            class="music-playlist-item flex min-w-0 items-center gap-4 rounded-[24px] p-3 text-left transition hover:scale-[1.015]"
+            :class="player.current === index ? 'music-playlist-item-active' : ''"
             @click="selectTrack(index)"
           >
             <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/10">
@@ -229,6 +229,6 @@ onMounted(load)
       </GlassCard>
     </div>
 
-    <CommentBox resource="music" slug="global" />
+    <CommentBox class="music-page-comments" resource="music" slug="global" />
   </section>
 </template>

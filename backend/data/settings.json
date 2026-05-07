@@ -78,7 +78,7 @@
     "enableChat": true,
     "apiKey": ""
   },
-  "siteTitle": "Shrink の 小世界🌍",
+  "siteTitle": "时锐 | Shrink",
   "subtitle": "",
   "author": "Shrink",
   "avatar": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=500&auto=format&fit=crop",
@@ -119,7 +119,7 @@
       "bgImages": [],
       "activeBgIndex": 0,
       "overlayColor": "#ffffff",
-      "overlayOpacity": "0.005",
+      "overlayOpacity": "0",
       "pageBg": "#f7f7f7",
       "bgPage": "#f7f7f7",
       "cardBg": "rgba(255,255,255,.82)",
@@ -148,7 +148,7 @@
       "bgImages": [],
       "activeBgIndex": 0,
       "overlayColor": "#000000",
-      "overlayOpacity": "0.68",
+      "overlayOpacity": "0.24",
       "pageBg": "#050505",
       "bgPage": "#050505",
       "cardBg": "rgba(16,16,18,.78)",
@@ -188,21 +188,21 @@
       "topNav": {
         "label": "顶部导航栏",
         "day": {
-          "bg": "rgba(255,255,255,.5)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.5)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.5,
+        "opacity": 0.72,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -211,21 +211,21 @@
       "toolboxFab": {
         "label": "左下角工具箱悬浮球",
         "day": {
-          "bg": "rgba(255,255,255,.65)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(26,26,30,.65)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.65,
+        "opacity": 0.86,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -234,21 +234,21 @@
       "toolboxMenu": {
         "label": "工具箱菜单",
         "day": {
-          "bg": "rgba(255,255,255,.55)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.55)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.55,
+        "opacity": 0.86,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -257,21 +257,21 @@
       "toolboxSettingsPanel": {
         "label": "工具箱设置弹窗",
         "day": {
-          "bg": "rgba(255,255,255,.6)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(20,20,22,.6)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.6,
+        "opacity": 0.92,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -280,21 +280,21 @@
       "toolboxSearchPanel": {
         "label": "工具箱全局搜索弹窗",
         "day": {
-          "bg": "rgba(255,255,255,.6)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(20,20,22,.6)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.6,
+        "opacity": 0.92,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -303,21 +303,21 @@
       "toolboxCalculatorPanel": {
         "label": "工具箱计算器弹窗",
         "day": {
-          "bg": "rgba(255,255,255,.6)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(20,20,22,.6)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.6,
+        "opacity": 0.9,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -326,21 +326,21 @@
       "toast": {
         "label": "Toast 提示",
         "day": {
-          "bg": "rgba(255,255,255,.8)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(26,26,30,.8)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.8,
+        "opacity": 0.86,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -349,21 +349,21 @@
       "homeProfileCard": {
         "label": "首页名片",
         "day": {
-          "bg": "rgba(255,255,255,.45)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.45)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.45,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -372,21 +372,21 @@
       "homeMusicPlayer": {
         "label": "首页音乐播放器",
         "day": {
-          "bg": "rgba(255,255,255,.45)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.45)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.45,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -395,21 +395,21 @@
       "homeLyrics": {
         "label": "首页歌词区",
         "day": {
-          "bg": "rgba(255,255,255,.45)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.45)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.45,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -418,21 +418,21 @@
       "homeLatestPostsCarousel": {
         "label": "首页最新文章轮播",
         "day": {
-          "bg": "rgba(255,255,255,.45)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.45)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.45,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -441,21 +441,21 @@
       "homePhotoCarousel": {
         "label": "首页图片轮播",
         "day": {
-          "bg": "rgba(255,255,255,.45)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.45)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.45,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -464,21 +464,21 @@
       "homeUpdatesCarousel": {
         "label": "首页更新内容轮播",
         "day": {
-          "bg": "rgba(255,255,255,.45)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.45)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.45,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -487,21 +487,21 @@
       "homeThemeToggle": {
         "label": "首页昼夜切换卡片",
         "day": {
-          "bg": "rgba(255,255,255,.45)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.45)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.45,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -510,21 +510,21 @@
       "homeStatusBar": {
         "label": "首页底部状态区",
         "day": {
-          "bg": "rgba(255,255,255,.45)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.45)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.45,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -533,21 +533,21 @@
       "sectionSwitch": {
         "label": "正经 / 杂谈切换按钮",
         "day": {
-          "bg": "rgba(255,255,255,.5)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.5)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.5,
+        "opacity": 0.86,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -556,21 +556,21 @@
       "viewModeSwitch": {
         "label": "矩阵网格 / 中枢链路切换按钮",
         "day": {
-          "bg": "rgba(255,255,255,.5)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.5)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.5,
+        "opacity": 0.86,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -579,21 +579,21 @@
       "postCard": {
         "label": "文章卡片",
         "day": {
-          "bg": "rgba(255,255,255,.5)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.5)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.5,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -602,21 +602,21 @@
       "chatterCard": {
         "label": "杂谈卡片",
         "day": {
-          "bg": "rgba(255,255,255,.5)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.5)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.5,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -625,21 +625,21 @@
       "photoAlbumCard": {
         "label": "图片相册卡片",
         "day": {
-          "bg": "rgba(255,255,255,.5)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.5)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.5,
+        "opacity": 0.82,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -648,21 +648,21 @@
       "musicPlayerPanel": {
         "label": "音乐页播放器面板",
         "day": {
-          "bg": "rgba(255,255,255,.55)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(20,20,22,.55)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.55,
+        "opacity": 0.88,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -671,21 +671,21 @@
       "musicLyricsPanel": {
         "label": "音乐页歌词 / 歌单面板",
         "day": {
-          "bg": "rgba(255,255,255,.55)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(20,20,22,.55)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.55,
+        "opacity": 0.88,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -694,21 +694,21 @@
       "messageBoard": {
         "label": "留言板",
         "day": {
-          "bg": "rgba(255,255,255,.5)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.5)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.5,
+        "opacity": 0.86,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -717,21 +717,21 @@
       "searchInput": {
         "label": "搜索框",
         "day": {
-          "bg": "rgba(255,255,255,.55)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.55)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.55,
+        "opacity": 0.86,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -740,21 +740,21 @@
       "searchButton": {
         "label": "搜索按钮",
         "day": {
-          "bg": "rgba(255,255,255,.55)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.55)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.55,
+        "opacity": 0.86,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -763,21 +763,21 @@
       "tagButton": {
         "label": "标签按钮",
         "day": {
-          "bg": "rgba(255,255,255,.55)",
-          "text": "#1a1a1a",
+          "bg": "rgba(255,255,255,.86)",
+          "text": "#111111",
           "accent": "#e11d48",
-          "border": "rgba(0,0,0,.08)"
+          "border": "rgba(17,17,17,.14)"
         },
         "night": {
-          "bg": "rgba(16,16,18,.55)",
-          "text": "#f0f0f0",
+          "bg": "rgba(16,16,18,.82)",
+          "text": "#f5f5f5",
           "accent": "#e11d48",
-          "border": "rgba(255,255,255,.08)"
+          "border": "rgba(255,255,255,.16)"
         },
-        "opacity": 0.55,
+        "opacity": 0.86,
         "size": "medium",
         "fontFamily": "",
-        "fontSize": 16.0,
+        "fontSize": 16,
         "textColor": "",
         "textAlign": "left",
         "fontWeight": "normal",
@@ -793,14 +793,14 @@
         "version": 1,
         "author": "Shrink",
         "createdAt": "2026-05-05T04:10:22.039Z",
-        "updatedAt": "2026-05-05T11:10:23.129Z",
+        "updatedAt": "2026-05-07T11:40:43.956Z",
         "modes": {
           "day": {
             "bgImage": "",
             "bgImages": [],
             "activeBgIndex": 0,
             "overlayColor": "#ffffff",
-            "overlayOpacity": "0.005",
+            "overlayOpacity": "0",
             "pageBg": "#f7f7f7",
             "bgPage": "#f7f7f7",
             "cardBg": "rgba(255,255,255,.82)",
@@ -829,7 +829,7 @@
             "bgImages": [],
             "activeBgIndex": 0,
             "overlayColor": "#000000",
-            "overlayOpacity": "0.68",
+            "overlayOpacity": "0.24",
             "pageBg": "#050505",
             "bgPage": "#050505",
             "cardBg": "rgba(16,16,18,.78)",
@@ -858,21 +858,21 @@
           "topNav": {
             "label": "顶部导航栏",
             "day": {
-              "bg": "rgba(255,255,255,.5)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.5)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.5,
+            "opacity": 0.72,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -881,21 +881,21 @@
           "toolboxFab": {
             "label": "左下角工具箱悬浮球",
             "day": {
-              "bg": "rgba(255,255,255,.65)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(26,26,30,.65)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.65,
+            "opacity": 0.86,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -904,21 +904,21 @@
           "toolboxMenu": {
             "label": "工具箱菜单",
             "day": {
-              "bg": "rgba(255,255,255,.55)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.55)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.55,
+            "opacity": 0.86,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -927,21 +927,21 @@
           "toolboxSettingsPanel": {
             "label": "工具箱设置弹窗",
             "day": {
-              "bg": "rgba(255,255,255,.6)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(20,20,22,.6)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.6,
+            "opacity": 0.92,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -950,21 +950,21 @@
           "toolboxSearchPanel": {
             "label": "工具箱全局搜索弹窗",
             "day": {
-              "bg": "rgba(255,255,255,.6)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(20,20,22,.6)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.6,
+            "opacity": 0.92,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -973,21 +973,21 @@
           "toolboxCalculatorPanel": {
             "label": "工具箱计算器弹窗",
             "day": {
-              "bg": "rgba(255,255,255,.6)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(20,20,22,.6)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.6,
+            "opacity": 0.9,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -996,21 +996,21 @@
           "toast": {
             "label": "Toast 提示",
             "day": {
-              "bg": "rgba(255,255,255,.8)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(26,26,30,.8)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.8,
+            "opacity": 0.86,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1019,21 +1019,21 @@
           "homeProfileCard": {
             "label": "首页名片",
             "day": {
-              "bg": "rgba(255,255,255,.45)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.45)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.45,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1042,21 +1042,21 @@
           "homeMusicPlayer": {
             "label": "首页音乐播放器",
             "day": {
-              "bg": "rgba(255,255,255,.45)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.45)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.45,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1065,21 +1065,21 @@
           "homeLyrics": {
             "label": "首页歌词区",
             "day": {
-              "bg": "rgba(255,255,255,.45)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.45)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.45,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1088,21 +1088,21 @@
           "homeLatestPostsCarousel": {
             "label": "首页最新文章轮播",
             "day": {
-              "bg": "rgba(255,255,255,.45)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.45)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.45,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1111,21 +1111,21 @@
           "homePhotoCarousel": {
             "label": "首页图片轮播",
             "day": {
-              "bg": "rgba(255,255,255,.45)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.45)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.45,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1134,21 +1134,21 @@
           "homeUpdatesCarousel": {
             "label": "首页更新内容轮播",
             "day": {
-              "bg": "rgba(255,255,255,.45)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.45)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.45,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1157,21 +1157,21 @@
           "homeThemeToggle": {
             "label": "首页昼夜切换卡片",
             "day": {
-              "bg": "rgba(255,255,255,.45)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.45)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.45,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1180,21 +1180,21 @@
           "homeStatusBar": {
             "label": "首页底部状态区",
             "day": {
-              "bg": "rgba(255,255,255,.45)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.45)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.45,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1203,21 +1203,21 @@
           "sectionSwitch": {
             "label": "正经 / 杂谈切换按钮",
             "day": {
-              "bg": "rgba(255,255,255,.5)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.5)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.5,
+            "opacity": 0.86,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1226,21 +1226,21 @@
           "viewModeSwitch": {
             "label": "矩阵网格 / 中枢链路切换按钮",
             "day": {
-              "bg": "rgba(255,255,255,.5)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.5)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.5,
+            "opacity": 0.86,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1249,21 +1249,21 @@
           "postCard": {
             "label": "文章卡片",
             "day": {
-              "bg": "rgba(255,255,255,.5)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.5)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.5,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1272,21 +1272,21 @@
           "chatterCard": {
             "label": "杂谈卡片",
             "day": {
-              "bg": "rgba(255,255,255,.5)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.5)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.5,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1295,21 +1295,21 @@
           "photoAlbumCard": {
             "label": "图片相册卡片",
             "day": {
-              "bg": "rgba(255,255,255,.5)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.5)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.5,
+            "opacity": 0.82,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1318,21 +1318,21 @@
           "musicPlayerPanel": {
             "label": "音乐页播放器面板",
             "day": {
-              "bg": "rgba(255,255,255,.55)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(20,20,22,.55)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.55,
+            "opacity": 0.88,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1341,21 +1341,21 @@
           "musicLyricsPanel": {
             "label": "音乐页歌词 / 歌单面板",
             "day": {
-              "bg": "rgba(255,255,255,.55)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(20,20,22,.55)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.55,
+            "opacity": 0.88,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1364,21 +1364,21 @@
           "messageBoard": {
             "label": "留言板",
             "day": {
-              "bg": "rgba(255,255,255,.5)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.5)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.5,
+            "opacity": 0.86,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1387,21 +1387,21 @@
           "searchInput": {
             "label": "搜索框",
             "day": {
-              "bg": "rgba(255,255,255,.55)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.55)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.55,
+            "opacity": 0.86,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1410,21 +1410,21 @@
           "searchButton": {
             "label": "搜索按钮",
             "day": {
-              "bg": "rgba(255,255,255,.55)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.55)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.55,
+            "opacity": 0.86,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
@@ -1433,375 +1433,31 @@
           "tagButton": {
             "label": "标签按钮",
             "day": {
-              "bg": "rgba(255,255,255,.55)",
-              "text": "#1a1a1a",
+              "bg": "rgba(255,255,255,.86)",
+              "text": "#111111",
               "accent": "#e11d48",
-              "border": "rgba(0,0,0,.08)"
+              "border": "rgba(17,17,17,.14)"
             },
             "night": {
-              "bg": "rgba(16,16,18,.55)",
-              "text": "#f0f0f0",
+              "bg": "rgba(16,16,18,.82)",
+              "text": "#f5f5f5",
               "accent": "#e11d48",
-              "border": "rgba(255,255,255,.08)"
+              "border": "rgba(255,255,255,.16)"
             },
-            "opacity": 0.55,
+            "opacity": 0.86,
             "size": "medium",
             "fontFamily": "",
-            "fontSize": 16.0,
+            "fontSize": 16,
             "textColor": "",
             "textAlign": "left",
             "fontWeight": "normal",
             "fontStyle": "normal"
           }
         },
-        "pageLayouts": {
-          "home": {
-            "layoutVersion": 2,
-            "components": {
-              "profileCard": {
-                "order": 1,
-                "w": 6,
-                "h": 2,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "名片",
-                "type": "profileCard",
-                "locked": true,
-                "props": {}
-              },
-              "musicPlayer": {
-                "order": 2,
-                "w": 6,
-                "h": 2,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "音乐播放器",
-                "type": "musicPlayer",
-                "locked": true,
-                "props": {}
-              },
-              "lyrics": {
-                "order": 3,
-                "w": 12,
-                "h": 0.6,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "歌词区",
-                "type": "lyrics",
-                "locked": true,
-                "props": {}
-              },
-              "latestPostsCarousel": {
-                "order": 4,
-                "w": 4,
-                "h": 4,
-                "rowSpan": 2,
-                "visible": true,
-                "label": "最新文章轮播",
-                "type": "latestPostsCarousel",
-                "locked": true,
-                "props": {}
-              },
-              "photoCarousel": {
-                "order": 5,
-                "w": 8,
-                "h": 2,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "图片轮播",
-                "type": "photoCarousel",
-                "locked": true,
-                "props": {}
-              },
-              "updatesCarousel": {
-                "order": 6,
-                "w": 4,
-                "h": 2,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "更新内容轮播",
-                "type": "updatesCarousel",
-                "locked": true,
-                "props": {}
-              },
-              "themeToggle": {
-                "order": 7,
-                "w": 4,
-                "h": 2,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "昼夜切换卡片",
-                "type": "themeToggle",
-                "locked": true,
-                "props": {}
-              },
-              "statusBar": {
-                "order": 8,
-                "w": 12,
-                "h": 1,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "底部状态区",
-                "type": "statusBar",
-                "locked": true,
-                "props": {}
-              }
-            }
-          },
-          "posts": {
-            "layoutVersion": 1,
-            "components": {
-              "pageTitle": {
-                "order": 1,
-                "w": 12,
-                "h": 1.4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "页面标题区",
-                "type": "pageTitle",
-                "locked": true,
-                "props": {}
-              },
-              "sectionSwitch": {
-                "order": 2,
-                "w": 12,
-                "h": 0.8,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "正经 / 杂谈切换",
-                "type": "sectionSwitch",
-                "locked": true,
-                "props": {}
-              },
-              "searchBox": {
-                "order": 3,
-                "w": 12,
-                "h": 0.8,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "搜索区",
-                "type": "searchBox",
-                "locked": true,
-                "props": {}
-              },
-              "tagFilter": {
-                "order": 4,
-                "w": 12,
-                "h": 0.8,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "标签筛选区",
-                "type": "tagFilter",
-                "locked": true,
-                "props": {}
-              },
-              "viewModeSwitch": {
-                "order": 5,
-                "w": 12,
-                "h": 0.8,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "显示模式切换",
-                "type": "viewModeSwitch",
-                "locked": true,
-                "props": {}
-              },
-              "contentList": {
-                "order": 6,
-                "w": 12,
-                "h": 4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "内容列表区",
-                "type": "contentList",
-                "locked": true,
-                "props": {}
-              }
-            }
-          },
-          "photos": {
-            "layoutVersion": 1,
-            "components": {
-              "pageTitle": {
-                "order": 1,
-                "w": 12,
-                "h": 1.4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "页面标题区",
-                "type": "pageTitle",
-                "locked": true,
-                "props": {}
-              },
-              "viewModeSwitch": {
-                "order": 2,
-                "w": 12,
-                "h": 0.8,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "显示模式切换",
-                "type": "viewModeSwitch",
-                "locked": true,
-                "props": {}
-              },
-              "albumList": {
-                "order": 3,
-                "w": 12,
-                "h": 4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "相册列表区",
-                "type": "albumList",
-                "locked": true,
-                "props": {}
-              },
-              "messageBoard": {
-                "order": 4,
-                "w": 12,
-                "h": 2,
-                "rowSpan": 1,
-                "visible": false,
-                "label": "留言板区域",
-                "type": "messageBoard",
-                "locked": true,
-                "props": {}
-              }
-            }
-          },
-          "music": {
-            "layoutVersion": 1,
-            "components": {
-              "pageTitle": {
-                "order": 1,
-                "w": 12,
-                "h": 1.4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "页面标题区",
-                "type": "pageTitle",
-                "locked": true,
-                "props": {}
-              },
-              "playerPanel": {
-                "order": 2,
-                "w": 5,
-                "h": 4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "音乐播放器面板",
-                "type": "playerPanel",
-                "locked": true,
-                "props": {}
-              },
-              "lyricsPlaylistPanel": {
-                "order": 3,
-                "w": 7,
-                "h": 4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "歌词 / 歌单面板",
-                "type": "lyricsPlaylistPanel",
-                "locked": true,
-                "props": {}
-              },
-              "messageBoard": {
-                "order": 4,
-                "w": 12,
-                "h": 2,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "留言板",
-                "type": "messageBoard",
-                "locked": true,
-                "props": {}
-              }
-            }
-          },
-          "projects": {
-            "layoutVersion": 1,
-            "components": {
-              "pageTitle": {
-                "order": 1,
-                "w": 12,
-                "h": 1.4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "页面标题区",
-                "type": "pageTitle",
-                "locked": true,
-                "props": {}
-              },
-              "projectList": {
-                "order": 2,
-                "w": 12,
-                "h": 4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "项目列表区",
-                "type": "projectList",
-                "locked": true,
-                "props": {}
-              }
-            }
-          },
-          "friends": {
-            "layoutVersion": 1,
-            "components": {
-              "pageTitle": {
-                "order": 1,
-                "w": 12,
-                "h": 1.4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "页面标题区",
-                "type": "pageTitle",
-                "locked": true,
-                "props": {}
-              },
-              "friendList": {
-                "order": 2,
-                "w": 12,
-                "h": 4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "友链列表区",
-                "type": "friendList",
-                "locked": true,
-                "props": {}
-              }
-            }
-          },
-          "about": {
-            "layoutVersion": 1,
-            "components": {
-              "pageTitle": {
-                "order": 1,
-                "w": 12,
-                "h": 1.4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "页面标题区",
-                "type": "pageTitle",
-                "locked": true,
-                "props": {}
-              },
-              "markdownContent": {
-                "order": 2,
-                "w": 12,
-                "h": 4,
-                "rowSpan": 1,
-                "visible": true,
-                "label": "Markdown 内容区",
-                "type": "markdownContent",
-                "locked": true,
-                "props": {}
-              }
-            }
-          }
-        },
+        "pageLayouts": {},
         "layout": {
           "pagePadding": {
-            "desktop": 213,
+            "desktop": 180,
             "tablet": 72,
             "mobile": 18
           }
@@ -1814,7 +1470,8 @@
         "tablet": 72,
         "mobile": 18
       }
-    }
+    },
+    "backgroundSlideshowEnabled": true
   },
   "interaction": {
     "clickSoundEnabled": true,

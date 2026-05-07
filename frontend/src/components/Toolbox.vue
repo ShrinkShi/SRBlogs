@@ -40,7 +40,29 @@ const typeOptions: { label: string; value: DiscoveryType }[] = [
   { label: '音乐', value: 'music' }
 ]
 
-const bgCount = computed(() => Math.max(props.settings?.bgImages?.length || 0, themes.length))
+function countBackgrounds(value: unknown) {
+  const list = Array.isArray(value) ? value : value ? [value] : []
+  return list.filter((item: unknown) => {
+    if (typeof item === 'string') return item.trim()
+    if (item && typeof item === 'object') {
+      const entry = item as { url?: string; enabled?: boolean }
+      return entry.enabled !== false && typeof entry.url === 'string' && entry.url.trim()
+    }
+    return false
+  }).length
+}
+
+const bgCount = computed(() => {
+  const config = props.settings?.themeConfig
+  const activeTheme = config?.activeTheme || props.settings?.theme || 'shrink-red-glass'
+  const activePackage = config?.themePackages?.[activeTheme]
+  const localTokens = ui.colorMode === 'day' ? config?.day : config?.night
+  const packageTokens = ui.colorMode === 'day' ? activePackage?.modes?.day : activePackage?.modes?.night
+  const modeTokens = { ...(localTokens || {}), ...(packageTokens || {}) } as { bgImages?: unknown; bgImage?: unknown }
+  const modeCount = countBackgrounds(modeTokens.bgImages) || countBackgrounds(modeTokens.bgImage)
+  const legacyCount = countBackgrounds(props.settings?.bgImages)
+  return Math.max(modeCount || legacyCount, themes.length)
+})
 const siteBgSlideshowEnabled = computed(() => props.settings?.themeConfig?.backgroundSlideshowEnabled !== false)
 const themeLabel = (theme: string) => theme === 'shrink-red-glass' ? 'Shrink 红白黑玻璃主题' : theme
 const modalTitle = computed(() => activePanel.value === 'search' ? '全局搜索' : activePanel.value === 'settings' ? '游客设置' : '')
@@ -202,7 +224,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div data-toolbox-root class="fixed bottom-5 left-5 z-40">
+  <div data-toolbox-root class="fixed bottom-5 left-5 z-40" :class="ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night'">
     <div
       v-if="menuOpen"
       class="toolbox-menu mb-3 grid min-w-40 gap-2 rounded-[26px] border border-white/15 bg-slate-950/82 p-3 text-sm text-white/82 shadow-2xl backdrop-blur-2xl"
@@ -231,6 +253,7 @@ onBeforeUnmount(() => {
       v-if="activePanel === 'calculator'"
       data-toolbox-modal
       class="toolbox-calculator-panel fixed bottom-24 left-5 z-[92] grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[28px] border border-white/15 p-4 text-white shadow-2xl backdrop-blur-2xl"
+      :class="ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night'"
       role="dialog"
       aria-label="计算器"
       @click.stop
@@ -260,11 +283,12 @@ onBeforeUnmount(() => {
       v-if="activePanel === 'search' || activePanel === 'settings'"
       data-toolbox-modal
       class="fixed inset-0 z-[90] grid place-items-center bg-black/68 p-4 backdrop-blur-md"
+      :class="ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night'"
       role="dialog"
       aria-modal="true"
       @click.self="closePanel"
     >
-      <section class="toolbox-modal toolbox-modal-panel max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/15 text-white shadow-2xl backdrop-blur-2xl" :class="activePanel === 'search' ? 'toolbox-modal-panel-search' : 'toolbox-modal-panel-settings'">
+      <section class="toolbox-modal toolbox-modal-panel max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/15 text-white shadow-2xl backdrop-blur-2xl" :class="[activePanel === 'search' ? 'toolbox-modal-panel-search' : 'toolbox-modal-panel-settings', ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night']">
         <header class="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-[.28em] text-cyan-100/45">toolbox</p>
@@ -450,6 +474,65 @@ onBeforeUnmount(() => {
 :global(:root[data-color-mode='day']) .toolbox-calculator-panel {
   color: rgb(15, 23, 42);
 }
+:global(:root[data-color-mode='day']) .toolbox-menu {
+  background: color-mix(in srgb, var(--ct-toolbox-menu-bg, rgb(255 255 255)) calc(var(--ct-toolbox-menu-opacity, .94) * 100%), transparent) !important;
+  border-color: rgba(15, 23, 42, .14);
+  color: rgb(17, 24, 39);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, .18);
+}
+:global(:root[data-color-mode='day']) .toolbox-menu-item {
+  color: rgb(17, 24, 39);
+}
+:global(:root[data-color-mode='day']) .toolbox-menu-item:hover {
+  background: rgba(244, 0, 2, .08);
+  color: rgb(127, 29, 29);
+}
+:global(:root[data-color-mode='day']) .toolbox-fab {
+  background: color-mix(in srgb, var(--ct-toolbox-fab-bg, rgb(255 255 255)) calc(var(--ct-toolbox-fab-opacity, .94) * 100%), transparent) !important;
+  border-color: rgba(244, 0, 2, .28);
+  color: #f40002;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, .18), 0 0 24px rgba(244, 0, 2, .16);
+}
+:global(:root[data-color-mode='day']) .toolbox-modal-panel header {
+  border-color: rgba(15, 23, 42, .1);
+}
+:global(:root[data-color-mode='day']) .toolbox-modal-panel :where(h1,h2,h3,p,span,label,small) {
+  color: rgb(17, 24, 39);
+}
+:global(:root[data-color-mode='day']) .toolbox-modal-panel :where(input, select, textarea) {
+  color: rgb(17, 24, 39);
+}
+:global(:root[data-color-mode='day']) .toolbox-modal-panel header p {
+  color: #f40002;
+}
+:global(:root[data-color-mode='day']) .toolbox-setting {
+  background: color-mix(in srgb, var(--bg-card-elevated, rgb(255 255 255)) 86%, transparent);
+  border-color: rgba(15, 23, 42, .1);
+  color: rgb(17, 24, 39);
+}
+:global(:root[data-color-mode='day']) .toolbox-setting :where(span,p,label) {
+  color: rgb(17, 24, 39) !important;
+}
+:global(:root[data-color-mode='day']) .toolbox-setting select,
+:global(:root[data-color-mode='day']) .toolbox-setting input[type='range'] {
+  background: color-mix(in srgb, var(--bg-card-elevated, rgb(255 255 255)) 94%, transparent);
+  border-color: rgba(15, 23, 42, .18);
+  color: rgb(17, 24, 39);
+}
+:global(:root[data-color-mode='day']) .toolbox-setting select option {
+  background: rgb(255, 255, 255);
+  color: rgb(17, 24, 39);
+}
+:global(:root[data-color-mode='night']) .toolbox-setting select option {
+  background: rgb(15, 23, 42);
+  color: rgb(248, 250, 252);
+}
+:global(:root[data-color-mode='day']) .toolbox-modal-panel button:not(.toolbox-key) {
+  color: rgb(17, 24, 39);
+}
+:global(:root[data-color-mode='day']) .toolbox-modal-panel button:hover {
+  background: rgba(244, 0, 2, .08);
+}
 .toolbox-setting select,
 .toolbox-setting input[type='range'] {
   min-width: 0;
@@ -467,5 +550,107 @@ onBeforeUnmount(() => {
   width: 1.15rem;
   height: 1.15rem;
   accent-color: var(--accent);
+}
+
+.toolbox-day.toolbox-modal-panel,
+.toolbox-day.toolbox-calculator-panel {
+  color: rgb(17, 24, 39) !important;
+  background: color-mix(in srgb, rgb(248 250 252) calc(var(--ct-toolbox-settings-panel-opacity, var(--opacity-toolbox-settings-panel, .94)) * 100%), transparent) !important;
+  border-color: rgba(15, 23, 42, .12) !important;
+}
+
+.toolbox-night.toolbox-modal-panel,
+.toolbox-night.toolbox-calculator-panel {
+  color: rgb(248, 250, 252) !important;
+  background: color-mix(in srgb, rgb(15 23 42) calc(var(--ct-toolbox-settings-panel-opacity, var(--opacity-toolbox-settings-panel, .9)) * 100%), transparent) !important;
+  border-color: rgba(255, 255, 255, .14) !important;
+}
+
+.toolbox-day .toolbox-menu {
+  background: color-mix(in srgb, rgb(255 255 255) calc(var(--ct-toolbox-menu-opacity, .94) * 100%), transparent) !important;
+  border-color: rgba(15, 23, 42, .14) !important;
+  color: rgb(17, 24, 39) !important;
+}
+
+.toolbox-night .toolbox-menu {
+  background: color-mix(in srgb, rgb(15 23 42) calc(var(--ct-toolbox-menu-opacity, .9) * 100%), transparent) !important;
+  border-color: rgba(255, 255, 255, .14) !important;
+  color: rgb(248, 250, 252) !important;
+}
+
+.toolbox-day .toolbox-menu-item {
+  color: rgb(17, 24, 39) !important;
+}
+
+.toolbox-night .toolbox-menu-item {
+  color: rgba(248, 250, 252, .86) !important;
+}
+
+.toolbox-day .toolbox-menu-item:hover {
+  background: rgba(244, 0, 2, .08) !important;
+  color: rgb(127, 29, 29) !important;
+}
+
+.toolbox-night .toolbox-menu-item:hover {
+  background: rgba(255, 255, 255, .1) !important;
+  color: rgb(255, 255, 255) !important;
+}
+
+.toolbox-day .toolbox-fab {
+  background: color-mix(in srgb, rgb(255 255 255) calc(var(--ct-toolbox-fab-opacity, .94) * 100%), transparent) !important;
+  border-color: rgba(244, 0, 2, .32) !important;
+  color: #f40002 !important;
+}
+
+.toolbox-night .toolbox-fab {
+  background: color-mix(in srgb, rgb(15 23 42) calc(var(--ct-toolbox-fab-opacity, .86) * 100%), transparent) !important;
+  border-color: rgba(244, 0, 2, .34) !important;
+  color: #fb7185 !important;
+}
+
+.toolbox-day.toolbox-modal-panel :where(h1,h2,h3,p,span,label,small),
+.toolbox-day.toolbox-calculator-panel :where(h1,h2,h3,p,span,label,small),
+.toolbox-day .toolbox-setting :where(span,p,label,small) {
+  color: rgb(17, 24, 39) !important;
+}
+
+.toolbox-night.toolbox-modal-panel :where(h1,h2,h3,p,span,label,small),
+.toolbox-night.toolbox-calculator-panel :where(h1,h2,h3,p,span,label,small),
+.toolbox-night .toolbox-setting :where(span,p,label,small) {
+  color: rgba(248, 250, 252, .86) !important;
+}
+
+.toolbox-day .toolbox-setting {
+  background: rgba(255, 255, 255, .82) !important;
+  border-color: rgba(15, 23, 42, .1) !important;
+  color: rgb(17, 24, 39) !important;
+}
+
+.toolbox-night .toolbox-setting {
+  background: rgba(15, 23, 42, .78) !important;
+  border-color: rgba(255, 255, 255, .12) !important;
+  color: rgba(248, 250, 252, .86) !important;
+}
+
+.toolbox-day .toolbox-setting :where(select, input[type='range'], textarea) {
+  background-color: rgba(255, 255, 255, .94) !important;
+  border-color: rgba(15, 23, 42, .18) !important;
+  color: rgb(17, 24, 39) !important;
+}
+
+.toolbox-night .toolbox-setting :where(select, input[type='range'], textarea) {
+  background-color: rgba(15, 23, 42, .88) !important;
+  border-color: rgba(255, 255, 255, .16) !important;
+  color: rgb(248, 250, 252) !important;
+}
+
+.toolbox-day .toolbox-setting select option {
+  background: rgb(255, 255, 255) !important;
+  color: rgb(17, 24, 39) !important;
+}
+
+.toolbox-night .toolbox-setting select option {
+  background: rgb(15, 23, 42) !important;
+  color: rgb(248, 250, 252) !important;
 }
 </style>

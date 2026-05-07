@@ -132,7 +132,7 @@ watch(() => `${props.resource}/${props.slug}`, load)
 </script>
 
 <template>
-  <GlassCard class="mt-8">
+  <GlassCard class="comment-board mt-8">
     <div class="flex flex-wrap items-end justify-between gap-3">
       <div>
         <p class="text-xs font-bold tracking-[.28em] text-cyan-100/45">留言</p>

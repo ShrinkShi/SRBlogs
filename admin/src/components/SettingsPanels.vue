@@ -146,7 +146,7 @@ const defaultOpacity: Record<string, number> = {
 const defaultDay = {
   bgImage: '',
   overlayColor: '#ffffff',
-  overlayOpacity: '0.66',
+  overlayOpacity: '0.16',
   pageBg: '#f7f7f7',
   bgPage: '#f7f7f7',
   cardBg: 'rgba(255,255,255,.82)',
@@ -174,7 +174,7 @@ const defaultDay = {
 const defaultNight = {
   bgImage: '',
   overlayColor: '#000000',
-  overlayOpacity: '0.68',
+  overlayOpacity: '0.30',
   pageBg: '#050505',
   bgPage: '#050505',
   cardBg: 'rgba(16,16,18,.78)',

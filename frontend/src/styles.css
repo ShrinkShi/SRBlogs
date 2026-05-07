@@ -33,16 +33,16 @@
   --status-info: rgba(103, 232, 249, 0.88);
   --motion-ease: cubic-bezier(.2, .8, .2, 1);
   --toolbox-panel-rgb: 12 16 32;
-  --opacity-toolbox-settings-panel: .92;
-  --opacity-toolbox-search-panel: .92;
-  --opacity-toolbox-calculator-panel: .9;
-  --opacity-home-card: .82;
-  --opacity-home-carousel: .82;
-  --opacity-content-card: .82;
-  --opacity-photo-card: .82;
-  --opacity-music-panel: .88;
-  --opacity-message-board: .86;
-  --opacity-nav-bar: .72;
+  --opacity-toolbox-settings-panel: .05;
+  --opacity-toolbox-search-panel: .05;
+  --opacity-toolbox-calculator-panel: .05;
+  --opacity-home-card: .05;
+  --opacity-home-carousel: .05;
+  --opacity-content-card: .05;
+  --opacity-photo-card: .05;
+  --opacity-music-panel: .05;
+  --opacity-message-board: .05;
+  --opacity-nav-bar: .05;
   --page-side-padding-desktop: 32px;
   --page-side-padding-tablet: 24px;
   --page-side-padding-mobile: 14px;
@@ -95,7 +95,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 body {
   margin: 0;
   min-height: 100vh;
-  font-family: var(--app-font-family, Inter, Geist, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  font-family: var(--app-font-family, 'Consolas-with-Yahei', Consolas, 'Microsoft YaHei', '微软雅黑', 'Courier New', ui-monospace, monospace);
   font-size: var(--fs-base);
   background: var(--bg-page);
   color: var(--text-primary);
@@ -314,6 +314,91 @@ body::before {
 .sr-text-secondary { color: var(--text-secondary); }
 .sr-text-muted { color: var(--text-muted); }
 
+.page-title-block :where(h1,h2,h3) {
+  color: var(--text-primary) !important;
+}
+
+.page-title-block :where(p,span) {
+  color: var(--text-secondary) !important;
+}
+
+.readable-surface :where(h1,h2,h3,h4,b,strong) {
+  color: var(--text-primary) !important;
+}
+
+.readable-surface :where(p,span,small,li) {
+  color: var(--text-secondary) !important;
+}
+
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  max-width: 100%;
+  border: 1px solid var(--border-glass);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-card-elevated) 54%, transparent);
+  padding: .25rem;
+}
+
+.segmented-button {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: .52rem 1rem;
+  border: 0;
+  font-size: var(--fs-sm);
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+  transition: transform .2s var(--motion-ease), background .2s var(--motion-ease), color .2s var(--motion-ease), box-shadow .2s var(--motion-ease);
+}
+
+.segmented-button-active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+  color: #fff !important;
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.segmented-button-idle {
+  background: transparent;
+  color: var(--text-secondary) !important;
+}
+
+.segmented-button-idle:hover {
+  color: var(--text-primary) !important;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.filter-chip {
+  display: inline-flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-glass);
+  padding: .4rem .78rem;
+  font-size: var(--fs-sm);
+  line-height: 1;
+  color: var(--text-secondary) !important;
+  background: color-mix(in srgb, var(--bg-card-elevated) 42%, transparent);
+  transition: background .2s var(--motion-ease), color .2s var(--motion-ease), border-color .2s var(--motion-ease), transform .2s var(--motion-ease);
+}
+
+.filter-chip:hover {
+  color: var(--text-primary) !important;
+  border-color: color-mix(in srgb, var(--accent) 36%, transparent);
+}
+
+.filter-chip-active {
+  border-color: color-mix(in srgb, var(--accent) 54%, transparent);
+  background: var(--accent);
+  color: #fff !important;
+}
+
 .glass {
   position: relative;
   background: linear-gradient(135deg, var(--bg-card-elevated), var(--bg-card));
@@ -335,6 +420,39 @@ body::before {
 
 .app-topbar-hidden {
   transform: translateY(-110%);
+}
+
+.nav-link {
+  color: var(--text-secondary);
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: .24rem;
+  width: 1.45rem;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--accent);
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform .24s var(--motion-ease), opacity .24s var(--motion-ease);
+}
+
+.nav-link-active {
+  color: var(--text-primary);
+}
+
+.nav-link-active::after,
+.nav-link:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scaleX(1);
+}
+
+.nav-link-idle:hover {
+  color: var(--text-primary);
 }
 
 .home-asymmetric-grid {
@@ -391,11 +509,106 @@ body::before {
   grid-template-columns: minmax(18rem, .85fr) minmax(0, 1.15fr);
   gap: clamp(1rem, 2vw, 1.5rem);
   align-items: stretch;
+  overflow: visible;
+  min-height: 38rem;
+  grid-column: 1 / -1;
+}
+
+.music-page-comments {
+  grid-column: 1 / -1;
+  align-self: start;
+  margin-top: clamp(1rem, 2vw, 1.5rem);
 }
 
 .music-page-record {
   width: clamp(12rem, 26vw, 18rem);
   height: clamp(12rem, 26vw, 18rem);
+}
+
+.music-player-panel,
+.music-lyrics-panel {
+  min-height: clamp(34rem, 58vh, 42rem);
+  overflow: visible;
+  color: var(--text-primary) !important;
+}
+
+.music-player-panel > .relative,
+.music-lyrics-panel > .relative {
+  display: flex;
+  min-height: inherit;
+  flex-direction: column;
+}
+
+.music-player-panel > .grid {
+  min-height: clamp(31rem, 54vh, 38rem);
+  align-content: center;
+  justify-items: center;
+}
+
+.music-player-core {
+  display: grid;
+  min-height: inherit;
+  align-content: center;
+  justify-items: center;
+  gap: 1.15rem;
+  text-align: center;
+}
+
+.music-page-controls {
+  display: flex;
+  max-width: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .45rem;
+}
+
+.music-tab-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  color: var(--text-secondary) !important;
+  background: color-mix(in srgb, var(--bg-card-elevated) 46%, transparent) !important;
+}
+
+.music-lyrics-panel > div:nth-child(2) {
+  color: var(--text-secondary) !important;
+  background: color-mix(in srgb, var(--bg-card-elevated) 46%, transparent) !important;
+}
+
+.music-playlist-item {
+  color: var(--text-primary) !important;
+  background: color-mix(in srgb, var(--bg-card-elevated) 46%, transparent) !important;
+}
+
+.music-playlist-item:hover {
+  background: color-mix(in srgb, var(--bg-card-elevated) 64%, transparent) !important;
+}
+
+.music-playlist-item-active {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 44%, transparent);
+}
+
+.music-playlist-item :where(h1,h2,h3,b,strong) {
+  color: var(--text-primary) !important;
+}
+
+.music-playlist-item :where(p,span,small) {
+  color: var(--text-secondary) !important;
+}
+
+.music-player-panel :where(h1,h2,h3,b,strong),
+.music-lyrics-panel :where(h1,h2,h3,b,strong) {
+  color: var(--text-primary) !important;
+}
+
+.music-player-panel :where(p,span,small),
+.music-lyrics-panel :where(p,span,small) {
+  color: var(--text-secondary) !important;
+}
+
+.music-player-panel .like-button-inline span,
+.music-player-panel .icon-button svg.text-rose-300 {
+  color: var(--accent) !important;
 }
 
 .lyrics-compact {
@@ -462,7 +675,7 @@ body::before {
 .home-status-card { --component-font-family: var(--ct-home-status-bar-font-family, var(--app-font-family)); --component-font-size: var(--ct-home-status-bar-font-size, inherit); --component-font-color: var(--ct-home-status-bar-font-color, var(--component-text)); --component-text-align: var(--ct-home-status-bar-text-align, inherit); --component-font-weight: var(--ct-home-status-bar-font-weight, inherit); --component-font-style: var(--ct-home-status-bar-font-style, inherit); }
 .music-player-panel { --component-font-family: var(--ct-music-player-panel-font-family, var(--app-font-family)); --component-font-size: var(--ct-music-player-panel-font-size, inherit); --component-font-color: var(--ct-music-player-panel-font-color, var(--ct-music-player-panel-text)); --component-text-align: var(--ct-music-player-panel-text-align, inherit); --component-font-weight: var(--ct-music-player-panel-font-weight, inherit); --component-font-style: var(--ct-music-player-panel-font-style, inherit); }
 .music-lyrics-panel { --component-font-family: var(--ct-music-lyrics-panel-font-family, var(--app-font-family)); --component-font-size: var(--ct-music-lyrics-panel-font-size, inherit); --component-font-color: var(--ct-music-lyrics-panel-font-color, var(--ct-music-lyrics-panel-text)); --component-text-align: var(--ct-music-lyrics-panel-text-align, inherit); --component-font-weight: var(--ct-music-lyrics-panel-font-weight, inherit); --component-font-style: var(--ct-music-lyrics-panel-font-style, inherit); }
-.comment-board { --component-font-family: var(--ct-message-board-font-family, var(--app-font-family)); --component-font-size: var(--ct-message-board-font-size, inherit); --component-font-color: var(--ct-message-board-font-color, var(--ct-message-board-text)); --component-text-align: var(--ct-message-board-text-align, inherit); --component-font-weight: var(--ct-message-board-font-weight, inherit); --component-font-style: var(--ct-message-board-font-style, inherit); }
+.comment-board { --component-font-family: var(--ct-message-board-font-family, var(--app-font-family)); --component-font-size: var(--ct-message-board-font-size, inherit); --component-font-color: var(--ct-message-board-font-color, var(--ct-message-board-text, var(--text-primary))); --component-text-align: var(--ct-message-board-text-align, inherit); --component-font-weight: var(--ct-message-board-font-weight, inherit); --component-font-style: var(--ct-message-board-font-style, inherit); }
 
 :is(.home-profile-card,.music-compact-card,.lyrics-compact,.home-latest-posts-carousel,.home-photo-carousel-card,.home-updates-carousel-card,.home-theme-card,.home-status-card,.music-player-panel,.music-lyrics-panel,.comment-board),
 :is(.home-profile-card,.music-compact-card,.lyrics-compact,.home-latest-posts-carousel,.home-photo-carousel-card,.home-updates-carousel-card,.home-theme-card,.home-status-card,.music-player-panel,.music-lyrics-panel,.comment-board) :where(h1,h2,h3,h4,p,span,b,a,button,label,small,li) {
@@ -522,6 +735,14 @@ body::before {
   padding-block: calc(.5rem * var(--ct-search-input-size, 1));
 }
 
+.search-input-theme input {
+  color: var(--ct-search-input-text, var(--text-primary)) !important;
+}
+
+.search-input-theme input::placeholder {
+  color: var(--text-muted) !important;
+}
+
 .search-button-theme {
   background: color-mix(in srgb, var(--ct-search-button-bg, rgb(15 23 42)) calc(var(--ct-search-button-opacity, .95) * 100%), transparent) !important;
   color: var(--ct-search-button-text, rgb(207 250 254));
@@ -533,6 +754,57 @@ body::before {
     linear-gradient(135deg, color-mix(in srgb, var(--ct-post-card-bg, var(--bg-card-elevated)) calc(var(--ct-post-card-opacity, var(--opacity-content-card)) * 100%), transparent), color-mix(in srgb, var(--bg-card) calc(var(--ct-post-card-opacity, var(--opacity-content-card)) * 100%), transparent)) !important;
   color: var(--ct-post-card-text, var(--text-primary));
   padding: calc(1.5rem * var(--ct-post-card-size, 1));
+}
+
+.post-card-content,
+.photo-card-content {
+  color: var(--text-primary) !important;
+  text-shadow: none !important;
+}
+
+.post-card-content :where(h1,h2,h3,h4,b,strong),
+.photo-card-content :where(h1,h2,h3,h4,b,strong) {
+  color: var(--text-primary) !important;
+  text-shadow: none !important;
+}
+
+.post-card-content :where(p,span,small),
+.photo-card-content :where(p,span,small) {
+  color: var(--text-secondary) !important;
+  text-shadow: none !important;
+}
+
+.content-tag {
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border-glass)) !important;
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  text-shadow: none !important;
+}
+
+.content-tag:hover {
+  color: var(--text-primary) !important;
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--border-glass)) !important;
+}
+
+:root[data-color-mode='day'] .post-card-content,
+:root[data-color-mode='day'] .photo-card-content {
+  color: var(--text-primary) !important;
+}
+
+:root[data-color-mode='day'] .post-card-content :where(h1,h2,h3,h4,b,strong),
+:root[data-color-mode='day'] .photo-card-content :where(h1,h2,h3,h4,b,strong) {
+  color: var(--text-primary) !important;
+}
+
+:root[data-color-mode='day'] .post-card-content :where(p,span,small),
+:root[data-color-mode='day'] .photo-card-content :where(p,span,small) {
+  color: var(--text-secondary) !important;
+}
+
+:root[data-color-mode='day'] .post-card-content .content-tag,
+:root[data-color-mode='day'] .photo-card-content .content-tag {
+  color: var(--text-secondary) !important;
+  background: transparent !important;
 }
 
 .home-media-carousel {
@@ -652,8 +924,8 @@ body::before {
 .page-layout-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-auto-rows: 2rem;
-  grid-auto-flow: row dense;
+  grid-auto-rows: auto;
+  grid-auto-flow: row;
   gap: clamp(1rem, 2vw, 1.6rem);
   align-items: stretch;
 }
@@ -785,14 +1057,18 @@ body::before {
   background: linear-gradient(to bottom, rgba(255,255,255,.04), rgba(255,255,255,.72));
 }
 
-.image-tone-dark :where(h1,h2,h3,h4,p,span,small,b),
-.image-tone-light :where(h1,h2,h3,h4,p,span,small,b) {
+.image-tone-dark .home-carousel-copy :where(h1,h2,h3,h4,p,span,small,b),
+.image-tone-light .home-carousel-copy :where(h1,h2,h3,h4,p,span,small,b),
+.image-tone-dark .image-overlay-copy :where(h1,h2,h3,h4,p,span,small,b),
+.image-tone-light .image-overlay-copy :where(h1,h2,h3,h4,p,span,small,b) {
   color: var(--image-card-text) !important;
   text-shadow: var(--image-card-shadow);
 }
 
-.image-tone-dark :where(p,small),
-.image-tone-light :where(p,small) {
+.image-tone-dark .home-carousel-copy :where(p,small),
+.image-tone-light .home-carousel-copy :where(p,small),
+.image-tone-dark .image-overlay-copy :where(p,small),
+.image-tone-light .image-overlay-copy :where(p,small) {
   color: var(--image-card-muted) !important;
 }
 
@@ -895,6 +1171,17 @@ body::before {
   backdrop-filter: blur(18px) saturate(135%);
   -webkit-backdrop-filter: blur(18px) saturate(135%);
   overflow: visible;
+}
+
+.volume-slider-panel-floating {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: auto;
+  z-index: 80;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, calc(-100% - .7rem));
 }
 
 .volume-track {
@@ -1039,6 +1326,58 @@ body::before {
 [class*="ring-cyan-"],
 [class*="ring-fuchsia-"] {
   --tw-ring-color: color-mix(in srgb, var(--accent) 56%, transparent) !important;
+}
+
+.page-layout-grid > .flex.justify-center > .inline-flex.rounded-full,
+.page-layout-grid > .flex.justify-center > .inline-flex.shrink-0.rounded-full,
+.music-tab-header,
+.music-lyrics-panel > .flex:first-child {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .25rem;
+  max-width: 100%;
+  border: 1px solid var(--border-glass);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-card-elevated) 54%, transparent) !important;
+  padding: .25rem;
+}
+
+.page-layout-grid > .flex.justify-center button,
+.music-tab-header button,
+.music-lyrics-panel > .flex:first-child button {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: .52rem 1rem;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--text-secondary) !important;
+}
+
+.page-layout-grid > .flex.justify-center button[class*="bg-cyan"],
+.page-layout-grid > .flex.justify-center button[class*="bg-fuchsia"],
+.page-layout-grid > .flex.justify-center button[class*="bg-[var"],
+.music-tab-header button[class*="bg-[var"],
+.music-lyrics-panel > .flex:first-child button[class*="bg-[var"] {
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover)) !important;
+  color: #fff !important;
+}
+
+.page-layout-grid > .flex.justify-center button:hover,
+.music-tab-header button:hover,
+.music-lyrics-panel > .flex:first-child button:hover {
+  color: var(--text-primary) !important;
+}
+
+.page-layout-grid > .flex.justify-center button[class*="bg-cyan"]:hover,
+.page-layout-grid > .flex.justify-center button[class*="bg-fuchsia"]:hover,
+.page-layout-grid > .flex.justify-center button[class*="bg-[var"]:hover,
+.music-tab-header button[class*="bg-[var"]:hover,
+.music-lyrics-panel > .flex:first-child button[class*="bg-[var"]:hover {
+  color: #fff !important;
 }
 .glass::after {
   content: '';

@@ -47,8 +47,8 @@ onBeforeUnmount(() => {
   <header class="app-topbar fixed left-0 right-0 top-0 z-40" :class="hidden ? 'app-topbar-hidden' : ''">
     <nav class="sr-page-shell flex min-w-0 items-center justify-between gap-4 py-3" aria-label="前台导航">
       <RouterLink to="/" class="group flex min-w-0 items-center" aria-label="返回首页">
-        <span class="block min-w-0 truncate text-lg font-black leading-tight text-[var(--text-primary)]">
-          Shrink<span class="text-[var(--accent)]">の</span>小世界🌍
+        <span class="block min-w-0 truncate text-[24px] font-black leading-tight text-[var(--text-primary)]">
+          <span class="text-[#f40002]">&lt;</span>Shrink<span class="text-[#f40002]">/&gt;</span>
         </span>
       </RouterLink>
 
@@ -68,8 +68,8 @@ onBeforeUnmount(() => {
           v-for="link in links"
           :key="link[1]"
           :to="link[1]"
-          class="relative rounded-2xl px-3 py-2 text-sm transition"
-          :class="activePath === link[1] ? 'bg-white/[0.14] text-white shadow-[inset_0_-2px_0_var(--accent)]' : 'text-white/68 hover:bg-white/10 hover:text-white'"
+          class="nav-link relative rounded-2xl px-3 py-2 text-sm transition"
+          :class="activePath === link[1] ? 'nav-link-active' : 'nav-link-idle'"
         >
           {{ link[0] }}
         </RouterLink>
