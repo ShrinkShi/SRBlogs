@@ -1,4 +1,21 @@
 # HISTORY
+## 2026-05-08 - About 局部视觉收口
+
+- 继续按 `frontend-design-conservative` 修正 `/about`，仅处理用户指出的局部视觉问题，不改变四段式页面结构。
+- 删除 CyberCat SVG 上的额外 `drop-shadow-[0_0_18px_rgba(...)]` 阴影类，避免多余荧光阴影。
+- 将 About 页面 `<about />`、`<github />`、`<contact />` 徽标统一居中显示。
+- 移除“关于我”和“联系我”左侧说明区域的外框、背景填充与阴影，仅保留文字内容；右侧代码卡片与联系表单仍保留必要承载面。
+- GitHub 活动区整体收窄到约半宽，并压缩统计卡与热力图间距，继续优先读取 `ShrinkShi` 的 GitHub 公共数据。
+- 验证：`cd frontend && npm run build`、`cd admin && npm run build`、`python -m compileall backend\app` 已通过；构建产物 Secret 搜索未发现真实密钥明文。
+
+## 2026-05-08 - About 首屏结构与 GitHub 公共活动修复
+
+- 继续按 `frontend-design-conservative` 的保守实现原则处理 `/about`：不改变站点毛玻璃背景和四段式信息结构，只修正用户指定的首屏布局和数据来源。
+- 移除 About 首屏中的 `decor-ellipse`、`decor-orbit`、`decor-triangle` 和粒子装饰节点，首屏改为无 Frame 的居中文案流。
+- 首屏状态胶囊增加绿色荧光连接点；角色行改为带闪烁光标的打字/删除动画，循环展示“全栈开发工程师 / 游戏开发者 / MOD作者”。
+- GitHub 活动区优先读取 `https://api.github.com/users/ShrinkShi`、公开仓库和公开事件数据，实时汇总公开仓库、Stars、Followers、Forks，并用最近公开事件生成活动热力图；读取失败时回退后台配置兜底，不使用前端 token。
+- 验证：`cd frontend && npm run build`、`cd admin && npm run build`、`python -m compileall backend\app` 已通过。
+
 ## 2026-05-07 - 背景蒙层透明度下调
 
 - 根据人工反馈确认背景不是壁纸源丢失，而是昼夜蒙层和装饰层不透明度过高。
@@ -2793,3 +2810,12 @@ Manual QA still recommended:
 - 继续按 ui-ux-pro-max 的昼夜可读性建议修复前台工具箱。
 - 游客设置弹窗、设置项标题、下拉框、滑杆、左下角悬浮球和工具箱菜单增加显式 `day/night` 样式兜底，避免组件主题变量或通用控件样式把日间文字覆盖成白色。
 - 背景层恢复为“壁纸图层 + 主题蒙层”的组合，兼容旧 `bgImages` 和新版主题 `day/night.bgImages`，并提高壁纸图层可见度，避免白天模式看起来被纯色背景替换。
+## 2026-05-07 - 新版 About 四屏页面与联系表单
+
+- 使用已接入的 `ui-ux-pro-max` skill 作为 UI/UX 审查参考，按“红黑白毛玻璃 + 阅读优先 + 高对比 CTA”方向重构前台 `/about`。
+- 新增前台 About 四段纵向结构：Hero 首屏、关于我、GitHub 活动、联系我；页面继续使用站点现有壁纸轮播背景层，不写死纯白根背景。
+- 新增结构化关于页配置接口：`GET /api/about-page`、`GET/PUT /api/admin/about-page`，后台 `/admin/about` 可编辑 Hero、关于我、GitHub 活动、联系信息，并保留兼容 `about.md`。
+- 新增 `POST /api/contact/send` 联系表单接口，支持 SMTP 服务端发送、输入校验、基础 IP 限流和访客友好错误；SMTP Secret 仅走后端环境变量。
+- 更新 `backend/.env.production.example`，增加 `CONTACT_MAIL_*` 与 `SMTP_*` 示例字段。
+- 验证：`cd frontend && npm run build` 通过；`cd admin && npm run build` 通过；`python -m compileall backend\app` 通过。
+- 人工验收仍需确认：四屏视觉是否接近参考图、昼夜模式可读性、后台字段编辑后前台同步、联系表单在真实 SMTP 配置下是否能发送到 `1363072460@qq.com`。

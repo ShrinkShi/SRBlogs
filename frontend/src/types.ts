@@ -177,6 +177,56 @@ export interface CommentItem {
   providerId?: string
 }
 
+export interface AboutPageConfig {
+  hero: {
+    status: string
+    eyebrow: string
+    name: string
+    role: string
+    description: string
+    primaryButtonText: string
+    primaryButtonUrl: string
+    secondaryButtonText: string
+    stats: Array<{ value: string; suffix: string; label: string }>
+  }
+  about: {
+    badge: string
+    title: string
+    paragraphs: string[]
+    highlightWords: string[]
+    skills: Array<{ icon: string; title: string; description: string }>
+    codeProfile: {
+      variableName: string
+      name: string
+      role: string
+      location: string
+      languages: string[]
+      github: string
+    }
+  }
+  github: {
+    badge: string
+    titlePrefix: string
+    titleAccent: string
+    stats: Array<{ icon: string; value: string; label: string }>
+    contributionText: string
+  }
+  contact: {
+    badge: string
+    title: string
+    headline: string
+    description: string
+    email: string
+    github: string
+    githubUrl: string
+    website: string
+    websiteUrl: string
+    qq: string
+    wechat: string
+    mailTo: string
+  }
+}
+
 export interface SiteSettings {
   siteTitle?: string
   subtitle?: string

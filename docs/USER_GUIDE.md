@@ -400,3 +400,21 @@ Music uses `music/global` as the first-stage message target. Photowall album dia
 - 只有直接压在图片上的轮播文案会按图片明暗自动选择黑字或白字。
 - “正经 / 杂谈”“矩阵网格 / 中枢链路”“歌词 / 歌单”等切换按钮使用统一分段控件样式。
 - 音乐页保持左侧播放器、右侧歌词/歌单的固定布局，播放、进度、音量、喜欢数和留言功能继续保留。
+## 新版关于页与联系表单
+
+后台进入 `/admin/about` 可以编辑新版关于页的结构化内容，包括 Hero 首屏、关于我、GitHub 活动和联系我四个分区。旧版 `about.md` 仍保留为兼容内容，但前台 `/about` 优先读取结构化配置。
+
+联系表单默认不会发送邮件。生产环境需要在后端环境变量中启用并配置 SMTP：
+
+```env
+CONTACT_MAIL_ENABLED=true
+CONTACT_MAIL_TO=1363072460@qq.com
+SMTP_HOST=smtp.example.com
+SMTP_PORT=465
+SMTP_USERNAME=example@example.com
+SMTP_PASSWORD=your-smtp-authorization-code
+SMTP_USE_SSL=true
+SMTP_FROM=example@example.com
+```
+
+QQ 邮箱通常需要 SMTP 授权码，不是 QQ 登录密码。SMTP 密码只允许保存在服务端环境变量中，不能写入前台、后台构建产物或公开设置。

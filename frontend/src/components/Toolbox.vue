@@ -227,7 +227,7 @@ onBeforeUnmount(() => {
   <div data-toolbox-root class="fixed bottom-5 left-5 z-40" :class="ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night'">
     <div
       v-if="menuOpen"
-      class="toolbox-menu mb-3 grid min-w-40 gap-2 rounded-[26px] border border-white/15 bg-slate-950/82 p-3 text-sm text-white/82 shadow-2xl backdrop-blur-2xl"
+      class="toolbox-menu mb-3 grid min-w-40 gap-2 rounded-[26px] border p-3 text-sm shadow-2xl"
     >
       <button type="button" data-clickable="true" class="toolbox-menu-item" @click="openPanel('calculator')">计算器</button>
       <button type="button" data-clickable="true" class="toolbox-menu-item" @click="openPanel('search')">全局搜索</button>
@@ -236,7 +236,7 @@ onBeforeUnmount(() => {
     <button
       type="button"
       data-clickable="true"
-      class="toolbox-fab grid h-14 w-14 place-items-center rounded-full border border-cyan-200/25 bg-slate-950/72 text-cyan-100 shadow-[0_18px_48px_rgba(0,0,0,.35),0_0_34px_rgba(103,232,249,.18)] backdrop-blur-2xl transition hover:scale-105"
+      class="toolbox-fab grid h-14 w-14 place-items-center rounded-full border shadow-[0_18px_48px_rgba(0,0,0,.20)] transition hover:scale-105"
       :aria-expanded="menuOpen"
       aria-label="打开工具箱"
       @click.stop="menuOpen = !menuOpen"
@@ -252,7 +252,7 @@ onBeforeUnmount(() => {
     <section
       v-if="activePanel === 'calculator'"
       data-toolbox-modal
-      class="toolbox-calculator-panel fixed bottom-24 left-5 z-[92] grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[28px] border border-white/15 p-4 text-white shadow-2xl backdrop-blur-2xl"
+      class="toolbox-calculator-panel fixed bottom-24 left-5 z-[92] grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[28px] border p-4 shadow-2xl"
       :class="ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night'"
       role="dialog"
       aria-label="计算器"
@@ -282,13 +282,13 @@ onBeforeUnmount(() => {
     <div
       v-if="activePanel === 'search' || activePanel === 'settings'"
       data-toolbox-modal
-      class="fixed inset-0 z-[90] grid place-items-center bg-black/68 p-4 backdrop-blur-md"
+      class="toolbox-modal-overlay fixed inset-0 z-[90] grid place-items-center p-4"
       :class="ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night'"
       role="dialog"
       aria-modal="true"
       @click.self="closePanel"
     >
-      <section class="toolbox-modal toolbox-modal-panel max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/15 text-white shadow-2xl backdrop-blur-2xl" :class="[activePanel === 'search' ? 'toolbox-modal-panel-search' : 'toolbox-modal-panel-settings', ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night']">
+      <section class="toolbox-modal toolbox-modal-panel max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border shadow-2xl" :class="[activePanel === 'search' ? 'toolbox-modal-panel-search' : 'toolbox-modal-panel-settings', ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night']">
         <header class="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-[.28em] text-cyan-100/45">toolbox</p>
@@ -412,37 +412,41 @@ onBeforeUnmount(() => {
   transition: transform .2s var(--motion-ease), background .2s var(--motion-ease), color .2s var(--motion-ease);
 }
 .toolbox-menu {
-  background: color-mix(in srgb, var(--ct-toolbox-menu-bg, rgb(15 23 42)) calc(var(--ct-toolbox-menu-opacity, .9) * 100%), transparent) !important;
+  background: var(--ct-toolbox-menu-bg, rgb(15 23 42)) !important;
   color: var(--ct-toolbox-menu-text, rgba(255,255,255,.78));
   border-color: var(--ct-toolbox-menu-border, rgba(255,255,255,.15));
   transform-origin: bottom left;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 .toolbox-fab {
-  background: color-mix(in srgb, var(--ct-toolbox-fab-bg, rgb(15 23 42)) calc(var(--ct-toolbox-fab-opacity, .86) * 100%), transparent) !important;
+  background: var(--ct-toolbox-fab-bg, rgb(15 23 42)) !important;
   color: var(--ct-toolbox-fab-text, rgb(207 250 254));
   border-color: var(--ct-toolbox-fab-border, rgba(103,232,249,.25));
   transform: scale(var(--ct-toolbox-fab-size, 1));
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 .toolbox-menu-item {
   color: var(--ct-toolbox-menu-text, rgba(255,255,255,.78));
 }
 .toolbox-menu-item:hover {
-  background: rgba(255,255,255,.1);
+  background: rgb(31 41 55);
   color: white;
   transform: scale(1.02);
 }
 .toolbox-key {
   min-height: 2.55rem;
   border-radius: .95rem;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.08);
-  color: rgba(255,255,255,.82);
+  border: 1px solid rgb(55 65 81);
+  background: rgb(31 41 55);
+  color: rgb(248 250 252);
   font-weight: 900;
   transition: transform .18s var(--motion-ease), background .18s var(--motion-ease);
 }
 .toolbox-key:hover {
   transform: scale(1.025);
-  background: rgba(255,255,255,.13);
+  background: rgb(55 65 81);
 }
 .toolbox-key-main {
   background: linear-gradient(135deg, #67e8f9, #c084fc);
@@ -452,30 +456,43 @@ onBeforeUnmount(() => {
   display: grid;
   gap: .55rem;
   border-radius: 1.25rem;
-  border: 1px solid rgba(255,255,255,.1);
-  background: rgba(255,255,255,.13);
+  border: 1px solid rgb(55 65 81);
+  background: rgb(31 41 55);
   padding: 1rem;
-  color: rgba(255,255,255,.78);
+  color: rgb(248 250 252);
   font-size: .9rem;
 }
 .toolbox-calculator-panel {
-  background: color-mix(in srgb, var(--ct-toolbox-calculator-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) calc(var(--ct-toolbox-calculator-panel-opacity, var(--opacity-toolbox-calculator-panel, .9)) * 100%), transparent) !important;
+  background: var(--ct-toolbox-calculator-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) !important;
   color: var(--ct-toolbox-calculator-panel-text, currentColor);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 .toolbox-modal-panel-settings {
-  background: color-mix(in srgb, var(--ct-toolbox-settings-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) calc(var(--ct-toolbox-settings-panel-opacity, var(--opacity-toolbox-settings-panel, .92)) * 100%), transparent) !important;
+  background: var(--ct-toolbox-settings-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) !important;
   color: var(--ct-toolbox-settings-panel-text, currentColor);
 }
 .toolbox-modal-panel-search {
-  background: color-mix(in srgb, var(--ct-toolbox-search-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) calc(var(--ct-toolbox-search-panel-opacity, var(--opacity-toolbox-search-panel, .92)) * 100%), transparent) !important;
+  background: var(--ct-toolbox-search-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) !important;
   color: var(--ct-toolbox-search-panel-text, currentColor);
+}
+.toolbox-modal-panel,
+.toolbox-modal-overlay {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+.toolbox-modal-overlay {
+  background: rgb(15 23 42 / .44);
+}
+:global(:root[data-color-mode='day']) .toolbox-modal-overlay {
+  background: rgb(15 23 42 / .18);
 }
 :global(:root[data-color-mode='day']) .toolbox-modal-panel,
 :global(:root[data-color-mode='day']) .toolbox-calculator-panel {
   color: rgb(15, 23, 42);
 }
 :global(:root[data-color-mode='day']) .toolbox-menu {
-  background: color-mix(in srgb, var(--ct-toolbox-menu-bg, rgb(255 255 255)) calc(var(--ct-toolbox-menu-opacity, .94) * 100%), transparent) !important;
+  background: var(--ct-toolbox-menu-bg, rgb(255 255 255)) !important;
   border-color: rgba(15, 23, 42, .14);
   color: rgb(17, 24, 39);
   box-shadow: 0 18px 48px rgba(15, 23, 42, .18);
@@ -484,11 +501,11 @@ onBeforeUnmount(() => {
   color: rgb(17, 24, 39);
 }
 :global(:root[data-color-mode='day']) .toolbox-menu-item:hover {
-  background: rgba(244, 0, 2, .08);
+  background: rgb(254 226 226);
   color: rgb(127, 29, 29);
 }
 :global(:root[data-color-mode='day']) .toolbox-fab {
-  background: color-mix(in srgb, var(--ct-toolbox-fab-bg, rgb(255 255 255)) calc(var(--ct-toolbox-fab-opacity, .94) * 100%), transparent) !important;
+  background: var(--ct-toolbox-fab-bg, rgb(255 255 255)) !important;
   border-color: rgba(244, 0, 2, .28);
   color: #f40002;
   box-shadow: 0 18px 48px rgba(15, 23, 42, .18), 0 0 24px rgba(244, 0, 2, .16);
@@ -506,7 +523,7 @@ onBeforeUnmount(() => {
   color: #f40002;
 }
 :global(:root[data-color-mode='day']) .toolbox-setting {
-  background: color-mix(in srgb, var(--bg-card-elevated, rgb(255 255 255)) 86%, transparent);
+  background: var(--bg-card-elevated, rgb(255 255 255));
   border-color: rgba(15, 23, 42, .1);
   color: rgb(17, 24, 39);
 }
@@ -515,7 +532,7 @@ onBeforeUnmount(() => {
 }
 :global(:root[data-color-mode='day']) .toolbox-setting select,
 :global(:root[data-color-mode='day']) .toolbox-setting input[type='range'] {
-  background: color-mix(in srgb, var(--bg-card-elevated, rgb(255 255 255)) 94%, transparent);
+  background: var(--bg-card-elevated, rgb(255 255 255));
   border-color: rgba(15, 23, 42, .18);
   color: rgb(17, 24, 39);
 }
@@ -531,14 +548,14 @@ onBeforeUnmount(() => {
   color: rgb(17, 24, 39);
 }
 :global(:root[data-color-mode='day']) .toolbox-modal-panel button:hover {
-  background: rgba(244, 0, 2, .08);
+  background: rgb(254 226 226);
 }
 .toolbox-setting select,
 .toolbox-setting input[type='range'] {
   min-width: 0;
   border-radius: .9rem;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(15,23,42,.84);
+  border: 1px solid rgb(55 65 81);
+  background: rgb(15 23 42);
   padding: .55rem .7rem;
   color: white;
 }
@@ -555,25 +572,25 @@ onBeforeUnmount(() => {
 .toolbox-day.toolbox-modal-panel,
 .toolbox-day.toolbox-calculator-panel {
   color: rgb(17, 24, 39) !important;
-  background: color-mix(in srgb, rgb(248 250 252) calc(var(--ct-toolbox-settings-panel-opacity, var(--opacity-toolbox-settings-panel, .94)) * 100%), transparent) !important;
+  background: rgb(248 250 252) !important;
   border-color: rgba(15, 23, 42, .12) !important;
 }
 
 .toolbox-night.toolbox-modal-panel,
 .toolbox-night.toolbox-calculator-panel {
   color: rgb(248, 250, 252) !important;
-  background: color-mix(in srgb, rgb(15 23 42) calc(var(--ct-toolbox-settings-panel-opacity, var(--opacity-toolbox-settings-panel, .9)) * 100%), transparent) !important;
+  background: rgb(15 23 42) !important;
   border-color: rgba(255, 255, 255, .14) !important;
 }
 
 .toolbox-day .toolbox-menu {
-  background: color-mix(in srgb, rgb(255 255 255) calc(var(--ct-toolbox-menu-opacity, .94) * 100%), transparent) !important;
+  background: rgb(255 255 255) !important;
   border-color: rgba(15, 23, 42, .14) !important;
   color: rgb(17, 24, 39) !important;
 }
 
 .toolbox-night .toolbox-menu {
-  background: color-mix(in srgb, rgb(15 23 42) calc(var(--ct-toolbox-menu-opacity, .9) * 100%), transparent) !important;
+  background: rgb(15 23 42) !important;
   border-color: rgba(255, 255, 255, .14) !important;
   color: rgb(248, 250, 252) !important;
 }
@@ -583,27 +600,27 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-menu-item {
-  color: rgba(248, 250, 252, .86) !important;
+  color: rgb(248, 250, 252) !important;
 }
 
 .toolbox-day .toolbox-menu-item:hover {
-  background: rgba(244, 0, 2, .08) !important;
+  background: rgb(254 226 226) !important;
   color: rgb(127, 29, 29) !important;
 }
 
 .toolbox-night .toolbox-menu-item:hover {
-  background: rgba(255, 255, 255, .1) !important;
+  background: rgb(31 41 55) !important;
   color: rgb(255, 255, 255) !important;
 }
 
 .toolbox-day .toolbox-fab {
-  background: color-mix(in srgb, rgb(255 255 255) calc(var(--ct-toolbox-fab-opacity, .94) * 100%), transparent) !important;
+  background: rgb(255 255 255) !important;
   border-color: rgba(244, 0, 2, .32) !important;
   color: #f40002 !important;
 }
 
 .toolbox-night .toolbox-fab {
-  background: color-mix(in srgb, rgb(15 23 42) calc(var(--ct-toolbox-fab-opacity, .86) * 100%), transparent) !important;
+  background: rgb(15 23 42) !important;
   border-color: rgba(244, 0, 2, .34) !important;
   color: #fb7185 !important;
 }
@@ -617,29 +634,29 @@ onBeforeUnmount(() => {
 .toolbox-night.toolbox-modal-panel :where(h1,h2,h3,p,span,label,small),
 .toolbox-night.toolbox-calculator-panel :where(h1,h2,h3,p,span,label,small),
 .toolbox-night .toolbox-setting :where(span,p,label,small) {
-  color: rgba(248, 250, 252, .86) !important;
+  color: rgb(248, 250, 252) !important;
 }
 
 .toolbox-day .toolbox-setting {
-  background: rgba(255, 255, 255, .82) !important;
+  background: rgb(255, 255, 255) !important;
   border-color: rgba(15, 23, 42, .1) !important;
   color: rgb(17, 24, 39) !important;
 }
 
 .toolbox-night .toolbox-setting {
-  background: rgba(15, 23, 42, .78) !important;
+  background: rgb(15, 23, 42) !important;
   border-color: rgba(255, 255, 255, .12) !important;
-  color: rgba(248, 250, 252, .86) !important;
+  color: rgb(248, 250, 252) !important;
 }
 
 .toolbox-day .toolbox-setting :where(select, input[type='range'], textarea) {
-  background-color: rgba(255, 255, 255, .94) !important;
+  background-color: rgb(255, 255, 255) !important;
   border-color: rgba(15, 23, 42, .18) !important;
   color: rgb(17, 24, 39) !important;
 }
 
 .toolbox-night .toolbox-setting :where(select, input[type='range'], textarea) {
-  background-color: rgba(15, 23, 42, .88) !important;
+  background-color: rgb(15, 23, 42) !important;
   border-color: rgba(255, 255, 255, .16) !important;
   color: rgb(248, 250, 252) !important;
 }

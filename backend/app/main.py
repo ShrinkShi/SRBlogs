@@ -10,6 +10,7 @@ from app.config import get_settings
 from app.api.auth import router as auth_router
 from app.api.content_routes import make_content_router
 from app.api.json_routes import make_json_router
+from app.api.about import about_page_router, contact_router
 from app.api.about import router as about_router
 from app.api.comments import admin_router as comments_admin_router
 from app.api.comments import router as comments_router
@@ -74,6 +75,8 @@ app.include_router(make_content_router("posts", "posts"), prefix="/api")
 app.include_router(make_content_router("moments", "moments"), prefix="/api")
 app.include_router(make_content_router("chatters", "chatters"), prefix="/api")
 app.include_router(about_router, prefix="/api")
+app.include_router(about_page_router, prefix="/api")
+app.include_router(contact_router, prefix="/api")
 app.include_router(make_json_router("friends", "friends.json", "friends"), prefix="/api")
 app.include_router(make_json_router("projects", "projects.json", "projects"), prefix="/api")
 app.include_router(make_json_router("music", "music.json", "music"), prefix="/api")

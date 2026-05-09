@@ -71,8 +71,8 @@ watch(slideshowEnabled, startBgTimer, { immediate: true })
 onBeforeUnmount(stopBgTimer)
 
 const overlayStyle = computed(() => ({
-  backgroundColor: modeTokens.value.overlayColor || (ui.colorMode === 'day' ? '#ffffff' : '#000000'),
-  opacity: '0.5'
+  backgroundColor: ui.colorMode === 'day' ? '#ffffff' : (modeTokens.value.overlayColor || '#000000'),
+  opacity: ui.colorMode === 'day' ? '0.72' : '0.58'
 }))
 const bgLayerStyle = computed(() => ({
   backgroundImage: bgImage.value ? `url(${bgImage.value})` : '',

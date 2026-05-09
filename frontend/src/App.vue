@@ -3,7 +3,6 @@ import { onMounted, ref, watch } from 'vue'
 import AppNav from '@/components/AppNav.vue'
 import BackgroundEffects from '@/components/BackgroundEffects.vue'
 import ClickEffect from '@/components/ClickEffect.vue'
-import CyberCat from '@/components/CyberCat.vue'
 import Toast from '@/components/Toast.vue'
 import Toolbox from '@/components/Toolbox.vue'
 import DanmakuBackground from '@/components/DanmakuBackground.vue'
@@ -18,6 +17,13 @@ const settings = ref<SiteSettings | null>(null)
 const ui = useUiStore()
 const player = usePlayerStore()
 
+function solidColor(value: string | undefined, fallback: string) {
+  if (!value) return fallback
+  const rgba = value.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/i)
+  if (rgba) return `rgb(${Number(rgba[1])} ${Number(rgba[2])} ${Number(rgba[3])})`
+  return value
+}
+
 function applyTheme() {
   const root = document.documentElement
   const config = settings.value?.themeConfig || {}
@@ -30,18 +36,21 @@ function applyTheme() {
   const preferredScale = ui.fontScale || config.fontScale
   root.dataset.fontScale = preferredScale || 'medium'
   root.style.setProperty('--app-font-family', '"Consolas-with-Yahei", Consolas, "Microsoft YaHei", "微软雅黑", "Courier New", monospace')
+  const solidCard = solidColor(tokens?.bgCard || tokens?.cardBg, mode === 'day' ? '#ffffff' : '#141416')
+  const solidElevated = solidColor(tokens?.bgCardElevated || tokens?.cardBg, mode === 'day' ? '#ffffff' : '#202023')
+  const solidNav = solidColor(tokens?.navBg, mode === 'day' ? '#f8fafc' : '#08080a')
   const map: Record<string, string | undefined> = {
     '--bg-page': tokens?.bgPage || tokens?.pageBg,
-    '--bg-card': tokens?.bgCard || tokens?.cardBg,
-    '--bg-card-elevated': tokens?.bgCardElevated || tokens?.cardBg,
+    '--bg-card': solidCard,
+    '--bg-card-elevated': solidElevated,
     '--border-glass': tokens?.borderGlass || tokens?.border,
     '--text-primary': tokens?.textPrimary,
     '--text-secondary': tokens?.textSecondary,
     '--accent': tokens?.accent,
     '--accent-hover': tokens?.accentHover,
     '--accent-soft': tokens?.accentSoft,
-    '--nav-bg': tokens?.navBg,
-    '--home-panel-bg': tokens?.homePanelBg,
+    '--nav-bg': solidNav,
+    '--home-panel-bg': solidColor(tokens?.homePanelBg, solidCard),
     '--shadow-glow': tokens?.shadowGlow || tokens?.shadow,
     '--bg-overlay-color': tokens?.overlayColor,
     '--glass-radius': tokens?.radius ? `${tokens.radius}px` : undefined,
@@ -58,16 +67,16 @@ function applyTheme() {
   }
   if (tokens?.fontSizeBase) root.style.setProperty('--theme-font-size-base', `${tokens.fontSizeBase}px`)
   const opacityDefaults: Record<string, number> = {
-    toolboxSettingsPanel: 0.05,
-    toolboxSearchPanel: 0.05,
-    toolboxCalculatorPanel: 0.05,
-    homeCard: 0.05,
-    homeCarousel: 0.05,
-    contentCard: 0.05,
-    photoCard: 0.05,
-    musicPanel: 0.05,
-    messageBoard: 0.05,
-    navBar: 0.05
+    toolboxSettingsPanel: 1,
+    toolboxSearchPanel: 1,
+    toolboxCalculatorPanel: 1,
+    homeCard: 1,
+    homeCarousel: 1,
+    contentCard: 1,
+    photoCard: 1,
+    musicPanel: 1,
+    messageBoard: 1,
+    navBar: 1
   }
   Object.entries(opacityDefaults).forEach(([key, fallback]) => {
     const value = Math.min(1, Math.max(0, fallback))
@@ -99,7 +108,6 @@ watch([settings, () => ui.colorMode, () => ui.fontScale], () => {
   <div class="relative z-10 min-h-screen">
     <AppNav />
     <Toolbox :settings="settings" />
-    <CyberCat />
     <main class="site-page-container pb-28 pt-32 md:pt-36">
       <RouterView v-slot="{ Component }">
         <Transition name="fade-slide" mode="out-in">

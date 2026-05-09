@@ -1,5 +1,5 @@
 import { http } from './http'
-import type { ArchiveResponse, CommentItem, ContentItem, DiscoveryType, SearchResponse, TagItem } from '@/types'
+import type { AboutPageConfig, ArchiveResponse, CommentItem, ContentItem, DiscoveryType, SearchResponse, TagItem } from '@/types'
 
 export type CommentResource = 'posts' | 'moments' | 'chatters' | 'music' | 'photos'
 export type VisitorUser = { provider: 'github' | 'qq'; id: string; login?: string; name?: string; avatar?: string; html_url?: string }
@@ -19,6 +19,14 @@ export const contentApi = {
   },
   about: async () => {
     const { data } = await http.get<{ content: string }>('/about')
+    return data
+  },
+  aboutPage: async () => {
+    const { data } = await http.get<AboutPageConfig>('/about-page')
+    return data
+  },
+  sendContact: async (payload: { name: string; email: string; message: string }) => {
+    const { data } = await http.post<{ ok: boolean; message: string }>('/contact/send', payload)
     return data
   },
   comments: async (resource: CommentResource, slug: string) => {

@@ -14,6 +14,7 @@ const rawPhotos = ref<Array<PhotoItem | PhotoAlbum>>([])
 const activeAlbum = ref<AlbumView | null>(null)
 const active = ref<PhotoItem | null>(null)
 const viewMode = ref<'grid' | 'link'>('grid')
+const searchQ = ref('')
 const loading = ref(false)
 const error = ref('')
 const pageConfig = ref<PageConfig | null>(null)
@@ -55,6 +56,17 @@ function normalizeAlbum(item: PhotoItem | PhotoAlbum, index: number): AlbumView 
 }
 
 const albums = computed(() => rawPhotos.value.map(normalizeAlbum).filter((album) => album.photos.length || album.cover))
+const filteredAlbums = computed(() => {
+  const q = searchQ.value.trim().toLowerCase()
+  if (!q) return albums.value
+  return albums.value.filter((album) => [
+    album.title,
+    album.description,
+    album.date,
+    ...(album.tags || []),
+    ...album.photos.flatMap((photo) => [photo.title, photo.description, photo.date, ...(photo.tags || [])])
+  ].filter(Boolean).join(' ').toLowerCase().includes(q))
+})
 
 watch(albums, (list) => {
   list.forEach(async (album) => {
@@ -85,6 +97,15 @@ onMounted(load)
       <h1 class="mt-2 text-4xl font-black text-white">{{ title }}</h1>
       <p class="mt-3 text-white/56">{{ subtitle }}</p>
     </GlassCard>
+    <form class="page-local-search" role="search" @submit.prevent>
+      <input v-model="searchQ" type="search" placeholder="搜索相册标题、描述或标签..." aria-label="图片页搜索" />
+      <button type="submit" aria-label="搜索图片">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.7-3.7" />
+        </svg>
+      </button>
+    </form>
     <div class="flex justify-center">
       <div class="inline-flex rounded-full bg-white/[0.05] p-1">
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'grid' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'grid'">矩阵网格</button>
@@ -103,10 +124,13 @@ onMounted(load)
       <GlassCard v-else-if="!albums.length">
         <p class="text-white/60">暂无相册。</p>
       </GlassCard>
+      <GlassCard v-else-if="searchQ.trim() && !filteredAlbums.length">
+        <p class="text-white/60">没有找到匹配的相册。</p>
+      </GlassCard>
 
       <div v-else-if="viewMode === 'grid'" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
       <button
-        v-for="album in albums"
+        v-for="album in filteredAlbums"
         :key="album.title + album.cover"
         type="button"
         class="photo-card-theme glass glass-hover block w-full overflow-hidden rounded-[30px] text-left"
@@ -131,7 +155,7 @@ onMounted(load)
 
       <div v-else class="article-link-mode">
       <button
-        v-for="(album, index) in albums"
+        v-for="(album, index) in filteredAlbums"
         :key="album.title + album.cover"
         type="button"
         class="article-link-node text-left"
@@ -163,7 +187,7 @@ onMounted(load)
     </div>
     <div
       v-if="activeAlbum"
-      class="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4 backdrop-blur-sm"
+      class="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4"
       role="dialog"
       aria-modal="true"
       @click="activeAlbum = null; active = null"

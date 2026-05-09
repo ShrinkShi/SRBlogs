@@ -37,6 +37,15 @@ class Settings(BaseSettings):
     qq_oauth_app_id: str = ""
     qq_oauth_app_secret: str = ""
 
+    contact_mail_enabled: bool = False
+    contact_mail_to: str = "1363072460@qq.com"
+    smtp_host: str = ""
+    smtp_port: int = 465
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_use_ssl: bool = True
+    smtp_from: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     @property

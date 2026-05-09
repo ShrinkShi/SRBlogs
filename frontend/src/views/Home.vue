@@ -4,7 +4,7 @@ import GlassCard from '@/components/GlassCard.vue'
 import ProfileCard from '@/components/ProfileCard.vue'
 import PlayerVolumeControl from '@/components/PlayerVolumeControl.vue'
 import { contentApi } from '@/api/content'
-import type { ContentItem, MusicItem, PageConfig, PhotoAlbum, PhotoItem, SiteSettings } from '@/types'
+import type { ContentItem, MusicItem, PageConfig, PhotoAlbum, PhotoItem, SearchResultItem, SiteSettings } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { useUiStore } from '@/stores/ui'
 import { usePlayerStore } from '@/stores/player'
@@ -36,10 +36,15 @@ const updateIndex = ref(0)
 const now = ref(new Date())
 const postTone = ref<ImageTone>('dark')
 const photoTone = ref<ImageTone>('dark')
+const homeSearchQ = ref('')
+const homeSearchResults = ref<SearchResultItem[]>([])
+const homeSearchLoading = ref(false)
+const homeSearchError = ref('')
 const ui = useUiStore()
 const player = usePlayerStore()
 let clockTimer = 0
 let carouselTimer = 0
+let searchTimer = 0
 
 useSeo({
   title: () => settings.value?.siteTitle || settings.value?.title || '首页',
@@ -154,9 +159,14 @@ watch(() => currentPost.value?.meta.cover || settings.value?.defaultPostCover ||
 watch(() => currentPhoto.value?.url || '', async (url) => {
   photoTone.value = await detectImageTone(url, 'dark')
 }, { immediate: true })
+
+watch(homeSearchQ, () => {
+  if (searchTimer) window.clearTimeout(searchTimer)
+  searchTimer = window.setTimeout(runHomeSearch, 260)
+})
 const lyricStyle = computed(() => {
   const len = lyricLine.value.length
-  const size = len > 60 ? '1rem' : len > 42 ? '1.18rem' : len > 28 ? '1.35rem' : '1.65rem'
+  const size = len > 60 ? '.86rem' : len > 42 ? '.96rem' : len > 28 ? '1.08rem' : '1.22rem'
   return { fontSize: size }
 })
 const beijingTime = computed(() => now.value.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }))
@@ -228,6 +238,26 @@ function seekFromEvent(event: Event) {
   player.seek(value)
 }
 
+async function runHomeSearch() {
+  const q = homeSearchQ.value.trim()
+  if (!q) {
+    homeSearchResults.value = []
+    homeSearchError.value = ''
+    return
+  }
+  homeSearchLoading.value = true
+  homeSearchError.value = ''
+  try {
+    const result = await contentApi.search({ q, type: 'all', limit: 8 })
+    homeSearchResults.value = result.items
+  } catch (exc) {
+    homeSearchError.value = exc instanceof Error ? exc.message : '搜索失败'
+    homeSearchResults.value = []
+  } finally {
+    homeSearchLoading.value = false
+  }
+}
+
 async function toggleLike() {
   const id = currentSongId.value
   if (!id) {
@@ -282,11 +312,35 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   if (clockTimer) window.clearInterval(clockTimer)
   if (carouselTimer) window.clearInterval(carouselTimer)
+  if (searchTimer) window.clearTimeout(searchTimer)
 })
 </script>
 
 <template>
   <section class="grid min-w-0 max-w-full gap-6 md:gap-8">
+    <div class="home-search-wrap">
+      <form class="home-search-bar" role="search" @submit.prevent="runHomeSearch">
+        <input v-model="homeSearchQ" type="search" placeholder="搜索全站内容..." aria-label="首页全站搜索" />
+        <button type="submit" aria-label="搜索">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.7-3.7" />
+          </svg>
+        </button>
+      </form>
+      <div v-if="homeSearchQ.trim()" class="home-search-popover">
+        <p v-if="homeSearchLoading" class="home-search-state">搜索中...</p>
+        <p v-else-if="homeSearchError" class="home-search-state text-rose-600">{{ homeSearchError }}</p>
+        <p v-else-if="!homeSearchResults.length" class="home-search-state">暂无匹配结果</p>
+        <div v-else class="grid gap-2">
+          <RouterLink v-for="item in homeSearchResults" :key="`${item.type}-${item.url}-${item.title}`" :to="item.url" class="home-search-result">
+            <span>{{ item.type }}</span>
+            <b>{{ item.title }}</b>
+            <small>{{ item.summary || '点击查看详情' }}</small>
+          </RouterLink>
+        </div>
+      </div>
+    </div>
     <div class="home-fixed-grid">
       <ProfileCard
         class="home-profile-card home-card-opacity min-w-0 max-w-full"
@@ -396,25 +450,30 @@ onBeforeUnmount(() => {
             <div v-else class="home-text-carousel home-updates-carousel-card grid place-items-center text-white/58">暂无更新内容</div>
 
             <button type="button" class="home-theme-card sr-card-hover" @click="ui.toggleColorMode">
-              <span class="mode-orb grid h-20 w-20 place-items-center rounded-[28px] text-3xl">{{ ui.colorMode === 'day' ? '☀' : '☾' }}</span>
+              <span class="mode-orb grid h-20 w-20 place-items-center rounded-[28px] text-4xl" aria-hidden="true">{{ ui.colorMode === 'day' ? '☀️' : '🌙' }}</span>
               <span class="mt-5 block text-2xl font-black text-white">{{ ui.colorMode === 'day' ? '日间模式' : '夜间模式' }}</span>
               <span class="mt-3 block text-sm leading-6 text-white/58">点击切换全站昼夜主题</span>
             </button>
       </div>
 
-    <GlassCard hover class="home-status-card home-card-opacity">
+    <GlassCard hover dense class="home-status-card home-card-opacity">
       <div class="home-status-grid">
-        <div class="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
+        <div class="home-status-cell">
           <p class="text-xs uppercase tracking-[.24em] text-white/38">beijing time</p>
           <b class="mt-2 block text-xl text-white">{{ beijingTime }}</b>
         </div>
-        <div class="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
+        <div class="home-status-cell">
           <p class="text-xs uppercase tracking-[.24em] text-white/38">runtime</p>
           <b class="mt-2 block text-xl text-white">{{ runtime }}</b>
         </div>
-        <div class="rounded-3xl border border-white/10 bg-white/[0.06] p-4">
+        <div class="home-status-cell">
           <p class="text-xs uppercase tracking-[.24em] text-white/38">stack</p>
-          <b class="mt-2 block text-sm leading-6 text-white">Vue 3 / Vite / Tailwind CSS / FastAPI</b>
+          <div class="readme-badges mt-2" aria-label="技术栈">
+            <span><b>Vue</b><em>3</em></span>
+            <span><b>Vite</b><em>5</em></span>
+            <span><b>Tailwind</b><em>CSS</em></span>
+            <span><b>FastAPI</b><em>API</em></span>
+          </div>
         </div>
       </div>
     </GlassCard>

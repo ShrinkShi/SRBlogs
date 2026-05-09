@@ -1302,3 +1302,59 @@ Admin settings can save theme packages, active theme, component overrides, and t
 Theme export may include `pageLayouts`. Import/apply can choose whether to write those layouts to `/api/admin/pages/config`. If the user imports colors only, `pageLayouts` must not overwrite the current page layout configuration.
 
 
+## About Page And Contact Form
+
+### `GET /api/about-page`
+
+Returns the public structured About page configuration. It is safe for unauthenticated visitors and never returns secrets. If `backend/data/about_page.json` does not exist, the backend returns the default configuration.
+
+Main sections:
+
+- `hero`: status pill, name, role, description, CTA buttons, stats.
+- `about`: badge, paragraphs, highlighted words, skills, code profile.
+- `github`: public stats and local contribution heatmap text.
+- `contact`: public email, GitHub, website, QQ, WeChat, and `mailTo` display target.
+
+### `GET /api/admin/about-page`
+
+Requires admin JWT. Returns the same structured configuration for admin editing.
+
+### `PUT /api/admin/about-page`
+
+Requires admin JWT. Body follows the normal `JsonWrite` wrapper:
+
+```json
+{
+  "data": {
+    "hero": {},
+    "about": {},
+    "github": {},
+    "contact": {}
+  }
+}
+```
+
+The backend validates basic required fields and URL shape, writes through the JSON store safe-write path, creates backups through the existing file-store behavior, and writes an audit log entry.
+
+### `POST /api/contact/send`
+
+Public endpoint used by the `/about` contact form.
+
+Request:
+
+```json
+{
+  "name": "Visitor",
+  "email": "visitor@example.com",
+  "message": "Hello"
+}
+```
+
+Validation:
+
+- `name`: 1-80 chars.
+- `email`: valid email shape.
+- `message`: 1-2000 chars.
+- Basic IP rate limit: max 3 submissions per minute.
+
+If `CONTACT_MAIL_ENABLED=false` or SMTP is incomplete, returns `503` with `联系表单暂未启用`. SMTP credentials are never exposed to frontend/admin public responses.

@@ -20,7 +20,9 @@ const ui = useUiStore()
 <style scoped>
 .toast-enter-active,.toast-leave-active{transition:opacity .24s ease, transform .24s ease}
 .toast-enter-from,.toast-leave-to{opacity:0;transform:translate(-50%,-14px) scale(.98)}
-.toast-shell{position:fixed;border:1px solid var(--ct-toast-border, rgba(255,255,255,.18));background:color-mix(in srgb,var(--ct-toast-bg,rgba(12,16,32,.92)) calc(var(--ct-toast-opacity,.9) * 100%),transparent);color:var(--ct-toast-text,#fff);backdrop-filter:blur(18px) saturate(140%)}
-.toast-success{border-color:rgba(74,222,128,.55);background:linear-gradient(135deg,rgba(22,163,74,.72),rgba(16,185,129,.4));box-shadow:0 18px 48px rgba(34,197,94,.24)}
-.toast-error{border-color:rgba(248,113,113,.55);background:linear-gradient(135deg,rgba(185,28,28,.72),rgba(248,113,113,.28));box-shadow:0 18px 48px rgba(248,113,113,.2)}
+.toast-shell{position:fixed;border:1px solid var(--ct-toast-border, var(--border-glass));background:var(--ct-toast-bg,var(--bg-card-elevated));color:var(--ct-toast-text,var(--text-primary));box-shadow:0 18px 48px color-mix(in srgb,#000 18%,transparent);backdrop-filter:none;-webkit-backdrop-filter:none}
+.toast-success{border-color:rgba(22,163,74,.65);background:rgb(240 253 244);color:rgb(22 101 52);box-shadow:0 18px 48px rgba(34,197,94,.18)}
+.toast-error{border-color:rgba(220,38,38,.62);background:rgb(254 242 242);color:rgb(127 29 29);box-shadow:0 18px 48px rgba(248,113,113,.18)}
+:global(:root[data-color-mode='night']) .toast-success{background:rgb(20 83 45);color:rgb(220 252 231)}
+:global(:root[data-color-mode='night']) .toast-error{background:rgb(127 29 29);color:rgb(254 226 226)}
 </style>

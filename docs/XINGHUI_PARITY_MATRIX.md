@@ -494,3 +494,8 @@ Windows 本地启动命令：
 - Photo wall admin remains `in progress / browser QA required` for this focused visual-operability fix until the user confirms the create/edit album modal scrolls correctly.
 - Implemented: modal shell owns `85vh`; body scrolls; album photo area grows naturally; thumbnails are stable size; upload/delete/sort/cover controls are preserved.
 - Progress estimate after this fix: P0 100%, P1 99%, P2 95%.
+## 新版关于页与联系表单状态
+
+- 新版 `/about` 四屏页面与结构化后台编辑已进入“进行中”状态。
+- 联系表单后端 SMTP 发送能力已接入，真实发送结果需等待生产 SMTP 配置后的人工验收。
+- 未经人工验收前，不标记为完成。

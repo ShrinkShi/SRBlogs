@@ -13,7 +13,7 @@ const items = computed(() => (props.list?.length ? props.list : fallback).slice(
     <span
       v-for="(text, i) in items"
       :key="text + i"
-      class="absolute whitespace-nowrap rounded-full border border-white/10 bg-white/[0.08] px-4 py-1 text-xs text-white/38 backdrop-blur-md"
+      class="absolute whitespace-nowrap rounded-full border border-white/10 bg-white px-4 py-1 text-xs text-slate-500"
       :style="{ top: `${8 + (i * 7) % 70}%`, animation: `drift ${18 + i * 1.7}s linear ${-i * 2.1}s infinite` }"
     >
       {{ text }}

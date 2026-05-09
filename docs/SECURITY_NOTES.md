@@ -130,3 +130,10 @@
 - Theme import must not overwrite backend secret settings. Empty secret preservation rules remain unchanged.
 - If an imported theme contains `pageLayouts`, the admin UI must give the operator a choice before applying layouts.
 - Component opacity may be `0..1`. Opacity `0` can visually hide a component, but it must not bypass authorization, upload checks, comment login rules, or backend validation.
+## About Contact Form SMTP Secrets
+
+- `/api/contact/send` sends mail only from the backend. Frontend code never receives SMTP host credentials, usernames, passwords, authorization codes, or provider internals.
+- Configure SMTP only through server-side environment variables: `CONTACT_MAIL_ENABLED`, `CONTACT_MAIL_TO`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_USE_SSL`, and `SMTP_FROM`.
+- `SMTP_PASSWORD` must not be a personal login password when the provider requires an app authorization code. QQ Mail usually requires an SMTP authorization code.
+- Contact form errors returned to visitors must be user-readable and must not expose SMTP usernames, passwords, server paths, stack traces, or provider debug output.
+- About page structured content is public presentation data. It may contain public email, QQ, WeChat, GitHub, website links, page text, and local GitHub-style statistics, but must not contain private tokens or credentials.

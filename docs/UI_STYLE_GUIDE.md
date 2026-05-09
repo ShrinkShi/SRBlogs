@@ -513,3 +513,11 @@ Player and carousel:
 - 游客工具箱必须显式区分日间和夜间状态：日间使用浅色玻璃面板、深色文字和深色表单控件文字；夜间使用深色玻璃面板、浅色文字。
 - 左下角工具箱悬浮球和展开菜单也要随昼夜模式切换背景、边框和文字色，不允许日间仍保留深色菜单加白字造成风格断层。
 - 前台背景不是纯色背景。主题应使用“壁纸图层 + 昼夜蒙层 + 毛玻璃内容”的结构，壁纸图层必须保持可辨识，只由蒙层负责统一白/灰/红或黑/灰/红氛围。
+## About Page Visual Direction
+
+- `/about` uses the existing site wallpaper/background-effect layer. Do not replace the root page background with a hard-coded pure white block.
+- The page is organized as four vertical portfolio sections: Hero, About Me, GitHub Activity, and Contact.
+- Day mode uses dark text on white/light glass cards with red as the only strong accent.
+- Night mode uses light text on dark glass cards with the same red accent.
+- Decorative lines, orbits, triangles, and particles are local to the About page and must not obstruct text or form fields.
+- Contact form controls must keep strong contrast in both modes and show loading/error/success states.
