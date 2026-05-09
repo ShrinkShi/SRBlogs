@@ -1,27 +1,39 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import ImageUploader from '@/components/ImageUploader.vue'
-import GlassCard from '@/components/GlassCard.vue'
 import { adminApi } from '@/api/admin'
-import { usePendingStore } from '@/stores/pending'
 import { useUiStore } from '@/stores/ui'
 import type { ContentItem } from '@/types'
 
-const route = useRoute(); const router = useRouter(); const ui = useUiStore()
-const pendingStore = usePendingStore()
+const route = useRoute()
+const router = useRouter()
+const ui = useUiStore()
+
 const section = ref((route.params.section as 'posts' | 'moments' | 'chatters') || 'posts')
 const oldSlug = ref(route.params.slug ? String(route.params.slug) : '')
 const content = ref('# 新内容\n')
-const meta = reactive({ title: '未命名', date: new Date().toISOString().slice(0,16).replace('T',' '), tagsText: '', draft: true, cover: '', summary: '' })
+const meta = reactive({
+  title: '未命名',
+  date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+  tagsText: '',
+  draft: true,
+  cover: '',
+  summary: ''
+})
 const slug = ref(`post-${Date.now()}`)
 const saving = ref(false)
 const error = ref('')
 const success = ref('')
 const editorOpen = ref(false)
+const mdImportName = ref('')
+
 const slugPattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$/
-const slugHelp = 'slug 会出现在公开 URL 中，只允许字母、数字、下划线和连字符，例如 vue-fastapi-blog。'
+const slugHelp = 'slug 会出现在公开 URL 中，只允许字母、数字、下划线和连字符。'
+const summaryLength = computed(() => meta.summary.trim().length)
+const summaryWarning = computed(() => summaryLength.value > 120)
+const contentTypeLabel = computed(() => section.value === 'chatters' ? '杂谈' : section.value === 'moments' ? '动态' : '文章')
 
 onMounted(async () => {
   if (!oldSlug.value) return
@@ -36,7 +48,7 @@ onMounted(async () => {
     meta.cover = item.meta.cover || ''
     meta.summary = item.meta.summary || ''
   } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '文章加载失败'
+    error.value = exc instanceof Error ? exc.message : '内容加载失败'
   }
 })
 
@@ -56,7 +68,7 @@ function validateForm() {
     return false
   }
   if (!content.value.trim()) {
-    error.value = 'Markdown 内容不能为空。'
+    error.value = 'Markdown 正文不能为空。'
     return false
   }
   return true
@@ -66,13 +78,20 @@ function buildPayload(draftOverride?: boolean): ContentItem | null {
   if (!validateForm()) return null
   return {
     slug: slug.value.trim(),
-    meta: { title: meta.title.trim(), date: meta.date, tags: meta.tagsText.split(',').map(s => s.trim()).filter(Boolean), draft: draftOverride ?? meta.draft, cover: meta.cover, summary: meta.summary },
+    meta: {
+      title: meta.title.trim(),
+      date: meta.date,
+      tags: meta.tagsText.split(',').map((item) => item.trim()).filter(Boolean),
+      draft: draftOverride ?? meta.draft,
+      cover: meta.cover.trim(),
+      summary: meta.summary.trim()
+    },
     content: content.value
   }
 }
 
-async function save(){
-  const payload = buildPayload()
+async function save(draftOverride?: boolean) {
+  const payload = buildPayload(draftOverride)
   if (!payload) return
   saving.value = true
   try {
@@ -80,10 +99,8 @@ async function save(){
     oldSlug.value = saved.slug
     slug.value = saved.slug
     meta.draft = saved.meta.draft
-    success.value = meta.draft
-      ? '保存成功，已作为草稿写入后端文件；前台公开列表不会显示。'
-      : '保存成功，已写入后端文件；前台文章列表和详情会显示最新内容。'
-    ui.show(meta.draft ? '草稿已保存' : '文章已保存并公开')
+    success.value = saved.meta.draft ? '草稿已保存。' : '内容已发布，前台可见。'
+    ui.show(success.value)
     router.replace(`/editor/${section.value}/${saved.slug}`)
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '保存失败'
@@ -91,100 +108,152 @@ async function save(){
     saving.value = false
   }
 }
-function stage(draftOverride?: boolean) {
-  if (section.value !== 'posts') {
-    error.value = 'pendingOperations 第一阶段只覆盖文章新建、编辑、删除和草稿发布。'
+
+function insertImage(url: string) {
+  content.value += `\n![图片](${url})\n`
+}
+
+function setCover(url: string) {
+  meta.cover = url
+}
+
+async function importMarkdown(files: FileList | null) {
+  const file = files?.[0]
+  if (!file) return
+  if (!file.name.toLowerCase().endsWith('.md') && !file.type.startsWith('text/')) {
+    error.value = '请上传 .md 或文本格式文件。'
     return
   }
-  const payload = buildPayload(draftOverride)
-  if (!payload) return
-  const isPublish = Boolean(oldSlug.value && meta.draft && draftOverride === false)
-  pendingStore.add({
-    kind: isPublish ? 'publishDraft' : oldSlug.value ? 'editPost' : 'createPost',
-    section: section.value,
-    title: payload.meta.title,
-    slug: payload.slug,
-    oldSlug: oldSlug.value || undefined,
-    payload
-  })
-  success.value = isPublish ? '草稿发布已加入暂存队列，点击右侧应用后才会写入。' : '操作已加入暂存队列，点击右侧应用后才会写入。'
-  ui.show('已加入暂存队列')
-}
-async function publishNow() {
-  const payload = buildPayload(false)
-  if (!payload) return
-  saving.value = true
-  try {
-    const saved = await adminApi.save(section.value, payload, oldSlug.value || undefined)
-    oldSlug.value = saved.slug
-    slug.value = saved.slug
-    meta.draft = false
-    success.value = '发布成功，前台文章列表现在可见，文章详情可公开访问。'
-    ui.show('草稿已发布，前台可见')
-    router.replace(`/editor/${section.value}/${saved.slug}`)
-  } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '发布失败'
-  } finally {
-    saving.value = false
+  content.value = await file.text()
+  mdImportName.value = file.name
+  if (!meta.title.trim() || meta.title === '未命名') {
+    meta.title = file.name.replace(/\.md$/i, '')
   }
+  ui.show('Markdown 文件已导入编辑区')
 }
-function insertImage(url: string){ content.value += `\n![图片](${url})\n` }
 
 function closeEditor() {
   if (!confirm('确认关闭 Markdown 编辑器？未保存内容请先点击保存。')) return
   editorOpen.value = false
 }
 </script>
+
 <template>
   <section class="grid gap-5">
-    <GlassCard>
-      <p class="mb-4 text-sm leading-6 text-amber-100/75">“保存”会直接持久化写入后端 Markdown 文件；“加入暂存”只进入本地 pendingOperations，刷新页面会丢失，点击右侧“应用”后才会写后端。</p>
-      <div class="grid gap-4 md:grid-cols-3">
-        <input v-model="meta.title" aria-label="文章标题" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="标题" />
-        <label class="grid gap-1">
-          <input v-model="slug" aria-label="文章 slug" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="slug" />
-          <span class="px-1 text-xs text-white/45">{{ slugHelp }}</span>
-        </label>
-        <select v-model="section" disabled aria-label="内容类型" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none"><option>posts</option><option>moments</option><option>chatters</option></select>
-        <input v-model="meta.date" aria-label="发布日期" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="日期" />
-        <input v-model="meta.tagsText" aria-label="标签，逗号分隔" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="标签，逗号分隔" />
-        <label class="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/10 px-4 py-3"><input v-model="meta.draft" type="checkbox" />{{ meta.draft ? '当前为草稿：前台不可见' : '当前为已发布：前台可见' }}</label>
+    <div class="admin-page-head">
+      <div>
+        <p class="eyebrow">markdown editor</p>
+        <h1>{{ oldSlug ? `编辑${contentTypeLabel}` : `新增${contentTypeLabel}` }}</h1>
+        <p>正文 Markdown 与卡片简介分离维护；封面为空时前台使用默认封面，简介用于首页和列表卡片。</p>
       </div>
-      <textarea v-model="meta.summary" rows="2" aria-label="文章摘要" class="mt-4 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="摘要"></textarea>
-      <input v-model="meta.cover" aria-label="封面 URL" class="mt-4 w-full rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none" placeholder="封面 URL" />
-      <div class="mt-4 flex flex-wrap items-center gap-3">
-        <button :disabled="saving" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:opacity-50" @click="save">{{ saving ? '保存中...' : '保存' }}</button>
-        <button :disabled="saving" class="rounded-2xl border border-cyan-200/25 px-5 py-3 font-bold text-cyan-100 disabled:opacity-50" @click="stage()">加入暂存</button>
-        <button v-if="meta.draft" :disabled="saving" class="rounded-2xl bg-emerald-300 px-5 py-3 font-bold text-slate-950 disabled:opacity-50" @click="publishNow">立即发布</button>
-        <button v-if="meta.draft" :disabled="saving" class="rounded-2xl border border-emerald-200/25 px-5 py-3 font-bold text-emerald-100 disabled:opacity-50" @click="stage(false)">发布加入暂存</button>
-        <RouterLink to="/posts" class="rounded-2xl border border-white/10 px-5 py-3 text-white/70">返回列表</RouterLink>
-        <span v-if="error" class="text-sm text-red-200/80">{{ error }}</span>
-        <span v-if="success" class="text-sm text-emerald-200/80">{{ success }}</span>
+      <div class="actions">
+        <button :disabled="saving" class="admin-btn admin-btn-ghost" type="button" @click="save(true)">
+          {{ saving ? '保存中...' : '保存草稿' }}
+        </button>
+        <button :disabled="saving" class="admin-btn admin-btn-primary" type="button" @click="save(false)">发布</button>
+        <RouterLink to="/content/posts" class="admin-btn admin-btn-ghost">返回内容管理</RouterLink>
       </div>
-    </GlassCard>
-    <ImageUploader @uploaded="insertImage" />
-    <GlassCard>
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 class="text-2xl font-black text-white">Markdown 正文</h2>
-          <p class="mt-2 text-sm text-white/55">点击按钮打开近全屏编辑器，左侧编辑，右侧安全预览；移动端可切换编辑/预览。</p>
+    </div>
+
+    <div class="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <div class="admin-card">
+        <h2 class="text-xl font-black text-slate-950">基础信息</h2>
+        <div class="mt-4 grid gap-4">
+          <label class="field">
+            标题
+            <input v-model="meta.title" aria-label="标题" class="admin-input" placeholder="请输入标题" />
+          </label>
+          <label class="field">
+            Slug
+            <input v-model="slug" aria-label="slug" class="admin-input font-mono" placeholder="vue-fastapi-blog" />
+            <span class="text-xs text-slate-500">{{ slugHelp }}</span>
+          </label>
+          <div class="grid gap-4 md:grid-cols-2">
+            <label class="field">
+              日期
+              <input v-model="meta.date" aria-label="日期" class="admin-input" />
+            </label>
+            <label class="field">
+              类型
+              <select v-model="section" disabled aria-label="内容类型" class="admin-input">
+                <option value="posts">正经文章</option>
+                <option value="chatters">杂谈</option>
+                <option value="moments">动态</option>
+              </select>
+            </label>
+          </div>
+          <label class="field">
+            标签
+            <input v-model="meta.tagsText" aria-label="标签" class="admin-input" placeholder="Vue, FastAPI, Blog" />
+          </label>
+          <label class="field">
+            卡片简介
+            <textarea v-model="meta.summary" rows="4" aria-label="卡片简介" class="admin-input resize-y" placeholder="用于首页和列表卡片展示，不等同于 Markdown 正文。"></textarea>
+            <span :class="summaryWarning ? 'text-red-700' : 'text-slate-500'" class="text-xs font-bold">
+              {{ summaryLength }} 字，建议 120 字以内
+            </span>
+          </label>
+          <label class="field flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <span>{{ meta.draft ? '当前为草稿，前台公开列表不可见' : '当前已发布，前台可见' }}</span>
+            <input v-model="meta.draft" type="checkbox" />
+          </label>
         </div>
-        <button type="button" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950" @click="editorOpen = true">打开 Markdown 编辑器</button>
       </div>
-      <p class="mt-4 line-clamp-3 rounded-2xl border border-white/10 bg-white/[0.055] p-4 text-sm leading-6 text-white/56">{{ content || '暂无正文内容' }}</p>
-    </GlassCard>
+
+      <div class="admin-card">
+        <h2 class="text-xl font-black text-slate-950">封面与素材</h2>
+        <p class="mt-2 text-sm leading-6 text-slate-600">文章和杂谈必须有封面；这里可直接上传图片，也可留空使用设置中的默认封面。</p>
+        <div class="mt-4 grid gap-4">
+          <label class="field">
+            封面 URL
+            <input v-model="meta.cover" aria-label="封面 URL" class="admin-input" placeholder="https://..." />
+          </label>
+          <ImageUploader @uploaded="setCover" />
+          <div v-if="meta.cover" class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
+            <img :src="meta.cover" alt="封面预览" class="h-48 w-full object-cover" />
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <h3 class="font-black text-slate-950">正文图片</h3>
+            <p class="mt-1 text-sm text-slate-600">上传成功后会自动插入 Markdown 图片语法。</p>
+            <div class="mt-3">
+              <ImageUploader @uploaded="insertImage" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-black text-slate-950">Markdown 正文</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-600">可以直接导入 .md 文件，也可以打开近全屏编辑器进行编辑与预览。</p>
+          <p v-if="mdImportName" class="mt-1 text-xs font-bold text-slate-500">已导入：{{ mdImportName }}</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <label class="admin-btn admin-btn-ghost cursor-pointer">
+            导入 .md
+            <input class="hidden" type="file" accept=".md,text/markdown,text/plain" @change="importMarkdown(($event.target as HTMLInputElement).files)" />
+          </label>
+          <button type="button" class="admin-btn admin-btn-primary" @click="editorOpen = true">打开 Markdown 编辑器</button>
+        </div>
+      </div>
+      <textarea v-model="content" class="admin-input mt-4 min-h-[360px] font-mono text-sm leading-6" aria-label="Markdown 正文"></textarea>
+      <p v-if="error" class="mt-3 text-sm font-bold text-red-700">{{ error }}</p>
+      <p v-if="success" class="mt-3 text-sm font-bold text-emerald-700">{{ success }}</p>
+    </div>
 
     <Teleport to="body">
-      <div v-if="editorOpen" class="fixed inset-0 z-[9990] bg-slate-950/82 p-3 backdrop-blur-xl md:p-6">
-        <div class="mx-auto grid h-full max-w-[1500px] grid-rows-[auto_minmax(0,1fr)] gap-4 rounded-[32px] border border-white/12 bg-slate-950/88 p-4 shadow-2xl">
-          <div class="flex flex-wrap items-center justify-between gap-3">
+      <div v-if="editorOpen" class="fixed inset-0 z-[9990] bg-black/45 p-3 md:p-6">
+        <div class="mx-auto grid h-full max-w-[1500px] grid-rows-[auto_minmax(0,1fr)] gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
             <div class="min-w-0">
-              <p class="text-xs font-bold uppercase tracking-[.24em] text-cyan-100/45">immersive markdown editor</p>
-              <h2 class="truncate text-2xl font-black text-white">{{ meta.title || '未命名文章' }}</h2>
+              <p class="text-xs font-bold uppercase tracking-[.24em] text-slate-500">markdown editor</p>
+              <h2 class="truncate text-2xl font-black text-slate-950">{{ meta.title || '未命名' }}</h2>
             </div>
             <div class="flex flex-wrap gap-2">
-              <button :disabled="saving" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:opacity-50" @click="save">{{ saving ? '保存中...' : '保存' }}</button>
-              <button type="button" class="rounded-2xl border border-white/10 px-5 py-3 text-white/72" @click="closeEditor">关闭</button>
+              <button :disabled="saving" class="admin-btn admin-btn-primary" @click="save()">{{ saving ? '保存中...' : '保存' }}</button>
+              <button type="button" class="admin-btn admin-btn-ghost" @click="closeEditor">关闭</button>
             </div>
           </div>
           <div class="min-h-0 overflow-auto">

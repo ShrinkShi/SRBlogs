@@ -13,6 +13,7 @@ type NavItem = {
 type NavGroup = {
   key: string
   title: string
+  description: string
   items: NavItem[]
 }
 
@@ -25,6 +26,7 @@ const groups: NavGroup[] = [
   {
     key: 'content',
     title: '内容管理',
+    description: '文章、图片、音乐、项目、友链、关于',
     items: [
       {
         label: '文章',
@@ -41,7 +43,7 @@ const groups: NavGroup[] = [
       {
         label: '音乐',
         path: '/content/music',
-        note: '歌单',
+        note: '歌单 / 歌词',
         children: [{ label: '评论', path: '/content/music-comments' }]
       },
       { label: '项目', path: '/content/projects', note: '封面 / 链接' },
@@ -52,17 +54,20 @@ const groups: NavGroup[] = [
   {
     key: 'settings',
     title: '设置',
-    items: [{ label: '设置中心', path: '/settings', note: '站点 / 我的 / 主题 / 留言' }]
+    description: '站点、个人、主题、留言授权',
+    items: [{ label: '设置中心', path: '/settings', note: '四个 Frame' }]
   },
   {
     key: 'audit',
     title: '审计日志',
-    items: [{ label: '审计日志', path: '/audit', note: '操作记录' }]
+    description: '后台操作记录',
+    items: [{ label: '审计日志', path: '/audit', note: '查询 / 筛选' }]
   },
   {
     key: 'backup',
     title: '备份恢复',
-    items: [{ label: '备份恢复', path: '/backups', note: '导入 / 导出 / 回滚' }]
+    description: '备份、下载、恢复',
+    items: [{ label: '备份恢复', path: '/backups', note: '安全回滚' }]
   }
 ]
 
@@ -77,7 +82,11 @@ function isGroupActive(group: NavGroup) {
   return group.items.some(isItemActive)
 }
 
-function goGroup(group: NavGroup) {
+function toggleGroup(group: NavGroup) {
+  expanded.value = expanded.value === group.key && !isGroupActive(group) ? '' : group.key
+}
+
+function goFirst(group: NavGroup) {
   expanded.value = group.key
   router.push(group.items[0].path)
 }
@@ -90,28 +99,32 @@ function logout() {
 
 <template>
   <div class="admin-flat min-h-screen">
-    <div class="grid min-h-screen gap-0 xl:grid-cols-[280px_minmax(0,1fr)]">
-      <aside class="admin-sidebar h-screen overflow-auto rounded-none border-y-0 border-l-0 p-3 xl:sticky xl:top-0">
-        <div class="mb-4 px-3 py-3">
+    <div class="grid min-h-screen xl:grid-cols-[292px_minmax(0,1fr)]">
+      <aside class="admin-sidebar h-screen overflow-auto p-4 xl:sticky xl:top-0">
+        <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-4">
           <div class="flex items-center gap-3">
-            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-950">SR</span>
+            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-slate-950 text-sm font-black text-white">SR</span>
             <div class="min-w-0">
-              <h1 class="truncate text-xl font-black text-slate-950">SRBlogs</h1>
-              <p class="text-xs text-slate-500">管理控制台</p>
+              <h1 class="truncate text-xl font-black tracking-tight text-slate-950">SRBlogs</h1>
+              <p class="text-xs font-semibold text-slate-500">后台管理系统</p>
             </div>
           </div>
         </div>
 
-        <nav class="relative z-[1] grid gap-1" aria-label="后台导航">
+        <nav class="grid gap-3" aria-label="后台导航">
           <section v-for="group in groups" :key="group.key" class="admin-nav-group">
             <button
               type="button"
               class="admin-nav-parent"
               :class="isGroupActive(group) ? 'admin-nav-parent-active' : ''"
-              @click="goGroup(group)"
+              @click="goFirst(group)"
+              @dblclick="toggleGroup(group)"
             >
-              <span>{{ group.title }}</span>
-              <span>{{ expanded === group.key ? '收起' : '展开' }}</span>
+              <span>
+                <b>{{ group.title }}</b>
+                <small>{{ group.description }}</small>
+              </span>
+              <span class="admin-nav-toggle">{{ expanded === group.key || isGroupActive(group) ? '收起' : '展开' }}</span>
             </button>
             <div v-if="expanded === group.key || isGroupActive(group)" class="admin-nav-children">
               <template v-for="item in group.items" :key="item.path">
@@ -128,7 +141,7 @@ function logout() {
                     v-for="child in item.children"
                     :key="child.path"
                     :to="child.path"
-                    class="admin-nav-child text-xs"
+                    class="admin-nav-child admin-nav-child-sub"
                     :class="activePath === child.path ? 'admin-nav-child-active' : ''"
                   >
                     <span>{{ child.label }}</span>
@@ -139,10 +152,12 @@ function logout() {
           </section>
         </nav>
 
-        <button type="button" class="admin-btn admin-btn-ghost relative z-[1] mt-5 w-full text-sm" @click="logout">退出登录</button>
+        <button type="button" class="admin-btn admin-btn-ghost mt-6 w-full" @click="logout">退出登录</button>
       </aside>
 
-      <main class="min-w-0 p-4 md:p-6"><slot /></main>
+      <main class="min-w-0 p-4 md:p-6 xl:p-8">
+        <slot />
+      </main>
     </div>
   </div>
 </template>

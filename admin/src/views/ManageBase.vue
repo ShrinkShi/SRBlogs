@@ -30,6 +30,13 @@ const filteredItems = computed(() => items.value.filter((item) => {
   return item.meta.title.toLowerCase().includes(q)
     || item.slug.toLowerCase().includes(q)
     || (item.meta.summary || '').toLowerCase().includes(q)
+    || item.meta.tags?.some((tag) => tag.toLowerCase().includes(q))
+}))
+
+const stats = computed(() => ({
+  total: items.value.length,
+  published: items.value.filter((item) => !item.meta.draft).length,
+  draft: items.value.filter((item) => item.meta.draft).length
 }))
 
 function publicPath(item: ContentItem) {
@@ -67,7 +74,7 @@ async function remove(slug: string) {
 
 async function toggleDraft(item: ContentItem, draft: boolean) {
   const label = draft ? '设为草稿' : '发布'
-  if (!confirm(`确认${label}「${item.meta.title}」？`)) return
+  if (!confirm(`确认${label}《${item.meta.title}》？`)) return
   error.value = ''
   actionBusy.value = item.slug
   try {
@@ -87,39 +94,64 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
+    <div class="grid gap-3 md:grid-cols-3">
+      <div class="admin-card">
+        <p class="admin-section-title">TOTAL</p>
+        <strong class="mt-2 block text-3xl text-slate-950">{{ stats.total }}</strong>
+        <span class="admin-meta">总内容</span>
+      </div>
+      <div class="admin-card">
+        <p class="admin-section-title">PUBLISHED</p>
+        <strong class="mt-2 block text-3xl text-slate-950">{{ stats.published }}</strong>
+        <span class="admin-meta">公开显示</span>
+      </div>
+      <div class="admin-card">
+        <p class="admin-section-title">DRAFT</p>
+        <strong class="mt-2 block text-3xl text-slate-950">{{ stats.draft }}</strong>
+        <span class="admin-meta">草稿隐藏</span>
+      </div>
+    </div>
+
     <div class="admin-card">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 class="text-2xl font-black text-slate-950">{{ title }}</h2>
-          <p class="mt-2 text-sm leading-6 text-slate-600">正文 Markdown 和卡片简介分开维护；封面缺失时前台会使用设置里的默认封面。</p>
+          <p class="mt-2 text-sm leading-6 text-slate-600">
+            Markdown 正文用于详情页，卡片简介单独维护；简介建议控制字数，避免前台卡片溢出。封面为空时前台使用默认封面。
+          </p>
         </div>
         <div class="flex flex-wrap gap-2">
           <button class="admin-btn admin-btn-ghost" type="button" @click="load">刷新</button>
-          <RouterLink :to="`/editor/${section}`" class="admin-btn admin-btn-primary">新增</RouterLink>
+          <RouterLink :to="`/editor/${section}`" class="admin-btn admin-btn-primary">新增{{ props.section === 'chatters' ? '杂谈' : '文章' }}</RouterLink>
         </div>
       </div>
-      <div class="mt-5 flex flex-wrap items-center gap-2">
-        <input v-model="query" class="admin-input max-w-md" placeholder="搜索标题、简介或 slug" />
-        <button
-          v-for="option in filterOptions"
-          :key="option.value"
-          type="button"
-          class="admin-btn"
-          :class="filter === option.value ? 'admin-btn-primary' : 'admin-btn-ghost'"
-          @click="filter = option.value"
-        >
-          {{ option.label }}
-        </button>
+      <div class="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <input v-model="query" class="admin-input" placeholder="搜索标题、简介、标签或 slug" />
+        <div class="admin-segment">
+          <button
+            v-for="option in filterOptions"
+            :key="option.value"
+            type="button"
+            :class="filter === option.value ? 'admin-segment-active' : ''"
+            @click="filter = option.value"
+          >
+            {{ option.label }}
+          </button>
+        </div>
       </div>
-      <p v-if="error" class="mt-3 text-sm text-red-700">{{ error }}</p>
+      <p v-if="error" class="mt-3 text-sm font-bold text-red-700">{{ error }}</p>
     </div>
 
-    <div class="admin-card">
-      <p v-if="loading" class="text-slate-500">加载中...</p>
-      <p v-else-if="!filteredItems.length" class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-slate-500">当前筛选下暂无内容。</p>
-      <div v-else class="grid gap-3">
-        <div v-for="item in filteredItems" :key="item.slug" class="rounded-xl border border-slate-200 bg-white p-4">
-          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+    <div class="admin-table-card">
+      <p v-if="loading" class="p-6 text-slate-500">加载中...</p>
+      <p v-else-if="!filteredItems.length" class="p-6 text-slate-500">当前条件下暂无内容。</p>
+      <div v-else>
+        <article v-for="item in filteredItems" :key="item.slug" class="admin-list-row">
+          <div class="grid gap-4 lg:grid-cols-[8rem_minmax(0,1fr)_auto] lg:items-center">
+            <div class="h-24 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+              <img v-if="item.meta.cover" :src="item.meta.cover" alt="" class="h-full w-full object-cover" loading="lazy" />
+              <div v-else class="grid h-full place-items-center text-xs font-bold text-slate-400">默认封面</div>
+            </div>
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
                 <h3 class="break-words text-lg font-black text-slate-950">{{ item.meta.title }}</h3>
@@ -128,21 +160,22 @@ onMounted(load)
               </div>
               <p class="mt-1 break-all font-mono text-xs text-slate-500">{{ item.slug }}</p>
               <p class="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{{ item.meta.summary || '未填写卡片简介' }}</p>
-              <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                 <span>{{ item.meta.date || '无日期' }}</span>
                 <span>{{ item.meta.tags?.length || 0 }} 个标签</span>
-                <span>{{ item.content?.length || 0 }} 字符正文</span>
+                <span>{{ item.meta.summary?.length || 0 }} 字简介</span>
+                <span>{{ item.content?.length || 0 }} 字正文</span>
               </div>
             </div>
-            <div class="flex shrink-0 flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2 lg:justify-end">
               <RouterLink :to="`/editor/${section}/${item.slug}`" class="admin-btn admin-btn-ghost text-sm">编辑</RouterLink>
-              <a v-if="!item.meta.draft" :href="publicPath(item)" target="_blank" class="admin-btn admin-btn-ghost text-sm">前台预览</a>
+              <a v-if="!item.meta.draft" :href="publicPath(item)" target="_blank" class="admin-btn admin-btn-ghost text-sm">预览</a>
               <button v-if="item.meta.draft" :disabled="actionBusy === item.slug" class="admin-btn admin-btn-primary text-sm" type="button" @click="toggleDraft(item, false)">发布</button>
               <button v-else :disabled="actionBusy === item.slug" class="admin-btn admin-btn-ghost text-sm" type="button" @click="toggleDraft(item, true)">设为草稿</button>
               <button :disabled="actionBusy === item.slug" class="admin-btn admin-btn-danger text-sm" type="button" @click="remove(item.slug)">删除</button>
             </div>
           </div>
-        </div>
+        </article>
       </div>
     </div>
   </section>

@@ -17,16 +17,52 @@ const section = computed(() => String(route.params.section || 'articles'))
 const articleKind = computed<'posts' | 'chatters'>(() => route.query.kind === 'chatters' ? 'chatters' : 'posts')
 
 const sectionMeta = computed(() => {
-  const map: Record<string, { title: string; description: string }> = {
-    articles: { title: '文章', description: '统一管理正经文章和杂谈，新增或编辑会进入 Markdown 编辑器。' },
-    'article-comments': { title: '文章评论', description: '管理文章和杂谈对应的留言数据。' },
-    photos: { title: '图片', description: '按相册组管理照片，支持封面、批量上传、排序和删除。' },
-    'photo-comments': { title: '图片评论', description: '管理照片墙和相册对应的留言数据。' },
-    music: { title: '音乐', description: '管理歌单、音频、歌词、封面和喜欢数。' },
-    'music-comments': { title: '音乐评论', description: '管理音乐页留言数据。' },
-    projects: { title: '项目', description: '管理项目卡片，项目必须保留可跳转链接。' },
-    friends: { title: '友链', description: '管理友链卡片，保留站点链接和封面。' },
-    about: { title: '关于', description: '编辑关于页结构化文案和兼容 Markdown。' }
+  const map: Record<string, { eyebrow: string; title: string; description: string }> = {
+    articles: {
+      eyebrow: 'CONTENT / ARTICLES',
+      title: '文章管理',
+      description: '统一管理正经文章和杂谈。新增或编辑会进入 Markdown 编辑器，正文和卡片简介分离维护。'
+    },
+    'article-comments': {
+      eyebrow: 'CONTENT / MESSAGES',
+      title: '文章评论',
+      description: '管理文章、杂谈对应的留言数据。评论区开关保留在留言设置中维护。'
+    },
+    photos: {
+      eyebrow: 'CONTENT / PHOTOS',
+      title: '图片相册',
+      description: '按相册组管理照片，支持封面、批量上传、排序和删除，每组最多 50 张。'
+    },
+    'photo-comments': {
+      eyebrow: 'CONTENT / MESSAGES',
+      title: '图片评论',
+      description: '管理照片墙和相册对应的留言数据。'
+    },
+    music: {
+      eyebrow: 'CONTENT / MUSIC',
+      title: '音乐管理',
+      description: '维护歌曲、音频、歌词、封面、排序和喜欢数。'
+    },
+    'music-comments': {
+      eyebrow: 'CONTENT / MESSAGES',
+      title: '音乐评论',
+      description: '管理音乐页留言数据。'
+    },
+    projects: {
+      eyebrow: 'CONTENT / PROJECTS',
+      title: '项目管理',
+      description: '维护项目卡片。项目必须保留跳转链接，封面为空时前台使用默认封面。'
+    },
+    friends: {
+      eyebrow: 'CONTENT / FRIENDS',
+      title: '友链管理',
+      description: '维护友链卡片。友链必须保留站点链接，封面为空时前台使用默认封面。'
+    },
+    about: {
+      eyebrow: 'CONTENT / ABOUT',
+      title: '关于页面',
+      description: '编辑关于页面结构化文案和兼容 Markdown 内容。'
+    }
   }
   return map[section.value] || map.articles
 })
@@ -37,20 +73,18 @@ function setArticleKind(kind: 'posts' | 'chatters') {
 </script>
 
 <template>
-  <section class="grid gap-5">
-    <div class="admin-card">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-[.28em] text-slate-500">content hub</p>
-          <h1 class="mt-2 text-3xl font-black text-slate-950">{{ sectionMeta.title }}</h1>
-          <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{{ sectionMeta.description }}</p>
-        </div>
-        <div v-if="section === 'articles'" class="admin-segment">
-          <button type="button" :class="articleKind === 'posts' ? 'admin-segment-active' : ''" @click="setArticleKind('posts')">正经</button>
-          <button type="button" :class="articleKind === 'chatters' ? 'admin-segment-active' : ''" @click="setArticleKind('chatters')">杂谈</button>
-        </div>
+  <section class="admin-workspace">
+    <header class="admin-page-head">
+      <div class="min-w-0">
+        <p class="admin-section-title">{{ sectionMeta.eyebrow }}</p>
+        <h1>{{ sectionMeta.title }}</h1>
+        <p>{{ sectionMeta.description }}</p>
       </div>
-    </div>
+      <div v-if="section === 'articles'" class="admin-segment shrink-0">
+        <button type="button" :class="articleKind === 'posts' ? 'admin-segment-active' : ''" @click="setArticleKind('posts')">正经</button>
+        <button type="button" :class="articleKind === 'chatters' ? 'admin-segment-active' : ''" @click="setArticleKind('chatters')">杂谈</button>
+      </div>
+    </header>
 
     <PostsManage v-if="section === 'articles' && articleKind === 'posts'" />
     <ChatterManage v-else-if="section === 'articles' && articleKind === 'chatters'" />
