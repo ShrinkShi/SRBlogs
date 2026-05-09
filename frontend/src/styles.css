@@ -964,42 +964,53 @@ body::before {
 
 .home-status-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: .55rem;
+  grid-template-columns: minmax(0, .78fr) minmax(0, 1.02fr) minmax(0, 1.82fr);
+  gap: .45rem;
 }
 
 .home-status-card {
   min-height: 0;
 }
 
+.home-status-card.sr-card {
+  padding: .58rem .72rem !important;
+}
+
 .home-status-cell {
   min-width: 0;
   border: 1px solid var(--border-glass);
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--bg-card);
-  padding: .72rem .85rem;
+  padding: .48rem .62rem;
+}
+
+.home-status-cell b {
+  font-size: clamp(.9rem, 1.35vw, 1.14rem) !important;
+  line-height: 1.2;
 }
 
 .readme-badges {
   display: flex;
-  flex-wrap: wrap;
-  gap: .3rem;
+  flex-wrap: nowrap;
+  gap: .22rem;
+  align-items: center;
 }
 
 .readme-badges span {
   display: inline-flex;
   overflow: hidden;
   border-radius: 0;
-  font-size: .78rem;
+  font-size: .72rem;
   font-weight: 700;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .readme-badges b,
 .readme-badges em {
   display: inline-flex;
   align-items: center;
-  padding: .22rem .38rem;
+  padding: .18rem .3rem;
   font-style: normal;
 }
 
@@ -1042,9 +1053,43 @@ body::before {
 
 .home-fixed-grid .home-profile-card { grid-area: profile; min-height: 290px; }
 .home-fixed-grid .music-compact-card { grid-area: music; min-height: 290px; }
-.home-fixed-grid .lyrics-compact { grid-area: lyrics; min-height: 2.9rem; }
+.home-fixed-grid .lyrics-compact { grid-area: lyrics; min-height: 2.1rem; }
 .home-fixed-grid .home-mosaic-grid { grid-area: mosaic; }
 .home-fixed-grid .home-status-card { grid-area: status; }
+
+.home-fixed-grid .lyrics-compact.sr-card {
+  min-height: 2.1rem;
+  padding: .36rem .9rem !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-fixed-grid .lyrics-compact > .relative {
+  width: 100%;
+}
+
+:root[data-color-mode='day'] .lyrics-compact {
+  --component-bg: rgba(75, 85, 99, .92);
+  --component-text: #fff;
+  background: rgba(75, 85, 99, .92) !important;
+  border-color: rgba(255, 255, 255, .28);
+}
+
+:root[data-color-mode='night'] .lyrics-compact {
+  --component-bg: rgba(0, 0, 0, .9);
+  --component-text: #fff;
+  background: rgba(0, 0, 0, .9) !important;
+  border-color: rgba(255, 255, 255, .16);
+}
+
+.lyrics-compact .home-lyric-line {
+  color: #fff !important;
+  font-weight: 900 !important;
+  text-shadow:
+    0 0 8px rgba(244, 0, 2, .62),
+    0 1px 1px rgba(0, 0, 0, .35);
+}
 
 .home-mosaic-grid {
   display: grid;

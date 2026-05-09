@@ -166,7 +166,7 @@ watch(homeSearchQ, () => {
 })
 const lyricStyle = computed(() => {
   const len = lyricLine.value.length
-  const size = len > 60 ? '.86rem' : len > 42 ? '.96rem' : len > 28 ? '1.08rem' : '1.22rem'
+  const size = len > 60 ? '.78rem' : len > 42 ? '.88rem' : len > 28 ? '.98rem' : '1.08rem'
   return { fontSize: size }
 })
 const beijingTime = computed(() => now.value.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }))
@@ -395,8 +395,8 @@ onBeforeUnmount(() => {
       </GlassCard>
 
       <GlassCard hover class="sr-hero-panel lyrics-compact">
-      <div class="flex h-full min-h-[38px] flex-col items-center justify-center px-4 py-3 text-center">
-        <p class="mx-auto max-w-full truncate text-center font-black leading-tight text-white/78" :style="lyricStyle">{{ lyricLine }}</p>
+      <div class="flex h-full min-h-[22px] flex-col items-center justify-center px-3 py-1 text-center">
+        <p class="home-lyric-line mx-auto max-w-full truncate text-center font-black leading-tight" :style="lyricStyle">{{ lyricLine }}</p>
       </div>
     </GlassCard>
 
