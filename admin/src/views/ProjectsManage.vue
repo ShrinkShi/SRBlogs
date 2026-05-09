@@ -2,12 +2,12 @@
 import StructuredJsonManager from '@/components/StructuredJsonManager.vue'
 
 const fields = [
-  { key: 'name', label: '名称', required: true },
-  { key: 'description', label: '描述', type: 'textarea' as const, required: true },
-  { key: 'tags', label: '技术栈', type: 'tags' as const, placeholder: 'Vue3, FastAPI, Tailwind' },
-  { key: 'url', label: '项目链接', placeholder: 'https://example.com' },
-  { key: 'repo', label: 'GitHub/Gitee 链接' },
-  { key: 'cover', label: '封面 URL', type: 'upload' as const },
+  { key: 'name', label: '项目名称', required: true },
+  { key: 'description', label: '项目简介', type: 'textarea' as const, required: true },
+  { key: 'tags', label: '技术标签', type: 'tags' as const, placeholder: 'Vue3, FastAPI, Tailwind' },
+  { key: 'url', label: '项目链接（前台点击跳转）', placeholder: 'https://example.com', required: true },
+  { key: 'repo', label: '代码仓库链接' },
+  { key: 'cover', label: '封面 URL（留空使用默认封面）', type: 'upload' as const, accept: 'image/*' },
   { key: 'status', label: '状态', type: 'select' as const, options: ['planning', 'active', 'done', 'archived', 'demo', 'notes'] }
 ]
 

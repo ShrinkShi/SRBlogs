@@ -1358,3 +1358,26 @@ Validation:
 - Basic IP rate limit: max 3 submissions per minute.
 
 If `CONTACT_MAIL_ENABLED=false` or SMTP is incomplete, returns `503` with `联系表单暂未启用`. SMTP credentials are never exposed to frontend/admin public responses.
+# 后台信息架构兼容约定（2026-05-09）
+
+本轮未新增公开业务 API，主要调整后台前端路由和管理入口。
+
+后台路由主入口：
+
+- `/content/articles`：文章管理，内部支持“正经 / 杂谈”切换。
+- `/content/photos`：图片相册组管理。
+- `/content/music`：音乐管理。
+- `/content/projects`：项目管理。
+- `/content/friends`：友链管理。
+- `/content/about`：关于页信息编辑。
+- `/content/comments`：留言管理。
+- `/settings`：后台设置，收敛为站点信息、我的信息、主题设置、留言设置四个 Frame。
+- `/audit`：审计日志。
+- `/backups`：备份恢复。
+
+兼容约定：
+
+- 旧后台路径通过前端路由重定向到新信息架构。
+- `/api/pages/config` 和历史 `pageLayouts` 字段可继续作为 legacy compatibility 返回，但前台固定布局不再依赖它们驱动页面结构。
+- 主题包新导出不应承载页面布局；旧主题导入遇到 `pageLayouts` 时应兼容忽略。
+- OAuth Secret、SMTP Secret、图床 Secret 等敏感字段不得进入公开 API 或前端构建产物。

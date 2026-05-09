@@ -521,3 +521,11 @@ Player and carousel:
 - Night mode uses light text on dark glass cards with the same red accent.
 - Decorative lines, orbits, triangles, and particles are local to the About page and must not obstruct text or form fields.
 - Contact form controls must keep strong contrast in both modes and show loading/error/success states.
+# 后台管理界面收口规范（2026-05-09）
+
+- 后台保持黑白灰平面简约风，定位为高密度管理工具，不使用前台毛玻璃视觉。
+- 一级导航仅保留：内容管理、设置、审计日志、备份恢复。
+- 不再提供低代码式组件宽高、拖拽、添加、删除等页面布局编辑入口。
+- 内容管理页面使用清晰的列表、表单、弹窗和分段开关；文章区分“正经 / 杂谈”，图片以相册组管理，音乐以歌单/歌曲管理。
+- 设置页仅保留四个 Frame：站点信息设置、我的信息设置、主题设置、留言设置。
+- 旧 `pageLayouts` 和旧页面编辑能力仅作为兼容数据存在，不作为 UI 主流程展示。

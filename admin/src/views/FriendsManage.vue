@@ -2,10 +2,10 @@
 import StructuredJsonManager from '@/components/StructuredJsonManager.vue'
 
 const fields = [
-  { key: 'name', label: '名称', required: true },
-  { key: 'url', label: 'URL', required: true, placeholder: 'https://example.com' },
-  { key: 'description', label: '描述', type: 'textarea' as const },
-  { key: 'avatar', label: '头像/图标 URL', type: 'upload' as const },
+  { key: 'name', label: '站点名称', required: true },
+  { key: 'url', label: '站点链接（前台点击跳转）', required: true, placeholder: 'https://example.com' },
+  { key: 'description', label: '站点简介', type: 'textarea' as const },
+  { key: 'avatar', label: '封面 / 图标 URL（留空使用默认封面）', type: 'upload' as const, accept: 'image/*' },
   { key: 'tags', label: '标签', type: 'tags' as const, placeholder: 'Vue, Blog, Friend' }
 ]
 

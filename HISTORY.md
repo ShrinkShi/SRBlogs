@@ -2819,3 +2819,11 @@ Manual QA still recommended:
 - 更新 `backend/.env.production.example`，增加 `CONTACT_MAIL_*` 与 `SMTP_*` 示例字段。
 - 验证：`cd frontend && npm run build` 通过；`cd admin && npm run build` 通过；`python -m compileall backend\app` 通过。
 - 人工验收仍需确认：四屏视觉是否接近参考图、昼夜模式可读性、后台字段编辑后前台同步、联系表单在真实 SMTP 配置下是否能发送到 `1363072460@qq.com`。
+# 2026-05-09 - 后台信息架构精简与内容管理收口
+
+- 后台主导航收敛为“内容管理 / 设置 / 审计日志 / 备份恢复”，移除低代码页面布局编辑主流程。
+- “内容管理”整合文章、图片、音乐、项目、友链、关于与留言管理；文章支持“正经 / 杂谈”切换，新增/编辑继续复用 Markdown 编辑器。
+- 图片管理保留相册组模型；音乐管理保留音频与歌词；项目/友链保留封面、简介与跳转链接字段。
+- “设置”收敛为四个 Frame：站点信息设置、我的信息设置、主题设置、留言设置。
+- 旧后台路径保留重定向兼容；`pageLayouts` 作为 legacy 兼容字段保留，不再作为后台主流程入口。
+- 验证：`frontend` build 通过，`admin` build 通过，`python -m compileall backend\app` 通过；构建产物 Secret 搜索未发现真实密钥明文。

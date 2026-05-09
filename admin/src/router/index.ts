@@ -1,43 +1,47 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Editor from '@/views/Editor.vue'
-import AboutEdit from '@/views/AboutEdit.vue'
 
 const router = createRouter({
   history: createWebHistory('/admin/'),
   routes: [
     { path: '/login', component: () => import('@/views/Login.vue') },
-    { path: '/', component: () => import('@/views/Dashboard.vue') },
-    { path: '/pages/:page?', component: () => import('@/views/PageEditor.vue') },
-    { path: '/content/editor/:section?/:slug?', redirect: (to) => `/editor/${to.params.section || 'posts'}${to.params.slug ? `/${to.params.slug}` : ''}` },
-    { path: '/content/posts', redirect: '/posts' },
-    { path: '/content/drafts', redirect: '/drafts' },
-    { path: '/content/moments', redirect: '/moments' },
-    { path: '/content/chatters', redirect: '/chatters' },
-    { path: '/logs/audit', redirect: '/audit' },
-    { path: '/logs/backups', redirect: '/backups' },
-    { path: '/editor/:section?/:slug?', component: Editor },
-    { path: '/drafts', component: () => import('@/views/Drafts.vue') },
-    { path: '/posts', component: () => import('@/views/PostsManage.vue') },
-    { path: '/moments', component: () => import('@/views/MomentsManage.vue') },
-    { path: '/chatters', component: () => import('@/views/ChatterManage.vue') },
-    { path: '/comments', component: () => import('@/views/CommentsManage.vue') },
+    { path: '/', redirect: '/content/articles' },
+
+    { path: '/content/:section?', component: () => import('@/views/ContentHub.vue') },
+    { path: '/settings', component: () => import('@/views/Settings.vue') },
     { path: '/audit', component: () => import('@/views/AuditLogs.vue') },
     { path: '/backups', component: () => import('@/views/BackupsManage.vue') },
-    { path: '/friends', component: () => import('@/views/FriendsManage.vue') },
-    { path: '/music', component: () => import('@/views/MusicManage.vue') },
-    { path: '/photos', component: () => import('@/views/PhotowallManage.vue') },
-    { path: '/projects', component: () => import('@/views/ProjectsManage.vue') },
-    { path: '/about', component: AboutEdit },
-    { path: '/settings', component: () => import('@/views/Settings.vue') },
-    { path: '/chat', component: () => import('@/views/ChatAssistant.vue') },
-    { path: '/:pathMatch(.*)*', redirect: '/' }
+
+    // 旧入口只保留兼容，不再出现在左侧主导航。
+    { path: '/editor/:section?/:slug?', component: Editor },
+    { path: '/posts', redirect: '/content/articles' },
+    { path: '/chatters', redirect: '/content/articles?kind=chatters' },
+    { path: '/comments', redirect: '/content/article-comments' },
+    { path: '/photos', redirect: '/content/photos' },
+    { path: '/music', redirect: '/content/music' },
+    { path: '/projects', redirect: '/content/projects' },
+    { path: '/friends', redirect: '/content/friends' },
+    { path: '/about', redirect: '/content/about' },
+    { path: '/drafts', redirect: '/content/articles' },
+    { path: '/moments', redirect: '/content/articles' },
+    { path: '/pages/:page?', redirect: '/content/about' },
+    { path: '/content/editor/:section?/:slug?', redirect: (to) => `/editor/${to.params.section || 'posts'}${to.params.slug ? `/${to.params.slug}` : ''}` },
+    { path: '/content/posts', redirect: '/content/articles' },
+    { path: '/content/chatters', redirect: '/content/articles?kind=chatters' },
+    { path: '/content/drafts', redirect: '/content/articles' },
+    { path: '/content/moments', redirect: '/content/articles' },
+    { path: '/logs/audit', redirect: '/audit' },
+    { path: '/logs/backups', redirect: '/backups' },
+    { path: '/chat', redirect: '/settings' },
+    { path: '/:pathMatch(.*)*', redirect: '/content/articles' }
   ]
 })
 
 router.beforeEach((to) => {
   const auth = useAuthStore()
-  if (to.path !== '/login' && !auth.isAuthed) return '/login'
+  if (to.path !== '/login' && !auth.token) return '/login'
+  if (to.path === '/login' && auth.token) return '/content/articles'
 })
 
 export default router
