@@ -96,6 +96,7 @@ const radialStyle = computed(() => ({
       ></div>
     </Transition>
     <div class="absolute inset-0" :style="overlayStyle"></div>
+    <div class="bg-painterly-wash absolute inset-0"></div>
     <div class="absolute inset-0 bg-cyber-radial" :style="radialStyle"></div>
     <div class="absolute left-[8%] top-[16%] hidden h-40 w-40 rounded-full bg-rose-500/12 blur-3xl md:block" style="animation: float-slow 8s ease-in-out infinite"></div>
     <div class="absolute bottom-[6%] right-[10%] hidden h-52 w-52 rounded-full bg-zinc-100/8 blur-3xl md:block" style="animation: float-slow 11s ease-in-out infinite reverse"></div>

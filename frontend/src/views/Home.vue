@@ -395,7 +395,7 @@ onBeforeUnmount(() => {
       </GlassCard>
 
       <GlassCard hover class="sr-hero-panel lyrics-compact">
-      <div class="flex h-full min-h-[22px] flex-col items-center justify-center px-3 py-1 text-center">
+      <div class="flex h-full min-h-[38px] flex-col items-center justify-center px-4 py-2 text-center">
         <p class="home-lyric-line mx-auto max-w-full truncate text-center font-black leading-tight" :style="lyricStyle">{{ lyricLine }}</p>
       </div>
     </GlassCard>
@@ -452,28 +452,27 @@ onBeforeUnmount(() => {
             <button type="button" class="home-theme-card sr-card-hover" @click="ui.toggleColorMode">
               <span class="mode-orb grid h-20 w-20 place-items-center rounded-[28px] text-4xl" aria-hidden="true">{{ ui.colorMode === 'day' ? '☀️' : '🌙' }}</span>
               <span class="mt-5 block text-2xl font-black text-white">{{ ui.colorMode === 'day' ? '日间模式' : '夜间模式' }}</span>
-              <span class="mt-3 block text-sm leading-6 text-white/58">点击切换全站昼夜主题</span>
+              <span class="mt-3 block text-sm leading-6 text-white/58">{{ ui.colorMode === 'day' ? '燎原破晓的黎明' : '赤旗翻转的长夜' }}</span>
             </button>
       </div>
 
     <GlassCard hover dense class="home-status-card home-card-opacity">
       <div class="home-status-grid">
-        <div class="home-status-cell">
-          <p class="text-xs uppercase tracking-[.24em] text-white/38">beijing time</p>
-          <b class="mt-2 block text-xl text-white">{{ beijingTime }}</b>
+        <div class="home-status-cell home-status-time">
+          <b class="block text-xl">{{ beijingTime }}</b>
         </div>
         <div class="home-status-cell">
-          <p class="text-xs uppercase tracking-[.24em] text-white/38">runtime</p>
-          <b class="mt-2 block text-xl text-white">{{ runtime }}</b>
+          <b class="block text-xl">{{ runtime }}</b>
         </div>
         <div class="home-status-cell">
-          <p class="text-xs uppercase tracking-[.24em] text-white/38">stack</p>
-          <div class="readme-badges mt-2" aria-label="技术栈">
+          <div class="readme-badges" aria-label="技术栈">
             <span><b>Vue</b><em>3</em></span>
             <span><b>Vite</b><em>5</em></span>
-            <span><b>Tailwind</b><em>CSS</em></span>
             <span><b>FastAPI</b><em>API</em></span>
           </div>
+        </div>
+        <div class="home-status-cell home-icp-cell">
+          <b class="block text-sm">备案号待获取</b>
         </div>
       </div>
     </GlassCard>

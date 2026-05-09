@@ -964,8 +964,9 @@ body::before {
 
 .home-status-grid {
   display: grid;
-  grid-template-columns: minmax(0, .78fr) minmax(0, 1.02fr) minmax(0, 1.82fr);
-  gap: .45rem;
+  grid-template-columns: minmax(18rem, 1.05fr) minmax(0, 1.1fr) minmax(20rem, 1.45fr) minmax(0, 1fr);
+  gap: .55rem;
+  align-items: stretch;
 }
 
 .home-status-card {
@@ -973,20 +974,80 @@ body::before {
 }
 
 .home-status-card.sr-card {
-  padding: .58rem .72rem !important;
+  padding: .42rem .58rem !important;
+  overflow: hidden;
 }
 
 .home-status-cell {
+  display: flex;
   min-width: 0;
-  border: 1px solid var(--border-glass);
+  min-height: 3.55rem;
+  align-items: center;
+  justify-content: center;
+  border: 0;
   border-radius: 16px;
-  background: var(--bg-card);
-  padding: .48rem .62rem;
+  background: transparent;
+  padding: .18rem .24rem;
+  text-align: center;
 }
 
 .home-status-cell b {
-  font-size: clamp(.9rem, 1.35vw, 1.14rem) !important;
+  font-size: clamp(.84rem, 1.18vw, 1.05rem) !important;
   line-height: 1.2;
+  color: var(--text-primary) !important;
+  white-space: nowrap;
+}
+
+.home-status-time {
+  width: 100%;
+  height: 100%;
+  min-height: 3.55rem;
+  border-radius: 28px 6px 6px 28px;
+  background: linear-gradient(180deg, rgba(50, 58, 78, .98), rgba(32, 38, 56, .98));
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 255, 255, .08),
+    inset 0 1px 0 rgba(255, 255, 255, .10);
+  transform: scale(1.34, 1.28);
+  transform-origin: right center;
+  transition: background-color .18s ease, box-shadow .18s ease, transform .18s ease;
+  z-index: 1;
+}
+
+.home-status-time b {
+  display: block;
+  width: 100%;
+  color: #fff !important;
+  font-size: clamp(.72rem, .98vw, .94rem) !important;
+  letter-spacing: .025em;
+  transform: translateX(35px);
+  transition: color .18s ease, text-shadow .18s ease;
+}
+
+.home-status-time:hover {
+  box-shadow:
+    inset 0 -1px 0 rgba(255, 255, 255, .08),
+    inset 0 1px 0 rgba(255, 255, 255, .10),
+    0 0 18px rgba(244, 0, 2, .20);
+  transform: scale(1.36, 1.3);
+}
+
+.home-status-time:hover b {
+  color: var(--accent) !important;
+  text-shadow: 0 0 10px rgba(244, 0, 2, .45);
+}
+
+:root[data-color-mode='night'] .home-status-time {
+  background: linear-gradient(180deg, rgba(16, 21, 36, .98), rgba(2, 4, 9, .98));
+}
+
+.home-status-cell:not(.home-status-time) {
+  background: transparent !important;
+  box-shadow: none;
+}
+
+.home-icp-cell b {
+  color: var(--text-primary) !important;
+  white-space: nowrap;
 }
 
 .readme-badges {
@@ -994,6 +1055,8 @@ body::before {
   flex-wrap: nowrap;
   gap: .22rem;
   align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .readme-badges span {
@@ -1015,13 +1078,38 @@ body::before {
 }
 
 .readme-badges b {
-  background: #4b5563;
-  color: #fff;
+  background: #a3a8af !important;
+  color: #fff !important;
 }
 
 .readme-badges em {
   background: var(--accent);
-  color: #fff;
+  color: #fff !important;
+}
+
+:root[data-color-mode='day'] .readme-badges b {
+  background: #a3a8af !important;
+  color: #fff !important;
+}
+
+.home-status-card .readme-badges span > b {
+  --component-font-color: #fff;
+  background: #a3a8af !important;
+  background-color: #a3a8af !important;
+  color: #fff !important;
+}
+
+.home-status-card .readme-badges span > em {
+  --component-font-color: #fff;
+  background: var(--accent) !important;
+  background-color: var(--accent) !important;
+  color: #fff !important;
+}
+
+:root[data-color-mode='day'] .home-status-card .readme-badges span > b {
+  background: #a3a8af !important;
+  background-color: #a3a8af !important;
+  color: #fff !important;
 }
 
 .home-layout-grid {
@@ -1053,13 +1141,13 @@ body::before {
 
 .home-fixed-grid .home-profile-card { grid-area: profile; min-height: 290px; }
 .home-fixed-grid .music-compact-card { grid-area: music; min-height: 290px; }
-.home-fixed-grid .lyrics-compact { grid-area: lyrics; min-height: 2.1rem; }
+.home-fixed-grid .lyrics-compact { grid-area: lyrics; min-height: 3.7rem; }
 .home-fixed-grid .home-mosaic-grid { grid-area: mosaic; }
 .home-fixed-grid .home-status-card { grid-area: status; }
 
 .home-fixed-grid .lyrics-compact.sr-card {
-  min-height: 2.1rem;
-  padding: .36rem .9rem !important;
+  min-height: 3.7rem;
+  padding: .55rem 1rem !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1089,6 +1177,21 @@ body::before {
   text-shadow:
     0 0 8px rgba(244, 0, 2, .62),
     0 1px 1px rgba(0, 0, 0, .35);
+}
+
+.bg-painterly-wash {
+  opacity: .16;
+  mix-blend-mode: soft-light;
+  filter: blur(7px) contrast(1.18) saturate(1.08);
+  background:
+    radial-gradient(ellipse at 18% 24%, rgba(255, 255, 255, .34), transparent 28%),
+    radial-gradient(ellipse at 72% 18%, rgba(244, 0, 2, .14), transparent 24%),
+    radial-gradient(ellipse at 42% 72%, rgba(0, 0, 0, .18), transparent 30%),
+    repeating-linear-gradient(112deg, rgba(255, 255, 255, .09) 0 10px, rgba(0, 0, 0, .08) 10px 22px);
+}
+
+:root[data-color-mode='night'] .bg-painterly-wash {
+  opacity: .12;
 }
 
 .home-mosaic-grid {
