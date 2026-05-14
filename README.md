@@ -369,3 +369,8 @@ SRBlogs 当前默认前台主题为 `Shrink 红白黑玻璃主题`。它保留�
 - 内容管理覆盖文章/杂谈、图片相册组、音乐、项目、友链、关于和各类留言管理；写作页支持 `.md` 导入、正文图片上传、封面和简介维护。
 - 设置页收敛为站点信息、我的信息、主题交互和留言授权四个 Frame，Secret 继续只保存在后端且不回显。
 - 本轮只调整后台信息架构和管理体验，不恢复低代码页面布局编辑，不影响前台固定布局、主题、留言、音乐和照片墙功能。
+## 2026-05-10 Review Fix Notes
+
+- Article saves now fall back to the configured public default cover when no custom cover is provided.
+- Album batch uploads reject selections that exceed the 50-photo album limit instead of silently truncating them.
+- Contact-form SMTP delivery remains backend-only; audit logs mask visitor email and avoid storing submitted message content.

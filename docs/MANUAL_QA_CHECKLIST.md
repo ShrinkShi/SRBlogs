@@ -857,3 +857,10 @@
 - 旧后台路径应重定向到新信息架构，不应大面积 404。
 - 验证 `frontend` build、`admin` build、`python -m compileall backend\app` 通过。
 - 构建产物 Secret 搜索不应出现真实密钥明文。
+## 2026-05-10 Code Review Regression Checklist
+
+- [ ] About page highlight words render correctly, and injected HTML-like text is displayed as text rather than executed.
+- [ ] Contact form still sends when SMTP is enabled and returns a visitor-friendly unavailable message when disabled.
+- [ ] Contact-form audit log masks visitor email and does not store the submitted message body.
+- [ ] Saving an article with a blank cover uses the configured default cover instead of saving an empty cover value.
+- [ ] Album batch upload rejects selections that exceed the remaining 50-photo capacity and does not silently upload only part of the selected files.

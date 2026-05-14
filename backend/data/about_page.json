@@ -1,0 +1,114 @@
+{
+  "hero": {
+    "status": "Available for opportunities",
+    "eyebrow": "你好，我是",
+    "name": "Shrink",
+    "role": "全栈开发工程师",
+    "description": "物联网工程专业学生，热衷于 MOD、游戏引擎，热爱软件、Web 应用开发。\n致力于用技术创造价值",
+    "primaryButtonText": "查看作品",
+    "primaryButtonUrl": "/projects",
+    "secondaryButtonText": "联系我",
+    "stats": [
+      {
+        "value": "1",
+        "suffix": "+",
+        "label": "年经验"
+      },
+      {
+        "value": "n",
+        "suffix": "+",
+        "label": "个项目"
+      },
+      {
+        "value": "n",
+        "suffix": "+",
+        "label": "次提交"
+      }
+    ]
+  },
+  "about": {
+    "badge": "<about />",
+    "title": "关于我",
+    "paragraphs": [
+      "我是一名充满热情的全栈开发工程师，拥有丰富的 Web 应用开发经验。",
+      "在多年的开发生涯中，我参与并主导了多个企业级项目的架构设计与开发工作。从前端的交互体验到后端的系统架构，从数据库设计到云端部署，我始终追求代码的优雅性和系统的可靠性。",
+      "我相信技术的力量，热爱开源社区，持续学习新技术并将其应用到实际项目中。在工作之余，我也喜欢通过技术博客和开源项目与社区分享知识。"
+    ],
+    "highlightWords": [
+      "全栈开发工程师"
+    ],
+    "skills": [
+      {
+        "icon": "rocket",
+        "title": "全栈开发",
+        "description": "前端与后端的完整技术栈"
+      },
+      {
+        "icon": "cloud",
+        "title": "云原生架构",
+        "description": "Docker、K8s、微服务架构"
+      },
+      {
+        "icon": "bot",
+        "title": "AI 应用",
+        "description": "LLM 集成与智能应用开发"
+      }
+    ],
+    "codeProfile": {
+      "variableName": "Shrink",
+      "name": "Shrink",
+      "role": "Freelance Developer",
+      "location": "BeiJing, China CN",
+      "languages": [
+        "python",
+        "Java",
+        "c#",
+        "c++",
+        "Vue/Nuxt"
+      ],
+      "github": "github.com/ShrinkShi"
+    }
+  },
+  "github": {
+    "badge": "<github />",
+    "titlePrefix": "GitHub",
+    "titleAccent": "活动",
+    "stats": [
+      {
+        "icon": "folder",
+        "value": "20",
+        "label": "公开仓库"
+      },
+      {
+        "icon": "star",
+        "value": "2616",
+        "label": "Stars"
+      },
+      {
+        "icon": "git-branch",
+        "value": "79",
+        "label": "Followers"
+      },
+      {
+        "icon": "fork",
+        "value": "837",
+        "label": "Forks"
+      }
+    ],
+    "contributionText": "07836246 · 2,108 contributions"
+  },
+  "contact": {
+    "badge": "<contact />",
+    "title": "联系我",
+    "headline": "让我们一起创造价值",
+    "description": "无论是工作机会、项目合作还是技术交流，都欢迎与我联系，期待与您的交流！",
+    "email": "1363072460@qq.com",
+    "github": "github.com/ShrinkShi",
+    "githubUrl": "https://github.com/ShrinkShi",
+    "website": "www.shrink.asia",
+    "websiteUrl": "https://www.shrink.asia",
+    "qq": "1363072460",
+    "wechat": "请填写微信号",
+    "mailTo": "1363072460@qq.com"
+  }
+}

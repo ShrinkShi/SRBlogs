@@ -1381,3 +1381,24 @@ If `CONTACT_MAIL_ENABLED=false` or SMTP is incomplete, returns `503` with `联�
 - `/api/pages/config` 和历史 `pageLayouts` 字段可继续作为 legacy compatibility 返回，但前台固定布局不再依赖它们驱动页面结构。
 - 主题包新导出不应承载页面布局；旧主题导入遇到 `pageLayouts` 时应兼容忽略。
 - OAuth Secret、SMTP Secret、图床 Secret 等敏感字段不得进入公开 API 或前端构建产物。
+## 2026-05-10 Review Fix Addendum
+
+### `GET /api/settings/public`
+
+The public settings response may include:
+
+```json
+{
+  "defaultPostCover": "https://example.com/default-cover.jpg"
+}
+```
+
+`defaultPostCover` is a public fallback cover URL used by the admin editor when an article is saved without a custom cover. It must never contain or imply private credentials.
+
+### `POST /api/contact/send`
+
+The request/response contract is unchanged. The backend implementation sends SMTP mail from a threadpool and writes masked audit details only. Visitor messages, full email addresses, SMTP errors, and SMTP credentials must not be written to public responses.
+
+### Album Batch Upload Limit
+
+Albums remain limited to 50 photos. If a batch upload selection exceeds the remaining album capacity, the admin UI must reject the selection with a readable error instead of uploading a partial subset silently.

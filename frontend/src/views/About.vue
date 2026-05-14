@@ -95,6 +95,11 @@ let typingWordIndex = 0
 let typingCharIndex = 0
 let isDeleting = false
 
+type HighlightSegment = {
+  text: string
+  highlighted: boolean
+}
+
 const fallbackHeatmapCells = computed(() =>
   Array.from({ length: 154 }, (_, index) => (index * 7 + Math.floor(index / 11) * 3) % 6)
 )
@@ -206,9 +211,33 @@ function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
-function withHighlights(text: string) {
-  const words = config.value.about.highlightWords || []
-  return words.reduce((result, word) => result.split(word).join(`<span class="about-accent">${word}</span>`), text)
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function highlightSegments(text: string): HighlightSegment[] {
+  const source = String(text || '')
+  const words = Array.from(new Set((config.value.about.highlightWords || [])
+    .map((word) => String(word || '').trim())
+    .filter(Boolean)))
+    .sort((a, b) => b.length - a.length)
+  if (!source || !words.length) return [{ text: source, highlighted: false }]
+
+  const pattern = new RegExp(words.map(escapeRegExp).join('|'), 'g')
+  const segments: HighlightSegment[] = []
+  let lastIndex = 0
+  for (const match of source.matchAll(pattern)) {
+    const index = match.index ?? 0
+    if (index > lastIndex) {
+      segments.push({ text: source.slice(lastIndex, index), highlighted: false })
+    }
+    segments.push({ text: match[0], highlighted: true })
+    lastIndex = index + match[0].length
+  }
+  if (lastIndex < source.length) {
+    segments.push({ text: source.slice(lastIndex), highlighted: false })
+  }
+  return segments.length ? segments : [{ text: source, highlighted: false }]
 }
 
 function statIcon(icon: string) {
@@ -288,7 +317,13 @@ onBeforeUnmount(() => {
         </header>
         <div class="section-copy profile-copy">
           <div class="paragraphs">
-            <p v-for="(paragraph, index) in config.about.paragraphs" :key="index" v-html="withHighlights(paragraph)"></p>
+            <p v-for="(paragraph, index) in config.about.paragraphs" :key="index">
+              <span
+                v-for="(segment, segmentIndex) in highlightSegments(paragraph)"
+                :key="`${index}-${segmentIndex}`"
+                :class="{ 'about-accent': segment.highlighted }"
+              >{{ segment.text }}</span>
+            </p>
           </div>
           <div class="skills-grid">
             <article v-for="skill in config.about.skills" :key="skill.title" class="skill-card">

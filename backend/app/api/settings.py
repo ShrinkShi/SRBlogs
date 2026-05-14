@@ -411,6 +411,7 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "author": data.get("author") or data.get("authorName", ""),
         "avatar": data.get("avatar") or data.get("avatarUrl", ""),
         "description": data.get("description") or data.get("bio", ""),
+        "defaultPostCover": data.get("defaultPostCover") or data.get("defaultCover", ""),
         "socialLinks": deepcopy(data.get("socialLinks") or data.get("social") or {}),
         "theme": theme,
         "themeConfig": _theme_config_with_defaults(data.get("themeConfig")),

@@ -10,6 +10,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field, field_validator
+from starlette.concurrency import run_in_threadpool
 
 from app.config import get_settings
 from app.models.schemas import JsonWrite
@@ -189,8 +190,28 @@ def _check_contact_rate(request: Request) -> None:
     _CONTACT_BUCKET[ip] = recent
 
 
+def _send_contact_email(settings: Any, msg: EmailMessage) -> None:
+    if settings.smtp_use_ssl:
+        with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, timeout=12) as smtp:
+            smtp.login(settings.smtp_username, settings.smtp_password)
+            smtp.send_message(msg)
+        return
+    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=12) as smtp:
+        smtp.starttls()
+        smtp.login(settings.smtp_username, settings.smtp_password)
+        smtp.send_message(msg)
+
+
+def _mask_email(email: str) -> str:
+    local, _, domain = email.partition("@")
+    if not domain:
+        return "***"
+    visible = local[:2] if len(local) > 2 else local[:1]
+    return f"{visible}***@{domain}"
+
+
 @contact_router.post("/send")
-def send_contact(payload: ContactPayload, request: Request):
+async def send_contact(payload: ContactPayload, request: Request):
     settings = get_settings()
     if not settings.contact_mail_enabled:
         raise HTTPException(status_code=503, detail="联系表单暂未启用")
@@ -220,15 +241,7 @@ def send_contact(payload: ContactPayload, request: Request):
     )
 
     try:
-        if settings.smtp_use_ssl:
-            with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, timeout=12) as smtp:
-                smtp.login(settings.smtp_username, settings.smtp_password)
-                smtp.send_message(msg)
-        else:
-            with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=12) as smtp:
-                smtp.starttls()
-                smtp.login(settings.smtp_username, settings.smtp_password)
-                smtp.send_message(msg)
+        await run_in_threadpool(_send_contact_email, settings, msg)
     except Exception:
         raise HTTPException(status_code=503, detail="邮件发送失败，请稍后再试。")
 
@@ -240,7 +253,7 @@ def send_contact(payload: ContactPayload, request: Request):
         result="success",
         message="联系表单邮件已发送",
         ip=request.client.host if request.client else "",
-        detail={"name": payload.name, "email": payload.email},
+        detail={"nameLength": len(payload.name), "email": _mask_email(payload.email)},
     )
     return {"ok": True, "message": "消息已发送"}
 

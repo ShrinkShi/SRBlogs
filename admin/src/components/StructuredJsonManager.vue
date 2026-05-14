@@ -266,11 +266,17 @@ function onGalleryDrop(key: string, index: number) {
 async function uploadGallery(field: StructuredField, files: FileList | null) {
   if (!files?.length) return
   const current = galleryItems(field.key)
-  const selected = Array.from(files).slice(0, Math.max(0, 50 - current.length))
-  if (!selected.length) {
+  const remaining = Math.max(0, 50 - current.length)
+  const selectedFiles = Array.from(files)
+  if (remaining <= 0) {
     error.value = '每个相册最多 50 张照片'
     return
   }
+  if (selectedFiles.length > remaining) {
+    error.value = `当前相册还能添加 ${remaining} 张，已选择 ${selectedFiles.length} 张，请减少后重试。`
+    return
+  }
+  const selected = selectedFiles
   error.value = ''
   uploadProgress.value[field.key] = 0
   const next = [...current]

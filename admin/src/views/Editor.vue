@@ -28,6 +28,11 @@ const error = ref('')
 const success = ref('')
 const editorOpen = ref(false)
 const mdImportName = ref('')
+const adminSettings = ref<Record<string, any>>({})
+const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop'
+const defaultCover = computed(() =>
+  String(adminSettings.value.defaultPostCover || adminSettings.value.defaultCover || fallbackCover)
+)
 
 const slugPattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$/
 const slugHelp = 'slug 会出现在公开 URL 中，只允许字母、数字、下划线和连字符。'
@@ -36,6 +41,11 @@ const summaryWarning = computed(() => summaryLength.value > 120)
 const contentTypeLabel = computed(() => section.value === 'chatters' ? '杂谈' : section.value === 'moments' ? '动态' : '文章')
 
 onMounted(async () => {
+  try {
+    adminSettings.value = await adminApi.json<Record<string, any>>('/admin/settings')
+  } catch {
+    adminSettings.value = {}
+  }
   if (!oldSlug.value) return
   try {
     const item = await adminApi.detail(section.value, oldSlug.value)
@@ -76,6 +86,7 @@ function validateForm() {
 
 function buildPayload(draftOverride?: boolean): ContentItem | null {
   if (!validateForm()) return null
+  const cover = meta.cover.trim() || defaultCover.value
   return {
     slug: slug.value.trim(),
     meta: {
@@ -83,7 +94,7 @@ function buildPayload(draftOverride?: boolean): ContentItem | null {
       date: meta.date,
       tags: meta.tagsText.split(',').map((item) => item.trim()).filter(Boolean),
       draft: draftOverride ?? meta.draft,
-      cover: meta.cover.trim(),
+      cover,
       summary: meta.summary.trim()
     },
     content: content.value

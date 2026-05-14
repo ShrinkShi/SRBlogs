@@ -452,3 +452,8 @@ QQ 邮箱通常需要 SMTP 授权码，不是 QQ 登录密码。SMTP 密码只�
 文章与杂谈统一在“内容管理 > 文章”中管理，通过“正经 / 杂谈”切换。新增和编辑文章继续使用 Markdown 编辑器；封面、简介和正文分离，简介用于前台卡片摘要。
 
 `pageLayouts` 旧配置仅用于兼容历史数据，不再控制前台页面布局。
+## 2026-05-10 Admin Editing Notes
+
+- When an article is saved without a cover image, the admin editor uses the configured public default cover URL.
+- Album groups still support at most 50 photos. If a batch selection would exceed that limit, reduce the selected files and upload again; the admin UI no longer silently drops extra files.
+- About-page highlighted words are plain text highlights. HTML entered in About text fields is displayed as text for safety.

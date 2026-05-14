@@ -137,3 +137,10 @@
 - `SMTP_PASSWORD` must not be a personal login password when the provider requires an app authorization code. QQ Mail usually requires an SMTP authorization code.
 - Contact form errors returned to visitors must be user-readable and must not expose SMTP usernames, passwords, server paths, stack traces, or provider debug output.
 - About page structured content is public presentation data. It may contain public email, QQ, WeChat, GitHub, website links, page text, and local GitHub-style statistics, but must not contain private tokens or credentials.
+## 2026-05-10 Code Review Security Fixes
+
+- About page highlight words are rendered as text segments, not `v-html`; editable About content must not be treated as trusted HTML.
+- Contact-form SMTP delivery remains server-side only and now runs in a threadpool so mail network I/O does not block the FastAPI event loop.
+- Contact-form audit records must avoid visitor message content and full personal identifiers; current logs store name length and masked email only.
+- `/api/settings/public` may expose `defaultPostCover` as a public image URL, but must not expose secret keys, OAuth secrets, SMTP credentials, access tokens, or admin credentials.
+- Album batch upload validation must reject over-capacity selections instead of silently truncating user-selected files.

@@ -2836,3 +2836,17 @@ Manual QA still recommended:
 - “设置”收敛为四个 Frame：站点信息设置、我的信息设置、主题设置、留言设置。
 - 旧后台路径保留重定向兼容；`pageLayouts` 作为 legacy 兼容字段保留，不再作为后台主流程入口。
 - 验证：`frontend` build 通过，`admin` build 通过，`python -m compileall backend\app` 通过；构建产物 Secret 搜索未发现真实密钥明文。
+## 2026-05-10 - Code Review Fixes: Safety, Uploads, And Defaults
+
+- Removed `v-html` rendering from the About page highlight flow. Highlight words are now rendered as escaped text segments to avoid stored XSS from editable About content.
+- Moved contact-form SMTP sending into a threadpool helper so `/api/contact/send` does not block the FastAPI event loop during network I/O.
+- Reduced contact-form audit log exposure: the log now stores name length and a masked email instead of visitor name/message/full email.
+- Restored default-cover behavior in the admin Markdown editor: saving an article without a cover now falls back to the configured public default cover URL.
+- Added `defaultPostCover` to `/api/settings/public` as a public URL-only setting; no secret settings are exposed.
+- Changed album batch upload over-capacity behavior from silent truncation to an explicit error when selected files exceed the remaining 50-photo album limit.
+
+Validation:
+- Passed: `cd frontend && npm run build`.
+- Passed: `cd admin && npm run build`.
+- Passed: `python -m compileall backend\app`.
+- Passed: frontend/admin dist Secret scan for known secret value patterns.
