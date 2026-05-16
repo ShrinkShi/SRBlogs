@@ -87,7 +87,7 @@
   --glow-pink: rgba(248, 113, 113, 0.12);
   --toolbox-panel-rgb: 245 248 255;
   --bg-overlay-color: #ffffff;
-  --bg-overlay-opacity: .72;
+  --bg-overlay-opacity: 0;
 }
 
 * { box-sizing: border-box; }
@@ -1728,8 +1728,18 @@ body::before {
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 @keyframes float-slow { 0%,100%{ transform: translate3d(0,0,0) rotate(0deg);} 50%{ transform: translate3d(0,-18px,0) rotate(2deg);} }
- .bg-fade-enter-active,.bg-fade-leave-active { transition: opacity 1.1s ease; }
- .bg-fade-enter-from,.bg-fade-leave-to { opacity: 0; }
+.bg-fade-enter-active,.bg-fade-leave-active { transition: opacity 1.1s ease; }
+.bg-fade-enter-from,.bg-fade-leave-to { opacity: 0; }
+.bg-soft-blur-enter-active,.bg-soft-blur-leave-active {
+  transition: opacity 1.1s ease, filter 1.1s ease, transform 1.1s ease;
+}
+.bg-soft-blur-enter-from,.bg-soft-blur-leave-to {
+  opacity: 0;
+  filter: blur(14px) saturate(.95);
+  transform: scale(1.035);
+}
+.bg-none-enter-active,.bg-none-leave-active { transition: none; }
+.bg-none-enter-from,.bg-none-leave-to { opacity: 1; }
 @keyframes drift { from { transform: translateX(-20vw); } to { transform: translateX(120vw); } }
 @keyframes fall { from { transform: translateY(-10vh) rotate(0deg); opacity: 0;} 10%{ opacity: .75;} to { transform: translateY(110vh) rotate(540deg); opacity: 0;} }
 @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 28%, transparent); } 70% { box-shadow: 0 0 0 14px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }

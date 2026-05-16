@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
-import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 
@@ -11,17 +10,14 @@ const ui = useUiStore()
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
-const section = ref<'hero' | 'about' | 'github' | 'contact' | 'markdown'>('hero')
+const section = ref<'hero' | 'about' | 'github' | 'contact'>('hero')
 const aboutPage = ref<AnyRecord | null>(null)
-const markdown = ref('')
-const editorOpen = ref(false)
 
 const sections = [
   { key: 'hero', label: 'Hero 首屏' },
   { key: 'about', label: '关于我' },
   { key: 'github', label: 'GitHub 活动' },
-  { key: 'contact', label: '联系我' },
-  { key: 'markdown', label: '兼容 Markdown' }
+  { key: 'contact', label: '联系我' }
 ] as const
 
 function emptyAboutPage(): AnyRecord {
@@ -119,7 +115,6 @@ async function load() {
   error.value = ''
   try {
     aboutPage.value = await adminApi.json<AnyRecord>('/admin/about-page')
-    markdown.value = (await adminApi.json<{ content: string }>('/about')).content || ''
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '关于页配置加载失败'
     aboutPage.value = emptyAboutPage()
@@ -134,7 +129,6 @@ async function save() {
   error.value = ''
   try {
     await adminApi.putJson('/admin/about-page', aboutPage.value)
-    await adminApi.putJson('/about', { content: markdown.value })
     ui.show('关于页已保存')
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '关于页保存失败'
@@ -142,10 +136,6 @@ async function save() {
   } finally {
     saving.value = false
   }
-}
-
-function closeEditor() {
-  if (confirm('确认关闭关于页 Markdown 编辑器？未保存内容请先保存。')) editorOpen.value = false
 }
 
 onMounted(load)
@@ -159,11 +149,10 @@ onMounted(load)
           <p class="text-xs font-bold uppercase tracking-[.22em] text-slate-500">ABOUT PAGE</p>
           <h1 class="mt-2 text-4xl font-black text-slate-950">关于页结构化编辑</h1>
           <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            维护新版四屏关于页的 Hero、关于我、GitHub 活动和联系表单文案。兼容 Markdown 仍保留，但前台 /about 优先使用结构化配置。
+            维护新版四屏关于页的 Hero、关于我、GitHub 活动和联系表单文案。
           </p>
         </div>
         <div class="flex flex-wrap gap-2">
-          <button class="admin-btn admin-btn-ghost" type="button" @click="editorOpen = true">打开 Markdown 兼容编辑器</button>
           <button class="admin-btn admin-btn-primary" type="button" :disabled="saving || loading" @click="save">
             {{ saving ? '保存中...' : '保存关于页' }}
           </button>
@@ -270,13 +259,6 @@ onMounted(load)
           <label>微信<input v-model="aboutPage.contact.wechat" class="admin-input" /></label>
         </div>
 
-        <div v-else class="grid gap-4">
-          <p class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            兼容 Markdown 仍会保存到 about.md；新版前台 /about 优先使用结构化配置。
-          </p>
-          <textarea v-model="markdown" class="admin-input font-mono" rows="20"></textarea>
-        </div>
-
         <div class="mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4">
           <button class="admin-btn admin-btn-primary" type="button" :disabled="saving" @click="save">
             {{ saving ? '保存中...' : '保存关于页' }}
@@ -284,21 +266,6 @@ onMounted(load)
         </div>
       </GlassCard>
     </div>
-
-    <Teleport to="body">
-      <div v-if="editorOpen" class="fixed inset-0 z-[9990] bg-slate-950/60 p-3 md:p-6">
-        <div class="mx-auto grid h-full max-w-[1500px] grid-rows-[auto_minmax(0,1fr)] gap-4 rounded-3xl border border-slate-200 bg-white p-4 shadow-2xl">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <h2 class="text-2xl font-black text-slate-950">关于页 Markdown</h2>
-            <div class="flex gap-2">
-              <button class="admin-btn admin-btn-primary" @click="save">保存</button>
-              <button class="admin-btn admin-btn-ghost" @click="closeEditor">关闭</button>
-            </div>
-          </div>
-          <div class="min-h-0 overflow-auto"><MarkdownEditor v-model="markdown" /></div>
-        </div>
-      </div>
-    </Teleport>
   </section>
 </template>
 

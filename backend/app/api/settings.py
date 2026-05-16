@@ -69,8 +69,11 @@ DEFAULT_THEME_MODES: dict[str, dict[str, Any]] = {
         "bgImage": "",
         "bgImages": [],
         "activeBgIndex": 0,
+        "slideshowEnabled": True,
+        "slideshowInterval": 8.5,
+        "slideshowEffect": "fade",
         "overlayColor": "#ffffff",
-        "overlayOpacity": 0.16,
+        "overlayOpacity": 0.0,
         "pageBg": "#f7f7f7",
         "bgPage": "#f7f7f7",
         "cardBg": "rgba(255,255,255,.82)",
@@ -98,6 +101,9 @@ DEFAULT_THEME_MODES: dict[str, dict[str, Any]] = {
         "bgImage": "",
         "bgImages": [],
         "activeBgIndex": 0,
+        "slideshowEnabled": True,
+        "slideshowInterval": 8.5,
+        "slideshowEffect": "fade",
         "overlayColor": "#000000",
         "overlayOpacity": 0.30,
         "pageBg": "#050505",
@@ -257,6 +263,19 @@ def _normalize_bg_images(value: Any) -> list[dict[str, Any]]:
     return normalized
 
 
+def _normalize_slideshow_interval(value: Any) -> float:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        number = 8.5
+    return min(60.0, max(3.0, number))
+
+
+def _normalize_slideshow_effect(value: Any) -> str:
+    effect = str(value or "fade")
+    return effect if effect in {"fade", "soft-blur", "none"} else "fade"
+
+
 def _normalize_mode_tokens(mode: str, value: Any) -> dict[str, Any]:
     source = value if isinstance(value, dict) else {}
     result = {**DEFAULT_THEME_MODES[mode], **source}
@@ -269,6 +288,9 @@ def _normalize_mode_tokens(mode: str, value: Any) -> dict[str, Any]:
     except (TypeError, ValueError):
         index = 0
     result["activeBgIndex"] = max(0, min(index, max(0, len(bg_images) - 1)))
+    result["slideshowEnabled"] = result.get("slideshowEnabled") is not False
+    result["slideshowInterval"] = _normalize_slideshow_interval(result.get("slideshowInterval"))
+    result["slideshowEffect"] = _normalize_slideshow_effect(result.get("slideshowEffect"))
     return result
 
 

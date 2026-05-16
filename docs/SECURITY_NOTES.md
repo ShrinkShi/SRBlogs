@@ -1,5 +1,11 @@
 # Security Notes
 
+## 2026-05-15 昼夜壁纸轮播公开字段
+
+- `themeConfig.modes.day/night.slideshowEnabled`、`slideshowInterval` 和 `slideshowEffect` 属于公开视觉配置，可以进入 `/api/settings/public` 和主题导出 JSON。
+- 白天模式前台按 `overlayOpacity=0` 使用，不应通过白色蒙层遮挡壁纸；夜间蒙层仅用于提升文字可读性。
+- 壁纸轮播配置不得保存本地磁盘绝对路径、SMTP/OAuth/OSS Secret、管理员 token 或任何服务端私密字段。
+
 ## 2026-05-05 主题包与内容布局安全规则
 
 - 主题包属于公开视觉配置，只能保存颜色、字体、透明度、背景壁纸 URL、组件样式和页面布局。

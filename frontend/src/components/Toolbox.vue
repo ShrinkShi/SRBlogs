@@ -58,7 +58,7 @@ const bgCount = computed(() => {
   const activePackage = config?.themePackages?.[activeTheme]
   const localTokens = ui.colorMode === 'day' ? config?.day : config?.night
   const packageTokens = ui.colorMode === 'day' ? activePackage?.modes?.day : activePackage?.modes?.night
-  const modeTokens = { ...(localTokens || {}), ...(packageTokens || {}) } as { bgImages?: unknown; bgImage?: unknown }
+  const modeTokens = { ...(packageTokens || {}), ...(localTokens || {}) } as { bgImages?: unknown; bgImage?: unknown }
   const modeCount = countBackgrounds(modeTokens.bgImages) || countBackgrounds(modeTokens.bgImage)
   const legacyCount = countBackgrounds(props.settings?.bgImages)
   return Math.max(modeCount || legacyCount, themes.length)
@@ -590,9 +590,10 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-menu {
-  background: rgb(15 23 42) !important;
-  border-color: rgba(255, 255, 255, .14) !important;
+  background: rgba(3, 3, 3, .92) !important;
+  border-color: rgba(255, 255, 255, .18) !important;
   color: rgb(248, 250, 252) !important;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, .46), 0 0 0 1px rgba(244, 0, 2, .10) inset !important;
 }
 
 .toolbox-day .toolbox-menu-item {
@@ -609,7 +610,7 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-menu-item:hover {
-  background: rgb(31 41 55) !important;
+  background: rgba(244, 0, 2, .16) !important;
   color: rgb(255, 255, 255) !important;
 }
 
@@ -620,9 +621,10 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-fab {
-  background: rgb(15 23 42) !important;
+  background: rgba(3, 3, 3, .92) !important;
   border-color: rgba(244, 0, 2, .34) !important;
   color: #fb7185 !important;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, .42), 0 0 26px rgba(244, 0, 2, .14) !important;
 }
 
 .toolbox-day.toolbox-modal-panel :where(h1,h2,h3,p,span,label,small),
@@ -644,7 +646,7 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-setting {
-  background: rgb(15, 23, 42) !important;
+  background: rgb(3, 3, 3) !important;
   border-color: rgba(255, 255, 255, .12) !important;
   color: rgb(248, 250, 252) !important;
 }

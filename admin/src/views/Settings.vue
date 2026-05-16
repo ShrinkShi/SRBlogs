@@ -13,6 +13,7 @@ const success = ref('')
 const rawSettings = ref<AnyRecord>({})
 const aboutPage = ref<AnyRecord>({})
 const clickSoundFile = ref<File | null>(null)
+const wallpaperUploading = ref<{ day: boolean; night: boolean }>({ day: false, night: false })
 
 const form = ref({
   site: {
@@ -35,7 +36,13 @@ const form = ref({
     dayWallpapers: '',
     nightWallpapers: '',
     dayActiveIndex: 0,
-    nightActiveIndex: 0
+    nightActiveIndex: 0,
+    daySlideshowEnabled: true,
+    daySlideshowInterval: 8.5,
+    daySlideshowEffect: 'fade',
+    nightSlideshowEnabled: true,
+    nightSlideshowInterval: 8.5,
+    nightSlideshowEffect: 'fade'
   },
   comments: {
     enabled: true,
@@ -70,6 +77,16 @@ function textToWallpaperList(value: string) {
     .map((url, index) => ({ url, name: `壁纸 ${index + 1}`, enabled: true }))
 }
 
+function normalizeSlideshowInterval(value: unknown) {
+  const number = Number(value)
+  return Number.isFinite(number) ? Math.min(60, Math.max(3, number)) : 8.5
+}
+
+function normalizeSlideshowEffect(value: unknown) {
+  const effect = String(value || 'fade')
+  return ['fade', 'soft-blur', 'none'].includes(effect) ? effect : 'fade'
+}
+
 function defaultAboutPage(): AnyRecord {
   return {
     hero: { name: '', description: '' },
@@ -81,8 +98,10 @@ function applyLoadedSettings(settings: AnyRecord, about: AnyRecord) {
   rawSettings.value = clone(settings)
   aboutPage.value = { ...defaultAboutPage(), ...clone(about) }
   const themeConfig = settings.themeConfig || {}
-  const day = themeConfig.modes?.day || themeConfig.day || {}
-  const night = themeConfig.modes?.night || themeConfig.night || {}
+  const activeTheme = themeConfig.activeTheme || settings.theme || 'shrink-red-glass'
+  const activePackage = themeConfig.themePackages?.[activeTheme] || {}
+  const day = themeConfig.modes?.day || themeConfig.day || activePackage.modes?.day || {}
+  const night = themeConfig.modes?.night || themeConfig.night || activePackage.modes?.night || {}
   const comments = settings.comments || {}
   const interaction = settings.interaction || {}
   const contact = aboutPage.value.contact || {}
@@ -113,7 +132,13 @@ function applyLoadedSettings(settings: AnyRecord, about: AnyRecord) {
       dayWallpapers: listToText(day.bgImages || day.backgrounds || settings.bgImages),
       nightWallpapers: listToText(night.bgImages || night.backgrounds || settings.bgImages),
       dayActiveIndex: Number(day.activeBgIndex || 0),
-      nightActiveIndex: Number(night.activeBgIndex || 0)
+      nightActiveIndex: Number(night.activeBgIndex || 0),
+      daySlideshowEnabled: day.slideshowEnabled !== false,
+      daySlideshowInterval: normalizeSlideshowInterval(day.slideshowInterval),
+      daySlideshowEffect: normalizeSlideshowEffect(day.slideshowEffect),
+      nightSlideshowEnabled: night.slideshowEnabled !== false,
+      nightSlideshowInterval: normalizeSlideshowInterval(night.slideshowInterval),
+      nightSlideshowEffect: normalizeSlideshowEffect(night.slideshowEffect)
     },
     comments: {
       enabled: comments.enabled !== false,
@@ -158,6 +183,36 @@ async function uploadClickSound() {
   }
 }
 
+function appendWallpaperUrls(mode: 'day' | 'night', urls: string[]) {
+  const current = mode === 'day' ? form.value.theme.dayWallpapers : form.value.theme.nightWallpapers
+  const next = [current.trim(), ...urls].filter(Boolean).join('\n')
+  if (mode === 'day') form.value.theme.dayWallpapers = next
+  else form.value.theme.nightWallpapers = next
+}
+
+async function uploadWallpapers(mode: 'day' | 'night', files: FileList | null) {
+  const selected = Array.from(files || []).filter((file) => file.type.startsWith('image/'))
+  if (!selected.length) {
+    error.value = '请选择图片文件作为壁纸'
+    return
+  }
+  wallpaperUploading.value[mode] = true
+  error.value = ''
+  try {
+    const urls: string[] = []
+    for (const file of selected) {
+      const data = await adminApi.upload(file)
+      urls.push(data.url)
+    }
+    appendWallpaperUrls(mode, urls)
+    ui.show(`${mode === 'day' ? '白天' : '夜晚'}壁纸已上传`)
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '壁纸上传失败'
+  } finally {
+    wallpaperUploading.value[mode] = false
+  }
+}
+
 function buildSettingsPayload() {
   const next = clone(rawSettings.value)
   next.siteTitle = form.value.site.title
@@ -186,14 +241,48 @@ function buildSettingsPayload() {
   modes.day = {
     ...(modes.day || themeConfig.day || {}),
     bgImages: textToWallpaperList(form.value.theme.dayWallpapers),
-    activeBgIndex: Number(form.value.theme.dayActiveIndex || 0)
+    activeBgIndex: Number(form.value.theme.dayActiveIndex || 0),
+    slideshowEnabled: form.value.theme.daySlideshowEnabled,
+    slideshowInterval: normalizeSlideshowInterval(form.value.theme.daySlideshowInterval),
+    slideshowEffect: normalizeSlideshowEffect(form.value.theme.daySlideshowEffect)
   }
   modes.night = {
     ...(modes.night || themeConfig.night || {}),
     bgImages: textToWallpaperList(form.value.theme.nightWallpapers),
-    activeBgIndex: Number(form.value.theme.nightActiveIndex || 0)
+    activeBgIndex: Number(form.value.theme.nightActiveIndex || 0),
+    slideshowEnabled: form.value.theme.nightSlideshowEnabled,
+    slideshowInterval: normalizeSlideshowInterval(form.value.theme.nightSlideshowInterval),
+    slideshowEffect: normalizeSlideshowEffect(form.value.theme.nightSlideshowEffect)
   }
-  next.themeConfig = { ...themeConfig, modes, day: modes.day, night: modes.night }
+  const activeTheme = String(themeConfig.activeTheme || next.theme || 'shrink-red-glass')
+  const themePackages = { ...(themeConfig.themePackages || {}) }
+  const activePackage = themePackages[activeTheme]
+  if (activePackage && typeof activePackage === 'object') {
+    const packageRecord = activePackage as AnyRecord
+    themePackages[activeTheme] = {
+      ...packageRecord,
+      modes: {
+        ...(packageRecord.modes || {}),
+        day: {
+          ...((packageRecord.modes || {}).day || {}),
+          bgImages: modes.day.bgImages,
+          activeBgIndex: modes.day.activeBgIndex,
+          slideshowEnabled: modes.day.slideshowEnabled,
+          slideshowInterval: modes.day.slideshowInterval,
+          slideshowEffect: modes.day.slideshowEffect
+        },
+        night: {
+          ...((packageRecord.modes || {}).night || {}),
+          bgImages: modes.night.bgImages,
+          activeBgIndex: modes.night.activeBgIndex,
+          slideshowEnabled: modes.night.slideshowEnabled,
+          slideshowInterval: modes.night.slideshowInterval,
+          slideshowEffect: modes.night.slideshowEffect
+        }
+      }
+    }
+  }
+  next.themeConfig = { ...themeConfig, activeTheme, themePackages, modes, day: modes.day, night: modes.night }
 
   next.comments = {
     ...(next.comments || {}),
@@ -314,11 +403,11 @@ onMounted(load)
       <div class="admin-card">
         <h2 class="text-xl font-black text-slate-950">Frame3 主题设置</h2>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
-          <label class="field flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <label class="checkbox-row">
             <span>启用点击音效</span>
             <input v-model="form.theme.clickSoundEnabled" type="checkbox" />
           </label>
-          <label class="field flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <label class="checkbox-row">
             <span>启用鼠标点击特效</span>
             <input v-model="form.theme.clickEffectEnabled" type="checkbox" />
           </label>
@@ -336,15 +425,77 @@ onMounted(load)
         <div class="mt-5 grid gap-4 lg:grid-cols-2">
           <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <h3 class="font-black text-slate-950">子Frame 白天模式壁纸</h3>
-            <p class="mt-1 text-xs text-slate-500">{{ wallpaperHint }}</p>
+            <p class="mt-1 text-xs text-slate-500">{{ wallpaperHint }} 也可以直接上传图片，上传后会自动追加 URL。</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <label class="admin-btn admin-btn-ghost cursor-pointer">
+                {{ wallpaperUploading.day ? '上传中...' : '上传白天壁纸' }}
+                <input
+                  class="hidden"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  :disabled="wallpaperUploading.day"
+                  @change="uploadWallpapers('day', ($event.target as HTMLInputElement).files); (($event.target as HTMLInputElement).value = '')"
+                />
+              </label>
+            </div>
             <textarea v-model="form.theme.dayWallpapers" class="admin-input mt-3 min-h-36 font-mono text-sm"></textarea>
             <label class="field mt-3">默认壁纸序号<input v-model.number="form.theme.dayActiveIndex" class="admin-input" type="number" min="0" /></label>
+            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+              <label class="checkbox-row sm:col-span-2">
+                <span>启用白天壁纸轮播</span>
+                <input v-model="form.theme.daySlideshowEnabled" type="checkbox" />
+              </label>
+              <label class="field">
+                轮播间隔（秒）
+                <input v-model.number="form.theme.daySlideshowInterval" class="admin-input" type="number" min="3" max="60" step="0.5" />
+              </label>
+              <label class="field">
+                切换动画
+                <select v-model="form.theme.daySlideshowEffect" class="admin-input">
+                  <option value="fade">淡入淡出</option>
+                  <option value="soft-blur">柔焦淡入</option>
+                  <option value="none">无动画</option>
+                </select>
+              </label>
+            </div>
           </div>
           <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
             <h3 class="font-black text-slate-950">子Frame 夜晚模式壁纸</h3>
-            <p class="mt-1 text-xs text-slate-500">{{ wallpaperHint }}</p>
+            <p class="mt-1 text-xs text-slate-500">{{ wallpaperHint }} 也可以直接上传图片，上传后会自动追加 URL。</p>
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+              <label class="admin-btn admin-btn-ghost cursor-pointer">
+                {{ wallpaperUploading.night ? '上传中...' : '上传夜晚壁纸' }}
+                <input
+                  class="hidden"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  :disabled="wallpaperUploading.night"
+                  @change="uploadWallpapers('night', ($event.target as HTMLInputElement).files); (($event.target as HTMLInputElement).value = '')"
+                />
+              </label>
+            </div>
             <textarea v-model="form.theme.nightWallpapers" class="admin-input mt-3 min-h-36 font-mono text-sm"></textarea>
             <label class="field mt-3">默认壁纸序号<input v-model.number="form.theme.nightActiveIndex" class="admin-input" type="number" min="0" /></label>
+            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+              <label class="checkbox-row sm:col-span-2">
+                <span>启用夜晚壁纸轮播</span>
+                <input v-model="form.theme.nightSlideshowEnabled" type="checkbox" />
+              </label>
+              <label class="field">
+                轮播间隔（秒）
+                <input v-model.number="form.theme.nightSlideshowInterval" class="admin-input" type="number" min="3" max="60" step="0.5" />
+              </label>
+              <label class="field">
+                切换动画
+                <select v-model="form.theme.nightSlideshowEffect" class="admin-input">
+                  <option value="fade">淡入淡出</option>
+                  <option value="soft-blur">柔焦淡入</option>
+                  <option value="none">无动画</option>
+                </select>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -353,13 +504,13 @@ onMounted(load)
         <h2 class="text-xl font-black text-slate-950">Frame4 留言设置</h2>
         <p class="mt-2 text-sm text-slate-600">前台留言支持 OAuth 登录，密钥只保存在后端，不回显明文。</p>
         <div class="mt-4 grid gap-4 md:grid-cols-2">
-          <label class="field flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <label class="checkbox-row">
             <span>开启留言板</span>
             <input v-model="form.comments.enabled" type="checkbox" />
           </label>
           <label class="field">留言最大长度<input v-model.number="form.comments.maxLength" class="admin-input" type="number" min="1" /></label>
 
-          <label class="field flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <label class="checkbox-row">
             <span>启用 GitHub 登录留言</span>
             <input v-model="form.comments.githubLoginEnabled" type="checkbox" />
           </label>
@@ -369,7 +520,7 @@ onMounted(load)
           </div>
           <label class="field">新的 GitHub OAuth Secret<input v-model="form.comments.githubSecret" class="admin-input" type="password" placeholder="留空则保持旧值，不回显明文" /></label>
 
-          <label class="field flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <label class="checkbox-row">
             <span>启用 QQ 登录留言</span>
             <input v-model="form.comments.qqLoginEnabled" type="checkbox" />
           </label>

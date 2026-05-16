@@ -18,11 +18,32 @@
 - `backgroundSlideshowEnabled=true` 且当前主题 day/night 背景组存在多张启用图片时，前台可按游客本地设置轮播背景，并使用淡入淡出切换。
 - 该字段是公开视觉配置，不包含 Secret。
 
+`themeConfig.modes.day` / `themeConfig.modes.night` 还支持按昼夜模式独立配置壁纸轮播：
+
+```json
+{
+  "bgImages": [{ "url": "/uploads/day.jpg", "name": "白天壁纸", "enabled": true }],
+  "activeBgIndex": 0,
+  "overlayColor": "#ffffff",
+  "overlayOpacity": 0,
+  "slideshowEnabled": true,
+  "slideshowInterval": 8.5,
+  "slideshowEffect": "fade"
+}
+```
+
+- `slideshowEnabled` 控制当前模式是否参与壁纸轮播。
+- `slideshowInterval` 单位为秒，后端归一化到 `3-60`。
+- `slideshowEffect` 可选 `fade`、`soft-blur`、`none`。
+- 白天模式前台按 `overlayOpacity=0` 使用，不再叠加白色背景蒙层；夜间模式继续按主题 token 使用黑色蒙层。
+- 切换昼夜模式时，前台会立即触发一次背景切换，并使用目标模式的 `slideshowEffect`。
+- 这些字段只属于公开视觉配置，不得包含 OAuth Secret、SMTP Secret、管理员 token 或任何服务端私密字段。
+
 ## 2026-05-05 Theme Package Compatibility Addendum
 
 `GET /api/settings/public` 与 `GET/PUT /api/admin/settings` 的公开主题配置保留旧主题包的 `pagePadding` 兼容字段，并支持 day/night 背景壁纸组。公开接口只返回视觉与布局字段，不返回任何 Secret。
 
-前台主体内容最大宽度固定以 `1100px` 为基准，页面编辑组件宽度按 12 栅格比例计算。`themeConfig.layout.pagePadding` 只作为浏览器边缘安全留白配置，不参与页面组件宽度、组件高度、grid row/column 或 `pageLayouts` 计算。`pageLayouts` 中的 `w/h/rowSpan` 继续独立控制组件布局，二者不得互相覆盖。
+前台主体内容最大宽度固定以 `1100px` 为基准。`themeConfig.layout.pagePadding` 只作为旧主题包兼容字段保留，不参与页面组件宽度、组件高度、grid row/column 或 `pageLayouts` 计算。`pageLayouts` 中的 `w/h/rowSpan` 仅作为 legacy compatibility 字段保留，不再驱动前台页面布局。
 
 当前后台主流程不再展示页面边距调节入口；导入旧主题包时仍会安全兼容该字段，避免旧 JSON 导入失败。
 

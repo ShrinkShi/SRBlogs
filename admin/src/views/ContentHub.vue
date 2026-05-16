@@ -61,7 +61,7 @@ const sectionMeta = computed(() => {
     about: {
       eyebrow: 'CONTENT / ABOUT',
       title: '关于页面',
-      description: '编辑关于页面结构化文案和兼容 Markdown 内容。'
+      description: '编辑关于页面 Hero、关于我、GitHub 活动和联系表单等结构化文案。'
     }
   }
   return map[section.value] || map.articles

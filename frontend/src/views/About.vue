@@ -287,7 +287,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="about-page">
+  <main class="about-page" :class="{ 'about-day': ui.colorMode === 'day' }">
     <section id="about-hero" class="about-section hero-section">
       <div class="about-shell hero-centered">
         <div class="hero-content">
@@ -324,13 +324,6 @@ onBeforeUnmount(() => {
                 :class="{ 'about-accent': segment.highlighted }"
               >{{ segment.text }}</span>
             </p>
-          </div>
-          <div class="skills-grid">
-            <article v-for="skill in config.about.skills" :key="skill.title" class="skill-card">
-              <span class="skill-icon">{{ skill.icon === 'cloud' ? 'CN' : skill.icon === 'bot' ? 'AI' : 'FS' }}</span>
-              <h3>{{ skill.title }}</h3>
-              <p>{{ skill.description }}</p>
-            </article>
           </div>
         </div>
         <aside class="code-card" aria-label="个人代码资料">
@@ -429,6 +422,26 @@ onBeforeUnmount(() => {
   padding: 2rem 0 5rem;
 }
 
+.about-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: transparent;
+}
+
+.about-page.about-day::before {
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, .32), transparent 30%),
+    rgba(255, 255, 255, .46);
+}
+
+.about-page > * {
+  position: relative;
+  z-index: 1;
+}
+
 .about-section {
   position: relative;
   min-height: calc(100vh - 4.5rem);
@@ -457,8 +470,9 @@ onBeforeUnmount(() => {
 }
 
 .profile-layout {
-  grid-template-columns: minmax(0, 1fr) minmax(360px, .88fr);
-  column-gap: clamp(1.35rem, 2.6vw, 2.5rem);
+  width: min(100%, 1280px);
+  grid-template-columns: minmax(0, 1fr) minmax(460px, .92fr);
+  column-gap: clamp(2rem, 4vw, 4.5rem);
   row-gap: clamp(.55rem, 1.4vw, 1rem);
 }
 
@@ -794,7 +808,7 @@ h1 {
 
 .code-card {
   justify-self: center;
-  width: min(100%, 212px);
+  width: min(100%, 540px);
   min-width: 0;
   overflow: hidden;
   padding: 0;
@@ -852,9 +866,9 @@ h1 {
 pre {
   margin: 0;
   color: var(--text-primary);
-  padding: clamp(1.1rem, 2.4vw, 2rem);
+  padding: clamp(1.35rem, 2.6vw, 2.35rem);
   font-family: var(--about-code-font);
-  font-size: .88rem;
+  font-size: .96rem;
   line-height: 1.75;
   white-space: pre-wrap;
   overflow-wrap: anywhere;

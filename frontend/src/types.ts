@@ -47,6 +47,9 @@ export interface ThemeTokens {
   bgImage?: string
   bgImages?: Array<string | { url: string; name?: string; enabled?: boolean }>
   activeBgIndex?: number
+  slideshowEnabled?: boolean
+  slideshowInterval?: number
+  slideshowEffect?: 'fade' | 'soft-blur' | 'none' | string
   overlayColor?: string
   overlayOpacity?: number
   pageBg?: string

@@ -33,7 +33,8 @@ const modeTokens = computed(() => {
   const activePackage = config?.themePackages?.[activeTheme]
   const localTokens = ui.colorMode === 'day' ? config?.day : config?.night
   const packageTokens = ui.colorMode === 'day' ? activePackage?.modes?.day : activePackage?.modes?.night
-  return { ...(localTokens || {}), ...(packageTokens || {}) }
+  // 后台“白天/夜晚壁纸”是当前主题的直接编辑结果，必须覆盖主题包默认值。
+  return { ...(packageTokens || {}), ...(localTokens || {}) }
 })
 const bgImages = computed(() => {
   const modeList = uniqueBackgrounds([
@@ -45,7 +46,19 @@ const bgImages = computed(() => {
 const activeBgIndex = ref(0)
 let bgTimer = 0
 const siteSlideshowEnabled = computed(() => props.settings?.themeConfig?.backgroundSlideshowEnabled !== false)
-const slideshowEnabled = computed(() => siteSlideshowEnabled.value && ui.bgSlideshow && bgImages.value.length > 1)
+const modeSlideshowEnabled = computed(() => modeTokens.value.slideshowEnabled !== false)
+const slideshowEnabled = computed(() => siteSlideshowEnabled.value && modeSlideshowEnabled.value && ui.bgSlideshow && bgImages.value.length > 1)
+const slideshowIntervalMs = computed(() => {
+  const seconds = Number(modeTokens.value.slideshowInterval ?? 8.5)
+  const safeSeconds = Number.isFinite(seconds) ? Math.min(60, Math.max(3, seconds)) : 8.5
+  return safeSeconds * 1000
+})
+const transitionName = computed(() => {
+  const effect = String(modeTokens.value.slideshowEffect || 'fade')
+  if (effect === 'soft-blur') return 'bg-soft-blur'
+  if (effect === 'none') return 'bg-none'
+  return 'bg-fade'
+})
 const bgImage = computed(() => bgImages.value[activeBgIndex.value % Math.max(1, bgImages.value.length)])
 
 function stopBgTimer() {
@@ -58,21 +71,32 @@ function startBgTimer() {
   if (!slideshowEnabled.value) return
   bgTimer = window.setInterval(() => {
     activeBgIndex.value = (activeBgIndex.value + 1) % bgImages.value.length
-  }, 8500)
+  }, slideshowIntervalMs.value)
 }
 
-watch([bgImages, () => modeTokens.value.activeBgIndex, () => ui.bgIndex], () => {
-  const next = Number.isFinite(Number(ui.bgIndex))
-    ? Number(ui.bgIndex)
-    : Number(modeTokens.value.activeBgIndex ?? 0)
+watch([bgImages, () => modeTokens.value.activeBgIndex], () => {
+  const next = Number(modeTokens.value.activeBgIndex ?? 0)
   activeBgIndex.value = Math.max(0, Number.isFinite(next) ? next : 0) % Math.max(1, bgImages.value.length)
 }, { immediate: true })
-watch(slideshowEnabled, startBgTimer, { immediate: true })
+watch(() => ui.bgIndex, () => {
+  const next = Number(ui.bgIndex)
+  if (Number.isFinite(next)) {
+    activeBgIndex.value = Math.max(0, next) % Math.max(1, bgImages.value.length)
+  }
+})
+watch(() => ui.colorMode, () => {
+  window.setTimeout(() => {
+    if (bgImages.value.length > 1) {
+      activeBgIndex.value = (activeBgIndex.value + 1) % bgImages.value.length
+    }
+  })
+})
+watch([slideshowEnabled, slideshowIntervalMs], startBgTimer, { immediate: true })
 onBeforeUnmount(stopBgTimer)
 
 const overlayStyle = computed(() => ({
-  backgroundColor: ui.colorMode === 'day' ? '#ffffff' : (modeTokens.value.overlayColor || '#000000'),
-  opacity: ui.colorMode === 'day' ? '0.72' : '0.58'
+  backgroundColor: modeTokens.value.overlayColor || (ui.colorMode === 'day' ? '#ffffff' : '#000000'),
+  opacity: String(ui.colorMode === 'day' ? 0 : Math.min(1, Math.max(0, Number(modeTokens.value.overlayOpacity ?? 0.58))))
 }))
 const bgLayerStyle = computed(() => ({
   backgroundImage: bgImage.value ? `url(${bgImage.value})` : '',
@@ -87,10 +111,10 @@ const radialStyle = computed(() => ({
 <template>
   <div class="pointer-events-none fixed inset-0 z-0 overflow-hidden">
     <div class="absolute inset-0 bg-[var(--bg-page)]"></div>
-    <Transition name="bg-fade" mode="out-in">
+    <Transition :name="transitionName" mode="out-in">
       <div
         v-if="bgImage"
-        :key="bgImage"
+        :key="`${ui.colorMode}-${bgImage}`"
         class="absolute inset-0 scale-[1.02] bg-cover bg-center blur-[1px]"
         :style="bgLayerStyle"
       ></div>

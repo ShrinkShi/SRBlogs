@@ -31,7 +31,8 @@ function applyTheme() {
   const activeTheme = config.activeTheme || settings.value?.theme || 'shrink-red-glass'
   const activePackage = config.themePackages?.[activeTheme]
   const packageTokens = mode === 'day' ? activePackage?.modes?.day : activePackage?.modes?.night
-  const tokens = { ...(mode === 'day' ? config.day : config.night), ...(packageTokens || {}) }
+  const localTokens = mode === 'day' ? config.day : config.night
+  const tokens = { ...(packageTokens || {}), ...(localTokens || {}) }
   root.dataset.colorMode = mode
   const preferredScale = ui.fontScale || config.fontScale
   root.dataset.fontScale = preferredScale || 'medium'
@@ -61,7 +62,8 @@ function applyTheme() {
     else root.style.removeProperty(key)
   })
   if (tokens?.overlayOpacity !== undefined) {
-    root.style.setProperty('--bg-overlay-opacity', String(Math.min(1, Math.max(0, Number(tokens.overlayOpacity)))))
+    const overlayOpacity = mode === 'day' ? 0 : Math.min(1, Math.max(0, Number(tokens.overlayOpacity)))
+    root.style.setProperty('--bg-overlay-opacity', String(overlayOpacity))
   } else {
     root.style.removeProperty('--bg-overlay-opacity')
   }
