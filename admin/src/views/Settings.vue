@@ -4,6 +4,17 @@ import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 
 type AnyRecord = Record<string, any>
+type UpdateStatus = {
+  repo: string
+  current: { version: string; source: string }
+  latest: { tag?: string; name?: string; url?: string; publishedAt?: string; body?: string; error?: string }
+  ignoredTag: string
+  lastCheckedAt: string
+  updateAvailable: boolean
+  updateEnabled: boolean
+  updateConfigured: boolean
+  run: { status?: string; pid?: number; tag?: string; startedAt?: string; log?: string }
+}
 
 const ui = useUiStore()
 const loading = ref(false)
@@ -14,6 +25,10 @@ const rawSettings = ref<AnyRecord>({})
 const aboutPage = ref<AnyRecord>({})
 const clickSoundFile = ref<File | null>(null)
 const wallpaperUploading = ref<{ day: boolean; night: boolean }>({ day: false, night: false })
+const updateStatus = ref<UpdateStatus | null>(null)
+const updateLoading = ref(false)
+const updateActionLoading = ref(false)
+const updateError = ref('')
 
 const form = ref({
   site: {
@@ -59,6 +74,7 @@ const form = ref({
 })
 
 const wallpaperHint = computed(() => '每行一个壁纸 URL。保存后前台按当前主题的昼夜模式读取。')
+const latestTag = computed(() => updateStatus.value?.latest?.tag || '')
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value || {}))
@@ -159,12 +175,18 @@ async function load() {
   loading.value = true
   error.value = ''
   success.value = ''
+  updateError.value = ''
   try {
-    const [settings, about] = await Promise.all([
+    const [settings, about, update] = await Promise.all([
       adminApi.json<AnyRecord>('/admin/settings'),
-      adminApi.json<AnyRecord>('/admin/about-page').catch(() => defaultAboutPage())
+      adminApi.json<AnyRecord>('/admin/about-page').catch(() => defaultAboutPage()),
+      adminApi.updateStatus().catch((exc) => {
+        updateError.value = exc instanceof Error ? exc.message : '版本信息加载失败'
+        return null
+      })
     ])
     applyLoadedSettings(settings, about)
+    if (update) updateStatus.value = update as UpdateStatus
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '设置加载失败'
   } finally {
@@ -357,6 +379,51 @@ async function save() {
   }
 }
 
+async function checkRelease() {
+  updateLoading.value = true
+  updateError.value = ''
+  try {
+    updateStatus.value = await adminApi.checkUpdate() as UpdateStatus
+    ui.show('已检查 GitHub Release')
+  } catch (exc) {
+    updateError.value = exc instanceof Error ? exc.message : '检查更新失败'
+  } finally {
+    updateLoading.value = false
+  }
+}
+
+async function ignoreRelease() {
+  if (!latestTag.value) return
+  updateActionLoading.value = true
+  updateError.value = ''
+  try {
+    updateStatus.value = await adminApi.ignoreUpdate(latestTag.value) as UpdateStatus
+    ui.show('已忽略该版本')
+  } catch (exc) {
+    updateError.value = exc instanceof Error ? exc.message : '忽略版本失败'
+  } finally {
+    updateActionLoading.value = false
+  }
+}
+
+async function runReleaseUpdate() {
+  updateActionLoading.value = true
+  updateError.value = ''
+  try {
+    updateStatus.value = await adminApi.runUpdate(latestTag.value) as UpdateStatus
+    ui.show('更新任务已启动')
+  } catch (exc) {
+    updateError.value = exc instanceof Error ? exc.message : '启动更新失败'
+  } finally {
+    updateActionLoading.value = false
+  }
+}
+
+function openLatestRelease() {
+  const url = updateStatus.value?.latest?.url
+  if (url) window.open(url, '_blank', 'noopener,noreferrer')
+}
+
 onMounted(load)
 </script>
 
@@ -530,6 +597,63 @@ onMounted(load)
           </div>
           <label class="field">新的 QQ App Secret<input v-model="form.comments.qqSecret" class="admin-input" type="password" placeholder="留空则保持旧值，不回显明文" /></label>
         </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-950">Frame5 版本更新</h2>
+            <p class="mt-2 text-sm text-slate-600">读取 GitHub Releases 并对比当前版本。一键更新只执行后端环境变量中配置的命令，前端不会携带命令内容。</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button class="admin-btn admin-btn-ghost" type="button" :disabled="updateLoading" @click="checkRelease">
+              {{ updateLoading ? '检查中...' : '检查更新' }}
+            </button>
+            <button class="admin-btn admin-btn-ghost" type="button" :disabled="!latestTag || updateActionLoading" @click="ignoreRelease">忽略此版本</button>
+            <button class="admin-btn admin-btn-primary" type="button" :disabled="!updateStatus?.updateAvailable || !updateStatus?.updateConfigured || updateActionLoading" @click="runReleaseUpdate">
+              {{ updateActionLoading ? '处理中...' : '一键更新' }}
+            </button>
+          </div>
+        </div>
+
+        <p v-if="updateError" class="mt-3 text-sm text-red-700">{{ updateError }}</p>
+
+        <div v-if="updateStatus" class="mt-4 grid gap-4 lg:grid-cols-3">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-xs font-bold uppercase tracking-[.2em] text-slate-500">current</p>
+            <p class="mt-2 text-2xl font-black text-slate-950">{{ updateStatus.current.version }}</p>
+            <p class="mt-1 text-sm text-slate-500">来源：{{ updateStatus.current.source }}</p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-xs font-bold uppercase tracking-[.2em] text-slate-500">latest release</p>
+            <p class="mt-2 text-2xl font-black text-slate-950">{{ updateStatus.latest.tag || '未检查' }}</p>
+            <p class="mt-1 text-sm text-slate-500">{{ updateStatus.latest.name || updateStatus.repo }}</p>
+            <p v-if="updateStatus.latest.error" class="mt-2 text-sm text-red-700">{{ updateStatus.latest.error }}</p>
+            <button v-if="updateStatus.latest.url" class="admin-btn admin-btn-ghost mt-3" type="button" @click="openLatestRelease">打开 Release</button>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p class="text-xs font-bold uppercase tracking-[.2em] text-slate-500">status</p>
+            <p class="mt-2 text-lg font-black" :class="updateStatus.updateAvailable ? 'text-red-700' : 'text-emerald-700'">
+              {{ updateStatus.updateAvailable ? '发现可用更新' : '当前无需更新' }}
+            </p>
+            <p class="mt-1 text-sm text-slate-500">仓库：{{ updateStatus.repo }}</p>
+            <p class="mt-1 text-sm text-slate-500">自动更新：{{ updateStatus.updateConfigured ? '已配置' : '未配置' }}</p>
+            <p v-if="updateStatus.ignoredTag" class="mt-1 text-sm text-slate-500">已忽略：{{ updateStatus.ignoredTag }}</p>
+          </div>
+        </div>
+
+        <div v-if="updateStatus?.run?.status" class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+          <p><b>更新任务：</b>{{ updateStatus.run.status }}</p>
+          <p v-if="updateStatus.run.pid"><b>PID：</b>{{ updateStatus.run.pid }}</p>
+          <p v-if="updateStatus.run.startedAt"><b>启动时间：</b>{{ updateStatus.run.startedAt }}</p>
+          <p v-if="updateStatus.run.log"><b>日志：</b>{{ updateStatus.run.log }}</p>
+        </div>
+
+        <p v-if="!updateStatus?.updateConfigured" class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          一键更新默认关闭。需要在后端环境变量中设置 SRBLOGS_UPDATE_ENABLED=true 和 SRBLOGS_UPDATE_COMMAND，后台才会允许触发。
+        </p>
       </div>
     </div>
   </section>

@@ -459,3 +459,15 @@ QQ 邮箱通常需要 SMTP 授权码，不是 QQ 登录密码。SMTP 密码只�
 - When an article is saved without a cover image, the admin editor uses the configured public default cover URL.
 - Album groups still support at most 50 photos. If a batch selection would exceed that limit, reduce the selected files and upload again; the admin UI no longer silently drops extra files.
 - About-page highlighted words are plain text highlights. HTML entered in About text fields is displayed as text for safety.
+## 后台版本更新
+
+后台“设置 > 版本更新”会显示当前本地版本，并可手动检查 `ShrinkShi/SRBlogs` 的 GitHub Releases。发现新版本后，可以选择“忽略此版本”或“一键更新”。
+
+一键更新默认关闭。服务器管理员需要在后端环境变量中设置：
+
+```env
+SRBLOGS_UPDATE_ENABLED=true
+SRBLOGS_UPDATE_COMMAND=你的部署更新脚本
+```
+
+后台页面不会保存或发送更新命令；命令只从后端环境变量读取。建议把实际更新流程封装成可回滚的脚本，例如拉取代码、安装依赖、构建、迁移和重启服务。

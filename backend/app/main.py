@@ -22,6 +22,7 @@ from app.api.pages import router as pages_router
 from app.api.discovery import router as discovery_router
 from app.api.seo import router as seo_router
 from app.api.admin_tools import router as admin_tools_router
+from app.api.updates import router as updates_router
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name)
@@ -90,6 +91,7 @@ app.include_router(chat_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(discovery_router, prefix="/api")
 app.include_router(admin_tools_router, prefix="/api")
+app.include_router(updates_router, prefix="/api")
 app.include_router(seo_router)
 
 

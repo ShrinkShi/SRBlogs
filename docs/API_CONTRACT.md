@@ -1423,3 +1423,61 @@ The request/response contract is unchanged. The backend implementation sends SMT
 ### Album Batch Upload Limit
 
 Albums remain limited to 50 photos. If a batch upload selection exceeds the remaining album capacity, the admin UI must reject the selection with a readable error instead of uploading a partial subset silently.
+## 2026-05-16 Admin Release Update Contract
+
+后台版本更新接口仅管理员可用，统一走 JWT。前端/后台页面只触发服务端逻辑，不提交任何 shell 命令。
+
+### `GET /api/admin/updates/status`
+
+返回当前版本、最近一次 Release 检查结果、忽略版本和更新任务状态。
+
+```json
+{
+  "repo": "ShrinkShi/SRBlogs",
+  "current": { "version": "1.0.0", "source": "frontend/package.json" },
+  "latest": {
+    "tag": "v1.1.0",
+    "name": "v1.1.0",
+    "url": "https://github.com/ShrinkShi/SRBlogs/releases/tag/v1.1.0",
+    "publishedAt": "2026-05-16T00:00:00Z",
+    "body": "...",
+    "error": ""
+  },
+  "ignoredTag": "",
+  "lastCheckedAt": "2026-05-16T12:00:00",
+  "updateAvailable": true,
+  "updateEnabled": false,
+  "updateConfigured": false,
+  "run": {
+    "status": "idle",
+    "pid": null,
+    "tag": "",
+    "startedAt": "",
+    "log": ""
+  }
+}
+```
+
+### `POST /api/admin/updates/check`
+
+请求 GitHub Releases latest API，更新 `update_state.json` 中的 `latest` 和 `lastCheckedAt`。GitHub 网络失败时返回可读 `latest.error`，不返回 Secret。
+
+### `POST /api/admin/updates/ignore`
+
+请求体：
+
+```json
+{ "tag": "v1.1.0" }
+```
+
+保存被忽略的 Release tag，之后同一 tag 不再提示 `updateAvailable=true`。
+
+### `POST /api/admin/updates/run`
+
+请求体：
+
+```json
+{ "tag": "v1.1.0" }
+```
+
+后端只执行环境变量 `SRBLOGS_UPDATE_COMMAND` 中配置的命令。默认 `SRBLOGS_UPDATE_ENABLED=false`，未启用或未配置命令时返回 `400`。启动后写入 `update_logs/latest_update.log` 并记录审计日志。

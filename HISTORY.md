@@ -1,4 +1,19 @@
 # HISTORY
+## 2026-05-17 - README 首页重写与历史迁移
+
+- 将旧 `README.md` 备份为 `README.old.md`，避免覆盖原始历史记录和乱码内容。
+- 旧 README 中可读的版本变更记录已在本文件既有历史条目中保留；重复且乱码的首页说明不再继续留在 README。
+- 新 README 改为面向 GitHub 首页的中文项目文档，基于当前源码、启动脚本、环境变量、部署资产和文档目录重新整理。
+- README 明确当前项目状态、核心功能、技术栈、Windows 快速启动、Linux/Nginx 部署、配置项、安全边界、已知问题和开发计划。
+
+## 2026-05-16 - 后台版本检测与一键更新入口
+
+- 后台设置页新增“版本更新”Frame，可显示当前本地版本、版本来源、目标 GitHub 仓库和最近检查到的 Release。
+- 新增管理员接口 `GET /api/admin/updates/status`、`POST /api/admin/updates/check`、`POST /api/admin/updates/ignore`、`POST /api/admin/updates/run`，用于检测 `ShrinkShi/SRBlogs` Releases、忽略指定版本和触发服务端更新命令。
+- 一键更新命令只从后端环境变量 `SRBLOGS_UPDATE_COMMAND` 读取，默认关闭；后台只负责触发，不允许前端提交任意命令。
+- 更新状态写入 `update_state.json`，更新任务日志写入后端数据目录 `update_logs/latest_update.log`，检测、忽略、启动更新均写入审计日志。
+- `backend/.env.production.example` 增加 `SRBLOGS_UPDATE_REPO`、`SRBLOGS_UPDATE_ENABLED`、`SRBLOGS_UPDATE_COMMAND` 配置说明。
+
 ## 2026-05-15 - 昼夜壁纸轮播控制与白天蒙层收口
 
 - 白天模式背景蒙层改为 `0`，前台不再用白色蒙层压住壁纸；夜间模式继续按主题 token 使用黑色蒙层以保证文字可读。

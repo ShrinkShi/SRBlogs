@@ -94,5 +94,21 @@ export const adminApi = {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
     return data
+  },
+  updateStatus: async () => {
+    const { data } = await http.get('/admin/updates/status')
+    return data
+  },
+  checkUpdate: async () => {
+    const { data } = await http.post('/admin/updates/check')
+    return data
+  },
+  ignoreUpdate: async (tag: string) => {
+    const { data } = await http.post('/admin/updates/ignore', { tag })
+    return data
+  },
+  runUpdate: async (tag = '') => {
+    const { data } = await http.post('/admin/updates/run', { tag })
+    return data
   }
 }

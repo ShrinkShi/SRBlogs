@@ -1,121 +1,126 @@
-﻿## 2026-05-05 打磨更新：1100px 内容基准、背景轮播与音量控件
-
-- 后续前台 UI/UX 调整继续参考本地 `ui-ux-pro-max` skill；`.codex/` 本地缓存不作为项目产物提交。
-- 2026-05-06 起，前台页面布局已回归 Vue/CSS 固定实现；后台不再控制组件宽度、高度、跨行、排序、添加或删除。
-- 后台“页面编辑”降级为“页面信息编辑”，只维护首页作者、头像、简介、社交链接、页面标题/副标题和关于 Markdown 等真实字段。
-- `/api/pages/config` 和历史 `pageLayouts` 仅作为 legacy compatibility 保留；前台首页、文章、图片、音乐、项目、友链、关于不再使用它们驱动页面布局。
-- 新导出的主题包不包含 `pageLayouts` 或页面布局；旧主题导入时若包含旧版布局字段，会忽略并给出中文提示。
-- 前台主内容宽度改为统一 `1100px` 桌面端基准，页面编辑组件仍按 12 栅格比例映射；不再通过后台页面边距设置来控制主布局宽度。
-- 首页和音乐页播放器音量控件改为单个自定义垂直滑杆浮层，独立于播放进度条，避免双轨和错位。
-- 后台可设置站点级背景图轮播开关，游客可在左下角工具箱设置里控制本地背景轮播偏好；背景切换使用淡入淡出动画。
-- 白天/夜晚壁纸组支持独立轮播开关、轮播间隔和切换动画；白天模式不叠加背景蒙层，切换昼夜模式时会立即触发一次壁纸淡入淡出切换。
-- 首页名片与首页音乐播放器默认高度约 `290px`，继续由页面编辑器保存的布局配置控制前台真实显示。
-## 2026-05-03 打磨轮更新：页面编辑真实绑定
-
-- 前台工具箱继续作为游客入口：计算器为小浮窗，全局搜索和设置弹窗提高不透明度，设置中可控制字体大小、音乐音量、点击音效和鼠标点击特效。
-- 鼠标点击视觉特效响应页面任意点击；点击音效只在按钮、链接、导航、表单操作等交互元素触发。
-- 后台可分别关闭站点级点击音效和点击特效，关闭后游客端不可覆盖。
-- 后台一级导航调整为：页面编辑、内容管理、评论管理、后台设置、日志备份。
-- `/admin/pages/:page?` 页面编辑第一阶段入口已绑定真实配置和数据摘要：可编辑首页作者、头像、简介、社交链接，各页面标题/副标题，以及关于页 Markdown。
-- 首页核心模块拆分为 `profileCard`、`musicPlayer`、`lyrics`、`latestPostsCarousel`、`photoCarousel`、`updatesCarousel`、`themeToggle`、`statusBar` 八个可排序/调尺寸模块。
-- 首页布局保存到 `backend/data/page_config.json` 的公开 `homeLayout.components`，前台刷新时通过 `GET /api/pages/config` 读取并生效；该配置不包含 Secret。
-- 后台“主题与背景 > 前台透明度设置”可以配置工具箱弹窗、首页卡片、内容卡片、留言板和顶部导航栏透明度；前台通过 `GET /api/settings/public` 的 `themeConfig.opacity` 读取。
-- 作者、头像、首页简介、社交链接的主编辑入口迁移到“后台 > 页面编辑 > 首页”；设置中心只保留兼容折叠区。
-- 操作暂存区默认隐藏，按需从右下角按钮打开。
-
 # SRBlogs
 
-## 2026-05-05 打磨更新：主题管理、页面边距与播放器交互
+![Vue](https://img.shields.io/badge/Vue-3.5-42b883)
+![Vite](https://img.shields.io/badge/Vite-TypeScript-646cff)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38bdf8)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)
+![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab)
+![Nginx](https://img.shields.io/badge/Nginx-reverse_proxy-009639)
 
-- 本轮已接入本地 `ui-ux-pro-max` skill，后续前端 UI/UX 修改优先参考其控件清晰度、交互反馈和可读性建议；本地 `.codex/` skill 缓存不纳入仓库提交。
-- 后台主题管理支持新建、编辑、删除主题，并保留主题导入、导出和一键应用能力。
-- 主题包现在可以包含日间/夜间独立背景壁纸组、页面左右边距、组件样式和页面布局；导出包不包含 Secret。
-- 前台主体内容改为 `1100px` 最大宽度基准，页面编辑组件继续按 12 栅格比例映射；页面左右边距配置保留为安全留白，不再作为主要内容收窄方案。
-- 首页和音乐页播放器支持进度条点击/拖动、音量浮层内边距与延迟隐藏、喜欢按钮与喜欢数同排显示。
-- 页面编辑器的组件高度支持 `0.5`、`1.5` 等小数高度，并会在前台真实生效。
+SRBlogs 是一个基于 Vue 3 + FastAPI 的个人博客系统，包含访客前台、后台管理端和文件型内容后端。
 
-## 2026-05-05 前台主题收口说明
+## 在线体验 / 项目状态
 
-- 前台默认主题收口为红白黑毛玻璃风格，白天白/灰/红，夜间黑/灰/红。
-- 前台页面内容容器进一步加大左右边距，桌面端更收拢，移动端保留可读边距。
-- 首页歌词区按当前播放进度显示单句歌词；播放器控制按钮颜色跟随昼夜主题。
-- 文章详情和关于页 Markdown 正文会随主题切换深色/浅色文字。
+- 在线演示：暂无在线演示。
+- 当前状态：可本地运行、可按仓库部署资产进行服务器部署；真实域名、HTTPS 与生产服务器实操仍需按环境验收。
+- 默认本地地址：前台 `http://127.0.0.1:5173`，后台 `http://127.0.0.1:5174/admin/`，后端 `http://127.0.0.1:8000`。
 
-## 2026-05-05 打磨更新：红色重点色与首页跨行布局
+## 项目概述
 
-- 前台导航品牌改为 `<Shrink/>`，其中 `<`、`/`、`>` 使用红色重点色。
-- 前台整体视觉保留毛玻璃风格，并调整为白天白/灰/红、夜间黑/灰/红。
-- 后台提供全局主题预设：`白昼红白主题`、`夜幕红黑主题`，可一键应用到前台默认主题；组件级单独设置仍可覆盖。
-- 首页页面编辑布局支持 `rowSpan`，可以实现左侧高卡片跨两行、右侧上下分区的四组件结构。
-- 首页和音乐页播放器的音量改为 hover 弹出垂直滑杆，轮播分页指示器统一在底部。
+SRBlogs 面向个人站长、内容创作者和需要轻量自托管博客的开发者。它用 Markdown 与 JSON 文件保存内容，避免引入独立数据库，适合小型个人站、作品集、日志站和带后台维护能力的静态风格博客。
 
-## 当前前台导航与工具箱
+项目解决的核心问题是：用一套可本地开发、可服务器部署的工程，统一管理文章、杂谈、图片、音乐、友链、项目、关于页、留言、主题和备份。
 
-前台顶部导航已收敛为：首页、文章、图片、音乐、项目、友链、关于。搜索、杂谈和归档不再显示在顶部导航中，但旧路由仍保留兼容。
+## 核心功能
 
-- `文章`：进入 `/posts`，可在“正经 / 杂谈”之间切换，并支持“矩阵网格 / 中枢链路”两种显示模式。
-- `图片`：进入 `/photowall`，继续使用照片墙相册数据，并支持“矩阵网格 / 中枢链路”两种显示模式。
-- `搜索`：移动到左下角工具箱的“全局搜索”弹窗中，旧 `/search` 仍可直接访问。
-- `游客设置`：移动到左下角工具箱，可调整昼夜模式、主题、背景、氛围、弹幕、点击音效、音乐音量和字体大小。
+- 内容发布：支持文章、动态、杂谈的 Markdown 读写、草稿、发布、撤回和删除。
+- 后台管理：独立管理端提供内容管理、设置、审计日志和备份恢复入口。
+- 结构化内容：支持友链、项目、音乐、照片墙相册、关于页等 JSON/结构化数据维护。
+- 留言评论：支持本地评论数据、后台评论管理，以及 GitHub/QQ 访客登录配置状态。
+- 媒体上传：后台鉴权上传图片、音频、视频等文件，并通过 `/uploads` 访问。
+- 主题配置：支持前台昼夜主题、背景壁纸、轮播、透明度和交互开关。
+- SEO 输出：提供 RSS、Sitemap、Robots、OpenGraph/Twitter Card 等公开输出。
+- 运维能力：提供审计日志、手动备份、导入导出、生产环境模板、Nginx/systemd 示例和健康检查脚本。
 
-左下角工具箱还提供一个轻量计算器。工具箱设置写入浏览器 localStorage，不需要后台登录，也不会读取后台 Secret。
+## 技术栈
 
-## 2026-05-03 GitHub/QQ 留言登录说明
+| 组件 | 技术 |
+|---|---|
+| 前台 | Vue 3、Vite、TypeScript、Vue Router、Pinia、Tailwind CSS |
+| 管理端 | Vue 3、Vite、TypeScript、CodeMirror、Axios、Tailwind CSS |
+| 后端 | FastAPI、Uvicorn、Pydantic、python-jose、passlib |
+| 数据存储 | `backend/data` 中的 Markdown、JSON、评论文件、上传文件和审计日志 |
+| 内容渲染 | marked、DOMPurify、highlight.js |
+| 构建工具 | npm、vue-tsc、Vite、ESLint、Prettier |
+| 部署 | Nginx、systemd、Shell 脚本、Windows CMD 启动脚本 |
 
-- 前台留言板通过 `/api/settings/public` 读取 GitHub/QQ 独立 provider 状态。
-- GitHub 已配置时会显示“使用 GitHub 登录后留言”；QQ 未配置只影响 QQ，不会影响 GitHub。
-- 本地开发环境如未读取到 `VITE_API_BASE_URL`，前台会兜底访问 `http://127.0.0.1:8000/api`，避免登录入口落到前台 404。
-- OAuth Secret 不会进入前端或后台构建产物，公开接口只返回布尔 configured 状态。
+## 快速开始
 
-## 2026-05-03 当前收口说明
+### 环境要求
 
-- 前台留言板支持 GitHub 与 QQ 两种访客登录入口；各平台配置状态独立判断，未配置的平台只显示中文访客提示，不影响另一个已配置平台。
-- OAuth Secret 只保存在后端配置中，`/api/settings/public` 只返回 `configured` 布尔值，不返回 GitHub/QQ Secret。
-- 搜索框保持轻量容器、清晰输入框、深色图标按钮；高度更紧凑，背景更不透明。
-- 默认本地访问地址保持：前台 `http://127.0.0.1:5173`，后台 `http://127.0.0.1:5174/admin/`，后端 `http://127.0.0.1:8000`。
+- Windows 10/11 或 Linux
+- Node.js 与 npm
+- Python 3.10+
+- PowerShell / CMD；Linux 部署需要 bash、nginx、systemd
 
-> 褰撳墠杩涘害锛歅0 100%锛孭1 绾?99%锛孭2 绾?88%銆傛湰杞ˉ淇《灞?Toast銆佸墠鍙?GitHub 璇勮鍏ュ彛銆佸悗鍙?GitHub-only 璇勮璁剧疆銆佺浉鍐岀粍缂栬緫銆佺揣鍑戦椤甸煶涔愭挱鏀惧櫒銆佹瓕璇嶉珮搴﹀拰鍚嶇墖 hover/tooltip銆?
-SRBlogs 鏄竴涓熀浜?**Vue 3 + Vite + TypeScript + Tailwind CSS + FastAPI** 鐨勪釜浜哄崥瀹㈢郴缁熴€傚綋鍓嶅伐绋嬫槸瀵规爣 XinghuisamaBlogs 浜у搧鏂瑰悜鐨?Vue3/FastAPI 閲嶅埗鐗堬紝涓嶅鍒跺師椤圭洰婧愮爜銆佸浘鐗囥€佹枃妗堟垨绉佹湁绱犳潗銆?
-## 鎶€鏈爤
+### 克隆项目
 
-- 鍓嶅彴锛歏ue 3銆乂ite銆乀ypeScript銆乀ailwind CSS 3.4
-- 鍚庡彴锛歏ue 3銆乂ite銆乀ypeScript銆乀ailwind CSS 3.4
-- 鍚庣锛欶astAPI銆丣WT銆丮arkdown Front Matter銆丣SON 鏂囦欢瀛樺偍
-- 鏁版嵁锛歚backend/data` 涓殑 Markdown銆丣SON銆佽瘎璁恒€佷笂浼犳枃浠跺拰澶囦唤
-
-## 瑙嗚涓庝氦浜?
-- 鍓嶅彴閲囩敤缁熶竴姣涚幓鐠?token銆佸崱鐗?hover銆佹爣绛俱€佹寜閽拰闃呰鎺掔増鏍峰紡锛岃鍒欒 [docs/UI_STYLE_GUIDE.md](docs/UI_STYLE_GUIDE.md)銆?- 鑳屾櫙鎺у埗鍖呭惈涓婚銆佽儗鏅€佸脊骞曞拰鈥滄皼鍥粹€濆紑鍏筹紱鍏抽棴姘涘洿鍚庝細鍋滅敤妯辫姳銆佽悿鐏€丆yberCat 鍜岀偣鍑诲厜鏁堢瓑瑁呴グ鍔ㄦ晥銆?- 棣栭〉绗簩闃舵缁撴瀯鍖呭惈閾烘弧寮忛《鏍忋€佸悕鐗?+ 闊充箰鎾斁鍣ㄣ€佹瓕璇?鎾斁鐘舵€佸尯銆佹渶鏂版枃绔犮€佹渶鏂版洿鏂板唴瀹广€佹樇澶滄ā寮忓崱鐗囧拰搴曢儴鐘舵€佸尯銆?- 璁剧疆涓績鏀寔鍏紑涓婚 token銆佸瓧浣撴棌鍜屽瓧鍙锋。浣嶉厤缃紱鍓嶅彴鏄煎妯″紡閫氳繃 CSS 鍙橀噺搴旂敤銆?- 璇勮閲囩敤 GitHub 鐧诲綍鍚庤瘎璁猴紱OAuth Secret 鍙湪鍚庣閰嶇疆锛屽墠绔彧璇诲彇鐧诲綍鐘舵€佸拰 GitHub 鍏紑鐢ㄦ埛淇℃伅銆?- 闊充箰鎾斁鐘舵€佹彁鍗囧埌鍏ㄥ眬锛岄椤靛拰 `/music` 椤甸潰鍏变韩鎾斁杩涘害锛涢煶涔愮鐞嗘敮鎸佹瓕璇?URL / `.lrc` / `.txt`銆?- 鐓х墖澧欐敮鎸佺浉鍐岀粍锛屾瘡缁勬渶澶?50 寮犵収鐗囷紝鏃у崟鍥炬暟鎹粛鍏煎灞曠ず銆?- P0/P1 鍔熻兘宸叉敹鍙ｏ紝P2 瑙嗚澧炲己浠嶆寜楠屾敹娓呭崟閫愯疆鎺ㄨ繘锛屼笉寮曞叆澶у瀷鍔ㄧ敾搴撱€佷笉鍋?3D/Three.js銆?
-## 椤圭洰缁撴瀯
-
-```text
-SRBlogs/
-鈹溾攢鈹€ frontend/               # 璇昏€呯鍗氬 SPA
-鈹溾攢鈹€ admin/                  # 鍚庡彴绠＄悊 SPA
-鈹溾攢鈹€ backend/                # FastAPI 鍚庣
-鈹?  鈹溾攢鈹€ app/                # API銆佹湇鍔″拰閰嶇疆
-鈹?  鈹斺攢鈹€ data/               # Markdown銆丣SON銆佽瘎璁恒€佷笂浼犲拰澶囦唤
-鈹溾攢鈹€ deploy/                 # Linux 閮ㄧ讲鑴氭湰銆丯ginx銆乻ystemd 鍜屽仴搴锋鏌?鈹溾攢鈹€ docs/                   # 濂戠害銆佸畨鍏ㄣ€侀獙鏀躲€侀儴缃插拰鍙戝竷鏂囨。
-鈹溾攢鈹€ start-backend.cmd       # Windows 鍚庣鍚姩
-鈹溾攢鈹€ start-frontend.cmd      # Windows 鍓嶅彴鍚姩
-鈹溾攢鈹€ start-admin.cmd         # Windows 鍚庡彴鍚姩
-鈹溾攢鈹€ start-all.cmd           # Windows 涓夌鍚姩
-鈹斺攢鈹€ WINDOWS_START.md
+```powershell
+git clone <your-repo-url> SRBlogs
+cd SRBlogs
 ```
 
-## Windows 鏈湴鍚姩
+### 后端启动
 
-鎺ㄨ崘鐩存帴杩愯锛?
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Linux/macOS 可将虚拟环境命令替换为：
+
+```bash
+cd backend
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+cp .env.example .env
+.venv/bin/python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+本项目不需要初始化数据库；内容数据来自 `backend/data`。
+
+### 前端启动
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+### 管理端启动
+
+```powershell
+cd admin
+npm install
+npm run dev
+```
+
+### 访问地址
+
+- 前台：`http://127.0.0.1:5173`
+- 后台：`http://127.0.0.1:5174/admin/`
+- 后端 Swagger：`http://127.0.0.1:8000/docs`
+- 健康检查：`http://127.0.0.1:8000/api/health`
+- 默认后台账号：`admin / change-me`，仅供本地开发，生产必须修改。
+
+## 一键启动脚本
+
+Windows 推荐从仓库根目录运行：
+
 ```powershell
 .\start-all.cmd
 ```
 
-鍥哄畾璁块棶鍦板潃锛?
-- 鍓嶅彴锛歚http://127.0.0.1:5173`
-- 鍚庡彴锛歚http://127.0.0.1:5174/admin/`
-- 鍚庣鏂囨。锛歚http://127.0.0.1:8000/docs`
-- 鍋ュ悍妫€鏌ワ細`http://127.0.0.1:8000/api/health`
+该脚本会分别启动：
 
-涔熷彲浠ュ垎鍒惎鍔細
+- `start-backend.cmd`：检查 8000 端口，创建后端虚拟环境并安装依赖。
+- `start-frontend.cmd`：检查 5173 端口，安装前台依赖并运行 Vite。
+- `start-admin.cmd`：检查 5174 端口，安装管理端依赖并运行 Vite。
+
+单独启动：
 
 ```powershell
 .\start-backend.cmd
@@ -123,255 +128,227 @@ SRBlogs/
 .\start-admin.cmd
 ```
 
-鍓嶅彴鍜屽悗鍙拌剼鏈浐瀹氱鍙ｅ苟浣跨敤 `--strictPort`銆傚鏋滅鍙ｈ鍗犵敤锛岃剼鏈細杈撳嚭鍗犵敤 PID 鍜?`taskkill` 澶勭悊寤鸿銆?
-## 鎵嬪姩鍚姩
+如需释放本地后端端口，可使用：
 
-鍚庣锛?
 ```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+.\kill-8000.bat
 ```
 
-鍓嶅彴锛?
+## 配置说明
+
+后端读取 `backend/.env` 或生产环境文件 `/etc/srblogs/backend.env`。前台与后台开发环境读取各自的 `.env.development`。
+
+| 配置项 | 默认值 | 是否必填 | 说明 |
+|---|---:|---|---|
+| `APP_NAME` | `SRBlogs API` | 否 | FastAPI 应用名称 |
+| `APP_ENV` | `development` | 否 | 运行环境标识 |
+| `DATA_DIR` | `backend/data` | 是 | Markdown、JSON、上传、备份和日志目录 |
+| `PUBLIC_BASE_URL` | `http://127.0.0.1:8000` | 生产必填 | RSS、Sitemap、Robots、OpenGraph 和上传 URL 的公开地址 |
+| `ADMIN_USERNAME` | `admin` | 是 | 后台管理员用户名 |
+| `ADMIN_PASSWORD` | `change-me` | 是 | 后台管理员密码，生产必须修改 |
+| `JWT_SECRET` | `please-change-this-secret` | 是 | JWT 签名密钥，生产必须改为长随机值 |
+| `JWT_EXPIRE_MINUTES` | `1440` | 否 | 管理端登录有效期 |
+| `CORS_ORIGINS` | 本地前后台地址 | 是 | 允许访问 API 的前端来源，生产不要使用 `*` |
+| `UPLOAD_DRIVER` | `local` | 否 | 当前实现为本地上传 |
+| `UPLOAD_MAX_SIZE` | `5242880` | 否 | 上传大小上限，需与 Nginx `client_max_body_size` 协调 |
+| `UPLOAD_ALLOWED_TYPES` | 图片/音视频 MIME 列表 | 否 | 上传 MIME 白名单 |
+| `GITHUB_OAUTH_CLIENT_ID` / `GITHUB_OAUTH_CLIENT_SECRET` | 空 | 否 | GitHub 访客登录配置 |
+| `QQ_OAUTH_APP_ID` / `QQ_OAUTH_APP_SECRET` | 空 | 否 | QQ 访客登录配置 |
+| `OSS_*` | 空 | 否 | OSS 占位配置，Secret 只能保存在服务端 |
+| `AI_A_*` / `AI_B_*` | 空 | 否 | AI 服务占位配置，Key 不进入前端构建 |
+| `CONTACT_MAIL_ENABLED` | `false` | 否 | 联系表单 SMTP 开关 |
+| `SMTP_*` | 空 | 否 | 联系表单邮件发送配置 |
+| `SRBLOGS_UPDATE_*` | 默认关闭 | 否 | 后台版本检测与服务端更新命令配置 |
+| `VITE_API_BASE_URL` | `http://127.0.0.1:8000/api` | 开发建议 | 前台/管理端 API 地址 |
+
+生产配置可从 `backend/.env.production.example` 复制，不要提交真实密钥。
+
+## 部署方式
+
+### 方式一：本地开发
+
+前置条件：本机安装 Node.js、npm、Python 3.10+。
+
+操作步骤：
+
 ```powershell
-cd frontend
-npm install
-npm run dev
+.\start-all.cmd
 ```
 
-鍚庡彴锛?
-```powershell
-cd admin
-npm install
-npm run dev
+查看日志：三个启动窗口分别输出后端、前台和管理端日志。访问地址见“访问地址”章节。
+
+### 方式二：Linux 服务器部署
+
+前置条件：服务器安装 nginx、rsync、Python 3、Node.js、npm，并准备部署目录 `/opt/srblogs` 与环境目录 `/etc/srblogs`。
+
+参考配置文件：
+
+- `deploy/setup.sh`
+- `deploy/build-all.sh`
+- `deploy/start-backend.sh`
+- `deploy/srblogs-backend.service`
+- `backend/.env.production.example`
+
+基础流程：
+
+```bash
+sudo mkdir -p /opt/srblogs /etc/srblogs
+sudo rsync -a --delete ./ /opt/srblogs/
+sudo cp /opt/srblogs/backend/.env.production.example /etc/srblogs/backend.env
+sudo editor /etc/srblogs/backend.env
+
+cd /opt/srblogs/backend
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+
+cd /opt/srblogs
+bash deploy/build-all.sh
+sudo cp deploy/srblogs-backend.service /etc/systemd/system/srblogs-backend.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now srblogs-backend
 ```
 
-`npm run dev` 鏄父椹诲紑鍙戞湇鍔★紝涓嶄細鑷劧閫€鍑恒€?
-## 榛樿鍚庡彴璐﹀彿
+查看日志：
+
+```bash
+journalctl -u srblogs-backend -f
+```
+
+### 方式三：Nginx 反向代理
+
+参考配置：`deploy/nginx.srblogs.conf` 或 `deploy/nginx/srblogs.conf`。
+
+安装配置：
+
+```bash
+sudo cp /opt/srblogs/deploy/nginx.srblogs.conf /etc/nginx/conf.d/srblogs.conf
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+示例配置会：
+
+- 从 `/opt/srblogs/frontend/dist` 提供前台静态文件。
+- 从 `/opt/srblogs/admin/dist` 提供 `/admin/` 管理端。
+- 将 `/api/`、`/uploads/` 和 `/robots.txt` 代理到 `127.0.0.1:8000`。
+- 为 Vue history mode 配置 `try_files` 回退。
+- 设置 `client_max_body_size 5m`。
+
+当前仓库未提供 Dockerfile 或 Docker Compose，不把 Docker 作为推荐部署方式。
+
+## 常用命令
+
+| 场景 | 命令 |
+|---|---|
+| 启动后端 | `cd backend; .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000` |
+| 启动前台 | `cd frontend; npm run dev` |
+| 启动管理端 | `cd admin; npm run dev` |
+| 构建前台 | `cd frontend; npm run build` |
+| 构建管理端 | `cd admin; npm run build` |
+| 代码检查/修复 | `cd frontend; npm run lint` 或 `cd admin; npm run lint` |
+| 格式化 | `cd frontend; npm run format` 或 `cd admin; npm run format` |
+| 后端语法检查 | `python -m compileall backend/app` |
+| 生产构建 | `bash deploy/build-all.sh` |
+| 健康检查 | `PUBLIC_BASE_URL=https://example.com API_BASE_URL=http://127.0.0.1:8000 bash deploy/healthcheck.sh` |
+| 查看 systemd 日志 | `journalctl -u srblogs-backend -f` |
+| 停止本地开发服务 | 在对应终端按 `Ctrl+C` |
+| 释放 8000 端口 | `.\kill-8000.bat` |
+
+仓库当前没有独立测试命令和数据库迁移命令。
+
+## 项目结构
 
 ```text
-鐢ㄦ埛鍚嶏細admin
-瀵嗙爜锛歝hange-me
+SRBlogs/
+├── frontend/                 # 访客前台 Vue SPA
+│   ├── src/views/            # 前台页面
+│   ├── src/components/       # 前台组件
+│   ├── src/api/              # 前台 API 客户端
+│   └── package.json          # 前台脚本与依赖
+├── admin/                    # 后台管理 Vue SPA
+│   ├── src/views/            # 后台页面
+│   ├── src/components/       # 后台组件
+│   ├── src/api/              # 后台 API 客户端
+│   └── package.json          # 后台脚本与依赖
+├── backend/                  # FastAPI 后端
+│   ├── app/api/              # API 路由
+│   ├── app/services/         # 内容、上传、备份、审计等服务
+│   ├── app/models/           # Pydantic 模型
+│   ├── data/                 # Markdown、JSON、评论、上传和日志数据
+│   └── requirements.txt      # 后端依赖
+├── docs/                     # API、部署、安全、QA、发布文档
+├── deploy/                   # Linux 部署、Nginx、systemd、健康检查脚本
+├── start-all.cmd             # Windows 一键启动
+├── start-backend.cmd         # Windows 后端启动
+├── start-frontend.cmd        # Windows 前台启动
+├── start-admin.cmd           # Windows 后台启动
+├── WINDOWS_START.md          # Windows 启动说明
+├── HISTORY.md                # 历史开发记录
+└── CHANGELOG.md              # 发布变更摘要
 ```
 
-榛樿璐﹀彿浠呯敤浜庢湰鍦板紑鍙戙€傜敓浜у墠蹇呴』鍩轰簬 `backend/.env.production.example` 閰嶇疆鏈嶅姟绔幆澧冩枃浠讹紝骞朵慨鏀?`ADMIN_PASSWORD` 鍜?`JWT_SECRET`銆?
-## API 鏂囨。
+## 接口文档
 
-鍚姩鍚庣鍚庤闂細
+启动后端后访问：
 
-```text
-http://127.0.0.1:8000/docs
-```
+- Swagger UI：`http://127.0.0.1:8000/docs`
+- OpenAPI JSON：`http://127.0.0.1:8000/openapi.json`
+- 健康检查：`GET http://127.0.0.1:8000/api/health`
+- RSS：`GET http://127.0.0.1:8000/api/rss.xml`
+- Sitemap：`GET http://127.0.0.1:8000/api/sitemap.xml`
+- Robots：`GET http://127.0.0.1:8000/robots.txt`
 
-璇︾粏鎺ュ彛濂戠害瑙?[docs/API_CONTRACT.md](docs/API_CONTRACT.md)銆?
-鏃ュ父浣跨敤姝ラ瑙?[docs/USER_GUIDE.md](docs/USER_GUIDE.md)锛屽寘鍚櫥褰曞悗鍙般€佸啓鏂囩珷銆佽崏绋垮彂甯冦€佽瘎璁虹鐞嗐€佸獟浣撶鐞嗐€佺珯鐐硅缃€佸浠芥仮澶嶃€佸璁℃棩蹇楀拰鍓嶅彴鎼滅储/鏍囩/褰掓。浣跨敤璇存槑銆?
-## 鍚庡彴涓昏璺敱
+## 相关文档
 
-- `/admin/`锛氫华琛ㄧ洏
-- `/admin/editor`锛歁arkdown 鍐欎綔
-- `/admin/posts`銆乣/admin/drafts`锛氭枃绔犱笌鑽夌
-- `/admin/comments`锛氭湰鍦拌瘎璁虹鐞?- `/admin/audit`锛氬悗鍙版搷浣滃璁℃棩蹇?- `/admin/backups`锛氭暟鎹浠姐€佷笅杞姐€佹仮澶嶃€佸鍏ュ鍑?- `/admin/friends`銆乣/admin/projects`銆乣/admin/music`銆乣/admin/photos`锛氱粨鏋勫寲鍐呭绠＄悊
-- `/admin/settings`锛氳缃腑蹇?
-## 鍓嶅彴涓昏璺敱
+- [Windows 启动说明](WINDOWS_START.md)
+- [API 契约](docs/API_CONTRACT.md)
+- [用户指南](docs/USER_GUIDE.md)
+- [部署指南](docs/DEPLOYMENT.md)
+- [生产检查清单](docs/PRODUCTION_CHECKLIST.md)
+- [发布检查清单](docs/RELEASE_CHECKLIST.md)
+- [手动 QA 清单](docs/MANUAL_QA_CHECKLIST.md)
+- [安全说明](docs/SECURITY_NOTES.md)
+- [UI 风格指南](docs/UI_STYLE_GUIDE.md)
+- [历史记录](HISTORY.md)
+- [发布变更](CHANGELOG.md)
 
-- `/`锛氶椤?- `/posts`銆乣/posts/:slug`锛氭枃绔犲垪琛ㄥ拰璇︽儏
-- `/search`锛氬叏绔欐悳绱?- `/tags`銆乣/tags/:tag`锛氭爣绛剧储寮曞拰鏍囩鍐呭
-- `/archive`锛氬唴瀹瑰綊妗?- `/moments`銆乣/moments/:slug`锛氬姩鎬?- `/chatters`銆乣/chatters/:slug`锛氭潅璋?- `/friends`銆乣/projects`銆乣/music`銆乣/photowall`锛氱粨鏋勫寲鍐呭
-- `/about`銆乣/timeline`锛氬叧浜庡拰瑙嗚鏃堕棿绾?
-## SEO 涓庤闃?
-鍏紑鎺ュ彛锛?
-- RSS锛歚http://127.0.0.1:8000/api/rss.xml`
-- Sitemap锛歚http://127.0.0.1:8000/api/sitemap.xml`
-- Robots锛歚http://127.0.0.1:8000/robots.txt`
+## 部署注意事项
 
-鍓嶅彴鏂囩珷鍒楄〃鍜屽叧浜庨〉鎻愪緵 RSS 鍏ュ彛銆傜敓浜х幆澧冭鍦ㄥ悗绔?`.env` 璁剧疆 `PUBLIC_BASE_URL`锛岀敤浜?RSS銆丼itemap銆乺obots 鍜屼笂浼?URL銆?
-## 鎬ц兘涓庡彲璁块棶鎬?
-- 鍓嶅彴鍥剧墖缁熶竴閫氳繃瀹夊叏鍥剧墖缁勪欢澶勭悊鎳掑姞杞姐€乣alt` 鍜屽姞杞藉け璐ュ厹搴曘€?- 涓昏鍒楄〃銆佹悳绱€佸綊妗ｇ瓑椤甸潰鏈夊姞杞姐€佺┖鐘舵€佸拰閿欒鐘舵€侊紝API 澶辫触鏃朵笉搴旂櫧灞忋€?- Markdown 浠ｇ爜鍧楀拰琛ㄦ牸鍏佽鑷韩妯悜婊氬姩锛岄伩鍏嶆拺瀹芥暣椤点€?- 鍚庡彴渚ф爮鍦ㄧ獎灞忎笅鍙粴鍔紝鍐欎綔銆佽缃€佽瘎璁虹鐞嗙瓑椤甸潰闇€淇濇寔鍙搷浣溿€?- 褰撳墠 MarkdownRenderer 鍜?MarkdownEditor 鏋勫缓 chunk 鍋忓ぇ锛屼絾鍒嗗埆浣嶄簬鏂囩珷璇︽儏鍜岀紪杈戝櫒鎳掑姞杞借矾寰勶紱鍙戝竷鍓嶄粛闇€鍏虫敞浣撶Н鍜岄灞忎綋楠屻€?
-## 鏁版嵁鐩綍
+- 前台开发环境可使用 `VITE_API_BASE_URL=http://127.0.0.1:8000/api`；生产环境推荐通过同域 `/api` 反向代理。
+- 管理端使用 `/admin/` history base，Nginx 必须将 `/admin/` 回退到 `/admin/index.html`。
+- 前台 history mode 需要将未知路径回退到 `/index.html`。
+- 后端生产建议监听内网地址，由 Nginx 对外暴露；如果跨主机部署，需要调整 `HOST`、`PORT` 和 `CORS_ORIGINS`。
+- `backend/data/uploads`、`backend/data/audit`、`backend/data/.manual_backups` 需要后端服务用户可读写。
+- Nginx 的 `client_max_body_size` 应与 `UPLOAD_MAX_SIZE` 保持一致或更大。
+- 不要直接暴露 `.env`、`.manual_backups`、`audit`、源代码目录、`node_modules` 或构建内部文件。
 
-`backend/data` 鏄綋鍓嶆枃浠跺瓨鍌ㄦ牴鐩綍锛?
-- `posts/*.md`锛氭枃绔?- `moments/*.md`锛氬姩鎬?- `chatters/*.md`锛氭潅璋?- `comments/*.json`锛氳瘎璁?- `friends.json`銆乣projects.json`銆乣music.json`锛氱粨鏋勫寲鍐呭
-- `photos/photos.json`锛氱収鐗囧鏁版嵁
-- `uploads/`锛氭湰鍦颁笂浼犳枃浠?- `.backups/`锛氳鐩栧啓鍏ユ垨鍒犻櫎鍓嶇殑澶囦唤
-- `audit/audit.log`锛氬悗鍙版搷浣滃璁℃棩蹇?- `.manual_backups/*.zip`锛氬悗鍙版墜鍔ㄥ浠姐€佸鍑哄拰鎭㈠鍓嶅浠?
-鎵€鏈?JSON/Markdown 鍐欏叆蹇呴』閫氳繃鍚庣瀹夊叏鍐欏叆灏佽锛岀姝笟鍔¤矾鐢辩洿鎺?`open(..., "w")` 鍐欐枃浠躲€?鎵嬪姩澶囦唤涓嶅寘鍚?`.env`銆佸墠绔簮鐮併€乣node_modules`銆乣dist` 鎴?`.manual_backups` 鏈韩锛沗settings.json` 鍐欏叆澶囦唤鍓嶄細鍓旈櫎 Secret 瀛楁銆?
-浠撳簱涓殑绀轰緥鏁版嵁鐢ㄤ簬鏈湴婕旂ず鍜屽洖褰掗獙璇侊紝鍖呭惈鍏紑鏂囩珷銆佽崏绋裤€佸姩鎬併€佹潅璋堛€佸弸閾俱€侀」鐩€侀煶涔愩€佺収鐗囧拰 about 鍐呭銆傝繍琛屾椂鐢熸垚鐨勬墜鍔ㄥ浠姐€佸璁℃棩蹇椼€佷笂浼犵紦瀛樺拰 `.backups` 鏂囦欢涓嶅簲浣滀负鍙戝竷浠ｇ爜鎻愪氦銆?
-## 鏋勫缓
+## 安全说明
 
-```powershell
-cd frontend
-npm run build
-```
+- 生产环境必须修改 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
+- 管理员账号密码、JWT、OAuth Secret、SMTP 密码、AI Key、OSS Key 不得提交到 Git。
+- 上传接口需要管理员 JWT；后端会校验文件类型和大小。
+- 公开设置接口只应返回非敏感状态，例如 provider 是否已配置，不返回 Secret 明文。
+- 留言、登录、上传、备份、恢复、系统状态和更新触发等能力都应通过后端鉴权边界访问。
+- 一键更新默认关闭；如启用 `SRBLOGS_UPDATE_COMMAND`，应指向已审查、可回滚的服务端脚本。
 
-```powershell
-cd admin
-npm run build
-```
+## 已知问题
 
-```powershell
-python -m compileall backend\app
-```
+- 真实服务器、域名和 HTTPS 部署实操仍需按目标环境执行验收。
+- GitHub/QQ OAuth、SMTP、OSS、AI Provider 需要配置真实服务后再进行联调。
+- 仓库当前没有自动化单元测试套件，主要依赖构建、后端语法检查、健康检查和手动 QA。
+- `backend/data` 是文件型存储，适合个人站和轻量内容维护，不适合作为高并发多作者 CMS。
 
-鏋勫缓浜х墿锛?
-- `frontend/dist`
-- `admin/dist`
+## 开发计划
 
-## 閮ㄧ讲
+- 补充更系统的自动化测试。
+- 完善真实生产部署记录与 HTTPS 验收流程。
+- 根据实际使用继续收敛 OAuth、SMTP、OSS 和 AI Provider 的配置体验。
+- 持续维护前台可读性、移动端表现和管理端内容工作流。
 
-鏈嶅姟鍣ㄩ儴缃茶鏄庤 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)锛屽寘鍚細
+## 许可证
 
-- FastAPI 鍚姩
-- 鍓嶅彴/鍚庡彴 build
-- Nginx 鍙嶅悜浠ｇ悊绀轰緥
-- systemd 鏈嶅姟绀轰緥
-- `backend/data` 鏉冮檺
-- 鐢熶骇 `.env`
-- HTTPS 鍜岀敓浜у墠妫€鏌?
-鐢熶骇鍙戝竷鍊欓€夊弬鑰冩枃浠讹細
+暂未声明开源许可证。使用、分发或二次开发前请先确认项目授权。
 
-- `backend/.env.production.example`锛氱敓浜х幆澧冨彉閲忔ā鏉匡紝涓嶅寘鍚湡瀹?Secret銆?- `deploy/build-all.sh`锛氭瀯寤哄墠鍙般€佸悗鍙板苟妫€鏌ュ悗绔娉曘€?- `deploy/start-backend.sh`锛歀inux 鍚庣鍚姩鑴氭湰銆?- `deploy/srblogs-backend.service`锛歴ystemd 绀轰緥銆?- `deploy/nginx.srblogs.conf`锛歂ginx 绀轰緥銆?- `deploy/healthcheck.sh`锛氱敓浜у仴搴锋鏌ヨ剼鏈€?- [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md)锛氱敓浜у彂甯冩竻鍗曘€?- [CHANGELOG.md](CHANGELOG.md) 涓?[docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md)锛氬彂甯冭鏄庛€?
-## 甯歌闂
+## 致谢
 
-### Tailwind v3/v4 闂
-
-鏈」鐩綋鍓嶅浐瀹氫娇鐢?Tailwind CSS `3.4.17`銆備笉瑕佺洿鎺ュ崌绾у埌 Tailwind v4锛屽惁鍒欑幇鏈夐厤缃拰鏍峰紡鍏ュ彛鍙兘涓嶅吋瀹广€?
-### `pydantic_core` 瀹夎鎹熷潖
-
-閲嶆柊鍒涘缓鍚庣铏氭嫙鐜锛?
-```powershell
-cd backend
-Remove-Item -Recurse -Force .venv
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-### Vite 绔彛璺宠浆鍜?CORS
-
-鍓嶅彴鍥哄畾 `5173`锛屽悗鍙板浐瀹?`5174`锛屽苟鍚敤 `--strictPort`銆傚鏋滅鍙ｈ鍗犵敤锛屽厛閲婃斁绔彛锛屼笉瑕佽 Vite 鑷姩璺崇鍙ｏ紝鍚﹀垯鍙兘瑙﹀彂 CORS 鎴栧洖璋冨湴鍧€涓嶄竴鑷淬€?
-### `npm run dev` 涓€鐩翠笉閫€鍑?
-杩欐槸姝ｅ父琛屼负銆俈ite dev server 鏄父椹昏繘绋嬨€傞渶瑕佸仠姝㈡椂鍦ㄥ搴旂粓绔寜 `Ctrl+C`銆?
-### 8000 绔彛鍗犵敤鎴栨潈闄愰棶棰?
-妫€鏌ュ崰鐢細
-
-```powershell
-netstat -ano | findstr :8000
-```
-
-纭杩涚▼鍙互鍋滄鍚庡啀鎵ц锛?
-```powershell
-taskkill /PID <PID> /F
-```
-
-## 褰撳墠浜や粯鐘舵€?
-- 鍙嬮摼銆侀」鐩€侀煶涔愩€佺収鐗囧宸查€氳繃浜哄伐楠屾敹骞跺湪鐭╅樀涓爣璁颁负 `宸插畬鎴恅銆?- 瀹¤鏃ュ織涓庡浠芥仮澶嶅凡閫氳繃浜哄伐楠屾敹骞跺彲鍦ㄧ煩闃典腑鏍囪涓?`宸插畬鎴恅銆?- 鍚庡彴鍐欎綔銆佽崏绋裤€佸彂甯?鎾ゅ洖銆佸垹闄ゆ枃绔犲拰 pendingOperations 绗竴闃舵宸查€氳繃浜哄伐楠屾敹骞跺湪鐭╅樀涓爣璁颁负 `宸插畬鎴恅銆?- 璁剧疆涓績鍓╀綑椤瑰凡瀹屾垚楠屾敹锛氱┖ Secret 淇濈暀銆佽瘎璁哄紑鍏炽€佸浘搴?local 涓婁紶銆丄I 璁剧疆杈圭晫鍜岄儴缃叉枃妗ｆ牳楠屽潎宸查€氳繃锛涚湡瀹?OSS/Gitalk/AI 鑱旇皟浠嶄笉灞炰簬褰撳墠 P0/P1 鏀跺彛鑼冨洿銆?- 鏈€缁堟€诲洖褰掑凡瀹屾垚 API/HTTP 蹇€熼獙璇侊細瀹屾暣鍐呭鐢熶骇婕旂ず娴併€佽瘎璁哄墠鍚庡彴鍚屾銆佸璁℃棩蹇椼€佹墜鍔ㄥ浠姐€佷笅杞藉浠姐€佹仮澶嶅墠澶囦唤銆丷SS/Sitemap/robots銆丼ecret 鎵弿鍧囬€氳繃銆?- 褰撳墠杩涘害浼扮畻锛歅0 100%锛孭1 100%锛孭2 绾?74%锛汸2 宸茶繘鍏ラ椤电粨鏋勮拷骞充笌鏄煎涓婚绯荤粺闃舵锛屼粛闇€鎸変汉宸ラ獙鏀舵竻鍗曠户缁‘璁ゃ€?- 鐪熷疄鏈嶅姟鍣ㄣ€佸煙鍚嶅拰 HTTPS 閮ㄧ讲瀹炴搷浠嶆爣璁颁负 `閮ㄧ讲瀹炴搷寰呮墽琛宍锛涘綋鍓嶄粨搴撴彁渚涚殑鏄笂绾垮噯澶囪剼鏈€丯ginx/systemd 绀轰緥銆佺幆澧冨彉閲忔ā鏉垮拰閮ㄧ讲妫€鏌ユ竻鍗曘€?- 鍙戝竷鍓嶆€绘鏌ヨ [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)銆?# SRBlogs 褰撳墠琛ュ厖
-
-> 褰撳墠杩涘害锛歅0 100%锛孭1 绾?98%锛孭2 绾?90%銆傛湰杞ˉ淇墠鍙?GitHub 璇勮鍏ュ彛銆佹枃绔?鏉傝皥涓夊垪鍥剧墖鍒楄〃銆侀煶涔愰〉宸︽挱鏀惧櫒鍙虫瓕璇?姝屽崟甯冨眬銆侀椤垫挱鏀惧櫒绱у噾鍖栧拰闈為椤垫爣棰樺眳涓紱鐪熷疄 GitHub OAuth 鍥炶烦浠嶉渶閰嶇疆鍚庝汉宸ラ獙鏀躲€?
-> 鏈€鏂拌ˉ鍏咃細鍓嶅彴璇勮鍖虹粺涓€鍛藉悕涓衡€滅暀瑷€鏉库€濓紝GitHub 鏈厤缃彁绀烘敼涓鸿瀹㈣瑙掞紱鏂囩珷椤垫柊澧炩€滅煩闃电綉鏍?/ 涓灑閾捐矾鈥濆弻妯″紡锛涢《閮ㄥ鑸Щ闄ゅ綊妗ｅ叆鍙ｄ絾 `/archive` 淇濈暀锛涙悳绱㈡爮鍜屾挱鏀惧櫒鍥炬爣鎸夐挳杩涗竴姝ヨ交閲忓寲銆?> 鏈疆淇锛氱暀瑷€鏉跨櫥褰曞叆鍙ｆ敼涓哄墠鍙?`returnTo` OAuth 娴佺▼锛屽叕寮€ `comments.githubLoginConfigured` 甯冨皵鐘舵€侊紝鏈櫥褰曞尶鍚嶇暀瑷€鍚庣杩斿洖 401锛涚収鐗囧鐩稿唽缂栬緫寮圭獥鏀寔 85vh 鍐呴儴婊氬姩锛涙枃绔犱腑鏋㈤摼璺仮澶嶅乏鍙充氦鏇垮苟璐撮潬涓績绾匡紱鎼滅储妗嗗幓鎺?`Search` 瀛楁牱骞跺鍔犳繁鑹叉悳绱㈠浘鏍囨寜閽€?
-### 褰撳墠鍓嶅彴浣撻獙琛ュ厖
-
-- 鐣欒█鏉匡細鍓嶅彴璇︽儏椤典娇鐢?GitHub 鐧诲綍鍚庣暀瑷€锛涙湭閰嶇疆鏃舵樉绀鸿瀹㈠弸濂芥彁绀猴紝涓嶆毚闇叉湇鍔＄ Secret 閰嶇疆缁嗚妭銆?- 鏂囩珷鍒楄〃锛氭敮鎸佺煩闃电綉鏍煎拰涓灑閾捐矾涓ょ鏄剧ず妯″紡锛屽崱鐗囨爣绛鹃潬杩戝簳閮ㄣ€?- 闊充箰锛氶椤垫挱鏀惧櫒鍜?`/music` 椤甸潰鍏变韩鍏ㄥ眬鎾斁銆侀煶閲忓拰闈欓煶鐘舵€併€?- 鐓х墖澧欙細鍚庡彴鐩稿唽缂栬緫寮圭獥鏀寔婊氬姩绠＄悊缁勫唴鐓х墖銆?
-
-## 2026-05-03 Message Login Update
-
-SRBlogs message boards support GitHub and QQ visitor login. OAuth secrets are server-side only. Public settings expose only configured booleans. Music uses a global message board target, and photowall album dialogs use per-album message targets.
-## 2026-05-04 打磨补充：组件样式 DIY 与音乐喜欢
-
-- 后台“主题与背景”支持组件级样式 DIY：主要前台组件可以分别配置日间/夜间颜色、透明度 `0..1` 和大小档位。
-- `/api/settings/public` 会返回公开的 `themeConfig.componentTheme`，只包含视觉配置，不包含任何 Secret。
-- 首页和音乐页播放器支持“顺序播放 / 随机播放 / 单曲循环”，状态保存在浏览器本地。
-- 首页和音乐页播放器支持歌曲喜欢按钮；喜欢数写入后端 `music.json`，旧歌曲默认 `likes=0`。
-- 音乐页歌单默认按喜欢数降序展示，喜欢数相同时保持原排序。
-## 2026-05-04 打磨轮更新：页面编辑精细尺寸与后台平面化
-
-- 后台“页面编辑 > 首页”已支持组件宽度/高度滑动条和精确数值输入。
-- 首页布局配置继续通过 `/api/admin/pages/config` 保存，通过 `/api/pages/config` 公开读取，刷新前台后真实生效。
-- 首页桌面布局使用 120 子列映射，`w` 支持 `0.1` 精度，`h` 支持 `0.1` 精度。
-- 后台管理端已调整为黑白灰平面简约风，前台玻璃风格和组件级主题系统不受影响。
-- 后台 UI 改造仅限 admin 应用，前台仍保持现有首页、文章、图片、音乐、项目、友链、关于、留言板和工具箱体验。
-## 2026-05-04 页面编辑器调整说明
-
-后台页面编辑器已暂时移除拖拽排序，避免与宽度/高度滑动条冲突。组件位置通过“上移 / 下移 / order 数值”调整；组件宽高通过滑动条和数值输入调整。前台首页会继续读取 `/api/pages/config`，但高度映射已改为更克制的比例，避免后台调试值把首页组件异常拉高。
-
-## 2026-05-04 打磨更新：多页面页面编辑
-
-后台“页面编辑”已从首页扩展到首页、文章、图片、音乐、项目、友链、关于七类页面。页面布局配置通过后端接口保存：
-
-- 前台读取：`GET /api/pages/config`
-- 后台读取：`GET /api/admin/pages/config`
-- 后台保存：`PUT /api/admin/pages/config`
-
-布局配置保存在 `backend/data/page_config.json`。每个页面使用 `pageLayouts.{page}.components` 描述组件顺序、宽度、高度和显示状态。核心组件可隐藏，自定义组件可删除；这些操作只影响页面布局，不删除真实内容数据。
-
-后台设置中心继续保持黑白灰平面化管理风格。首页作者、头像、简介和社交链接的主编辑入口迁移到“页面编辑 > 首页”。
-## 2026-05-05 打磨更新
-
-- 页面编辑中的真实字段编辑已改为按钮弹窗，主编辑区更专注于组件布局。
-- 页面编辑操作栏支持 sticky，滚动时仍可保存、添加组件和恢复默认布局。
-- 组件设置弹窗支持字体族、字号、字体颜色、文本对齐、加粗和斜体，并保存到组件主题配置。
-- 前台留言板不再显示开发调试 target；首页和音乐页播放器喜欢数与喜欢按钮水平显示。
-## 2026-05-05 打磨轮更新：页面编辑组件设置弹窗
-
-后台“页面编辑”中的组件详细设置已重新整合为一个可滚动弹窗，包含布局、外观、字体、显示四个分组。管理员可以在同一入口调整组件顺序、宽高、透明度、日夜颜色、字体、字号、对齐、加粗、斜体和显示状态。保存时会保留其他分组字段，避免只保存字体时覆盖布局或外观配置。
-## 2026-05-05 主题包与红白黑玻璃主题
-
-SRBlogs 当前默认前台主题为 `Shrink 红白黑玻璃主题`。它保留毛玻璃风格，但把色彩方向统一为：
-
-- 白天：白 / 灰 / 红。
-- 夜间：黑 / 灰 / 红。
-- 红色仅作为重点色，用于激活态、链接、按钮重点态、轮播分页器、播放进度和导航品牌 `<`、`/`、`>`。
-
-后台 `后台设置 > 主题与背景` 提供主题包管理：
-
-- 导出当前主题 JSON。
-- 导入主题 JSON。
-- 一键应用颜色和字体。
-- 一键应用颜色、字体和页面布局。
-
-主题包可以包含 day/night token、组件样式和页面布局，但不能包含 Secret、JWT、OAuth token、AI Key、OSS Secret 或管理员密码。
-
-前台页面使用统一页面容器变量控制左右边距。桌面端内容比上一轮更收拢，移动端会自动降级，避免内容过窄。
-
-## 2026-05-06 打磨更新：前台可读性与音乐页布局
-
-- 继续参考本地 `ui-ux-pro-max` skill，优先处理前台阅读对比度、控件一致性和固定布局稳定性。
-- 文章页、图片页、音乐页、项目页、友链页、关于页的普通文字改为跟随主题 token，白天深色、夜间浅色。
-- 图片背景卡片继续根据图片明暗自适应文字颜色，避免浅图白字或深图黑字。
-- “正经 / 杂谈”“矩阵网格 / 中枢链路”“歌词 / 歌单”等分段控件统一居中、统一 active 对比度。
-- 音乐页恢复固定布局：左侧播放器、右侧歌词/歌单面板、下方留言板完整显示，不再受旧页面布局配置影响。
-
-
-## 2026-05-06 Frontend Readability Fix
-
-- 白天模式下，文章/杂谈/图片相册卡片的非图片覆盖文字改为主题深色文字。
-- 图片明暗自适应仅用于真正压在图片上的轮播或封面覆盖文案。
-- 统一分段切换按钮的居中、active 对比度和红色重点色。
-- 修复音乐页固定两栏布局，保证播放器、歌词/歌单和留言板完整显示。
-### About 页面与联系表单
-
-- 前台 `/about` 已升级为四屏个人介绍页：Hero、关于我、GitHub 活动、联系我。
-- 后台 `/admin/about` 可编辑主要文字、统计项、技能卡、联系方式和兼容 Markdown。
-- 联系表单通过后端 `POST /api/contact/send` 发送邮件；生产环境需配置 `CONTACT_MAIL_ENABLED=true` 与 `SMTP_*` 环境变量。
-- SMTP 密码/授权码只放在后端环境变量中，不会进入前台或后台构建产物。
-# 后台管理收口说明（2026-05-09）
-
-后台已调整为更清晰的信息架构，只保留“内容管理 / 设置 / 审计日志 / 备份恢复”四类主入口。
-
-- 内容管理：文章（正经/杂谈）、图片相册、音乐、项目、友链、关于、留言管理。
-- 设置：站点信息、我的信息、主题交互项、留言 OAuth 配置。
-- 审计日志：查看关键操作记录。
-- 备份恢复：执行备份和恢复。
-
-前台布局已回归代码固定实现，后台不再作为低代码页面布局编辑器使用。历史 `pageLayouts` 字段仅作为兼容数据保留，不再是主流程。
-## 2026-05-09 后台管理台收口
-
-- 后台主流程重构为“内容管理、设置、审计日志、备份恢复”，旧后台路径继续兼容跳转。
-- 内容管理覆盖文章/杂谈、图片相册组、音乐、项目、友链、关于和各类留言管理；写作页支持 `.md` 导入、正文图片上传、封面和简介维护。
-- 设置页收敛为站点信息、我的信息、主题交互和留言授权四个 Frame，Secret 继续只保存在后端且不回显。
-- 本轮只调整后台信息架构和管理体验，不恢复低代码页面布局编辑，不影响前台固定布局、主题、留言、音乐和照片墙功能。
-## 2026-05-10 Review Fix Notes
-
-- Article saves now fall back to the configured public default cover when no custom cover is provided.
-- Album batch uploads reject selections that exceed the 50-photo album limit instead of silently truncating them.
-- Contact-form SMTP delivery remains backend-only; audit logs mask visitor email and avoid storing submitted message content.
+项目使用 Vue、Vite、FastAPI、Tailwind CSS、Pinia、marked、DOMPurify、highlight.js、CodeMirror 等开源项目构建。若这个项目对你有帮助，欢迎 Star。

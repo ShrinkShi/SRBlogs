@@ -150,3 +150,10 @@
 - Contact-form audit records must avoid visitor message content and full personal identifiers; current logs store name length and masked email only.
 - `/api/settings/public` may expose `defaultPostCover` as a public image URL, but must not expose secret keys, OAuth secrets, SMTP credentials, access tokens, or admin credentials.
 - Album batch upload validation must reject over-capacity selections instead of silently truncating user-selected files.
+## 2026-05-16 后台一键更新安全规则
+
+- 后台版本检测只读取 GitHub Releases 公开信息，不需要 GitHub token。
+- 一键更新命令只能通过后端环境变量 `SRBLOGS_UPDATE_COMMAND` 配置，前端和后台页面不得提交、拼接或回显 shell 命令。
+- 默认 `SRBLOGS_UPDATE_ENABLED=false`。生产环境启用前应把更新命令封装为可审查、可回滚的部署脚本。
+- 更新任务日志写入后端数据目录 `update_logs/latest_update.log`；日志不得写入 OAuth Secret、SMTP Secret、管理员 token、AI Key 或系统凭据。
+- `update_state.json` 只保存 Release tag、检查时间、忽略版本和任务状态，不保存任何 Secret。
