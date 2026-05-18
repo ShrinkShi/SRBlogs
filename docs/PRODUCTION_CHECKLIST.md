@@ -56,7 +56,7 @@
 ## 7. systemd Check
 
 - [ ] `deploy/srblogs-backend.service` is copied to systemd.
-- [ ] `EnvironmentFile=/etc/srblogs/backend.env` exists.
+- [ ] `/etc/srblogs/backend.env` exists after `/install` or manual setup; systemd may start without it to enter install mode.
 - [ ] `WorkingDirectory=/opt/srblogs/backend` exists.
 - [ ] `systemctl enable --now srblogs-backend` succeeds.
 - [ ] `journalctl -u srblogs-backend -f` shows no startup error.

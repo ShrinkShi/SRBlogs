@@ -6,7 +6,19 @@ This guide uses `/opt/srblogs` as the Linux deployment path and `/etc/srblogs/ba
 
 ## 1. Production Environment
 
-Start from the template:
+SRBlogs supports a first-start web installer. After `deploy/setup.sh` and Nginx are installed, visit:
+
+```text
+https://example.com/install
+```
+
+The installer creates `backend/data/.install.lock`, writes required public site settings, writes `/etc/srblogs/backend.env`, and generates `JWT_SECRET` on the server. After finishing the installer, restart the backend:
+
+```bash
+sudo systemctl restart srblogs-backend
+```
+
+Manual environment setup is still supported. Start from the template:
 
 ```bash
 sudo mkdir -p /etc/srblogs
@@ -19,6 +31,7 @@ Required production changes:
 - `ADMIN_PASSWORD`: must not be the development default.
 - `JWT_SECRET`: must be a long random value.
 - `PUBLIC_BASE_URL`: must be the public site origin, for example `https://example.com`.
+- `SITE_START_TIME`: optional ISO timestamp used for the site runtime counter. The installer writes this automatically when left blank.
 - `CORS_ORIGINS`: must list trusted origins only. Do not use `*` in production.
 - `DATA_DIR`: should point to the persistent data directory, usually `/opt/srblogs/backend/data`.
 
@@ -63,7 +76,7 @@ Reference startup script:
 bash /opt/srblogs/deploy/start-backend.sh
 ```
 
-The script loads `/etc/srblogs/backend.env` when present and starts uvicorn on `127.0.0.1:8000`.
+The script loads `/etc/srblogs/backend.env` when present and starts uvicorn on `127.0.0.1:8000`. If the environment file is missing, the backend still starts in install mode so `/install` can finish initialization.
 
 ## 4. systemd
 
@@ -112,6 +125,7 @@ Use HTTPS in production, for example through Certbot or your platform's managed 
 Backend endpoints:
 
 - `GET /api/health`: public basic health check.
+- `GET /api/install/status`: public install status check.
 - `GET /api/admin/system/status`: admin JWT required; checks app name, environment, data directory, uploads directory, and read/write flags without returning secrets.
 
 Deploy helper:
@@ -130,6 +144,7 @@ Persistent directories:
 - `backend/data/.manual_backups`: manual backups, exports, and pre-restore backups.
 - `backend/data/audit/audit.log`: admin audit log in JSON Lines format.
 - `backend/data/uploads`: uploaded files.
+- `backend/data/.install.lock`: install completion marker. Remove it only for a deliberate reinstall.
 
 Do not serve `.env`, `.manual_backups`, or `audit` directly through Nginx.
 
@@ -141,8 +156,9 @@ Before restore operations:
 
 ## 8. Production Preflight
 
-- `ADMIN_PASSWORD` changed.
-- `JWT_SECRET` changed.
+- `/install` completed or `/etc/srblogs/backend.env` was configured manually.
+- `ADMIN_PASSWORD` changed when using manual env setup.
+- `JWT_SECRET` changed when using manual env setup.
 - `CORS_ORIGINS` restricted to production origins.
 - development ports `5173` and `5174` are not exposed.
 - `frontend/dist` and `admin/dist` do not contain secret values.

@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     data_dir: str = "backend/data"
     public_base_url: str = "http://127.0.0.1:8000"
+    site_start_time: str = ""
 
     admin_username: str = "admin"
     admin_password: str = "change-me"
@@ -49,6 +50,7 @@ class Settings(BaseSettings):
     srblogs_update_repo: str = "ShrinkShi/SRBlogs"
     srblogs_update_enabled: bool = False
     srblogs_update_command: str = ""
+    env_file_path: str = "/etc/srblogs/backend.env"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

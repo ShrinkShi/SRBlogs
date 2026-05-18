@@ -12,6 +12,20 @@ These files are reference assets for a Linux deployment. They use `/opt/srblogs`
 
 ## Basic Flow
 
+Recommended first install:
+
+```bash
+sudo bash deploy/setup.sh
+```
+
+Then visit `http://your-domain/install` to complete the web installer. The installer writes `/etc/srblogs/backend.env`, initializes `backend/data/settings.json`, creates `backend/data/.install.lock`, and generates `JWT_SECRET` server-side. Restart the backend after installation:
+
+```bash
+sudo systemctl restart srblogs-backend
+```
+
+Manual setup is still supported:
+
 ```bash
 sudo mkdir -p /opt/srblogs /etc/srblogs
 sudo rsync -a --delete ./ /opt/srblogs/
@@ -19,7 +33,7 @@ sudo cp /opt/srblogs/backend/.env.production.example /etc/srblogs/backend.env
 sudo editor /etc/srblogs/backend.env
 ```
 
-Production must change `ADMIN_PASSWORD`, `JWT_SECRET`, `PUBLIC_BASE_URL`, and `CORS_ORIGINS`.
+Production must set `ADMIN_PASSWORD`, `JWT_SECRET`, `PUBLIC_BASE_URL`, `CORS_ORIGINS`, and optionally `SITE_START_TIME` when using manual setup.
 
 ```bash
 cd /opt/srblogs/backend
@@ -43,6 +57,7 @@ sudo systemctl reload nginx
 - Manual backups: `/opt/srblogs/backend/data/.manual_backups`
 - Audit logs: `/opt/srblogs/backend/data/audit/audit.log`
 - Uploads: `/opt/srblogs/backend/data/uploads`
+- Install lock: `/opt/srblogs/backend/data/.install.lock`
 - Backend logs: `journalctl -u srblogs-backend -f`
 - Nginx logs: usually `/var/log/nginx/access.log` and `/var/log/nginx/error.log`
 

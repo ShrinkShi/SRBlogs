@@ -247,6 +247,7 @@ export interface SiteSettings {
   themeColors?: string[]
   danmakuList?: string[]
   cloudMusicIds?: string[]
+  siteStartTime?: string
   buildDate?: string
   social?: Record<string, string>
   counts?: { photos?: number }

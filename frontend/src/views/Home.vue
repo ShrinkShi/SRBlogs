@@ -171,8 +171,9 @@ const lyricStyle = computed(() => {
 })
 const beijingTime = computed(() => now.value.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false }))
 const runtime = computed(() => {
-  if (!settings.value?.buildDate) return '待部署后开始计时'
-  const start = new Date(settings.value.buildDate).getTime()
+  const startedAt = settings.value?.siteStartTime || settings.value?.buildDate
+  if (!startedAt) return '待完成安装后开始计时'
+  const start = new Date(startedAt).getTime()
   if (Number.isNaN(start)) return '待部署后开始计时'
   const days = Math.max(1, Math.floor((Date.now() - start) / 86400000))
   return `${days} 天`

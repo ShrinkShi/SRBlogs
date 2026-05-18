@@ -4,7 +4,8 @@ import GlassCard from '@/components/GlassCard.vue'
 import type { SiteSettings } from '@/types'
 const props = defineProps<{ settings?: SiteSettings | null; posts: number; moments: number; chatters: number; projects: number }>()
 const days = computed(() => {
-  const start = props.settings?.buildDate ? new Date(props.settings.buildDate) : new Date()
+  const startedAt = props.settings?.siteStartTime || props.settings?.buildDate
+  const start = startedAt ? new Date(startedAt) : new Date()
   return Math.max(1, Math.ceil((Date.now() - start.getTime()) / 86400000))
 })
 </script>

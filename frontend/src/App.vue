@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import AppNav from '@/components/AppNav.vue'
 import BackgroundEffects from '@/components/BackgroundEffects.vue'
 import ClickEffect from '@/components/ClickEffect.vue'
@@ -12,10 +12,13 @@ import { contentApi } from '@/api/content'
 import type { MusicItem, SiteSettings } from '@/types'
 import { useUiStore } from '@/stores/ui'
 import { usePlayerStore } from '@/stores/player'
+import { useRoute } from 'vue-router'
 
 const settings = ref<SiteSettings | null>(null)
 const ui = useUiStore()
 const player = usePlayerStore()
+const route = useRoute()
+const installRoute = computed(() => route.path === '/install')
 
 function solidColor(value: string | undefined, fallback: string) {
   if (!value) return fallback
@@ -102,15 +105,15 @@ watch([settings, () => ui.colorMode, () => ui.fontScale], () => {
 </script>
 
 <template>
-  <BackgroundEffects :settings="settings" />
-  <DanmakuBackground :list="settings?.danmakuList" />
-  <Sakura />
-  <Fireflies />
-  <ClickEffect />
+  <BackgroundEffects v-if="!installRoute" :settings="settings" />
+  <DanmakuBackground v-if="!installRoute" :list="settings?.danmakuList" />
+  <Sakura v-if="!installRoute" />
+  <Fireflies v-if="!installRoute" />
+  <ClickEffect v-if="!installRoute" />
   <div class="relative z-10 min-h-screen">
-    <AppNav />
-    <Toolbox :settings="settings" />
-    <main class="site-page-container pb-28 pt-32 md:pt-36">
+    <AppNav v-if="!installRoute" />
+    <Toolbox v-if="!installRoute" :settings="settings" />
+    <main :class="installRoute ? 'min-h-screen' : 'site-page-container pb-28 pt-32 md:pt-36'">
       <RouterView v-slot="{ Component }">
         <Transition name="fade-slide" mode="out-in">
           <component :is="Component" />

@@ -373,6 +373,7 @@ def _theme_config_with_defaults(value: Any) -> dict[str, Any]:
 
 def public_settings(data: dict[str, Any]) -> dict[str, Any]:
     settings = get_settings()
+    site_start_time = settings.site_start_time or data.get("siteStartTime") or data.get("buildDate") or ""
     interaction = {
         "clickSoundEnabled": True,
         "clickSoundVolume": 0.05,
@@ -434,6 +435,8 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "avatar": data.get("avatar") or data.get("avatarUrl", ""),
         "description": data.get("description") or data.get("bio", ""),
         "defaultPostCover": data.get("defaultPostCover") or data.get("defaultCover", ""),
+        "siteStartTime": site_start_time,
+        "buildDate": data.get("buildDate") or site_start_time,
         "socialLinks": deepcopy(data.get("socialLinks") or data.get("social") or {}),
         "theme": theme,
         "themeConfig": _theme_config_with_defaults(data.get("themeConfig")),

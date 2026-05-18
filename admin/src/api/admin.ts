@@ -1,7 +1,12 @@
 import { http } from './http'
 import type { AuditLogResponse, BackupItem, CommentIndexItem, CommentItem, ContentItem, Stats } from '@/types'
+type InstallStatus = { installed: boolean; needsInstall: boolean; missingItems: string[] }
 
 export const adminApi = {
+  installStatus: async () => {
+    const { data } = await http.get<InstallStatus>('/install/status')
+    return data
+  },
   login: async (username: string, password: string) => {
     const { data } = await http.post<{ access_token: string }>('/auth/login', { username, password })
     return data

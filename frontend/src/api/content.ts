@@ -3,6 +3,16 @@ import type { AboutPageConfig, ArchiveResponse, CommentItem, ContentItem, Discov
 
 export type CommentResource = 'posts' | 'moments' | 'chatters' | 'music' | 'photos'
 export type VisitorUser = { provider: 'github' | 'qq'; id: string; login?: string; name?: string; avatar?: string; html_url?: string }
+export type InstallStatus = { installed: boolean; needsInstall: boolean; missingItems: string[] }
+export type InstallPayload = {
+  siteTitle: string
+  author: string
+  adminUsername: string
+  adminPassword: string
+  publicBaseUrl: string
+  corsOrigins: string
+  siteStartTime?: string
+}
 
 export const contentApi = {
   list: async (section: 'posts' | 'moments' | 'chatters') => {
@@ -15,6 +25,14 @@ export const contentApi = {
   },
   json: async <T>(path: string) => {
     const { data } = await http.get<T>(path)
+    return data
+  },
+  installStatus: async () => {
+    const { data } = await http.get<InstallStatus>('/install/status')
+    return data
+  },
+  install: async (payload: InstallPayload) => {
+    const { data } = await http.post<{ ok: boolean; installed: boolean; restartRequired: boolean; siteStartTime: string; loginUrl: string }>('/install', payload)
     return data
   },
   about: async () => {

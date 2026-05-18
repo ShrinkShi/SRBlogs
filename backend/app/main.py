@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
@@ -23,6 +23,8 @@ from app.api.discovery import router as discovery_router
 from app.api.seo import router as seo_router
 from app.api.admin_tools import router as admin_tools_router
 from app.api.updates import router as updates_router
+from app.api.install import router as install_router
+from app.services.install_service import ensure_base_data_dirs, is_installed
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name)
@@ -67,10 +69,28 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-settings.data_path.mkdir(parents=True, exist_ok=True)
-(settings.data_path / "uploads").mkdir(parents=True, exist_ok=True)
+ensure_base_data_dirs()
 app.mount("/uploads", StaticFiles(directory=settings.data_path / "uploads"), name="uploads")
 
+
+@app.middleware("http")
+async def install_guard(request: Request, call_next):
+    path = request.url.path
+    if request.method == "OPTIONS":
+        return await call_next(request)
+    allowed = {
+        "/api/health",
+        "/api/install/status",
+        "/api/install",
+    }
+    if path.startswith("/api/") and path not in allowed and not is_installed():
+        return JSONResponse(
+            status_code=503,
+            content={"code": "INSTALL_REQUIRED", "message": "SRBlogs 尚未完成安装。", "detail": {"installUrl": "/install"}},
+        )
+    return await call_next(request)
+
+app.include_router(install_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")
 app.include_router(make_content_router("posts", "posts"), prefix="/api")
 app.include_router(make_content_router("moments", "moments"), prefix="/api")

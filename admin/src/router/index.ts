@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import Editor from '@/views/Editor.vue'
+import { adminApi } from '@/api/admin'
 
 const router = createRouter({
   history: createWebHistory('/admin/'),
@@ -38,7 +39,25 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach((to) => {
+function installUrl() {
+  if (typeof window === 'undefined') return '/install'
+  if (window.location.port === '5174') {
+    return `${window.location.protocol}//${window.location.hostname || '127.0.0.1'}:5173/install`
+  }
+  return '/install'
+}
+
+router.beforeEach(async (to) => {
+  try {
+    const status = await adminApi.installStatus()
+    if (status.needsInstall) {
+      window.location.href = installUrl()
+      return false
+    }
+  } catch {
+    // If the install status endpoint is unreachable, continue to the normal login
+    // flow so existing deployments can still surface the backend error there.
+  }
   const auth = useAuthStore()
   if (to.path !== '/login' && !auth.token) return '/login'
   if (to.path === '/login' && auth.token) return '/content/articles'

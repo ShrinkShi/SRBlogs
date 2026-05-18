@@ -35,8 +35,11 @@ python3 -m venv .venv
 mkdir -p data/uploads data/audit data/.manual_backups
 if [ ! -f "$ENV_DIR/backend.env" ]; then
   cp "$APP_DIR/backend/.env.production.example" "$ENV_DIR/backend.env"
-  echo "Created $ENV_DIR/backend.env. Edit it before exposing the service."
+  echo "Created $ENV_DIR/backend.env. You can finish setup from /install or edit it manually."
 fi
+chown "$SERVICE_USER":"$SERVICE_USER" "$ENV_DIR" "$ENV_DIR/backend.env"
+chmod 700 "$ENV_DIR"
+chmod 600 "$ENV_DIR/backend.env"
 chown -R "$SERVICE_USER":"$SERVICE_USER" "$APP_DIR/backend"
 
 echo "[5/7] building frontend and admin"

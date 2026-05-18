@@ -1,4 +1,13 @@
 # HISTORY
+## 2026-05-18 - 首次启动安装向导与生产初始化修复
+
+- 新增安装状态与安装接口：`GET /api/install/status` 和 `POST /api/install`，以 `backend/data/.install.lock` 作为唯一安装完成标记。
+- 未安装状态下后端只开放安装接口和健康检查，其余 `/api/*` 返回 `INSTALL_REQUIRED`，避免生产环境半初始化运行。
+- 安装接口会校验管理员密码强度、限制同 IP 失败次数、生成服务端 `JWT_SECRET`，并写入 `/etc/srblogs/backend.env`、`settings.json` 和 `.install.lock`。
+- 前台新增 `/install` 安装向导，后台登录页未安装时跳转安装页；登录页默认凭据提示仅在开发环境显示。
+- 首页运行时间改为读取 `siteStartTime`，并保留 `buildDate` 兼容字段。
+- systemd 环境文件改为可选加载，`deploy/setup.sh` 会创建并授权 `/etc/srblogs/backend.env`，部署文档同步首次安装流程。
+
 ## 2026-05-18 - 根目录 requirements 与 Linux 部署说明补充
 
 - 新增仓库根目录 `requirements.txt`，通过 `-r backend/requirements.txt` 复用后端依赖清单，方便在服务器或 CI 中直接从项目根目录安装 Python 依赖。

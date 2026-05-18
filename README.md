@@ -150,6 +150,7 @@ Windows 推荐从仓库根目录运行：
 | `APP_ENV` | `development` | 否 | 运行环境标识 |
 | `DATA_DIR` | `backend/data` | 是 | Markdown、JSON、上传、备份和日志目录 |
 | `PUBLIC_BASE_URL` | `http://127.0.0.1:8000` | 生产必填 | RSS、Sitemap、Robots、OpenGraph 和上传 URL 的公开地址 |
+| `SITE_START_TIME` | 空 | 否 | 站点运行时间起点；首次安装向导未填写时由后端自动生成 |
 | `ADMIN_USERNAME` | `admin` | 是 | 后台管理员用户名 |
 | `ADMIN_PASSWORD` | `change-me` | 是 | 后台管理员密码，生产必须修改 |
 | `JWT_SECRET` | `please-change-this-secret` | 是 | JWT 签名密钥，生产必须改为长随机值 |
@@ -198,7 +199,7 @@ Windows 推荐从仓库根目录运行：
 
 #### 推荐流程：使用部署脚本
 
-`deploy/setup.sh` 会安装系统包、创建 `srblogs` 服务用户、同步项目、创建后端虚拟环境、安装 Python 依赖、构建前台/后台、安装 systemd 和 Nginx 示例配置。
+`deploy/setup.sh` 会安装系统包、创建 `srblogs` 服务用户、同步项目、创建后端虚拟环境、安装 Python 依赖、构建前台/后台、安装 systemd 和 Nginx 示例配置，并为 `/etc/srblogs/backend.env` 设置 Web 安装向导可写权限。
 
 ```bash
 sudo bash deploy/setup.sh
@@ -210,12 +211,18 @@ sudo bash deploy/setup.sh
 sudo editor /etc/srblogs/backend.env
 ```
 
-至少修改：
+你可以选择两种初始化方式：
+
+- 推荐：访问 `http://你的域名/install`，通过首次启动安装向导填写站点标题、作者、管理员账号、公开地址、CORS 和站点起始时间。安装完成后会创建 `backend/data/.install.lock`。
+- 高级手动配置：直接编辑 `/etc/srblogs/backend.env`。
+
+手动配置至少修改：
 
 - `ADMIN_PASSWORD`：后台管理员密码，不能使用开发默认值。
 - `JWT_SECRET`：长随机字符串。
 - `PUBLIC_BASE_URL`：公开访问域名，例如 `https://example.com`。
 - `CORS_ORIGINS`：可信前台/后台域名，不要使用 `*`。
+- `SITE_START_TIME`：可选，未设置时安装向导会写入当前时间。
 
 然后重启服务：
 
@@ -245,6 +252,8 @@ sudo cp deploy/srblogs-backend.service /etc/systemd/system/srblogs-backend.servi
 sudo systemctl daemon-reload
 sudo systemctl enable --now srblogs-backend
 ```
+
+后端服务允许 `/etc/srblogs/backend.env` 缺失时启动进入未安装状态；未安装时仅开放 `/install`、`/api/install/status`、`POST /api/install` 和 `/api/health`。
 
 确认服务状态和日志：
 
@@ -376,10 +385,11 @@ SRBlogs/
 - `backend/data/uploads`、`backend/data/audit`、`backend/data/.manual_backups` 需要后端服务用户可读写。
 - Nginx 的 `client_max_body_size` 应与 `UPLOAD_MAX_SIZE` 保持一致或更大。
 - 不要直接暴露 `.env`、`.manual_backups`、`audit`、源代码目录、`node_modules` 或构建内部文件。
+- 首次部署后访问 `/install` 完成初始化；安装完成会创建 `backend/data/.install.lock`，重复访问安装 API 会被拒绝。
 
 ## 安全说明
 
-- 生产环境必须修改 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
+- 生产环境必须通过 `/install` 或 `/etc/srblogs/backend.env` 设置管理员账号；`JWT_SECRET` 由安装向导自动生成，手动配置时必须改为长随机值。
 - 管理员账号密码、JWT、OAuth Secret、SMTP 密码、AI Key、OSS Key 不得提交到 Git。
 - 上传接口需要管理员 JWT；后端会校验文件类型和大小。
 - 公开设置接口只应返回非敏感状态，例如 provider 是否已配置，不返回 Secret 明文。
