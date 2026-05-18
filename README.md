@@ -80,6 +80,12 @@ cp .env.example .env
 .venv/bin/python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+也可以在仓库根目录安装后端依赖：
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
 本项目不需要初始化数据库；内容数据来自 `backend/data`。
 
 ### 前端启动
@@ -179,7 +185,7 @@ Windows 推荐从仓库根目录运行：
 
 ### 方式二：Linux 服务器部署
 
-前置条件：服务器安装 nginx、rsync、Python 3、Node.js、npm，并准备部署目录 `/opt/srblogs` 与环境目录 `/etc/srblogs`。
+前置条件：Linux 服务器具备 sudo 权限，安装或允许安装 nginx、rsync、Python 3、python3-venv、Node.js、npm。以下示例使用 `/opt/srblogs` 作为项目目录，`/etc/srblogs/backend.env` 作为生产环境文件。
 
 参考配置文件：
 
@@ -188,8 +194,38 @@ Windows 推荐从仓库根目录运行：
 - `deploy/start-backend.sh`
 - `deploy/srblogs-backend.service`
 - `backend/.env.production.example`
+- `deploy/healthcheck.sh`
 
-基础流程：
+#### 推荐流程：使用部署脚本
+
+`deploy/setup.sh` 会安装系统包、创建 `srblogs` 服务用户、同步项目、创建后端虚拟环境、安装 Python 依赖、构建前台/后台、安装 systemd 和 Nginx 示例配置。
+
+```bash
+sudo bash deploy/setup.sh
+```
+
+脚本完成后必须编辑生产环境文件：
+
+```bash
+sudo editor /etc/srblogs/backend.env
+```
+
+至少修改：
+
+- `ADMIN_PASSWORD`：后台管理员密码，不能使用开发默认值。
+- `JWT_SECRET`：长随机字符串。
+- `PUBLIC_BASE_URL`：公开访问域名，例如 `https://example.com`。
+- `CORS_ORIGINS`：可信前台/后台域名，不要使用 `*`。
+
+然后重启服务：
+
+```bash
+sudo systemctl restart srblogs-backend
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+#### 手动流程：逐步部署
 
 ```bash
 sudo mkdir -p /opt/srblogs /etc/srblogs
@@ -199,7 +235,9 @@ sudo editor /etc/srblogs/backend.env
 
 cd /opt/srblogs/backend
 python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -r /opt/srblogs/requirements.txt
+mkdir -p data/uploads data/audit data/.manual_backups
 
 cd /opt/srblogs
 bash deploy/build-all.sh
@@ -208,10 +246,23 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now srblogs-backend
 ```
 
-查看日志：
+确认服务状态和日志：
 
 ```bash
+sudo systemctl status srblogs-backend
 journalctl -u srblogs-backend -f
+```
+
+数据目录默认位于 `/opt/srblogs/backend/data`。生产环境应确保运行用户可读写：
+
+```bash
+sudo chown -R srblogs:srblogs /opt/srblogs/backend/data
+```
+
+部署后可以运行健康检查：
+
+```bash
+PUBLIC_BASE_URL=https://example.com API_BASE_URL=http://127.0.0.1:8000 bash deploy/healthcheck.sh
 ```
 
 ### 方式三：Nginx 反向代理
@@ -234,6 +285,8 @@ sudo systemctl reload nginx
 - 为 Vue history mode 配置 `try_files` 回退。
 - 设置 `client_max_body_size 5m`。
 
+上线前请将配置中的 `server_name example.com` 替换为真实域名，并接入 HTTPS。Nginx 日志通常位于 `/var/log/nginx/access.log` 和 `/var/log/nginx/error.log`，后端日志使用 `journalctl -u srblogs-backend -f` 查看。
+
 当前仓库未提供 Dockerfile 或 Docker Compose，不把 Docker 作为推荐部署方式。
 
 ## 常用命令
@@ -248,6 +301,7 @@ sudo systemctl reload nginx
 | 代码检查/修复 | `cd frontend; npm run lint` 或 `cd admin; npm run lint` |
 | 格式化 | `cd frontend; npm run format` 或 `cd admin; npm run format` |
 | 后端语法检查 | `python -m compileall backend/app` |
+| 安装后端依赖 | `python -m pip install -r requirements.txt` |
 | 生产构建 | `bash deploy/build-all.sh` |
 | 健康检查 | `PUBLIC_BASE_URL=https://example.com API_BASE_URL=http://127.0.0.1:8000 bash deploy/healthcheck.sh` |
 | 查看 systemd 日志 | `journalctl -u srblogs-backend -f` |
@@ -278,6 +332,7 @@ SRBlogs/
 │   └── requirements.txt      # 后端依赖
 ├── docs/                     # API、部署、安全、QA、发布文档
 ├── deploy/                   # Linux 部署、Nginx、systemd、健康检查脚本
+├── requirements.txt          # 根目录 Python 依赖入口，转发到 backend/requirements.txt
 ├── start-all.cmd             # Windows 一键启动
 ├── start-backend.cmd         # Windows 后端启动
 ├── start-frontend.cmd        # Windows 前台启动

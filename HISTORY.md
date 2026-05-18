@@ -1,4 +1,10 @@
 # HISTORY
+## 2026-05-18 - 根目录 requirements 与 Linux 部署说明补充
+
+- 新增仓库根目录 `requirements.txt`，通过 `-r backend/requirements.txt` 复用后端依赖清单，方便在服务器或 CI 中直接从项目根目录安装 Python 依赖。
+- README 的 Linux 服务器部署说明拆分为 `deploy/setup.sh` 推荐流程和手动部署流程，补充生产环境变量、服务重启、数据目录权限、健康检查和日志查看步骤。
+- README 的常用命令与项目结构同步加入根目录 `requirements.txt`。
+
 ## 2026-05-17 - README 首页重写与历史迁移
 
 - 将旧 `README.md` 备份为 `README.old.md`，避免覆盖原始历史记录和乱码内容。
