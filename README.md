@@ -184,53 +184,78 @@ Windows 推荐从仓库根目录运行：
 
 查看日志：三个启动窗口分别输出后端、前台和管理端日志。访问地址见“访问地址”章节。
 
-### 方式二：Linux 服务器部署
+### 方式二：Linux 一键部署
 
-前置条件：Linux 服务器具备 sudo 权限，安装或允许安装 nginx、rsync、Python 3、python3-venv、Node.js、npm。以下示例使用 `/opt/srblogs` 作为项目目录，`/etc/srblogs/backend.env` 作为生产环境文件。
+主要支持 Alibaba Cloud Linux / CentOS / RHEL 系服务器，使用 `dnf` 或 `yum`。推荐通过本地上传 zip 包部署，避免服务器直接 `git clone GitHub` 不稳定。
 
-参考配置文件：
+zip 包可以直接包含 `admin/ backend/ frontend/`，也可以多一层目录，例如 `SRBlogs-main/admin`。
 
-- `deploy/setup.sh`
-- `deploy/build-all.sh`
-- `deploy/start-backend.sh`
-- `deploy/srblogs-backend.service`
-- `backend/.env.production.example`
-- `deploy/healthcheck.sh`
+#### 全新安装
 
-#### 推荐流程：使用部署脚本
-
-`deploy/setup.sh` 会安装系统包、创建 `srblogs` 服务用户、同步项目、创建后端虚拟环境、安装 Python 依赖、构建前台/后台、安装 systemd 和 Nginx 示例配置，并为 `/etc/srblogs/backend.env` 设置 Web 安装向导可写权限。
+先预览将执行的系统修改：
 
 ```bash
-sudo bash deploy/setup.sh
+sudo bash deploy/install.sh --dry-run --zip /opt/SRBlogs-main.zip
 ```
 
-脚本完成后必须编辑生产环境文件：
+执行安装：
 
 ```bash
-sudo editor /etc/srblogs/backend.env
+sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip
 ```
 
-你可以选择两种初始化方式：
+可选参数：
 
-- 推荐：访问 `http://你的域名/install`，通过首次启动安装向导填写站点标题、作者、管理员账号、公开地址、CORS 和站点起始时间。安装完成后会创建 `backend/data/.install.lock`。
-- 高级手动配置：直接编辑 `/etc/srblogs/backend.env`。
+```bash
+sudo bash deploy/install.sh --source /tmp/SRBlogs-main
+sudo bash deploy/install.sh --app-dir /opt/srblogs --domain example.com
+sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip --compile-python
+sudo bash deploy/install.sh --force-nginx-main
+```
 
-手动配置至少修改：
+脚本完成后访问：
 
-- `ADMIN_PASSWORD`：后台管理员密码，不能使用开发默认值。
-- `JWT_SECRET`：长随机字符串。
-- `PUBLIC_BASE_URL`：公开访问域名，例如 `https://example.com`。
-- `CORS_ORIGINS`：可信前台/后台域名，不要使用 `*`。
-- `SITE_START_TIME`：可选，未设置时安装向导会写入当前时间。
+```text
+http://服务器IP/install
+```
 
-然后重启服务：
+安装向导会写入 `/etc/srblogs/backend.env`、初始化 `backend/data/settings.json`、创建 `backend/data/.install.lock`，并由后端生成 `JWT_SECRET`。完成后建议重启：
 
 ```bash
 sudo systemctl restart srblogs-backend
-sudo nginx -t
-sudo systemctl reload nginx
+sudo bash /opt/srblogs/deploy/doctor.sh
 ```
+
+`deploy/setup.sh` 仍保留为兼容入口，内部转调 `deploy/install.sh`。
+
+#### 一键更新
+
+```bash
+sudo bash /opt/srblogs/deploy/update.sh --dry-run --zip /opt/SRBlogs-main.zip
+sudo bash /opt/srblogs/deploy/update.sh --zip /opt/SRBlogs-main.zip
+sudo bash /opt/srblogs/deploy/doctor.sh
+```
+
+`update.sh` 会先备份当前 `/opt/srblogs`、`/etc/srblogs/backend.env`、Nginx 配置和 systemd unit 到 `/opt/srblogs.backup.TIMESTAMP/`，再在 staging 中安装依赖和构建。依赖安装、构建、`nginx -t`、systemd restart 或 API healthcheck 失败都会触发回滚；回滚后还会检查旧版本 `/api/health`。
+
+默认只清理旧的 `/opt/srblogs.backup.*`，保留最近 3 个。`/opt/srblogs.previous.*` 和 `/opt/srblogs.failed.*` 只有传入 `--cleanup` 才会清理。
+
+#### 一键诊断
+
+```bash
+sudo bash /opt/srblogs/deploy/doctor.sh
+```
+
+诊断项包括 Python 3.11、Node/npm、nginx、systemd、8000 端口、安装状态接口、公开设置接口、目录权限、构建产物、默认 Nginx 冲突、swap 和默认弱密钥。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
+
+#### 保守安全策略
+
+- 默认不源码编译 Python；只有 `--compile-python` 才允许 `make altinstall`。
+- 默认不覆盖 `/etc/nginx/nginx.conf`；只有 `--force-nginx-main` 才允许备份后重写。
+- 只会把明确默认站点 `default.conf`、`welcome.conf` 改名为 `.disabled.TIMESTAMP`，不会删除未知 Nginx 配置。
+- 无 swap 且根分区可用空间大于 4G 时才尝试创建 `/swapfile-srblogs`；失败只警告不中断。
+- 日志会隐藏 `ADMIN_PASSWORD`、`JWT_SECRET`、OAuth Secret、Token 和 API Key。
+- 安装期允许 `srblogs` 写 `/etc/srblogs/backend.env`；安装完成后建议收紧为 `root:srblogs 640` 或 `root:root 600`。
 
 #### 手动流程：逐步部署
 
@@ -312,6 +337,12 @@ sudo systemctl reload nginx
 | 后端语法检查 | `python -m compileall backend/app` |
 | 安装后端依赖 | `python -m pip install -r requirements.txt` |
 | 生产构建 | `bash deploy/build-all.sh` |
+| Linux 一键安装预览 | `sudo bash deploy/install.sh --dry-run --zip /opt/SRBlogs-main.zip` |
+| Linux 一键安装 | `sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip` |
+| Linux 一键更新预览 | `sudo bash /opt/srblogs/deploy/update.sh --dry-run --zip /opt/SRBlogs-main.zip` |
+| Linux 一键更新 | `sudo bash /opt/srblogs/deploy/update.sh --zip /opt/SRBlogs-main.zip` |
+| Linux 部署诊断 | `sudo bash /opt/srblogs/deploy/doctor.sh` |
+| 部署脚本语法检查 | `bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh` |
 | 健康检查 | `PUBLIC_BASE_URL=https://example.com API_BASE_URL=http://127.0.0.1:8000 bash deploy/healthcheck.sh` |
 | 查看 systemd 日志 | `journalctl -u srblogs-backend -f` |
 | 停止本地开发服务 | 在对应终端按 `Ctrl+C` |
@@ -340,7 +371,7 @@ SRBlogs/
 │   ├── data/                 # Markdown、JSON、评论、上传和日志数据
 │   └── requirements.txt      # 后端依赖
 ├── docs/                     # API、部署、安全、QA、发布文档
-├── deploy/                   # Linux 部署、Nginx、systemd、健康检查脚本
+├── deploy/                   # Linux 一键部署/更新/诊断、Nginx、systemd、健康检查脚本
 ├── requirements.txt          # 根目录 Python 依赖入口，转发到 backend/requirements.txt
 ├── start-all.cmd             # Windows 一键启动
 ├── start-backend.cmd         # Windows 后端启动
@@ -386,6 +417,8 @@ SRBlogs/
 - Nginx 的 `client_max_body_size` 应与 `UPLOAD_MAX_SIZE` 保持一致或更大。
 - 不要直接暴露 `.env`、`.manual_backups`、`audit`、源代码目录、`node_modules` 或构建内部文件。
 - 首次部署后访问 `/install` 完成初始化；安装完成会创建 `backend/data/.install.lock`，重复访问安装 API 会被拒绝。
+- 生产推荐先上传 zip，再执行 `deploy/install.sh --zip`；更新时使用 `deploy/update.sh --zip`，不要直接覆盖 `/opt/srblogs`。
+- 如更新失败且出现 `rollback attempted but healthcheck failed`，优先查看 `/var/log/srblogs/update.TIMESTAMP.log` 和 `journalctl -u srblogs-backend -f`。
 
 ## 安全说明
 

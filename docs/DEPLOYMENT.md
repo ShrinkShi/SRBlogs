@@ -1,171 +1,187 @@
-# SRBlogs Deployment Guide
+# SRBlogs 部署指南
 
-SRBlogs keeps the current stack: Vue 3 + Vite + TypeScript + Tailwind CSS + FastAPI.
+SRBlogs 前台和后台使用 Vue 3 + Vite + TypeScript，后端使用 FastAPI。本指南聚焦 Alibaba Cloud Linux / CentOS / RHEL 系服务器，默认使用 `dnf` 或 `yum`。
 
-This guide uses `/opt/srblogs` as the Linux deployment path and `/etc/srblogs/backend.env` as the production environment file. Replace `example.com` with your real domain.
+默认生产路径：
 
-## 1. Production Environment
+- 应用目录：`/opt/srblogs`
+- 环境文件：`/etc/srblogs/backend.env`
+- 后端服务：`srblogs-backend`
+- 后端监听：`127.0.0.1:8000`
 
-SRBlogs supports a first-start web installer. After `deploy/setup.sh` and Nginx are installed, visit:
+## 1. 首次安装
 
-```text
-https://example.com/install
+推荐生产流程：
+
+```bash
+# 1. 上传 zip 到服务器，例如 /opt/SRBlogs-main.zip
+sudo bash deploy/install.sh --dry-run --zip /opt/SRBlogs-main.zip
+sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip
+
+# 2. 浏览器打开安装向导
+# http://SERVER_IP/install
+
+# 3. 安装向导完成后重启后端
+sudo systemctl restart srblogs-backend
+
+# 4. 执行诊断
+sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
-The installer creates `backend/data/.install.lock`, writes required public site settings, writes `/etc/srblogs/backend.env`, and generates `JWT_SECRET` on the server. After finishing the installer, restart the backend:
+zip 包可以直接包含 `admin/ backend/ frontend/`，也可以多一层根目录，例如 `SRBlogs-main/admin`。
+
+`deploy/setup.sh` 仅作为兼容入口保留，内部转调 `deploy/install.sh`。
+
+## 2. install.sh 行为
+
+`install.sh` 会执行：
+
+- 检查 root 权限，`--dry-run` 除外。
+- 通过 `dnf` 或 `yum` 安装系统依赖。
+- 检测 `python3.11`，再尝试通过包管理器安装。
+- 未传入 `--compile-python` 时拒绝源码编译 Python。
+- 检测 Node.js >= 20，必要时安装 NodeSource Node 20。
+- 创建 `srblogs` 服务用户。
+- 准备 `/opt/srblogs`、`/etc/srblogs/backend.env` 和 `backend/data`。
+- 在 `/opt/srblogs/backend/.venv` 创建后端虚拟环境。
+- 从 `backend/requirements.txt` 安装 Python 依赖。
+- 有 `package-lock.json` 时使用 `npm ci`，否则使用 `npm install`。
+- 使用 `NODE_OPTIONS=--max-old-space-size=1024` 构建前台和后台。
+- 安装 systemd 和 Nginx 配置。
+- 启动 nginx 和 `srblogs-backend`。
+
+可选参数：
+
+```bash
+sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip --compile-python
+sudo bash deploy/install.sh --force-nginx-main
+sudo bash deploy/install.sh --app-dir /opt/srblogs --domain example.com
+```
+
+默认不会重写 `/etc/nginx/nginx.conf`。脚本只会把 `/etc/nginx/conf.d/default.conf`、`/etc/nginx/conf.d/welcome.conf` 等明确默认站点改名为 `.disabled.TIMESTAMP`，不会处理未知 Nginx 配置。
+
+swap 创建是保守策略：仅当当前无 swap 且 `/` 可用空间大于 4G 时，尝试创建 `/swapfile-srblogs`。swap 创建失败只输出 WARN，不中断安装。
+
+## 3. Web 初始化
+
+安装完成后访问：
+
+```text
+http://SERVER_IP/install
+```
+
+安装向导会创建 `backend/data/.install.lock`，写入公开站点设置，写入 `/etc/srblogs/backend.env`，并在后端生成 `JWT_SECRET`。完成后执行：
 
 ```bash
 sudo systemctl restart srblogs-backend
 ```
 
-Manual environment setup is still supported. Start from the template:
+仍然支持手动配置：
 
 ```bash
-sudo mkdir -p /etc/srblogs
-sudo cp /opt/srblogs/backend/.env.production.example /etc/srblogs/backend.env
 sudo editor /etc/srblogs/backend.env
 ```
 
-Required production changes:
+生产环境不能保留默认 `ADMIN_PASSWORD` 或 `JWT_SECRET`。`PUBLIC_BASE_URL`、`CORS_ORIGINS` 和可选的 `SITE_START_TIME` 应与真实部署地址一致。
 
-- `ADMIN_PASSWORD`: must not be the development default.
-- `JWT_SECRET`: must be a long random value.
-- `PUBLIC_BASE_URL`: must be the public site origin, for example `https://example.com`.
-- `SITE_START_TIME`: optional ISO timestamp used for the site runtime counter. The installer writes this automatically when left blank.
-- `CORS_ORIGINS`: must list trusted origins only. Do not use `*` in production.
-- `DATA_DIR`: should point to the persistent data directory, usually `/opt/srblogs/backend/data`.
+安装期 `backend.env` 允许 `srblogs` 服务用户写入，便于 Web 安装向导完成初始化。安装后应尽量收紧，例如 `root:srblogs 640` 或 `root:root 600`，以实际服务加载方式为准。
 
-`PUBLIC_BASE_URL` is used by RSS, sitemap, robots, OpenGraph URLs, and upload URLs.
+## 4. 更新
 
-## 2. Build
-
-Use the deploy helper:
+上传新 zip 后运行：
 
 ```bash
-cd /opt/srblogs
-bash deploy/build-all.sh
+sudo bash /opt/srblogs/deploy/update.sh --dry-run --zip /opt/SRBlogs-main.zip
+sudo bash /opt/srblogs/deploy/update.sh --zip /opt/SRBlogs-main.zip
+sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
-Equivalent manual commands:
+`update.sh` 启动后会先复制自身到 `/tmp/srblogs-runner.TIMESTAMP/`，后续更新、回滚和日志逻辑都从 runner 目录执行，避免依赖即将被替换的 `/opt/srblogs/deploy`。
+
+备份目录：
+
+```text
+/opt/srblogs.backup.TIMESTAMP/
+```
+
+备份内容：
+
+- 当前 `/opt/srblogs`
+- `/etc/srblogs/backend.env`
+- `/etc/nginx/conf.d/srblogs.conf`
+- `/etc/systemd/system/srblogs-backend.service`
+
+更新流程会先在 staging 中构建，再将 current 切到 previous，将 staging 切到 current，随后更新配置、重启服务并检查 `/api/health`、`/api/install/status`，已安装时还会检查 `/api/settings/public`。任一关键步骤失败都会回滚。
+
+如果回滚后的 `/api/health` 仍失败，脚本会输出：
+
+```text
+rollback attempted but healthcheck failed
+```
+
+`update.sh` 默认只保留最近 3 个 `/opt/srblogs.backup.*`。不会自动删除 `/opt/srblogs.previous.*` 或 `/opt/srblogs.failed.*`，除非显式传入 `--cleanup`。
+
+## 5. 诊断
+
+运行：
 
 ```bash
-cd /opt/srblogs/frontend
-npm install
-npm run build
-
-cd /opt/srblogs/admin
-npm install
-npm run build
-
-cd /opt/srblogs
-python -m compileall backend/app
+sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
-## 3. Backend
+dry-run：
 
 ```bash
-cd /opt/srblogs/backend
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-mkdir -p data/uploads data/audit data/.manual_backups
+sudo bash /opt/srblogs/deploy/doctor.sh --dry-run
 ```
 
-Reference startup script:
+`doctor.sh` 检查 Python、Node/npm、nginx、systemd、8000 端口、API 端点、目录权限、`backend.env`、前台/后台构建产物、默认 Nginx 冲突、swap 和默认弱密钥。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
+
+最后输出：
+
+```text
+Summary: PASS=12 WARN=2 FAIL=0
+```
+
+## 6. Nginx 注意事项
+
+生成的 Nginx 配置会：
+
+- 从 `/opt/srblogs/frontend/dist` 提供前台静态文件。
+- 从 `/opt/srblogs/admin/dist` 提供 `/admin/` 管理端。
+- 将 `/api/` 反向代理到 `127.0.0.1:8000`。
+- 将 `/uploads/` 反向代理到后端上传服务。
+- 将 `/robots.txt` 反向代理到后端路由。
+- 为前台和后台配置 Vue history fallback。
+
+生产环境应通过 Certbot、云厂商证书或托管 TLS 接入 HTTPS。
+
+## 7. 日志与数据
+
+- 脚本日志：`/var/log/srblogs/*.log`
+- 持久数据：`/opt/srblogs/backend/data`
+- 安装锁：`/opt/srblogs/backend/data/.install.lock`
+- 后端日志：`journalctl -u srblogs-backend -f`
+- Nginx 日志：通常是 `/var/log/nginx/access.log` 和 `/var/log/nginx/error.log`
+
+不要通过 Nginx 直接暴露 `.env`、`.manual_backups`、`audit`、源代码目录或 `node_modules`。
+
+## 8. 生产检查
+
+- 已完成 `/install`，或已手动配置 `/etc/srblogs/backend.env`。
+- `ADMIN_PASSWORD` 和 `JWT_SECRET` 不是默认值。
+- `CORS_ORIGINS` 只包含可信来源。
+- 开发端口 `5173`、`5174` 未对外暴露。
+- `frontend/dist` 和 `admin/dist` 已存在。
+- `/api/settings/public` 不返回 Secret。
+- `backend/data` 已有备份。
+
+参见 [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md)。
+
+## 9. 脚本静态检查
+
+发布部署脚本变更前运行：
 
 ```bash
-bash /opt/srblogs/deploy/start-backend.sh
+bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh
 ```
-
-The script loads `/etc/srblogs/backend.env` when present and starts uvicorn on `127.0.0.1:8000`. If the environment file is missing, the backend still starts in install mode so `/install` can finish initialization.
-
-## 4. systemd
-
-Reference unit: `deploy/srblogs-backend.service`
-
-```bash
-sudo cp /opt/srblogs/deploy/srblogs-backend.service /etc/systemd/system/srblogs-backend.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now srblogs-backend
-sudo systemctl status srblogs-backend
-```
-
-Logs:
-
-```bash
-journalctl -u srblogs-backend -f
-```
-
-## 5. Nginx
-
-Reference config: `deploy/nginx.srblogs.conf`
-
-The example includes:
-
-- frontend static files from `/opt/srblogs/frontend/dist`
-- admin static files from `/opt/srblogs/admin/dist`
-- `/api` reverse proxy to `127.0.0.1:8000`
-- `/uploads` reverse proxy to the backend upload service
-- `/robots.txt` reverse proxy to the backend route
-- gzip
-- static cache headers
-- `client_max_body_size 5m`
-
-Install:
-
-```bash
-sudo cp /opt/srblogs/deploy/nginx.srblogs.conf /etc/nginx/conf.d/srblogs.conf
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-Use HTTPS in production, for example through Certbot or your platform's managed TLS.
-
-## 6. Health Check
-
-Backend endpoints:
-
-- `GET /api/health`: public basic health check.
-- `GET /api/install/status`: public install status check.
-- `GET /api/admin/system/status`: admin JWT required; checks app name, environment, data directory, uploads directory, and read/write flags without returning secrets.
-
-Deploy helper:
-
-```bash
-PUBLIC_BASE_URL=https://example.com API_BASE_URL=http://127.0.0.1:8000 bash deploy/healthcheck.sh
-```
-
-The script checks backend health, frontend homepage, admin entry, RSS, sitemap, and robots.
-
-## 7. Data And Logs
-
-Persistent directories:
-
-- `backend/data`: Markdown, JSON, comments, uploads, audit logs, and manual backups.
-- `backend/data/.manual_backups`: manual backups, exports, and pre-restore backups.
-- `backend/data/audit/audit.log`: admin audit log in JSON Lines format.
-- `backend/data/uploads`: uploaded files.
-- `backend/data/.install.lock`: install completion marker. Remove it only for a deliberate reinstall.
-
-Do not serve `.env`, `.manual_backups`, or `audit` directly through Nginx.
-
-Before restore operations:
-
-- confirm the backend service user owns or can write `backend/data`;
-- create a fresh backup;
-- confirm disk space is sufficient.
-
-## 8. Production Preflight
-
-- `/install` completed or `/etc/srblogs/backend.env` was configured manually.
-- `ADMIN_PASSWORD` changed when using manual env setup.
-- `JWT_SECRET` changed when using manual env setup.
-- `CORS_ORIGINS` restricted to production origins.
-- development ports `5173` and `5174` are not exposed.
-- `frontend/dist` and `admin/dist` do not contain secret values.
-- `/api/settings/public` does not return secret fields or values.
-- `/api/admin/settings` only returns `xxxConfigured` booleans for secrets.
-- `/api/rss.xml`, `/api/sitemap.xml`, and `/robots.txt` return public data only.
-- `backend/data` has a backup.
-- upload size/type/MIME limits are enabled.
-
-See also [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md).

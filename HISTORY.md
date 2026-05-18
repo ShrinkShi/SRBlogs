@@ -1,4 +1,12 @@
 # HISTORY
+## 2026-05-18 - Linux 一键部署、更新与诊断脚本
+
+- 新增 `deploy/install.sh`，支持 zip/source 部署、dry-run、Python 3.11 检测、Node 20 构建、保守 swap 创建、Nginx/systemd 安装和首次 `/install` 初始化流程。
+- 新增 `deploy/update.sh`，更新前备份应用、环境文件、Nginx 配置和 systemd unit，在 staging 构建成功后切换，失败时回滚并检查旧版本 `/api/health`。
+- 新增 `deploy/doctor.sh`，检查 Python、Node/npm、nginx、systemd、端口、API、权限、构建产物、默认 Nginx 冲突、swap 和弱默认密钥，并输出 PASS/WARN/FAIL 汇总。
+- `deploy/setup.sh` 改为兼容入口，转调 `deploy/install.sh`；`deploy/build-all.sh` 优先使用 `npm ci`。
+- README、`deploy/README.md`、`docs/DEPLOYMENT.md` 同步一键安装、一键更新、dry-run、回滚和安全约束说明。
+
 ## 2026-05-18 - 首次启动安装向导与生产初始化修复
 
 - 新增安装状态与安装接口：`GET /api/install/status` 和 `POST /api/install`，以 `backend/data/.install.lock` 作为唯一安装完成标记。
