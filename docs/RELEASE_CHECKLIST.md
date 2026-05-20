@@ -166,7 +166,7 @@
 - [ ] `backend/data` 权限只给后端进程所需读写权限。
 - [ ] 上传大小限制有效。
 - [ ] `deploy/nginx.srblogs.conf` 已按域名调整，并通过 `nginx -t`。
-- [ ] `deploy/srblogs-backend.service` 已按部署路径调整，并通过 `systemctl status`。
+- [ ] `deploy/srblogs-backend.service` 已按部署路径调整，并通过 `systemctl status srblogs-backend --no-pager`。
 - [ ] `deploy/healthcheck.sh` 检查后端、前台、后台、RSS、Sitemap、robots。
 - [ ] `docs/PRODUCTION_CHECKLIST.md` 已逐项核对。
 

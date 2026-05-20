@@ -115,8 +115,10 @@ check_services() {
   fi
   if command_exists systemctl && systemctl is-active --quiet srblogs-backend; then
     pass "srblogs-backend is running."
+    pass "service check command: systemctl status srblogs-backend --no-pager"
+    pass "log command: journalctl -u srblogs-backend -n 100 --no-pager"
   else
-    fail "srblogs-backend is not running."
+    fail "srblogs-backend is not running. Check with: systemctl status srblogs-backend --no-pager"
   fi
   if command_exists ss && ss -ltn | grep -q ':8000 '; then
     pass "port 8000 is listening."

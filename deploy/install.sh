@@ -454,6 +454,60 @@ install_systemd() {
   safe_systemctl enable nginx
 }
 
+valid_ipv4() {
+  local value="$1"
+  [[ "$value" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]
+}
+
+detect_public_ip() {
+  local candidate=""
+  if command_exists curl; then
+    candidate="$(curl -4 --silent --show-error --max-time 5 https://ifconfig.me 2>/dev/null | tr -d '[:space:]' || true)"
+    if valid_ipv4 "$candidate"; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+    candidate="$(curl -4 --silent --show-error --max-time 5 https://ip.sb 2>/dev/null | tr -d '[:space:]' || true)"
+    if valid_ipv4 "$candidate"; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  fi
+  if command_exists hostname; then
+    candidate="$(hostname -I 2>/dev/null | awk '{print $1}' || true)"
+    if valid_ipv4 "$candidate"; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  fi
+  return 1
+}
+
+print_access_info() {
+  local access_host="" print_ip_hint=0
+  if [ -n "$DOMAIN" ] && [ "$DOMAIN" != "_" ]; then
+    access_host="$DOMAIN"
+  else
+    access_host="$(detect_public_ip || true)"
+  fi
+  if [ -z "$access_host" ]; then
+    access_host="<your-server-ip>"
+    print_ip_hint=1
+  fi
+  log_line "Install complete."
+  log_line "Visit: http://$access_host/install"
+  log_line "Admin: http://$access_host/admin/login"
+  log_line "Home: http://$access_host/"
+  if [ "$print_ip_hint" -eq 1 ]; then
+    log_line "Could not detect public IP automatically. Replace <your-server-ip> with your server public IPv4 address."
+  fi
+  log_line "Service: srblogs-backend"
+  log_line "Check service:"
+  log_line "  systemctl status srblogs-backend --no-pager"
+  log_line "View logs:"
+  log_line "  journalctl -u srblogs-backend -n 100 --no-pager"
+}
+
 print_plan() {
   log_line "SRBlogs install plan:"
   log_line "- app dir: $APP_DIR"
@@ -491,10 +545,7 @@ main() {
   safe_nginx_test
   safe_systemctl restart srblogs-backend
   safe_systemctl restart nginx
-  log_line "Install complete."
-  log_line "Visit: http://SERVER_IP/install"
-  log_line "Admin: http://SERVER_IP/admin/login"
-  log_line "Home: http://SERVER_IP/"
+  print_access_info
 }
 
 main "$@"

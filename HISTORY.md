@@ -1,4 +1,10 @@
 # HISTORY
+## 2026-05-18 - Linux 安装完成输出与服务名提示修复
+
+- `deploy/install.sh` 安装完成后优先使用 `--domain` 输出访问地址；未传域名时尝试探测公网 IPv4，失败时输出 `<your-server-ip>` 占位符并提示手动替换，不再输出 `SERVER_IP`。
+- 安装完成输出增加实际 systemd 服务名 `srblogs-backend`，并给出 `systemctl status srblogs-backend --no-pager` 与 `journalctl -u srblogs-backend -n 100 --no-pager` 排查命令。
+- 删除旧的 systemd 参考文件，避免与 `srblogs-backend.service` 混用；README、部署文档和检查清单同步统一服务名。
+
 ## 2026-05-18 - Linux 一键部署、更新与诊断脚本
 
 - 新增 `deploy/install.sh`，支持 zip/source 部署、dry-run、Python 3.11 检测、Node 20 构建、保守 swap 创建、Nginx/systemd 安装和首次 `/install` 初始化流程。
@@ -1653,7 +1659,7 @@ Remaining:
 
 - 新增 `backend/.env.production.example`，包含 APP、DATA_DIR、PUBLIC_BASE_URL、管理员、JWT、CORS、上传、AI、OSS、GitHub OAuth 占位字段，并明确生产必须修改 `ADMIN_PASSWORD` 和 `JWT_SECRET`。
 - 新增 `deploy/build-all.sh`、`deploy/start-backend.sh`、`deploy/srblogs-backend.service`、`deploy/nginx.srblogs.conf`、`deploy/healthcheck.sh`、`deploy/README.md`。
-- 同步修复 `deploy/nginx/srblogs.conf`、`deploy/systemd/srblogs.service`、`deploy/setup.sh`，统一使用 `/opt/srblogs` 和 `/etc/srblogs/backend.env` 占位路径，不写死本机 Windows 路径。
+- 同步修复 `deploy/nginx/srblogs.conf`、旧 systemd 参考文件、`deploy/setup.sh`，统一使用 `/opt/srblogs` 和 `/etc/srblogs/backend.env` 占位路径，不写死本机 Windows 路径。
 
 文档变更：
 
@@ -1682,7 +1688,7 @@ Remaining:
 - 通过：登录后 TestClient `GET /api/admin/system/status` 返回 200，包含 `app`、`backendRunning`、`environment`、`dataPath`、`uploads`、`version`。
 - 通过：构建产物 Secret 值静态搜索，未发现 `backend/.env` 中非空 Secret 值进入 `frontend/dist` 或 `admin/dist`。
 - 通过：`deploy/nginx.srblogs.conf` 静态检查包含 `/admin/`、`/api/`、`/uploads/`、`/robots.txt`、gzip、缓存、`client_max_body_size` 和后端反代。
-- 通过：`deploy/srblogs-backend.service` 和 `deploy/systemd/srblogs.service` 未匹配本地 Windows 路径。
+- 通过：`deploy/srblogs-backend.service` 和旧 systemd 参考文件未匹配本地 Windows 路径。
 - 通过：`backend/.env.production.example` 未匹配开发默认 `ADMIN_PASSWORD=change-me` 或 `JWT_SECRET=please-change-this-secret`，AI/OSS/GitHub Secret 字段为空占位。
 - 通过：`docs/PRODUCTION_CHECKLIST.md` 覆盖构建、环境变量、Secret、CORS、后端健康、Nginx、systemd、前台、后台、RSS/Sitemap/robots、上传、审计、备份、恢复、回滚和已知延期项。
 - 已清理：临时后端 HTTP 探测日志文件；未留下 8000 监听进程。

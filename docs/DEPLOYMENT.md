@@ -19,7 +19,7 @@ sudo bash deploy/install.sh --dry-run --zip /opt/SRBlogs-main.zip
 sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip
 
 # 2. 浏览器打开安装向导
-# http://SERVER_IP/install
+# http://<your-server-ip>/install
 
 # 3. 安装向导完成后重启后端
 sudo systemctl restart srblogs-backend
@@ -67,7 +67,7 @@ swap 创建是保守策略：仅当当前无 swap 且 `/` 可用空间大于 4G 
 安装完成后访问：
 
 ```text
-http://SERVER_IP/install
+http://<your-server-ip>/install
 ```
 
 安装向导会创建 `backend/data/.install.lock`，写入公开站点设置，写入 `/etc/srblogs/backend.env`，并在后端生成 `JWT_SECRET`。完成后执行：
@@ -161,7 +161,8 @@ Summary: PASS=12 WARN=2 FAIL=0
 - 脚本日志：`/var/log/srblogs/*.log`
 - 持久数据：`/opt/srblogs/backend/data`
 - 安装锁：`/opt/srblogs/backend/data/.install.lock`
-- 后端日志：`journalctl -u srblogs-backend -f`
+- 服务状态：`systemctl status srblogs-backend --no-pager`
+- 后端日志：`sudo journalctl -u srblogs-backend -n 100 --no-pager`
 - Nginx 日志：通常是 `/var/log/nginx/access.log` 和 `/var/log/nginx/error.log`
 
 不要通过 Nginx 直接暴露 `.env`、`.manual_backups`、`audit`、源代码目录或 `node_modules`。

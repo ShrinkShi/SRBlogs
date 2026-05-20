@@ -40,7 +40,7 @@ sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip
 然后访问：
 
 ```text
-http://SERVER_IP/install
+http://<your-server-ip>/install
 ```
 
 安装向导会写入 `/etc/srblogs/backend.env`、初始化 `backend/data/settings.json`、创建 `backend/data/.install.lock`，并由后端生成 `JWT_SECRET`。安装完成后重启后端：
@@ -90,7 +90,9 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 - 上传目录：`/opt/srblogs/backend/data/uploads`
 - 审计日志：`/opt/srblogs/backend/data/audit/audit.log`
 - 安装锁：`/opt/srblogs/backend/data/.install.lock`
-- 后端日志：`journalctl -u srblogs-backend -f`
+- 后端日志：`sudo journalctl -u srblogs-backend -n 100 --no-pager`
+- 服务状态：`systemctl status srblogs-backend --no-pager`
+- 最近日志：`sudo journalctl -u srblogs-backend -n 100 --no-pager`
 - Nginx 日志：通常是 `/var/log/nginx/access.log` 和 `/var/log/nginx/error.log`
 
 安装完成后应尽量收紧 `/etc/srblogs/backend.env` 权限。`doctor.sh` 会在已安装状态下检测该文件是否仍可被 `srblogs` 服务用户写入，并输出 WARN。

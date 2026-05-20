@@ -283,8 +283,8 @@ sudo systemctl enable --now srblogs-backend
 确认服务状态和日志：
 
 ```bash
-sudo systemctl status srblogs-backend
-journalctl -u srblogs-backend -f
+systemctl status srblogs-backend --no-pager
+sudo journalctl -u srblogs-backend -n 100 --no-pager
 ```
 
 数据目录默认位于 `/opt/srblogs/backend/data`。生产环境应确保运行用户可读写：
@@ -319,7 +319,7 @@ sudo systemctl reload nginx
 - 为 Vue history mode 配置 `try_files` 回退。
 - 设置 `client_max_body_size 5m`。
 
-上线前请将配置中的 `server_name example.com` 替换为真实域名，并接入 HTTPS。Nginx 日志通常位于 `/var/log/nginx/access.log` 和 `/var/log/nginx/error.log`，后端日志使用 `journalctl -u srblogs-backend -f` 查看。
+上线前请将配置中的 `server_name example.com` 替换为真实域名，并接入 HTTPS。Nginx 日志通常位于 `/var/log/nginx/access.log` 和 `/var/log/nginx/error.log`，后端日志使用 `sudo journalctl -u srblogs-backend -n 100 --no-pager` 查看。
 
 当前仓库未提供 Dockerfile 或 Docker Compose，不把 Docker 作为推荐部署方式。
 
@@ -344,7 +344,8 @@ sudo systemctl reload nginx
 | Linux 部署诊断 | `sudo bash /opt/srblogs/deploy/doctor.sh` |
 | 部署脚本语法检查 | `bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh` |
 | 健康检查 | `PUBLIC_BASE_URL=https://example.com API_BASE_URL=http://127.0.0.1:8000 bash deploy/healthcheck.sh` |
-| 查看 systemd 日志 | `journalctl -u srblogs-backend -f` |
+| 查看 systemd 服务 | `systemctl status srblogs-backend --no-pager` |
+| 查看 systemd 日志 | `sudo journalctl -u srblogs-backend -n 100 --no-pager` |
 | 停止本地开发服务 | 在对应终端按 `Ctrl+C` |
 | 释放 8000 端口 | `.\kill-8000.bat` |
 
@@ -418,7 +419,7 @@ SRBlogs/
 - 不要直接暴露 `.env`、`.manual_backups`、`audit`、源代码目录、`node_modules` 或构建内部文件。
 - 首次部署后访问 `/install` 完成初始化；安装完成会创建 `backend/data/.install.lock`，重复访问安装 API 会被拒绝。
 - 生产推荐先上传 zip，再执行 `deploy/install.sh --zip`；更新时使用 `deploy/update.sh --zip`，不要直接覆盖 `/opt/srblogs`。
-- 如更新失败且出现 `rollback attempted but healthcheck failed`，优先查看 `/var/log/srblogs/update.TIMESTAMP.log` 和 `journalctl -u srblogs-backend -f`。
+- 如更新失败且出现 `rollback attempted but healthcheck failed`，优先查看 `/var/log/srblogs/update.TIMESTAMP.log` 和 `sudo journalctl -u srblogs-backend -n 100 --no-pager`。
 
 ## 安全说明
 

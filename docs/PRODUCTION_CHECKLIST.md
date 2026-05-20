@@ -59,7 +59,7 @@
 - [ ] `/etc/srblogs/backend.env` exists after `/install` or manual setup; systemd may start without it to enter install mode.
 - [ ] `WorkingDirectory=/opt/srblogs/backend` exists.
 - [ ] `systemctl enable --now srblogs-backend` succeeds.
-- [ ] `journalctl -u srblogs-backend -f` shows no startup error.
+- [ ] `sudo journalctl -u srblogs-backend -n 100 --no-pager` shows no startup error.
 
 ## 8. Frontend Pages
 
