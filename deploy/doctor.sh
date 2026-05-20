@@ -130,12 +130,13 @@ check_services() {
 }
 
 check_http() {
+  local status_file="/tmp/srblogs-doctor-install-status.$$"
+  local admin_html="/tmp/srblogs-doctor-admin-login.$$"
   if curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
     pass "/api/health is reachable."
   else
     fail "/api/health is not reachable."
   fi
-  local status_file="/tmp/srblogs-doctor-install-status.$$"
   if curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8000/api/install/status >"$status_file" 2>/dev/null; then
     pass "/api/install/status is reachable."
     if grep -q '"installed"[[:space:]]*:[[:space:]]*true' "$status_file"; then
@@ -149,6 +150,33 @@ check_http() {
     fi
   else
     fail "/api/install/status is not reachable."
+  fi
+  if curl --fail --silent --show-error --max-time 10 http://127.0.0.1/admin/login >"$admin_html" 2>/dev/null; then
+    pass "/admin/login returns HTTP 200."
+    if grep -Eq 'id="app"|/admin/assets/|<script' "$admin_html"; then
+      pass "/admin/login contains admin SPA entry markup."
+    else
+      fail "/admin/login does not look like the admin SPA HTML."
+    fi
+    check_admin_assets "$admin_html"
+  else
+    fail "/admin/login is not reachable through Nginx."
+  fi
+}
+
+check_admin_assets() {
+  local html_file="$1"
+  local asset path
+  asset="$(grep -Eo '/admin/assets/[^"]+\.(js|css)' "$html_file" | head -n 1 || true)"
+  if [ -z "$asset" ]; then
+    fail "admin HTML does not reference /admin/assets JS/CSS."
+    return
+  fi
+  path="http://127.0.0.1$asset"
+  if curl --fail --silent --show-error --head --max-time 10 "$path" >/dev/null 2>&1; then
+    pass "admin asset is reachable: $asset"
+  else
+    fail "admin asset is not reachable: $asset"
   fi
 }
 

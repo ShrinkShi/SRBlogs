@@ -1,4 +1,10 @@
 # HISTORY
+## 2026-05-20 - Linux 后台登录白屏与运行时间秒级显示修复
+
+- 修复 Nginx admin SPA 部署配置，将 `/admin/` location 改为 `^~ /admin/`，避免 `/admin/assets/*.js/css` 被通用静态资源 regex 抢匹配到前台目录导致后台白屏。
+- `doctor.sh` 增加 `/admin/login` 访问检查、admin SPA 入口 HTML 检查和首个 `/admin/assets` 静态资源检查，部署后可直接发现后台入口不可用问题。
+- 首页运行时间改为“本项目已经成功部署并运行”加 `xx天xx小时xx分xx秒` 两行展示，并依赖每秒时钟刷新；`SiteDashboard` 的运行时间也同步为秒级格式。
+
 ## 2026-05-18 - Linux 安装完成输出与服务名提示修复
 
 - `deploy/install.sh` 安装完成后优先使用 `--domain` 输出访问地址；未传域名时尝试探测公网 IPv4，失败时输出 `<your-server-ip>` 占位符并提示手动替换，不再输出 `SERVER_IP`。

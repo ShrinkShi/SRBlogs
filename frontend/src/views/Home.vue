@@ -175,8 +175,12 @@ const runtime = computed(() => {
   if (!startedAt) return '待完成安装后开始计时'
   const start = new Date(startedAt).getTime()
   if (Number.isNaN(start)) return '待部署后开始计时'
-  const days = Math.max(1, Math.floor((Date.now() - start) / 86400000))
-  return `${days} 天`
+  const diff = Math.max(0, now.value.getTime() - start)
+  const days = Math.floor(diff / 86400000)
+  const hours = Math.floor((diff % 86400000) / 3600000)
+  const minutes = Math.floor((diff % 3600000) / 60000)
+  const seconds = Math.floor((diff % 60000) / 1000)
+  return `${days}天${hours}小时${minutes}分${seconds}秒`
 })
 const progressPercent = computed(() => player.duration ? `${Math.min(100, (player.currentTime / player.duration) * 100)}%` : '0%')
 const currentSongId = computed(() => player.songKey(track.value))
@@ -462,8 +466,11 @@ onBeforeUnmount(() => {
         <div class="home-status-cell home-status-time">
           <b class="block text-xl">{{ beijingTime }}</b>
         </div>
-        <div class="home-status-cell">
-          <b class="block text-xl">{{ runtime }}</b>
+        <div class="home-status-cell home-runtime-cell">
+          <b class="block text-xl">
+            <span>本项目已经成功部署并运行</span>
+            <span>{{ runtime }}</span>
+          </b>
         </div>
         <div class="home-status-cell">
           <div class="readme-badges" aria-label="技术栈">

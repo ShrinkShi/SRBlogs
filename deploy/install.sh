@@ -339,7 +339,7 @@ server {
         return 301 /admin/;
     }
 
-    location /admin/ {
+    location ^~ /admin/ {
         alias $APP_DIR/admin/dist/;
         try_files \$uri \$uri/ /admin/index.html;
     }

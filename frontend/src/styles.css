@@ -998,6 +998,27 @@ body::before {
   white-space: nowrap;
 }
 
+.home-runtime-cell b {
+  display: grid;
+  gap: .18rem;
+  white-space: normal;
+}
+
+.home-runtime-cell b span {
+  display: block;
+}
+
+.home-runtime-cell b span:first-child {
+  font-size: clamp(.68rem, .86vw, .82rem) !important;
+  color: var(--text-secondary) !important;
+}
+
+.home-runtime-cell b span:last-child {
+  font-size: clamp(.78rem, 1vw, .96rem) !important;
+  color: var(--text-primary) !important;
+  white-space: nowrap;
+}
+
 .home-status-time {
   width: 100%;
   height: 100%;
