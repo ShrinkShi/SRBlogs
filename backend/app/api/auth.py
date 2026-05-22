@@ -12,6 +12,7 @@ from jose import JWTError, jwt
 from app.config import get_settings
 from app.models.schemas import LoginRequest, TokenResponse
 from app.services.audit_service import write_audit
+from app.services.admin_credentials import verify_admin_password
 from app.services.auth_service import create_access_token
 from app.services.json_service import JsonStore
 
@@ -27,7 +28,7 @@ QQ_RETURN_COOKIE = "srblogs_qq_return"
 @router.post("/login", response_model=TokenResponse)
 def login(payload: LoginRequest, request: Request):
     settings = get_settings()
-    if payload.username != settings.admin_username or payload.password != settings.admin_password:
+    if payload.username != settings.admin_username or not verify_admin_password(payload.password, settings):
         write_audit(
             actor=payload.username or "unknown",
             action="auth.login",

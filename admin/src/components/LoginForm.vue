@@ -20,7 +20,7 @@ async function submit(){
     <h1 class="text-4xl font-black text-white">SRBlogs Admin</h1>
     <p class="mt-2 text-white/55">登录后管理文章、动态、图床与 AI 配置。</p>
     <p v-if="showDevCredentials" class="mt-4 rounded-2xl border border-white/10 bg-white/10 p-3 text-sm text-white/65">
-      本地开发默认账号：<b>admin</b> / <b>change-me</b>。生产环境请使用安装向导或后端环境变量中设置的管理员账号。
+      本地开发可在 <b>backend/.env</b> 设置管理员账号；生产环境请使用安装向导初始化，忘记密码时使用 <b>backend/scripts/reset_admin.py</b> 重置。
     </p>
     <div class="mt-7 grid gap-4">
       <input v-model="form.username" aria-label="用户名" autocomplete="username" class="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 outline-none focus:border-cyan-300/60" placeholder="用户名" />

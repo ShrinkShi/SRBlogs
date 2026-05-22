@@ -399,7 +399,7 @@ Windows 本地启动命令：
 
 2026-05-02 发布候选与部署演练轮当前结果：
 
-- 新增 `backend/.env.production.example`，明确生产必须修改 `ADMIN_PASSWORD`、`JWT_SECRET`，并限制 `CORS_ORIGINS` 不使用 `*`。
+- 新增 `backend/.env.production.example`，生产推荐通过 `/install` 写入 `ADMIN_PASSWORD_HASH` 并生成 `JWT_SECRET`，同时限制 `CORS_ORIGINS` 不使用 `*`。
 - 新增 `deploy/build-all.sh`、`deploy/start-backend.sh`、`deploy/srblogs-backend.service`、`deploy/nginx.srblogs.conf`、`deploy/healthcheck.sh` 和 `deploy/README.md`。
 - 新增 `GET /api/admin/system/status`，管理员 JWT 保护，返回 app、环境、data/uploads 目录存在性和读写状态，不返回 Secret。
 - 新增 `docs/PRODUCTION_CHECKLIST.md`、`CHANGELOG.md`、`docs/RELEASE_NOTES.md`，并同步生产部署、目录、日志、备份和发布说明。

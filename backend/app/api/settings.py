@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends
 from app.config import get_settings
 from app.models.schemas import JsonWrite
 from app.services.audit_service import write_audit
+from app.services.admin_credentials import admin_password_configured
 from app.services.auth_service import require_admin
 from app.services.json_service import JsonStore
 
@@ -489,7 +490,7 @@ def admin_settings(data: dict[str, Any]) -> dict[str, Any]:
         result["ai"] = {"aiKeyConfigured": bool(get_settings().ai_a_api_key or get_settings().ai_b_api_key)}
     result["serverSecrets"] = {
         "jwtSecretConfigured": _configured(get_settings().jwt_secret),
-        "adminPasswordConfigured": _configured(get_settings().admin_password),
+        "adminPasswordConfigured": admin_password_configured(get_settings()),
         "ossKeyConfigured": _configured(get_settings().oss_access_key_secret),
         "aiKeyConfigured": _configured(get_settings().ai_a_api_key or get_settings().ai_b_api_key),
         "githubOAuthClientIdConfigured": _configured(get_settings().github_oauth_client_id or (data.get("gitalkConfig") or {}).get("clientID", "")),

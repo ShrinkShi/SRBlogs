@@ -33,12 +33,6 @@ const filteredItems = computed(() => items.value.filter((item) => {
     || item.meta.tags?.some((tag) => tag.toLowerCase().includes(q))
 }))
 
-const stats = computed(() => ({
-  total: items.value.length,
-  published: items.value.filter((item) => !item.meta.draft).length,
-  draft: items.value.filter((item) => item.meta.draft).length
-}))
-
 function publicPath(item: ContentItem) {
   if (props.section === 'chatters') return `/chatters/${item.slug}`
   if (props.section === 'moments') return `/moments/${item.slug}`
@@ -94,51 +88,26 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
-    <div class="grid gap-3 md:grid-cols-3">
-      <div class="admin-card">
-        <p class="admin-section-title">TOTAL</p>
-        <strong class="mt-2 block text-3xl text-slate-950">{{ stats.total }}</strong>
-        <span class="admin-meta">总内容</span>
-      </div>
-      <div class="admin-card">
-        <p class="admin-section-title">PUBLISHED</p>
-        <strong class="mt-2 block text-3xl text-slate-950">{{ stats.published }}</strong>
-        <span class="admin-meta">公开显示</span>
-      </div>
-      <div class="admin-card">
-        <p class="admin-section-title">DRAFT</p>
-        <strong class="mt-2 block text-3xl text-slate-950">{{ stats.draft }}</strong>
-        <span class="admin-meta">草稿隐藏</span>
-      </div>
-    </div>
-
     <div class="admin-card">
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 class="text-2xl font-black text-slate-950">{{ title }}</h2>
-          <p class="mt-2 text-sm leading-6 text-slate-600">
-            Markdown 正文用于详情页，卡片简介单独维护；简介建议控制字数，避免前台卡片溢出。封面为空时前台使用默认封面。
-          </p>
-        </div>
-        <div class="flex flex-wrap gap-2">
+        <h2 class="text-2xl font-black text-slate-950">{{ title }}</h2>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="admin-segment">
+            <button
+              v-for="option in filterOptions"
+              :key="option.value"
+              type="button"
+              :class="filter === option.value ? 'admin-segment-active' : ''"
+              @click="filter = option.value"
+            >
+              {{ option.label }}
+            </button>
+          </div>
           <button class="admin-btn admin-btn-ghost" type="button" @click="load">刷新</button>
           <RouterLink :to="`/editor/${section}`" class="admin-btn admin-btn-primary">新增{{ props.section === 'chatters' ? '杂谈' : '文章' }}</RouterLink>
         </div>
       </div>
-      <div class="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-        <input v-model="query" class="admin-input" placeholder="搜索标题、简介、标签或 slug" />
-        <div class="admin-segment">
-          <button
-            v-for="option in filterOptions"
-            :key="option.value"
-            type="button"
-            :class="filter === option.value ? 'admin-segment-active' : ''"
-            @click="filter = option.value"
-          >
-            {{ option.label }}
-          </button>
-        </div>
-      </div>
+      <input v-model="query" class="admin-input mt-5" placeholder="搜索标题、简介、标签或 slug" />
       <p v-if="error" class="mt-3 text-sm font-bold text-red-700">{{ error }}</p>
     </div>
 

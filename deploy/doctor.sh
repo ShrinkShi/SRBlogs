@@ -120,6 +120,11 @@ check_services() {
   else
     fail "srblogs-backend is not running. Check with: systemctl status srblogs-backend --no-pager"
   fi
+  if command_exists systemctl && systemctl list-unit-files srblogs.service --no-legend 2>/dev/null | grep -q '^srblogs\.service'; then
+    warn "legacy systemd unit srblogs.service exists; use srblogs-backend.service only."
+  else
+    pass "no legacy srblogs.service unit found."
+  fi
   if command_exists ss && ss -ltn | grep -q ':8000 '; then
     pass "port 8000 is listening."
   elif command_exists netstat && netstat -ltn | grep -q ':8000 '; then
@@ -215,8 +220,26 @@ check_env_permissions() {
       warn "installed system still leaves backend.env writable by srblogs or others; tighten permissions."
     fi
   fi
-  if grep -Eq '^(ADMIN_PASSWORD|JWT_SECRET)=change-me' "$ENV_FILE" 2>/dev/null; then
-    warn "$ENV_FILE still contains a default placeholder secret."
+  if grep -Eq '^ADMIN_PASSWORD=' "$ENV_FILE" 2>/dev/null; then
+    warn "$ENV_FILE contains legacy ADMIN_PASSWORD; prefer ADMIN_PASSWORD_HASH and rotate with backend/scripts/reset_admin.py."
+  fi
+  if grep -Eq "^ADMIN_PASSWORD=['\"]?(change-me|admin|123456|password|admin123)['\"]?$" "$ENV_FILE" 2>/dev/null ||
+     grep -Eq "^JWT_SECRET=['\"]?(please-change-this-secret|change-me)['\"]?$" "$ENV_FILE" 2>/dev/null; then
+    warn "$ENV_FILE still contains a weak default credential or secret placeholder."
+  fi
+  if [ -f "$INSTALL_LOCK" ]; then
+    if grep -Eq '^ADMIN_USERNAME=' "$ENV_FILE" 2>/dev/null; then
+      pass "installed system has ADMIN_USERNAME configured."
+    else
+      fail "installed system is missing ADMIN_USERNAME in $ENV_FILE."
+    fi
+    if grep -Eq '^ADMIN_PASSWORD_HASH=' "$ENV_FILE" 2>/dev/null; then
+      pass "installed system uses ADMIN_PASSWORD_HASH."
+    elif grep -Eq '^ADMIN_PASSWORD=' "$ENV_FILE" 2>/dev/null; then
+      warn "installed system still uses legacy ADMIN_PASSWORD; rotate with backend/scripts/reset_admin.py."
+    else
+      fail "installed system has no admin credential in $ENV_FILE."
+    fi
   fi
 }
 
@@ -229,6 +252,17 @@ check_nginx_defaults() {
     fi
   done
   [ "$found" -eq 0 ] && pass "no known default nginx site conflicts found."
+  local conf="/etc/nginx/conf.d/srblogs.conf"
+  if [ -f "$conf" ]; then
+    if grep -Eq 'location[[:space:]]+\^~[[:space:]]+/admin/' "$conf" 2>/dev/null &&
+       grep -Eq 'alias[[:space:]]+.*/admin/dist/' "$conf" 2>/dev/null; then
+      pass "srblogs nginx admin SPA fallback uses the current template."
+    else
+      warn "srblogs nginx config may use an old admin SPA template; rerun install.sh/update.sh or review /etc/nginx/conf.d/srblogs.conf."
+    fi
+  else
+    fail "srblogs nginx config is missing: $conf"
+  fi
 }
 
 check_swap() {

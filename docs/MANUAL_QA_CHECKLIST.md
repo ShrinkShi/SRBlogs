@@ -11,7 +11,7 @@
 
 # 2026-05-09 后台管理台收口 QA
 
-- [ ] 左侧主导航只显示“内容管理、设置、审计日志、备份恢复”四个主流程入口。
+- [ ] 左侧主导航只显示“内容、设置”两个主流程入口。
 - [ ] 内容管理 > 文章可在“正经 / 杂谈”之间切换，列表、搜索、发布/草稿、编辑、删除可用。
 - [ ] 新增/编辑文章进入 Markdown 写作页，`.md` 文件可导入编辑区，正文图片上传后可插入 Markdown。
 - [ ] 文章封面可上传或填写 URL；未填写封面时前台使用默认封面。
@@ -474,8 +474,8 @@
 - [ ] `/admin/comments` 可从后台导航进入。
 - [ ] `/admin/friends`、`/admin/projects`、`/admin/music`、`/admin/photos` 可从后台导航进入。
 - [ ] `/admin/settings` 可从后台导航进入。
-- [ ] `/admin/audit` 可从后台导航进入。
-- [ ] `/admin/backups` 可从后台导航进入。
+- [ ] `/admin/audit` 作为兼容/排障路由可直接访问，不出现在日常侧栏导航。
+- [ ] `/admin/backups` 作为兼容/排障路由可直接访问，不出现在日常侧栏导航。
 - [ ] 未登录或登录过期时有明确跳转或提示。
 - [ ] API 失败时显示 UI 错误，不只在 console 报错。
 - [ ] 表单保存成功/失败提示清楚。
@@ -501,7 +501,7 @@
 
 ## 发布候选与生产部署演练
 
-- [ ] `backend/.env.production.example` 不包含真实 Secret，并明确 `ADMIN_PASSWORD`、`JWT_SECRET` 生产必须修改。
+- [ ] `backend/.env.production.example` 不包含真实 Secret，并明确生产推荐由 `/install` 写入 `ADMIN_PASSWORD_HASH` 和生成 `JWT_SECRET`。
 - [ ] `deploy/build-all.sh` 能构建前台、后台并执行后端语法检查。
 - [ ] `deploy/start-backend.sh` 使用 `/etc/srblogs/backend.env` 或指定 `ENV_FILE` 启动后端。
 - [ ] `deploy/srblogs-backend.service` 不包含本地 Windows 路径，包含 `WorkingDirectory`、`EnvironmentFile`、`ExecStart`、`Restart=always`、`User`。
@@ -659,18 +659,18 @@
 - [ ] 高级 JSON 编辑只在折叠区内，JSON 非对象时阻止保存并显示错误。
 - [ ] `docs/DEPLOYMENT.md` 包含 FastAPI 启动、前端 build、后台 build、Nginx、systemd、`backend/data` 权限、`.env`、HTTPS 和生产前检查。
 - [ ] Windows 启动文档中的固定地址、设置中心地址和 Secret 边界说明可执行。
-- [ ] 生产前检查完成：`ADMIN_PASSWORD` 已修改、`JWT_SECRET` 已修改、CORS 白名单已收紧、开发端口不暴露、构建产物不含 Secret、`backend/data` 已备份、上传大小限制有效。
+- [ ] 生产前检查完成：管理员凭据已初始化为 `ADMIN_PASSWORD_HASH`、`JWT_SECRET` 已生成或改为长随机值、CORS 白名单已收紧、开发端口不暴露、构建产物不含 Secret、`backend/data` 已备份、上传大小限制有效。
 - [ ] `frontend/dist` 和 `admin/dist` 静态搜索不包含 Secret 字段名、默认密码或真实 Secret 值。
 
 ## 最终总回归与真实部署准备
 
 - [ ] 前台主路径 `/`、`/posts`、`/posts/:slug`、`/moments`、`/chatters`、`/chatters/:slug`、`/friends`、`/projects`、`/music`、`/photowall`、`/about`、`/timeline`、`/search`、`/tags`、`/tags/:tag`、`/archive` 和不存在路由均不白屏。
-- [ ] 后台主路径 `/admin/`、`/admin/editor`、`/admin/posts`、`/admin/comments`、`/admin/friends`、`/admin/projects`、`/admin/music`、`/admin/photos`、`/admin/settings`、`/admin/audit`、`/admin/backups` 均能从导航进入。
+- [ ] 后台主路径 `/admin/`、`/admin/editor`、`/admin/posts`、`/admin/comments`、`/admin/friends`、`/admin/projects`、`/admin/music`、`/admin/photos`、`/admin/settings` 可从导航进入；`/admin/audit`、`/admin/backups` 仅直接访问兼容。
 - [ ] 完整内容生产演示流通过：登录后台、新建草稿、发布、前台详情、提交评论、后台删除评论、编辑、撤回发布、删除文章、审计日志、手动备份、下载备份。
 - [ ] 手动备份 zip 不包含 `.env`，恢复前自动创建 `pre-restore-*.zip`。
 - [ ] `GET /api/settings/public` 和 `GET /api/admin/settings` 不暴露 Secret 明文。
 - [ ] `frontend/dist` 和 `admin/dist` 构建产物不包含当前服务端 Secret 值。
-- [ ] `backend/.env.production.example` 明确要求生产修改 `ADMIN_PASSWORD` 和 `JWT_SECRET`，且不建议生产 `CORS_ORIGINS=*`。
+- [ ] `backend/.env.production.example` 明确生产推荐使用 `/install`，旧 `ADMIN_PASSWORD` 仅兼容历史部署，且不建议生产 `CORS_ORIGINS=*`。
 - [ ] `deploy/nginx.srblogs.conf` 包含前台、后台、`/api/`、`/uploads/`、`client_max_body_size`。
 - [ ] `deploy/srblogs-backend.service` 和 deploy 脚本不包含本机 Windows 绝对路径。
 - [ ] 真实服务器、域名和 HTTPS 实操如未执行，应在矩阵中标记为 `部署实操待执行`，不得标记为完全完成。
@@ -862,7 +862,7 @@
 # 后台收口人工验收清单（2026-05-09）
 
 - 访问 `/admin/` 后默认进入内容管理文章页。
-- 左侧一级导航只显示：内容管理、设置、审计日志、备份恢复。
+- 左侧一级导航只显示：内容、设置。
 - 内容管理 > 文章：可在“正经 / 杂谈”之间切换；新增/编辑进入 Markdown 编辑器；草稿、发布、删除、预览入口可用。
 - 内容管理 > 图片：相册组可查看、增删改；封面、组内图片、标签和描述字段可用。
 - 内容管理 > 音乐：歌曲列表、音频 URL、歌词 URL/歌词内容、封面、喜欢数等字段不丢失。

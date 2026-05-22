@@ -24,7 +24,7 @@ SRBlogs 面向个人站长、内容创作者和需要轻量自托管博客的开
 ## 核心功能
 
 - 内容发布：支持文章、动态、杂谈的 Markdown 读写、草稿、发布、撤回和删除。
-- 后台管理：独立管理端提供内容管理、设置、审计日志和备份恢复入口。
+- 后台管理：独立管理端提供内容维护、评论管理、媒体管理和站点设置。
 - 结构化内容：支持友链、项目、音乐、照片墙相册、关于页等 JSON/结构化数据维护。
 - 留言评论：支持本地评论数据、后台评论管理，以及 GitHub/QQ 访客登录配置状态。
 - 媒体上传：后台鉴权上传图片、音频、视频等文件，并通过 `/uploads` 访问。
@@ -110,7 +110,7 @@ npm run dev
 - 后台：`http://127.0.0.1:5174/admin/`
 - 后端 Swagger：`http://127.0.0.1:8000/docs`
 - 健康检查：`http://127.0.0.1:8000/api/health`
-- 默认后台账号：`admin / change-me`，仅供本地开发，生产必须修改。
+- 管理员账号：首次部署通过 `/install` 创建；忘记密码可用 `backend/scripts/reset_admin.py` 重置。
 
 ## 一键启动脚本
 
@@ -151,9 +151,10 @@ Windows 推荐从仓库根目录运行：
 | `DATA_DIR` | `backend/data` | 是 | Markdown、JSON、上传、备份和日志目录 |
 | `PUBLIC_BASE_URL` | `http://127.0.0.1:8000` | 生产必填 | RSS、Sitemap、Robots、OpenGraph 和上传 URL 的公开地址 |
 | `SITE_START_TIME` | 空 | 否 | 站点运行时间起点；首次安装向导未填写时由后端自动生成 |
-| `ADMIN_USERNAME` | `admin` | 是 | 后台管理员用户名 |
-| `ADMIN_PASSWORD` | `change-me` | 是 | 后台管理员密码，生产必须修改 |
-| `JWT_SECRET` | `please-change-this-secret` | 是 | JWT 签名密钥，生产必须改为长随机值 |
+| `ADMIN_USERNAME` | `admin` | 安装后必填 | 后台管理员用户名；推荐由 `/install` 或 `reset_admin.py` 写入 |
+| `ADMIN_PASSWORD_HASH` | 空 | 安装后必填 | 后台管理员密码哈希；新安装和重置脚本写入该字段 |
+| `ADMIN_PASSWORD` | 空 | 否 | 旧部署兼容字段，不建议继续使用；`doctor.sh` 会提示 WARN |
+| `JWT_SECRET` | `please-change-this-secret` | 生产必填 | JWT 签名密钥；安装向导自动生成，手动配置必须改为长随机值 |
 | `JWT_EXPIRE_MINUTES` | `1440` | 否 | 管理端登录有效期 |
 | `CORS_ORIGINS` | 本地前后台地址 | 是 | 允许访问 API 的前端来源，生产不要使用 `*` |
 | `UPLOAD_DRIVER` | `local` | 否 | 当前实现为本地上传 |
@@ -169,6 +170,14 @@ Windows 推荐从仓库根目录运行：
 | `VITE_API_BASE_URL` | `http://127.0.0.1:8000/api` | 开发建议 | 前台/管理端 API 地址 |
 
 生产配置可从 `backend/.env.production.example` 复制，不要提交真实密钥。
+
+忘记后台密码时，在服务器上运行：
+
+```bash
+cd /opt/srblogs/backend
+sudo .venv/bin/python scripts/reset_admin.py --username admin --env-file /etc/srblogs/backend.env
+sudo systemctl restart srblogs-backend
+```
 
 ## 部署方式
 
@@ -336,6 +345,8 @@ sudo systemctl reload nginx
 | 格式化 | `cd frontend; npm run format` 或 `cd admin; npm run format` |
 | 后端语法检查 | `python -m compileall backend/app` |
 | 安装后端依赖 | `python -m pip install -r requirements.txt` |
+| 重置管理员密码 | `cd backend; python scripts/reset_admin.py --username admin --env-file /etc/srblogs/backend.env` |
+| 重置安装状态 | `cd backend; python scripts/reset_install.py` |
 | 生产构建 | `bash deploy/build-all.sh` |
 | Linux 一键安装预览 | `sudo bash deploy/install.sh --dry-run --zip /opt/SRBlogs-main.zip` |
 | Linux 一键安装 | `sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip` |

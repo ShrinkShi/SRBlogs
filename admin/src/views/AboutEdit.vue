@@ -143,22 +143,16 @@ onMounted(load)
 
 <template>
   <section class="about-admin grid gap-5">
-    <GlassCard>
-      <div class="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-[.22em] text-slate-500">ABOUT PAGE</p>
-          <h1 class="mt-2 text-4xl font-black text-slate-950">关于页结构化编辑</h1>
-          <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            维护新版四屏关于页的 Hero、关于我、GitHub 活动和联系表单文案。
-          </p>
-        </div>
+    <div class="admin-card">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-2xl font-black text-slate-950">关于页结构化编辑</h2>
         <div class="flex flex-wrap gap-2">
           <button class="admin-btn admin-btn-primary" type="button" :disabled="saving || loading" @click="save">
             {{ saving ? '保存中...' : '保存关于页' }}
           </button>
         </div>
       </div>
-    </GlassCard>
+    </div>
 
     <div v-if="error" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{{ error }}</div>
     <div v-if="loading" class="rounded-xl border border-slate-200 bg-white px-4 py-10 text-center text-slate-600">关于页配置加载中...</div>

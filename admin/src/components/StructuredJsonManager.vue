@@ -304,20 +304,15 @@ onMounted(load)
 
 <template>
   <section class="grid gap-5">
-    <div class="admin-page-head">
-      <div>
-        <p class="eyebrow">content manager</p>
-        <h1>{{ title }}</h1>
-        <p>以表单方式管理{{ itemName }}数据；上传和保存继续走后端安全写入，列表支持快速检索。</p>
-      </div>
-      <div class="actions">
-        <button class="admin-btn admin-btn-ghost" type="button" @click="load">刷新</button>
-        <button class="admin-btn admin-btn-primary" type="button" @click="openCreate">新增{{ itemName }}</button>
-      </div>
-    </div>
-
     <div class="admin-card">
-      <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <h2 class="text-2xl font-black text-slate-950">{{ title }}</h2>
+        <div class="flex flex-wrap gap-2">
+          <button class="admin-btn admin-btn-ghost" type="button" @click="load">刷新</button>
+          <button class="admin-btn admin-btn-primary" type="button" @click="openCreate">新增{{ itemName }}</button>
+        </div>
+      </div>
+      <div class="mt-5 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <input v-model="query" class="admin-input" :placeholder="`搜索${itemName}名称、简介、链接或标签`" />
         <div class="admin-meta">{{ filteredItems.length }} / {{ items.length }} 条</div>
       </div>

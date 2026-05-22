@@ -91,7 +91,6 @@ onMounted(() => loadIndex(false))
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 class="text-2xl font-black text-slate-950">留言管理</h2>
-          <p class="mt-2 text-sm leading-6 text-slate-600">管理文章、杂谈、音乐和相册留言。当前阶段保留删除、刷新和按目标加载能力。</p>
         </div>
         <button :disabled="loadingIndex" class="admin-btn admin-btn-primary" type="button" @click="loadIndex(true)">
           {{ loadingIndex ? '刷新中...' : '刷新索引' }}

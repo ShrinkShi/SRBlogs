@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from app.config import get_settings
+from app.services.admin_credentials import hash_admin_password
 from app.services.file_store import safe_read_json, safe_write_json, safe_write_text
 
 INSTALL_VERSION = "1"
@@ -187,6 +188,8 @@ def write_env(values: dict[str, str]) -> Path:
                 continue
             key, value = line.split("=", 1)
             existing[key.strip()] = value.strip()
+    if "ADMIN_PASSWORD_HASH" in values:
+        existing.pop("ADMIN_PASSWORD", None)
     merged = {**existing, **values}
     ordered_keys = [
         "APP_NAME",
@@ -195,6 +198,7 @@ def write_env(values: dict[str, str]) -> Path:
         "PUBLIC_BASE_URL",
         "SITE_START_TIME",
         "ADMIN_USERNAME",
+        "ADMIN_PASSWORD_HASH",
         "ADMIN_PASSWORD",
         "JWT_SECRET",
         "JWT_EXPIRE_MINUTES",
@@ -260,6 +264,7 @@ def install(payload: dict[str, Any]) -> dict[str, Any]:
     admin_username = str(payload.get("adminUsername") or "").strip() or "admin"
     admin_password = str(payload.get("adminPassword") or "")
     validate_password(admin_username, admin_password)
+    admin_password_hash = hash_admin_password(admin_password)
     cors_origins = normalize_cors(payload.get("corsOrigins"), public_base_url)
     jwt_secret = secrets.token_urlsafe(48)
     env_values = {
@@ -269,7 +274,7 @@ def install(payload: dict[str, Any]) -> dict[str, Any]:
         "PUBLIC_BASE_URL": public_base_url,
         "SITE_START_TIME": site_start_time,
         "ADMIN_USERNAME": admin_username,
-        "ADMIN_PASSWORD": admin_password,
+        "ADMIN_PASSWORD_HASH": admin_password_hash,
         "JWT_SECRET": jwt_secret,
         "JWT_EXPIRE_MINUTES": "1440",
         "CORS_ORIGINS": cors_origins,

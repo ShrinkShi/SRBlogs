@@ -70,7 +70,7 @@ swap 创建是保守策略：仅当当前无 swap 且 `/` 可用空间大于 4G 
 http://<your-server-ip>/install
 ```
 
-安装向导会创建 `backend/data/.install.lock`，写入公开站点设置，写入 `/etc/srblogs/backend.env`，并在后端生成 `JWT_SECRET`。完成后执行：
+安装向导会创建 `backend/data/.install.lock`，写入公开站点设置，写入 `/etc/srblogs/backend.env`，保存 `ADMIN_PASSWORD_HASH`，并在后端生成 `JWT_SECRET`。完成后执行：
 
 ```bash
 sudo systemctl restart srblogs-backend
@@ -82,7 +82,23 @@ sudo systemctl restart srblogs-backend
 sudo editor /etc/srblogs/backend.env
 ```
 
-生产环境不能保留默认 `ADMIN_PASSWORD` 或 `JWT_SECRET`。`PUBLIC_BASE_URL`、`CORS_ORIGINS` 和可选的 `SITE_START_TIME` 应与真实部署地址一致。
+生产环境不应继续使用旧的明文 `ADMIN_PASSWORD`；新安装和重置工具会写入 `ADMIN_PASSWORD_HASH`。`JWT_SECRET`、`PUBLIC_BASE_URL`、`CORS_ORIGINS` 和可选的 `SITE_START_TIME` 应与真实部署地址一致。
+
+忘记后台密码时可重置管理员凭据：
+
+```bash
+cd /opt/srblogs/backend
+sudo .venv/bin/python scripts/reset_admin.py --username admin --env-file /etc/srblogs/backend.env
+sudo systemctl restart srblogs-backend
+```
+
+如需重新进入安装向导但保留文章、图片、音乐等业务数据：
+
+```bash
+cd /opt/srblogs/backend
+sudo .venv/bin/python scripts/reset_install.py
+sudo systemctl restart srblogs-backend
+```
 
 安装期 `backend.env` 允许 `srblogs` 服务用户写入，便于 Web 安装向导完成初始化。安装后应尽量收紧，例如 `root:srblogs 640` 或 `root:root 600`，以实际服务加载方式为准。
 
@@ -135,7 +151,7 @@ dry-run：
 sudo bash /opt/srblogs/deploy/doctor.sh --dry-run
 ```
 
-`doctor.sh` 检查 Python、Node/npm、nginx、systemd、8000 端口、API 端点、目录权限、`backend.env`、前台/后台构建产物、默认 Nginx 冲突、swap 和默认弱密钥。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
+`doctor.sh` 检查 Python、Node/npm、nginx、systemd、8000 端口、API 端点、目录权限、`backend.env`、前台/后台构建产物、默认 Nginx 冲突、旧 `srblogs.service`、旧明文 `ADMIN_PASSWORD`、安装状态与管理员凭据一致性、swap 和默认弱密钥。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
 
 最后输出：
 
@@ -170,7 +186,8 @@ Summary: PASS=12 WARN=2 FAIL=0
 ## 8. 生产检查
 
 - 已完成 `/install`，或已手动配置 `/etc/srblogs/backend.env`。
-- `ADMIN_PASSWORD` 和 `JWT_SECRET` 不是默认值。
+- 管理员凭据已通过 `/install` 或 `scripts/reset_admin.py` 写入 `ADMIN_PASSWORD_HASH`。
+- `JWT_SECRET` 不是默认值。
 - `CORS_ORIGINS` 只包含可信来源。
 - 开发端口 `5173`、`5174` 未对外暴露。
 - `frontend/dist` 和 `admin/dist` 已存在。

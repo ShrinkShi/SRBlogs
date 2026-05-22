@@ -20,16 +20,16 @@ This release candidate packages SRBlogs as a deployable Vue 3 + Vite + TypeScrip
 
 ## Production Notes
 
-- Copy `backend/.env.production.example` to `/etc/srblogs/backend.env` or another server-only environment file.
-- Change `ADMIN_PASSWORD` and `JWT_SECRET` before first production start.
+- Prefer `deploy/install.sh` and complete `/install`; the installer writes `ADMIN_PASSWORD_HASH` and generates `JWT_SECRET`.
+- For advanced manual setup, copy `backend/.env.production.example` to `/etc/srblogs/backend.env` and set a long random `JWT_SECRET`.
 - Set `PUBLIC_BASE_URL` to the public HTTPS origin. RSS, sitemap, robots, OpenGraph URLs, and upload URLs depend on it.
 - Restrict `CORS_ORIGINS` to trusted production origins.
 - Keep `backend/data` persistent and backed up.
 - Do not expose `.env`, `.manual_backups`, `audit`, frontend source, `node_modules`, or build internals through Nginx.
 
-## Default Account Reminder
+## Admin Account Reminder
 
-The development default account is `admin / change-me`. It is only for local development. Production must use a new password and a new JWT secret in server-side configuration.
+Production administrator credentials are created by `/install`. If the password is lost, reset it with `backend/scripts/reset_admin.py`; legacy plain `ADMIN_PASSWORD` is only kept for old deployments.
 
 ## Backup And Recovery Reminder
 

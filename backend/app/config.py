@@ -11,7 +11,8 @@ class Settings(BaseSettings):
     site_start_time: str = ""
 
     admin_username: str = "admin"
-    admin_password: str = "change-me"
+    admin_password: str = ""
+    admin_password_hash: str = ""
     jwt_secret: str = "please-change-this-secret"
     jwt_expire_minutes: int = 1440
 

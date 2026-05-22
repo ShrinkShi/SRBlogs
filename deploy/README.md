@@ -43,7 +43,7 @@ sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip
 http://<your-server-ip>/install
 ```
 
-安装向导会写入 `/etc/srblogs/backend.env`、初始化 `backend/data/settings.json`、创建 `backend/data/.install.lock`，并由后端生成 `JWT_SECRET`。安装完成后重启后端：
+安装向导会写入 `/etc/srblogs/backend.env`、初始化 `backend/data/settings.json`、创建 `backend/data/.install.lock`，保存 `ADMIN_PASSWORD_HASH`，并由后端生成 `JWT_SECRET`。安装完成后重启后端：
 
 ```bash
 sudo systemctl restart srblogs-backend
@@ -82,6 +82,7 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 - 默认只清理旧的 `/opt/srblogs.backup.*`，保留最近 3 个。
 - `/opt/srblogs.previous.*` 和 `/opt/srblogs.failed.*` 只有传入 `--cleanup` 才会清理。
 - 日志会隐藏 `ADMIN_PASSWORD`、`JWT_SECRET`、OAuth Secret、Token 和 API Key。
+- 旧部署中的明文 `ADMIN_PASSWORD` 仅保留兼容；新安装和 `backend/scripts/reset_admin.py` 会写入 `ADMIN_PASSWORD_HASH`。
 
 ## 日志与数据
 
@@ -94,6 +95,22 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 - 服务状态：`systemctl status srblogs-backend --no-pager`
 - 最近日志：`sudo journalctl -u srblogs-backend -n 100 --no-pager`
 - Nginx 日志：通常是 `/var/log/nginx/access.log` 和 `/var/log/nginx/error.log`
+
+忘记后台密码时：
+
+```bash
+cd /opt/srblogs/backend
+sudo .venv/bin/python scripts/reset_admin.py --username admin --env-file /etc/srblogs/backend.env
+sudo systemctl restart srblogs-backend
+```
+
+仅重置安装状态且保留业务数据：
+
+```bash
+cd /opt/srblogs/backend
+sudo .venv/bin/python scripts/reset_install.py
+sudo systemctl restart srblogs-backend
+```
 
 安装完成后应尽量收紧 `/etc/srblogs/backend.env` 权限。`doctor.sh` 会在已安装状态下检测该文件是否仍可被 `srblogs` 服务用户写入，并输出 WARN。
 

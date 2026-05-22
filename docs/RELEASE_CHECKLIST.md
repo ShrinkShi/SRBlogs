@@ -15,7 +15,7 @@
 - [ ] 搜索、标签、归档、媒体页、评论区没有因 P2 样式改动白屏或交互失效。
 - [ ] 背景控制“氛围”开关可用，关闭后樱花、萤火、CyberCat 和点击光效不再干扰页面。
 - [ ] 390px 宽度下首页、文章详情、媒体页和后台主要页面没有严重横向溢出。
-- [ ] 后台控制台保持工具风，审计日志、备份恢复、设置中心主流程不被花哨动效干扰。
+- [ ] 后台控制台保持工具风，内容和设置主流程不被花哨动效干扰。
 - [ ] `prefers-reduced-motion` 或关闭氛围动效时页面仍可读。
 
 ## 1. 本地启动检查
@@ -156,8 +156,8 @@
 ## 10. 部署前检查
 
 - [ ] `backend/.env.production.example` 已复制到服务端环境文件，例如 `/etc/srblogs/backend.env`。
-- [ ] `ADMIN_PASSWORD` 已修改。
-- [ ] `JWT_SECRET` 已修改。
+- [ ] 管理员凭据已通过 `/install` 或 `backend/scripts/reset_admin.py` 写入 `ADMIN_PASSWORD_HASH`。
+- [ ] `JWT_SECRET` 已由安装向导生成或手动改为长随机值。
 - [ ] `CORS_ORIGINS` 已收紧。
 - [ ] DEBUG/开发端口不暴露。
 - [ ] Secret 不在构建产物中。
