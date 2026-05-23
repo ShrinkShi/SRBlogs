@@ -1,0 +1,19 @@
+{
+  "ignoredTag": "",
+  "lastCheckedAt": "2026-05-22T16:32:01",
+  "latest": {
+    "tag": "v1.1.0",
+    "name": "SRBlogs v1.1.0 Release",
+    "url": "https://github.com/ShrinkShi/SRBlogs/releases/tag/v1.1.0",
+    "publishedAt": "2026-05-18T05:33:48Z",
+    "body": "# SRBlogs v1.1.0 Release Notes\r\n- 修复 Issue #1：生产初始化、后台登录提示与站点运行时间异常。\r\n- 新增首次启动 Web 安装向导 `/install`，完成站点信息、管理员账号与生产安全配置。\r\n- 新增 `GET /api/install/status` 与 `POST /api/install`，安装后创建 `.install.lock` 防止重复初始化。\r\n- 修复后台登录账号来源不清晰问题，生产环境不再公开显示 `admin / change-me`。\r\n- 新增 `SITE_START_TIME` / `siteStartTime`，首页运行时间改为真实计算。\r\n- 修复 systemd 因 `/etc/srblogs/backend.env` 缺失导致的启动失败与重启循环。\r\n- 后端启动时自动补齐必要数据目录和基础配置文件，不覆盖已有用户数据。\r\n- 更新部署脚本、systemd 配置和部署文档，并已完成 Linux 服务器部署验证。",
+    "error": ""
+  },
+  "run": {
+    "status": "idle",
+    "pid": null,
+    "tag": "",
+    "startedAt": "",
+    "log": ""
+  }
+}

@@ -2,6 +2,18 @@ import { http } from './http'
 import type { AuditLogResponse, BackupItem, CommentIndexItem, CommentItem, ContentItem, Stats } from '@/types'
 type InstallStatus = { installed: boolean; needsInstall: boolean; missingItems: string[] }
 
+export type UpdateStatus = {
+  repo: string
+  current: { version: string; source: string }
+  latest: { tag?: string; name?: string; url?: string; publishedAt?: string; body?: string; error?: string }
+  ignoredTag: string
+  lastCheckedAt: string
+  updateAvailable: boolean
+  updateEnabled: boolean
+  updateConfigured: boolean
+  run: { status?: string; pid?: number; tag?: string; startedAt?: string; log?: string }
+}
+
 export const adminApi = {
   installStatus: async () => {
     const { data } = await http.get<InstallStatus>('/install/status')
@@ -101,19 +113,19 @@ export const adminApi = {
     return data
   },
   updateStatus: async () => {
-    const { data } = await http.get('/admin/updates/status')
+    const { data } = await http.get<UpdateStatus>('/admin/updates/status')
     return data
   },
   checkUpdate: async () => {
-    const { data } = await http.post('/admin/updates/check')
+    const { data } = await http.post<UpdateStatus>('/admin/updates/check')
     return data
   },
   ignoreUpdate: async (tag: string) => {
-    const { data } = await http.post('/admin/updates/ignore', { tag })
+    const { data } = await http.post<UpdateStatus>('/admin/updates/ignore', { tag })
     return data
   },
   runUpdate: async (tag = '') => {
-    const { data } = await http.post('/admin/updates/run', { tag })
+    const { data } = await http.post<UpdateStatus>('/admin/updates/run', { tag })
     return data
   }
 }

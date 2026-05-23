@@ -18,7 +18,7 @@ const router = createRouter({
     { path: '/editor/:section?/:slug?', component: Editor },
     { path: '/posts', redirect: '/content/articles' },
     { path: '/chatters', redirect: '/content/articles?kind=chatters' },
-    { path: '/comments', redirect: '/content/article-comments' },
+    { path: '/comments', redirect: '/content/articles' },
     { path: '/photos', redirect: '/content/photos' },
     { path: '/music', redirect: '/content/music' },
     { path: '/projects', redirect: '/content/projects' },

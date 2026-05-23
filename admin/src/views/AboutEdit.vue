@@ -143,29 +143,18 @@ onMounted(load)
 
 <template>
   <section class="about-admin grid gap-5">
-    <div class="admin-card">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 class="text-2xl font-black text-slate-950">关于页结构化编辑</h2>
-        <div class="flex flex-wrap gap-2">
-          <button class="admin-btn admin-btn-primary" type="button" :disabled="saving || loading" @click="save">
-            {{ saving ? '保存中...' : '保存关于页' }}
-          </button>
-        </div>
-      </div>
-    </div>
-
     <div v-if="error" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">{{ error }}</div>
     <div v-if="loading" class="rounded-xl border border-slate-200 bg-white px-4 py-10 text-center text-slate-600">关于页配置加载中...</div>
 
-    <div v-if="aboutPage && !loading" class="grid gap-5 lg:grid-cols-[14rem_minmax(0,1fr)]">
+    <div v-if="aboutPage && !loading" class="grid gap-5">
       <GlassCard>
-        <nav class="grid gap-2">
+        <nav class="flex flex-wrap gap-2">
           <button
             v-for="item in sections"
             :key="item.key"
             type="button"
-            class="rounded-xl px-4 py-3 text-left text-sm font-bold transition"
-            :class="section === item.key ? 'bg-slate-950 text-white' : 'bg-white text-slate-700 hover:bg-slate-100'"
+            class="rounded-xl px-4 py-2.5 text-sm font-bold transition"
+            :class="section === item.key ? 'admin-active-option bg-slate-950 text-white' : 'bg-white text-slate-700 hover:bg-slate-100'"
             @click="section = item.key"
           >
             {{ item.label }}
@@ -253,8 +242,8 @@ onMounted(load)
           <label>微信<input v-model="aboutPage.contact.wechat" class="admin-input" /></label>
         </div>
 
-        <div class="mt-6 flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4">
-          <button class="admin-btn admin-btn-primary" type="button" :disabled="saving" @click="save">
+        <div class="admin-bottom-actions mt-6 border-t border-slate-200 pt-4">
+          <button class="admin-btn admin-btn-save" type="button" :disabled="saving" @click="save">
             {{ saving ? '保存中...' : '保存关于页' }}
           </button>
         </div>

@@ -184,9 +184,6 @@ onMounted(load)
         </div>
         <div class="flex flex-wrap gap-2">
           <a class="admin-btn admin-btn-ghost" :href="currentPage.path" target="_blank" rel="noopener noreferrer">预览前台</a>
-          <button class="admin-btn admin-btn-primary" type="button" :disabled="saving || loading" @click="save">
-            {{ saving ? '保存中...' : '保存页面信息' }}
-          </button>
         </div>
       </div>
     </GlassCard>
@@ -287,8 +284,8 @@ onMounted(load)
             旧版页面布局字段仅作为兼容数据保存在配置文件中，不再影响前台实际布局。文章、图片、音乐、项目、友链、关于和留言数据不会被这里的保存操作删除。
           </div>
 
-          <div class="flex flex-wrap justify-end gap-2">
-            <button class="admin-btn admin-btn-primary" type="button" :disabled="saving" @click="save">
+          <div class="admin-bottom-actions">
+            <button class="admin-btn admin-btn-save" type="button" :disabled="saving" @click="save">
               {{ saving ? '保存中...' : '保存页面信息' }}
             </button>
           </div>

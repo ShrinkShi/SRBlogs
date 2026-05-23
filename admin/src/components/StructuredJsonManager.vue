@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { adminApi } from '@/api/admin'
+import CommentManageModal from '@/components/CommentManageModal.vue'
 import { useUiStore } from '@/stores/ui'
+import type { CommentIndexItem } from '@/types'
 
 export interface StructuredField {
   key: string
@@ -19,6 +21,8 @@ const props = defineProps<{
   itemName: string
   fields: StructuredField[]
   emptyItem: Record<string, unknown>
+  commentResource?: 'music' | 'photos'
+  commentTypeLabel?: string
 }>()
 
 const ui = useUiStore()
@@ -37,6 +41,13 @@ const jsonError = ref('')
 const uploadProgress = ref<Record<string, number>>({})
 const dragPhotoIndex = ref<number | null>(null)
 const query = ref('')
+const commentIndex = ref<CommentIndexItem[]>([])
+const activeCommentTarget = ref<{
+  resource: 'music' | 'photos'
+  slug: string
+  title: string
+  typeLabel: string
+} | null>(null)
 
 const isEditing = computed(() => editIndex.value !== null)
 const filteredItems = computed(() => {
@@ -70,7 +81,12 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    items.value = normalizeList(await adminApi.json<unknown>(props.path))
+    const [list, comments] = await Promise.all([
+      adminApi.json<unknown>(props.path),
+      props.commentResource ? adminApi.commentsIndex().catch(() => []) : Promise.resolve([])
+    ])
+    items.value = normalizeList(list)
+    commentIndex.value = comments
     jsonText.value = JSON.stringify(items.value, null, 2)
     if (!Object.keys(form.value).length) resetForm()
   } catch (exc) {
@@ -126,6 +142,54 @@ function itemCover(item: Record<string, unknown>) {
 
 function itemDescription(item: Record<string, unknown>) {
   return String(item.description || item.summary || item.artist || item.url || '')
+}
+
+function slugify(value: unknown, fallback: string) {
+  const slug = String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  return slug || fallback
+}
+
+function commentSlug(item: Record<string, unknown>, index: number) {
+  if (props.commentResource === 'photos') {
+    return slugify(item.title || item.cover || `album-${index + 1}`, `album-${index + 1}`)
+  }
+  if (props.commentResource === 'music') {
+    return slugify(item.id || item.title || `music-${index + 1}`, `music-${index + 1}`)
+  }
+  return ''
+}
+
+function commentCountFor(item: Record<string, unknown>, index: number) {
+  if (!props.commentResource) return 0
+  const slug = commentSlug(item, index)
+  return commentIndex.value.find((entry) => entry.resource === props.commentResource && entry.slug === slug)?.count || 0
+}
+
+function openComments(item: Record<string, unknown>, index: number) {
+  if (!props.commentResource) return
+  activeCommentTarget.value = {
+    resource: props.commentResource,
+    slug: commentSlug(item, index),
+    title: itemLabel(item, index),
+    typeLabel: props.commentTypeLabel || props.itemName
+  }
+}
+
+function updateCommentCount(payload: { resource: CommentIndexItem['resource']; slug: string; count: number; title: string }) {
+  const index = commentIndex.value.findIndex((item) => item.resource === payload.resource && item.slug === payload.slug)
+  const nextItem: CommentIndexItem = {
+    resource: payload.resource,
+    slug: payload.slug,
+    count: payload.count,
+    title: payload.title,
+    updatedAt: new Date().toISOString()
+  }
+  if (index >= 0) commentIndex.value.splice(index, 1, nextItem)
+  else commentIndex.value.push(nextItem)
 }
 
 function updateText(key: string, value: string) {
@@ -341,6 +405,9 @@ onMounted(load)
             </div>
           </div>
           <div class="flex flex-wrap gap-2 lg:justify-end">
+            <button v-if="commentResource" class="admin-btn admin-btn-ghost text-sm" type="button" @click="openComments(item, index)">
+              评论({{ commentCountFor(item, index) }})
+            </button>
             <button class="admin-btn admin-btn-ghost text-sm" type="button" @click="editItem(index)">编辑</button>
             <button class="admin-btn admin-btn-danger text-sm" type="button" @click="removeItem(index)">删除</button>
           </div>
@@ -448,14 +515,25 @@ onMounted(load)
             </div>
           </div>
 
-          <div class="flex shrink-0 flex-wrap gap-2 border-t border-slate-200 p-5">
-            <button :disabled="saving" class="admin-btn admin-btn-primary" type="button" @click="saveForm">{{ saving ? '保存中...' : '保存' }}</button>
+          <div class="admin-bottom-actions shrink-0 border-t border-slate-200 p-5">
+            <button :disabled="saving" class="admin-btn admin-btn-save" type="button" @click="saveForm">{{ saving ? '保存中...' : '保存' }}</button>
             <button class="admin-btn admin-btn-ghost" type="button" @click="resetForm">清空</button>
             <button class="admin-btn admin-btn-ghost" type="button" @click="closeForm">取消</button>
           </div>
         </div>
       </div>
     </Teleport>
+
+    <CommentManageModal
+      v-if="activeCommentTarget"
+      :model-value="Boolean(activeCommentTarget)"
+      :resource="activeCommentTarget.resource"
+      :slug="activeCommentTarget.slug"
+      :title="activeCommentTarget.title"
+      :type-label="activeCommentTarget.typeLabel"
+      @update:model-value="(value) => { if (!value) activeCommentTarget = null }"
+      @count-updated="updateCommentCount"
+    />
 
     <div class="admin-card">
       <button class="flex w-full items-center justify-between text-left" type="button" @click="advancedOpen = !advancedOpen">
@@ -466,7 +544,9 @@ onMounted(load)
         <p class="text-sm leading-6 text-amber-700">仅用于批量修复或迁移。JSON 格式错误会阻止保存；保存仍会通过后端安全写入并生成备份。</p>
         <textarea v-model="jsonText" rows="18" class="admin-input font-mono text-sm"></textarea>
         <p v-if="jsonError" class="text-sm font-bold text-red-700">{{ jsonError }}</p>
-        <button :disabled="saving" class="admin-btn admin-btn-ghost w-fit" type="button" @click="saveAdvancedJson">保存高级 JSON</button>
+        <div class="admin-bottom-actions">
+          <button :disabled="saving" class="admin-btn admin-btn-save" type="button" @click="saveAdvancedJson">保存高级 JSON</button>
+        </div>
       </div>
     </div>
   </section>

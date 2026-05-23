@@ -113,7 +113,7 @@ onMounted(() => loadIndex(false))
             :key="`${item.resource}/${item.slug}`"
             type="button"
             class="rounded-xl border p-3 text-left transition"
-            :class="selected?.resource === item.resource && selected?.slug === item.slug ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'"
+            :class="selected?.resource === item.resource && selected?.slug === item.slug ? 'admin-active-option border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-400'"
             @click="selectItem(item)"
           >
             <div class="flex items-start justify-between gap-3">

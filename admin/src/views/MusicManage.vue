@@ -17,5 +17,13 @@ const emptyItem = { title: '', artist: '', cover: '', url: '', lyricUrl: '', lyr
 </script>
 
 <template>
-  <StructuredJsonManager title="音乐管理" path="/music" item-name="歌曲" :fields="fields" :empty-item="emptyItem" />
+  <StructuredJsonManager
+    title="音乐管理"
+    path="/music"
+    item-name="歌曲"
+    :fields="fields"
+    :empty-item="emptyItem"
+    comment-resource="music"
+    comment-type-label="音乐"
+  />
 </template>

@@ -1,24 +1,37 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { adminApi } from '@/api/admin'
+import CommentManageModal from '@/components/CommentManageModal.vue'
 import { useUiStore } from '@/stores/ui'
-import type { ContentItem } from '@/types'
+import type { CommentIndexItem, ContentItem } from '@/types'
 
 const props = defineProps<{ section: 'posts' | 'moments' | 'chatters'; title: string }>()
 
 const ui = useUiStore()
+const router = useRouter()
 const items = ref<ContentItem[]>([])
 const filter = ref<'all' | 'published' | 'draft'>('all')
 const query = ref('')
 const loading = ref(false)
 const error = ref('')
 const actionBusy = ref('')
+const commentIndex = ref<CommentIndexItem[]>([])
+const activeCommentTarget = ref<{
+  resource: 'posts' | 'chatters'
+  slug: string
+  title: string
+  typeLabel: string
+} | null>(null)
 
 const filterOptions: { value: 'all' | 'published' | 'draft'; label: string }[] = [
   { value: 'all', label: '全部' },
   { value: 'published', label: '已发布' },
   { value: 'draft', label: '草稿' }
 ]
+
+const showArticleKindSwitch = computed(() => props.section === 'posts' || props.section === 'chatters')
+const articleKind = computed<'posts' | 'chatters'>(() => props.section === 'chatters' ? 'chatters' : 'posts')
 
 const filteredItems = computed(() => items.value.filter((item) => {
   if (filter.value === 'published') return !item.meta.draft
@@ -39,16 +52,53 @@ function publicPath(item: ContentItem) {
   return `/posts/${item.slug}`
 }
 
+function setArticleKind(kind: 'posts' | 'chatters') {
+  router.replace({ path: '/content/articles', query: kind === 'chatters' ? { kind } : {} })
+}
+
 async function load() {
   error.value = ''
   loading.value = true
   try {
-    items.value = await adminApi.list(props.section)
+    const [content, comments] = await Promise.all([
+      adminApi.list(props.section),
+      adminApi.commentsIndex().catch(() => [])
+    ])
+    items.value = content
+    commentIndex.value = comments
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '内容列表加载失败'
   } finally {
     loading.value = false
   }
+}
+
+function commentCountFor(resource: 'posts' | 'chatters', slug: string) {
+  return commentIndex.value.find((item) => item.resource === resource && item.slug === slug)?.count || 0
+}
+
+function openComments(item: ContentItem) {
+  if (!showArticleKindSwitch.value) return
+  const resource = props.section === 'chatters' ? 'chatters' : 'posts'
+  activeCommentTarget.value = {
+    resource,
+    slug: item.slug,
+    title: item.meta.title,
+    typeLabel: props.section === 'chatters' ? '杂谈' : '文章'
+  }
+}
+
+function updateCommentCount(payload: { resource: CommentIndexItem['resource']; slug: string; count: number; title: string }) {
+  const index = commentIndex.value.findIndex((item) => item.resource === payload.resource && item.slug === payload.slug)
+  const nextItem: CommentIndexItem = {
+    resource: payload.resource,
+    slug: payload.slug,
+    count: payload.count,
+    title: payload.title,
+    updatedAt: new Date().toISOString()
+  }
+  if (index >= 0) commentIndex.value.splice(index, 1, nextItem)
+  else commentIndex.value.push(nextItem)
 }
 
 async function remove(slug: string) {
@@ -92,6 +142,10 @@ onMounted(load)
       <div class="flex flex-wrap items-center justify-between gap-4">
         <h2 class="text-2xl font-black text-slate-950">{{ title }}</h2>
         <div class="flex flex-wrap items-center gap-2">
+          <div v-if="showArticleKindSwitch" class="admin-segment" aria-label="文章类型">
+            <button type="button" :class="articleKind === 'posts' ? 'admin-segment-active' : ''" @click="setArticleKind('posts')">正经</button>
+            <button type="button" :class="articleKind === 'chatters' ? 'admin-segment-active' : ''" @click="setArticleKind('chatters')">杂谈</button>
+          </div>
           <div class="admin-segment">
             <button
               v-for="option in filterOptions"
@@ -137,6 +191,9 @@ onMounted(load)
               </div>
             </div>
             <div class="flex flex-wrap gap-2 lg:justify-end">
+              <button v-if="showArticleKindSwitch" class="admin-btn admin-btn-ghost text-sm" type="button" @click="openComments(item)">
+                评论({{ commentCountFor(props.section === 'chatters' ? 'chatters' : 'posts', item.slug) }})
+              </button>
               <RouterLink :to="`/editor/${section}/${item.slug}`" class="admin-btn admin-btn-ghost text-sm">编辑</RouterLink>
               <a v-if="!item.meta.draft" :href="publicPath(item)" target="_blank" class="admin-btn admin-btn-ghost text-sm">预览</a>
               <button v-if="item.meta.draft" :disabled="actionBusy === item.slug" class="admin-btn admin-btn-primary text-sm" type="button" @click="toggleDraft(item, false)">发布</button>
@@ -147,5 +204,16 @@ onMounted(load)
         </article>
       </div>
     </div>
+
+    <CommentManageModal
+      v-if="activeCommentTarget"
+      :model-value="Boolean(activeCommentTarget)"
+      :resource="activeCommentTarget.resource"
+      :slug="activeCommentTarget.slug"
+      :title="activeCommentTarget.title"
+      :type-label="activeCommentTarget.typeLabel"
+      @update:model-value="(value) => { if (!value) activeCommentTarget = null }"
+      @count-updated="updateCommentCount"
+    />
   </section>
 </template>
