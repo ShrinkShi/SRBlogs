@@ -4,7 +4,7 @@
 ![Vite](https://img.shields.io/badge/Vite-TypeScript-646cff)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38bdf8)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)
-![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab)
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776ab)
 ![Nginx](https://img.shields.io/badge/Nginx-reverse_proxy-009639)
 
 SRBlogs 是一个基于 Vue 3 + FastAPI 的个人博客系统，包含访客前台、后台管理端和文件型内容后端。
@@ -13,26 +13,48 @@ SRBlogs 是一个基于 Vue 3 + FastAPI 的个人博客系统，包含访客前�
 
 - 在线演示：暂无在线演示。
 - 当前版本：`v1.2.0`。
-- 当前状态：可本地运行、可按仓库部署资产进行服务器部署；真实域名、HTTPS 与生产服务器实操仍需按环境验收。
+- 当前状态：可本地运行；Linux 服务器支持一键安装、一键更新和一键诊断；真实域名、HTTPS 与第三方服务仍需按环境验收。
 - 默认本地地址：前台 `http://127.0.0.1:5173`，后台 `http://127.0.0.1:5174/admin/`，后端 `http://127.0.0.1:8000`。
+
+## 截图
+
+README 当前未内置截图，避免继续展示旧版后台 UI。建议发布前补充以下截图：
+
+- 前台首页：展示当前主题、内容卡片和运行时间。
+- 后台文章编辑：展示 v1.2.0 双栏编辑器、Markdown 工具栏和预览。
+- 后台内容管理：展示文章、图片、音乐的嵌入式评论管理入口。
+- Linux 安装向导：展示 `/install` 首次初始化流程。
 
 ## 项目概述
 
 SRBlogs 面向个人站长、内容创作者和需要轻量自托管博客的开发者。它用 Markdown 与 JSON 文件保存内容，避免引入独立数据库，适合小型个人站、作品集、日志站和带后台维护能力的静态风格博客。
 
-项目解决的核心问题是：用一套可本地开发、可服务器部署的工程，统一管理文章、杂谈、图片、音乐、友链、项目、关于页、留言、主题和备份。
+项目解决的核心问题是：用一套可本地开发、可服务器部署的工程，统一管理文章、杂谈、图片、音乐、友链、项目、关于页、留言评论、主题配置和基础运维。
 
 ## 核心功能
 
-- 内容发布：支持文章、动态、杂谈的 Markdown 读写、草稿、发布、撤回和删除。
-- 后台管理：独立管理端提供内容维护、评论管理、媒体管理和站点设置。
-- 结构化内容：支持友链、项目、音乐、照片墙相册、关于页等 JSON/结构化数据维护。
-- 留言评论：支持本地评论数据、后台评论管理，以及 GitHub/QQ 访客登录配置状态。
-- 媒体上传：后台鉴权上传图片、音频、视频等文件，并通过 `/uploads` 访问。
-- 主题配置：支持前台昼夜主题、背景壁纸、轮播、透明度和交互开关。
+- 文章管理：支持正经文章、杂谈和动态内容的 Markdown 读写、草稿、发布、撤回、删除和搜索。
+- Markdown 编辑器：后台文章页采用双栏编辑布局，内置 Markdown 工具栏、编辑/预览切换、图片插入和全屏 Markdown 编辑器。
+- 评论系统：文章、图片、音乐条目内嵌评论管理，可查看评论内容、用户信息、回复关系并在后台删除。
+- 媒体管理：支持图片相册、音乐列表、封面、歌词、音频文件和后台鉴权上传，通过 `/uploads` 访问。
+- 结构化内容：支持项目展示、友情链接、关于页面、站点信息和社交链接等 JSON/结构化数据维护。
+- 设置中心：支持站点信息、作者信息、主题外观、评论/OAuth 状态、联系表单和安全相关配置。
+- 前台能力：提供首页、文章、杂谈、图片、音乐、项目、友链、关于、搜索、标签、归档和评论交互。
 - SEO 输出：提供 RSS、Sitemap、Robots、OpenGraph/Twitter Card 等公开输出。
-- 运维能力：提供审计日志、手动备份、导入导出、生产环境模板、Nginx/systemd 示例和健康检查脚本。
-- 版本更新：后台可检测 GitHub Releases；Linux 服务器可由后端触发 `deploy/update.sh` 安全更新，Windows 本地开发环境会明确显示不支持。
+- 操作反馈：后台使用项目内 Toast 和确认弹窗，不再依赖浏览器原生 `alert` / `confirm`。
+- 运维能力：提供审计日志 API、备份/导入导出接口、生产环境模板、Nginx/systemd 示例和健康检查脚本。
+- 版本更新：后台读取本地版本常量并检测 GitHub Releases，提供错误分类和调试日志；Linux 服务器可由后端触发 `deploy/update.sh` 安全更新，Windows 本地开发环境仅支持检测并明确显示不支持一键更新。
+
+## 后台管理体验
+
+v1.2.0 的后台主流程围绕内容维护收敛：
+
+- 左侧导航只保留“内容”和“设置”，评论不再是独立入口，而是嵌入文章、图片、音乐条目。
+- 文章新增/编辑页为左侧正文、右侧元信息的双栏布局，Slug 收进高级设置。
+- Markdown 正文区域支持中文“编写 / 预览”切换、快捷工具栏、`.md` 导入、图片插入和全屏编辑器。
+- 全屏 Markdown 编辑器支持 `Ctrl+S` / `Cmd+S` 快捷保存，未修改关闭不弹确认，保存反馈走 Toast。
+- 设置页、关于页和内容页移除旧版大 Hero 区块，保存类按钮统一使用绿色并下沉到操作区。
+- 版本弹窗显示当前版本、最新 Release、发布时间、更新摘要、检测状态和调试日志。
 
 ## 技术栈
 
@@ -43,6 +65,7 @@ SRBlogs 面向个人站长、内容创作者和需要轻量自托管博客的开
 | 后端 | FastAPI、Uvicorn、Pydantic、python-jose、passlib |
 | 数据存储 | `backend/data` 中的 Markdown、JSON、评论文件、上传文件和审计日志 |
 | 内容渲染 | marked、DOMPurify、highlight.js |
+| 编辑器 | CodeMirror、Markdown 工具栏、DOMPurify 预览净化 |
 | 构建工具 | npm、vue-tsc、Vite、ESLint、Prettier |
 | 部署 | Nginx、systemd、Shell 脚本、Windows CMD 启动脚本 |
 
@@ -52,7 +75,7 @@ SRBlogs 面向个人站长、内容创作者和需要轻量自托管博客的开
 
 - Windows 10/11 或 Linux
 - Node.js 与 npm
-- Python 3.10+
+- Python 3.11+
 - PowerShell / CMD；Linux 部署需要 bash、nginx、systemd
 
 ### 克隆项目
@@ -168,7 +191,9 @@ Windows 推荐从仓库根目录运行：
 | `AI_A_*` / `AI_B_*` | 空 | 否 | AI 服务占位配置，Key 不进入前端构建 |
 | `CONTACT_MAIL_ENABLED` | `false` | 否 | 联系表单 SMTP 开关 |
 | `SMTP_*` | 空 | 否 | 联系表单邮件发送配置 |
-| `SRBLOGS_UPDATE_*` | `SRBLOGS_UPDATE_ENABLED=true` | 否 | 后台版本检测与 Linux 服务器端 `deploy/update.sh` 更新配置 |
+| `SRBLOGS_UPDATE_REPO` | `ShrinkShi/SRBlogs` | 否 | GitHub Release 检测仓库 |
+| `SRBLOGS_UPDATE_ENABLED` | `true` | 否 | 是否允许 Linux 服务器端一键更新；Windows 本地只检测版本 |
+| `SRBLOGS_UPDATE_COMMAND` | 空 | 否 | 历史兼容字段；当前更新流程优先使用 `deploy/update.sh` |
 | `VITE_API_BASE_URL` | `http://127.0.0.1:8000/api` | 开发建议 | 前台/管理端 API 地址 |
 
 生产配置可从 `backend/.env.production.example` 复制，不要提交真实密钥。
@@ -185,7 +210,7 @@ sudo systemctl restart srblogs-backend
 
 ### 方式一：本地开发
 
-前置条件：本机安装 Node.js、npm、Python 3.10+。
+前置条件：本机安装 Node.js、npm、Python 3.11+。
 
 操作步骤：
 
@@ -291,6 +316,15 @@ sudo systemctl enable --now srblogs-backend
 
 后端服务允许 `/etc/srblogs/backend.env` 缺失时启动进入未安装状态；未安装时仅开放 `/install`、`/api/install/status`、`POST /api/install` 和 `/api/health`。
 
+#### 后台一键更新入口
+
+后台左侧底部版本入口会请求：
+
+- `GET /api/admin/update/status`：读取 `backend/app/version.py` 当前版本，检测 GitHub Latest Release，并返回 `errorCode`、`errorMessage`、`platform` 和 `debugLogs`。
+- `POST /api/admin/update/run`：仅管理员可调用。Linux 服务器会下载 Release zip 并调用 `deploy/update.sh`；Windows 本地开发环境直接返回 `unsupported_platform`，不会尝试执行 shell 更新。
+
+如果 GitHub 没有创建 Release，弹窗会显示“未找到 GitHub Release”；如果网络不可达、超时或 API 限流，会显示对应错误并可展开“查看日志”。
+
 确认服务状态和日志：
 
 ```bash
@@ -382,6 +416,8 @@ SRBlogs/
 │   ├── app/api/              # API 路由
 │   ├── app/services/         # 内容、上传、备份、审计等服务
 │   ├── app/models/           # Pydantic 模型
+│   ├── app/version.py        # v1.2.0 统一版本与 GitHub 仓库常量
+│   ├── scripts/              # 管理员密码与安装状态维护工具
 │   ├── data/                 # Markdown、JSON、评论、上传和日志数据
 │   └── requirements.txt      # 后端依赖
 ├── docs/                     # API、部署、安全、QA、发布文档
@@ -406,6 +442,8 @@ SRBlogs/
 - RSS：`GET http://127.0.0.1:8000/api/rss.xml`
 - Sitemap：`GET http://127.0.0.1:8000/api/sitemap.xml`
 - Robots：`GET http://127.0.0.1:8000/robots.txt`
+- 安装状态：`GET http://127.0.0.1:8000/api/install/status`
+- 版本检测：`GET http://127.0.0.1:8000/api/admin/update/status`
 
 ## 相关文档
 
@@ -445,6 +483,7 @@ SRBlogs/
 
 ## 已知问题
 
+- README 暂未包含 v1.2.0 截图，发布 GitHub Release 前建议补充前台、后台编辑器、评论弹窗和安装向导截图。
 - 真实服务器、域名和 HTTPS 部署实操仍需按目标环境执行验收。
 - GitHub/QQ OAuth、SMTP、OSS、AI Provider 需要配置真实服务后再进行联调。
 - 仓库当前没有自动化单元测试套件，主要依赖构建、后端语法检查、健康检查和手动 QA。
