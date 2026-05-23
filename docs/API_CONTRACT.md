@@ -953,7 +953,7 @@ Query锛?- `limit`锛氶粯璁?50锛屾渶澶?200銆?- `offset`锛氶粯璁?0銆
     "readable": true,
     "writable": true
   },
-  "version": "release-candidate"
+  "version": "1.2.0"
 }
 ```
 
@@ -1423,31 +1423,39 @@ The request/response contract is unchanged. The backend implementation sends SMT
 ### Album Batch Upload Limit
 
 Albums remain limited to 50 photos. If a batch upload selection exceeds the remaining album capacity, the admin UI must reject the selection with a readable error instead of uploading a partial subset silently.
-## 2026-05-16 Admin Release Update Contract
+## 2026-05-23 Admin Release Update Contract
 
-后台版本更新接口仅管理员可用，统一走 JWT。前端/后台页面只触发服务端逻辑，不提交任何 shell 命令。
+后台版本更新接口仅管理员可用，统一走 JWT。前端/后台页面只触发服务端逻辑，不提交任何 shell 命令。当前规范接口为 `/api/admin/update/*`，旧 `/api/admin/updates/*` 路径保留兼容。
 
-### `GET /api/admin/updates/status`
+### `GET /api/admin/update/status`
 
-返回当前版本、最近一次 Release 检查结果、忽略版本和更新任务状态。
+实时检查 GitHub Releases latest API，返回当前版本、最新版本、更新状态和任务状态。Windows 本地开发环境必须返回 `unsupported`，不能假装更新成功。
 
 ```json
 {
   "repo": "ShrinkShi/SRBlogs",
-  "current": { "version": "1.0.0", "source": "frontend/package.json" },
+  "currentVersion": "1.2.0",
+  "latestVersion": "v1.2.0",
+  "hasUpdate": false,
+  "releaseUrl": "https://github.com/ShrinkShi/SRBlogs/releases/tag/v1.2.0",
+  "publishedAt": "2026-05-23T00:00:00Z",
+  "notes": "...",
+  "status": "latest",
+  "message": "",
+  "updateSupported": true,
   "latest": {
-    "tag": "v1.1.0",
-    "name": "v1.1.0",
-    "url": "https://github.com/ShrinkShi/SRBlogs/releases/tag/v1.1.0",
-    "publishedAt": "2026-05-16T00:00:00Z",
+    "tag": "v1.2.0",
+    "name": "v1.2.0",
+    "url": "https://github.com/ShrinkShi/SRBlogs/releases/tag/v1.2.0",
+    "publishedAt": "2026-05-23T00:00:00Z",
     "body": "...",
     "error": ""
   },
   "ignoredTag": "",
   "lastCheckedAt": "2026-05-16T12:00:00",
   "updateAvailable": true,
-  "updateEnabled": false,
-  "updateConfigured": false,
+  "updateEnabled": true,
+  "updateConfigured": true,
   "run": {
     "status": "idle",
     "pid": null,
@@ -1458,26 +1466,26 @@ Albums remain limited to 50 photos. If a batch upload selection exceeds the rema
 }
 ```
 
-### `POST /api/admin/updates/check`
+### `POST /api/admin/update/check`
 
 请求 GitHub Releases latest API，更新 `update_state.json` 中的 `latest` 和 `lastCheckedAt`。GitHub 网络失败时返回可读 `latest.error`，不返回 Secret。
 
-### `POST /api/admin/updates/ignore`
+### `POST /api/admin/update/ignore`
 
 请求体：
 
 ```json
-{ "tag": "v1.1.0" }
+{ "tag": "v1.2.0" }
 ```
 
 保存被忽略的 Release tag，之后同一 tag 不再提示 `updateAvailable=true`。
 
-### `POST /api/admin/updates/run`
+### `POST /api/admin/update/run`
 
 请求体：
 
 ```json
-{ "tag": "v1.1.0" }
+{ "tag": "v1.2.0" }
 ```
 
-后端只执行环境变量 `SRBLOGS_UPDATE_COMMAND` 中配置的命令。默认 `SRBLOGS_UPDATE_ENABLED=false`，未启用或未配置命令时返回 `400`。启动后写入 `update_logs/latest_update.log` 并记录审计日志。
+Linux 服务器会由后端下载 GitHub Release zipball，并调用仓库内 `deploy/update.sh --zip ... --app-dir ...`。后端会检查脚本存在、bash/sudo/root 权限和当前运行环境；Windows 或权限不足时返回 `status=unsupported`。启动后写入 `backend/data/update_logs/` 并记录审计日志。

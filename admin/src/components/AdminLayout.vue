@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUiStore } from '@/stores/ui'
 import { adminApi, type UpdateStatus } from '@/api/admin'
 
 type NavItem = {
@@ -16,12 +17,15 @@ type NavGroup = {
 }
 
 const auth = useAuthStore()
+const ui = useUiStore()
 const route = useRoute()
 const updateStatus = ref<UpdateStatus | null>(null)
 const updateLoading = ref(false)
 const updateActionLoading = ref(false)
 const updateError = ref('')
+const localDebugLogs = ref<string[]>([])
 const versionModalOpen = ref(false)
+const versionDebugOpen = ref(false)
 
 const groups: NavGroup[] = [
   {
@@ -44,19 +48,64 @@ const groups: NavGroup[] = [
 ]
 
 const activePath = computed(() => route.path)
-const latestTag = computed(() => updateStatus.value?.latest?.tag || '')
+const latestTag = computed(() => updateStatus.value?.latestVersion || updateStatus.value?.latest?.tag || '')
 const currentVersion = computed(() => {
-  const version = updateStatus.value?.current?.version || 'unknown'
+  const version = updateStatus.value?.currentVersion || updateStatus.value?.current?.version || ''
+  if (!version) return updateError.value ? '后端未返回' : 'unknown'
   return version === 'unknown' || version.startsWith('v') ? version : `v${version}`
 })
+const latestVersionLabel = computed(() => {
+  const version = updateStatus.value?.latestVersion || updateStatus.value?.latest?.tag || ''
+  if (version) return version.startsWith('v') ? version : `v${version}`
+  if (updateError.value || updateStatus.value?.status === 'error' || updateStatus.value?.errorCode || updateStatus.value?.latest?.error) return '检测失败'
+  return '未检测'
+})
 const versionState = computed<'latest' | 'available' | 'unknown'>(() => {
-  if (!updateStatus.value || updateError.value || updateStatus.value.latest?.error) return 'unknown'
-  return updateStatus.value.updateAvailable ? 'available' : 'latest'
+  if (!updateStatus.value || updateError.value || updateStatus.value.status === 'error') return 'unknown'
+  return updateStatus.value.hasUpdate || updateStatus.value.updateAvailable ? 'available' : 'latest'
 })
 const versionStateLabel = computed(() => {
   if (versionState.value === 'available') return '发现新版本'
   if (versionState.value === 'latest') return '已是最新版'
   return '状态未知'
+})
+const detectionStatusLabel = computed(() => {
+  if (updateError.value) return updateError.value
+  const code = updateStatus.value?.errorCode || updateStatus.value?.latest?.errorCode || updateStatus.value?.latest?.errorType || ''
+  const labels: Record<string, string> = {
+    github_release_not_found: '未找到 GitHub Release',
+    github_network_error: '无法访问 GitHub',
+    github_timeout: '请求 GitHub 超时',
+    github_rate_limited: 'GitHub API 限流',
+    unsupported_platform: '当前环境不支持一键更新',
+    update_script_missing: '未找到更新脚本',
+    version_constant_missing: '当前版本常量缺失',
+    unknown_error: updateStatus.value?.errorMessage || updateStatus.value?.message || '未知错误'
+  }
+  if (code && labels[code]) return labels[code]
+  return updateStatus.value?.errorMessage || updateStatus.value?.latest?.error || versionStateLabel.value
+})
+const updateSupportMessage = computed(() => {
+  if (!updateStatus.value || updateStatus.value.updateSupported) return ''
+  return updateStatus.value.updateErrorMessage || updateStatus.value.message || '当前环境不支持一键更新，请在 Linux 服务器执行'
+})
+const versionDebugLogs = computed(() => {
+  const logs = updateStatus.value?.debugLogs?.length ? updateStatus.value.debugLogs : localDebugLogs.value
+  return logs.filter(Boolean)
+})
+const shouldShowDebugToggle = computed(() => {
+  return Boolean(
+    versionDebugLogs.value.length &&
+      (updateError.value ||
+        updateStatus.value?.errorCode ||
+        updateStatus.value?.status === 'error' ||
+        currentVersion.value === 'unknown' ||
+        currentVersion.value === '后端未返回' ||
+        !updateStatus.value?.updateSupported)
+  )
+})
+const canRunUpdate = computed(() => {
+  return Boolean(updateStatus.value?.updateSupported && !updateStatus.value.errorCode && (updateStatus.value.hasUpdate || updateStatus.value.updateAvailable))
 })
 
 function isItemActive(item: NavItem): boolean {
@@ -71,38 +120,64 @@ function logout() {
 async function loadUpdateStatus() {
   updateLoading.value = true
   updateError.value = ''
+  localDebugLogs.value = []
   try {
     updateStatus.value = await adminApi.updateStatus()
   } catch (exc) {
     updateError.value = exc instanceof Error ? exc.message : '版本状态加载失败'
+    localDebugLogs.value = [`前端请求 /api/admin/update/status 失败: ${updateError.value}`]
+    ui.error('版本状态加载失败')
   } finally {
     updateLoading.value = false
   }
 }
 
+async function openVersionModal() {
+  versionModalOpen.value = true
+  versionDebugOpen.value = false
+  await loadUpdateStatus()
+}
+
 async function checkRelease() {
   updateLoading.value = true
   updateError.value = ''
+  localDebugLogs.value = []
   try {
     updateStatus.value = await adminApi.checkUpdate()
+    if (updateStatus.value.errorCode) {
+      ui.error(detectionStatusLabel.value)
+    } else {
+      ui.show('版本检测完成')
+    }
   } catch (exc) {
     updateError.value = exc instanceof Error ? exc.message : '检查更新失败'
+    localDebugLogs.value = [`前端请求 /api/admin/update/check 失败: ${updateError.value}`]
+    ui.error('检查更新失败')
   } finally {
     updateLoading.value = false
   }
 }
 
 async function runReleaseUpdate() {
-  if (!updateStatus.value?.updateConfigured) {
-    updateError.value = '后端更新接口尚未接入或未启用。'
+  if (!updateStatus.value?.updateSupported) {
+    updateError.value = updateSupportMessage.value || '当前环境不支持一键更新，请在 Linux 服务器执行'
+    ui.error(updateError.value)
     return
   }
   updateActionLoading.value = true
   updateError.value = ''
   try {
     updateStatus.value = await adminApi.runUpdate(latestTag.value)
+    if (updateStatus.value.status === 'unsupported' || updateStatus.value.status === 'unsupported_platform') {
+      updateError.value = updateStatus.value.message || updateStatus.value.updateErrorMessage || '当前环境不支持一键更新，请在 Linux 服务器执行'
+      ui.error(updateError.value)
+    } else {
+      ui.show('更新任务已启动')
+    }
   } catch (exc) {
     updateError.value = exc instanceof Error ? exc.message : '启动更新失败'
+    localDebugLogs.value = [`前端请求 /api/admin/update/run 失败: ${updateError.value}`]
+    ui.error('启动更新失败')
   } finally {
     updateActionLoading.value = false
   }
@@ -149,7 +224,7 @@ onMounted(loadUpdateStatus)
             type="button"
             class="version-card"
             :class="`version-card-${versionState}`"
-            @click="versionModalOpen = true"
+            @click="openVersionModal"
           >
             <span class="version-dot" aria-hidden="true"></span>
             <span class="min-w-0 text-left">
@@ -183,22 +258,36 @@ onMounted(loadUpdateStatus)
           </div>
           <div class="version-info-row">
             <span>最新版本</span>
-            <b>{{ updateStatus?.latest?.tag || '未检测' }}</b>
+            <b>{{ latestVersionLabel }}</b>
           </div>
           <div class="version-info-row">
             <span>发布时间</span>
-            <b>{{ updateStatus?.latest?.publishedAt || '-' }}</b>
+            <b>{{ updateStatus?.publishedAt || updateStatus?.latest?.publishedAt || '-' }}</b>
           </div>
           <div class="version-info-row">
             <span>检测状态</span>
-            <b>{{ updateError || updateStatus?.latest?.error || versionStateLabel }}</b>
+            <b>{{ detectionStatusLabel }}</b>
           </div>
+          <div class="version-info-row">
+            <span>运行平台</span>
+            <b>{{ updateStatus?.platform || '-' }}</b>
+          </div>
+        </div>
+
+        <div v-if="shouldShowDebugToggle" class="mt-4">
+          <button type="button" class="admin-btn admin-btn-ghost" @click="versionDebugOpen = !versionDebugOpen">
+            {{ versionDebugOpen ? '隐藏日志' : '查看日志' }}
+          </button>
+          <pre
+            v-if="versionDebugOpen"
+            class="mt-3 max-h-64 overflow-auto rounded-xl border border-slate-200 bg-slate-950 p-4 text-xs leading-5 text-slate-100"
+          >{{ versionDebugLogs.join('\n') }}</pre>
         </div>
 
         <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
           <h3 class="text-sm font-black text-slate-950">更新摘要</h3>
           <p class="mt-2 max-h-56 overflow-auto whitespace-pre-wrap text-sm leading-6 text-slate-600">
-            {{ updateStatus?.latest?.body || updateStatus?.latest?.name || '暂无 release notes。' }}
+            {{ updateStatus?.notes || updateStatus?.latest?.body || updateStatus?.latest?.name || '暂无 release notes。' }}
           </p>
         </div>
 
@@ -209,8 +298,8 @@ onMounted(loadUpdateStatus)
           <p v-if="updateStatus.run.log"><b>日志：</b>{{ updateStatus.run.log }}</p>
         </div>
 
-        <p v-if="!updateStatus?.updateConfigured" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-          后端更新接口尚未接入或未启用。需要配置安全的后端更新接口后，才能执行立即更新。
+        <p v-if="updateStatus && !updateStatus.updateSupported" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+          {{ updateSupportMessage }}
         </p>
 
         <div class="mt-5 flex flex-wrap justify-end gap-2">
@@ -220,7 +309,7 @@ onMounted(loadUpdateStatus)
           <button
             class="admin-btn admin-btn-primary"
             type="button"
-            :disabled="!updateStatus?.updateConfigured || !updateStatus?.updateAvailable || updateActionLoading"
+            :disabled="!canRunUpdate || updateActionLoading"
             @click="runReleaseUpdate"
           >
             {{ updateActionLoading ? '启动中...' : '立即更新' }}

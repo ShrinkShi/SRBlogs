@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { adminApi } from '@/api/admin'
+import AdminConfirmDialog from '@/components/AdminConfirmDialog.vue'
 import CommentManageModal from '@/components/CommentManageModal.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useUiStore } from '@/stores/ui'
 import type { CommentIndexItem } from '@/types'
 
@@ -26,6 +28,7 @@ const props = defineProps<{
 }>()
 
 const ui = useUiStore()
+const confirmDialog = useConfirmDialog()
 const items = ref<Record<string, unknown>[]>([])
 const form = ref<Record<string, unknown>>({})
 const editIndex = ref<number | null>(null)
@@ -120,8 +123,17 @@ function normalizeGalleryFields() {
   }
 }
 
-function closeForm() {
-  if (dirty.value && !confirm('当前表单有未保存内容，确认关闭？')) return
+async function closeForm() {
+  if (dirty.value) {
+    const ok = await confirmDialog.ask({
+      title: '未保存的修改',
+      message: '当前表单有未保存内容，关闭后修改将丢失。',
+      cancelText: '继续编辑',
+      confirmText: '放弃修改',
+      variant: 'danger'
+    })
+    if (!ok) return
+  }
   modalOpen.value = false
   resetForm()
 }
@@ -231,6 +243,7 @@ async function persist(nextItems: Record<string, unknown>[], message: string) {
     ui.show(message)
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '保存失败'
+    ui.error(message.includes('删除') ? '删除失败，请重试' : '保存失败，请重试')
   } finally {
     saving.value = false
   }
@@ -254,9 +267,16 @@ async function removeItem(index: number) {
   const source = filteredItems.value[index]
   const realIndex = items.value.indexOf(source)
   const label = itemLabel(source, index)
-  if (!confirm(`确认删除 ${label}？删除前后端会生成 JSON 备份。`)) return
+  const ok = await confirmDialog.ask({
+    title: '确认删除',
+    message: `删除后会生成备份，确定删除「${label}」吗？`,
+    cancelText: '取消',
+    confirmText: '确认删除',
+    variant: 'danger'
+  })
+  if (!ok) return
   const nextItems = items.value.filter((_, itemIndex) => itemIndex !== realIndex)
-  await persist(nextItems, '已删除记录')
+  await persist(nextItems, '已删除')
   resetForm()
 }
 
@@ -297,8 +317,15 @@ function galleryItems(key: string) {
   return Array.isArray(value) ? value as Record<string, unknown>[] : []
 }
 
-function removeGalleryItem(key: string, index: number) {
-  if (!confirm('确认删除这张照片？保存后前台相册会同步更新。')) return
+async function removeGalleryItem(key: string, index: number) {
+  const ok = await confirmDialog.ask({
+    title: '确认删除',
+    message: '确定删除这张照片吗？保存后前台相册会同步更新。',
+    cancelText: '取消',
+    confirmText: '确认删除',
+    variant: 'danger'
+  })
+  if (!ok) return
   const removed = galleryItems(key)[index]
   const next = galleryItems(key).filter((_, itemIndex) => itemIndex !== index)
   form.value[key] = next
@@ -533,6 +560,12 @@ onMounted(load)
       :type-label="activeCommentTarget.typeLabel"
       @update:model-value="(value) => { if (!value) activeCommentTarget = null }"
       @count-updated="updateCommentCount"
+    />
+
+    <AdminConfirmDialog
+      v-bind="confirmDialog.state"
+      @confirm="confirmDialog.confirm"
+      @cancel="confirmDialog.cancel"
     />
 
     <div class="admin-card">

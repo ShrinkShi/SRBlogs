@@ -2,13 +2,16 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { adminApi } from '@/api/admin'
+import AdminConfirmDialog from '@/components/AdminConfirmDialog.vue'
 import CommentManageModal from '@/components/CommentManageModal.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useUiStore } from '@/stores/ui'
 import type { CommentIndexItem, ContentItem } from '@/types'
 
 const props = defineProps<{ section: 'posts' | 'moments' | 'chatters'; title: string }>()
 
 const ui = useUiStore()
+const confirmDialog = useConfirmDialog()
 const router = useRouter()
 const items = ref<ContentItem[]>([])
 const filter = ref<'all' | 'published' | 'draft'>('all')
@@ -101,16 +104,25 @@ function updateCommentCount(payload: { resource: CommentIndexItem['resource']; s
   else commentIndex.value.push(nextItem)
 }
 
-async function remove(slug: string) {
-  if (!confirm(`确认删除 ${slug}？删除前后端会生成备份。`)) return
+async function remove(item: ContentItem) {
+  const label = item.meta.title || item.slug
+  const ok = await confirmDialog.ask({
+    title: '确认删除',
+    message: `删除后会生成备份，确定删除「${label}」吗？`,
+    cancelText: '取消',
+    confirmText: '确认删除',
+    variant: 'danger'
+  })
+  if (!ok) return
   error.value = ''
-  actionBusy.value = slug
+  actionBusy.value = item.slug
   try {
-    await adminApi.remove(props.section, slug)
-    ui.show('内容已删除')
+    await adminApi.remove(props.section, item.slug)
+    ui.show('已删除')
     await load()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '删除失败'
+    ui.error('删除失败，请重试')
   } finally {
     actionBusy.value = ''
   }
@@ -118,7 +130,14 @@ async function remove(slug: string) {
 
 async function toggleDraft(item: ContentItem, draft: boolean) {
   const label = draft ? '设为草稿' : '发布'
-  if (!confirm(`确认${label}《${item.meta.title}》？`)) return
+  const ok = await confirmDialog.ask({
+    title: `确认${label}`,
+    message: `确定${label}「${item.meta.title || item.slug}」吗？`,
+    cancelText: '取消',
+    confirmText: `确认${label}`,
+    variant: draft ? 'default' : 'danger'
+  })
+  if (!ok) return
   error.value = ''
   actionBusy.value = item.slug
   try {
@@ -128,6 +147,7 @@ async function toggleDraft(item: ContentItem, draft: boolean) {
     await load()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : `${label}失败`
+    ui.error(`${label}失败，请重试`)
   } finally {
     actionBusy.value = ''
   }
@@ -198,7 +218,7 @@ onMounted(load)
               <a v-if="!item.meta.draft" :href="publicPath(item)" target="_blank" class="admin-btn admin-btn-ghost text-sm">预览</a>
               <button v-if="item.meta.draft" :disabled="actionBusy === item.slug" class="admin-btn admin-btn-primary text-sm" type="button" @click="toggleDraft(item, false)">发布</button>
               <button v-else :disabled="actionBusy === item.slug" class="admin-btn admin-btn-ghost text-sm" type="button" @click="toggleDraft(item, true)">设为草稿</button>
-              <button :disabled="actionBusy === item.slug" class="admin-btn admin-btn-danger text-sm" type="button" @click="remove(item.slug)">删除</button>
+              <button :disabled="actionBusy === item.slug" class="admin-btn admin-btn-danger text-sm" type="button" @click="remove(item)">删除</button>
             </div>
           </div>
         </article>
@@ -214,6 +234,12 @@ onMounted(load)
       :type-label="activeCommentTarget.typeLabel"
       @update:model-value="(value) => { if (!value) activeCommentTarget = null }"
       @count-updated="updateCommentCount"
+    />
+
+    <AdminConfirmDialog
+      v-bind="confirmDialog.state"
+      @confirm="confirmDialog.confirm"
+      @cancel="confirmDialog.cancel"
     />
   </section>
 </template>

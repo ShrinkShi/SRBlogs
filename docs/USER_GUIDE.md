@@ -461,13 +461,8 @@ QQ 邮箱通常需要 SMTP 授权码，不是 QQ 登录密码。SMTP 密码只�
 - About-page highlighted words are plain text highlights. HTML entered in About text fields is displayed as text for safety.
 ## 后台版本更新
 
-后台“设置 > 版本更新”会显示当前本地版本，并可手动检查 `ShrinkShi/SRBlogs` 的 GitHub Releases。发现新版本后，可以选择“忽略此版本”或“一键更新”。
+后台侧边栏版本入口会显示当前后端版本，并可检查 `ShrinkShi/SRBlogs` 的 GitHub Releases。发现新版本后，可以触发“一键更新”。
 
-一键更新默认关闭。服务器管理员需要在后端环境变量中设置：
+一键更新只在 Linux 服务器环境执行：后端下载 GitHub Release zipball，并调用仓库内 `deploy/update.sh`。Windows 本地开发环境会明确显示“不支持”，不会伪造更新成功。
 
-```env
-SRBLOGS_UPDATE_ENABLED=true
-SRBLOGS_UPDATE_COMMAND=你的部署更新脚本
-```
-
-后台页面不会保存或发送更新命令；命令只从后端环境变量读取。建议把实际更新流程封装成可回滚的脚本，例如拉取代码、安装依赖、构建、迁移和重启服务。
+后台页面不会保存或发送 shell 命令；更新流程必须由后端安全接口执行，并复用可备份、可回滚的部署脚本。

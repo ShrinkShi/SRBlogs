@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { adminApi } from '@/api/admin'
+import AdminConfirmDialog from '@/components/AdminConfirmDialog.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useUiStore } from '@/stores/ui'
 import type { CommentIndexItem, CommentItem } from '@/types'
 
 const ui = useUiStore()
+const confirmDialog = useConfirmDialog()
 const indexItems = ref<CommentIndexItem[]>([])
 const selected = ref<CommentIndexItem | null>(null)
 const comments = ref<CommentItem[]>([])
@@ -67,7 +70,14 @@ async function manualLoad() {
 
 async function remove(item: CommentItem) {
   if (!selected.value) return
-  if (!confirm(`确认删除 ${item.author || '访客'} 的这条留言？`)) return
+  const ok = await confirmDialog.ask({
+    title: '确认删除',
+    message: `确定删除「${item.author || '访客'}」的这条留言吗？`,
+    cancelText: '取消',
+    confirmText: '确认删除',
+    variant: 'danger'
+  })
+  if (!ok) return
   deleting.value = item.id
   error.value = ''
   try {
@@ -77,6 +87,7 @@ async function remove(item: CommentItem) {
     ui.show('留言已删除')
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '留言删除失败'
+    ui.error('删除失败，请重试')
   } finally {
     deleting.value = ''
   }
@@ -173,5 +184,10 @@ onMounted(() => loadIndex(false))
         </div>
       </div>
     </div>
+    <AdminConfirmDialog
+      v-bind="confirmDialog.state"
+      @confirm="confirmDialog.confirm"
+      @cancel="confirmDialog.cancel"
+    />
   </section>
 </template>

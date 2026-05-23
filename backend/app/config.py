@@ -2,9 +2,11 @@ from functools import lru_cache
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.version import APP_NAME, GITHUB_REPO
+
 
 class Settings(BaseSettings):
-    app_name: str = "SRBlogs API"
+    app_name: str = f"{APP_NAME} API"
     app_env: str = "development"
     data_dir: str = "backend/data"
     public_base_url: str = "http://127.0.0.1:8000"
@@ -48,8 +50,8 @@ class Settings(BaseSettings):
     smtp_use_ssl: bool = True
     smtp_from: str = ""
 
-    srblogs_update_repo: str = "ShrinkShi/SRBlogs"
-    srblogs_update_enabled: bool = False
+    srblogs_update_repo: str = GITHUB_REPO
+    srblogs_update_enabled: bool = True
     srblogs_update_command: str = ""
     env_file_path: str = "/etc/srblogs/backend.env"
 

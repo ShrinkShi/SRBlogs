@@ -12,6 +12,7 @@ SRBlogs 是一个基于 Vue 3 + FastAPI 的个人博客系统，包含访客前�
 ## 在线体验 / 项目状态
 
 - 在线演示：暂无在线演示。
+- 当前版本：`v1.2.0`。
 - 当前状态：可本地运行、可按仓库部署资产进行服务器部署；真实域名、HTTPS 与生产服务器实操仍需按环境验收。
 - 默认本地地址：前台 `http://127.0.0.1:5173`，后台 `http://127.0.0.1:5174/admin/`，后端 `http://127.0.0.1:8000`。
 
@@ -31,6 +32,7 @@ SRBlogs 面向个人站长、内容创作者和需要轻量自托管博客的开
 - 主题配置：支持前台昼夜主题、背景壁纸、轮播、透明度和交互开关。
 - SEO 输出：提供 RSS、Sitemap、Robots、OpenGraph/Twitter Card 等公开输出。
 - 运维能力：提供审计日志、手动备份、导入导出、生产环境模板、Nginx/systemd 示例和健康检查脚本。
+- 版本更新：后台可检测 GitHub Releases；Linux 服务器可由后端触发 `deploy/update.sh` 安全更新，Windows 本地开发环境会明确显示不支持。
 
 ## 技术栈
 
@@ -166,7 +168,7 @@ Windows 推荐从仓库根目录运行：
 | `AI_A_*` / `AI_B_*` | 空 | 否 | AI 服务占位配置，Key 不进入前端构建 |
 | `CONTACT_MAIL_ENABLED` | `false` | 否 | 联系表单 SMTP 开关 |
 | `SMTP_*` | 空 | 否 | 联系表单邮件发送配置 |
-| `SRBLOGS_UPDATE_*` | 默认关闭 | 否 | 后台版本检测与服务端更新命令配置 |
+| `SRBLOGS_UPDATE_*` | `SRBLOGS_UPDATE_ENABLED=true` | 否 | 后台版本检测与 Linux 服务器端 `deploy/update.sh` 更新配置 |
 | `VITE_API_BASE_URL` | `http://127.0.0.1:8000/api` | 开发建议 | 前台/管理端 API 地址 |
 
 生产配置可从 `backend/.env.production.example` 复制，不要提交真实密钥。
@@ -439,7 +441,7 @@ SRBlogs/
 - 上传接口需要管理员 JWT；后端会校验文件类型和大小。
 - 公开设置接口只应返回非敏感状态，例如 provider 是否已配置，不返回 Secret 明文。
 - 留言、登录、上传、备份、恢复、系统状态和更新触发等能力都应通过后端鉴权边界访问。
-- 一键更新默认关闭；如启用 `SRBLOGS_UPDATE_COMMAND`，应指向已审查、可回滚的服务端脚本。
+- 一键更新由后端在 Linux 服务器上调用 `deploy/update.sh`；Windows 本地开发环境会显示不支持，不会伪造更新成功。
 
 ## 已知问题
 

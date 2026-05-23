@@ -1,9 +1,14 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { adminApi } from '@/api/admin'
+import AdminConfirmDialog from '@/components/AdminConfirmDialog.vue'
 import GlassCard from '@/components/GlassCard.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
+import { useUiStore } from '@/stores/ui'
 import type { BackupItem } from '@/types'
 
+const ui = useUiStore()
+const confirmDialog = useConfirmDialog()
 const backups = ref<BackupItem[]>([])
 const loading = ref(false)
 const working = ref('')
@@ -44,9 +49,11 @@ async function createBackup() {
   try {
     const item = await adminApi.createBackup()
     success.value = `已创建手动备份：${item.name}。建议在升级、恢复或导入前下载并保存到服务器外部位置。`
+    ui.show('备份已创建')
     await load()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '创建备份失败'
+    ui.error('创建备份失败')
   } finally {
     working.value = ''
   }
@@ -60,9 +67,11 @@ async function exportData() {
     const blob = await adminApi.exportData()
     downloadBlob(blob, `srblogs-export-${Date.now()}.zip`)
     success.value = '已导出当前内容数据。'
+    ui.show('数据已导出')
     await load()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '导出数据失败'
+    ui.error('导出数据失败')
   } finally {
     working.value = ''
   }
@@ -70,17 +79,25 @@ async function exportData() {
 
 async function importData(files: FileList | null) {
   if (!files?.length) return
-  const message = '导入会覆盖当前 backend/data 内容，系统会先创建导入前备份。确认继续？'
-  if (!window.confirm(message)) return
+  const ok = await confirmDialog.ask({
+    title: '确认导入',
+    message: '导入会覆盖当前 backend/data 内容，系统会先创建导入前备份。确认继续？',
+    cancelText: '取消',
+    confirmText: '确认导入',
+    variant: 'danger'
+  })
+  if (!ok) return
   working.value = 'import'
   error.value = ''
   success.value = ''
   try {
     const result = await adminApi.importData(files[0])
     success.value = `导入完成，恢复前备份：${result.preRestoreBackup}`
+    ui.show('导入完成')
     await load()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '导入数据失败'
+    ui.error('导入数据失败')
   } finally {
     working.value = ''
   }
@@ -93,25 +110,35 @@ async function download(item: BackupItem) {
     const blob = await adminApi.downloadBackup(item.name)
     downloadBlob(blob, item.name)
     success.value = `备份已开始下载：${item.name}`
+    ui.show('备份已开始下载')
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '下载备份失败'
+    ui.error('下载备份失败')
   } finally {
     working.value = ''
   }
 }
 
 async function restore(item: BackupItem) {
-  const message = `恢复 ${item.name} 会覆盖当前 backend/data 内容。系统会先创建恢复前备份，但恢复后仍需要重新检查前台、后台和上传文件。确认继续？`
-  if (!window.confirm(message)) return
+  const ok = await confirmDialog.ask({
+    title: '确认恢复',
+    message: `恢复 ${item.name} 会覆盖当前 backend/data 内容。系统会先创建恢复前备份，但恢复后仍需要重新检查前台、后台和上传文件。确认继续？`,
+    cancelText: '取消',
+    confirmText: '确认恢复',
+    variant: 'danger'
+  })
+  if (!ok) return
   working.value = `restore:${item.name}`
   error.value = ''
   success.value = ''
   try {
     const result = await adminApi.restoreBackup(item.name)
     success.value = `已恢复 ${result.restored}，恢复前备份：${result.preRestoreBackup}`
+    ui.show('备份已恢复')
     await load()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '恢复备份失败'
+    ui.error('恢复备份失败')
   } finally {
     working.value = ''
   }
@@ -169,5 +196,10 @@ onMounted(load)
         </div>
       </GlassCard>
     </div>
+    <AdminConfirmDialog
+      v-bind="confirmDialog.state"
+      @confirm="confirmDialog.confirm"
+      @cancel="confirmDialog.cancel"
+    />
   </section>
 </template>

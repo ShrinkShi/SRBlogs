@@ -9,6 +9,7 @@ from app.config import get_settings
 from app.services.audit_service import read_audit_logs, write_audit
 from app.services.auth_service import require_admin
 from app.services.backup_service import BackupError, backup_path, create_backup, import_backup, list_backups, restore_backup
+from app.version import APP_VERSION
 
 router = APIRouter(prefix="/admin", tags=["admin-tools"], dependencies=[Depends(require_admin)])
 
@@ -45,7 +46,7 @@ def system_status():
             "readable": os.access(uploads_path, os.R_OK),
             "writable": os.access(uploads_path, os.W_OK),
         },
-        "version": "release-candidate",
+        "version": APP_VERSION,
     }
 
 

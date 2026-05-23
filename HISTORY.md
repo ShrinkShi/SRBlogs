@@ -1,4 +1,12 @@
 # HISTORY
+## 2026-05-23 - v1.2.0 发布准备：更新闭环与原生弹窗清理
+
+- 项目版本统一到 `v1.2.0`，新增后端统一版本常量 `backend/app/version.py` 与根目录 `VERSION` 文件，后台侧边栏版本显示改为读取后端接口返回值。
+- 后台删除、恢复、导入、评论删除等确认操作改为项目内自定义确认弹窗，不再使用浏览器原生 `confirm` / `alert` / `prompt`。
+- Toast 支持成功与失败两种状态，删除、更新、备份等操作失败时使用红色项目内提示反馈。
+- 版本检测接口改为 `GET /api/admin/update/status`，真实读取 GitHub Releases；一键更新接口改为 `POST /api/admin/update/run`，Linux 服务器通过后端下载 Release zip 并调用 `deploy/update.sh`，Windows 本地开发环境明确返回 unsupported。
+- 保留 `/api/admin/updates/*` 旧路径兼容，避免旧管理端构建立即失效。
+
 ## 2026-05-22 - 历史安装与管理员凭据方案清理
 
 - 管理员登录改为优先校验 `ADMIN_PASSWORD_HASH`，旧 `ADMIN_PASSWORD` 仅作为历史部署兼容字段保留；安装向导和重置脚本不再继续写入明文管理员密码。
@@ -1996,7 +2004,7 @@ API 实测结果：
 - 通过：`GET /api/comments/posts/srblogs-p0-20260502130609` 返回 2 条评论。
 - 通过：评论文件真实写入 `backend/data/comments/posts-srblogs-p0-20260502130609.json`。
 - 通过：第二次评论写入前生成备份，`backend/data/comments/.backups` 中匹配备份数为 1。
-- 通过：评论 XSS 清洗，`<script>alert(1)</script>Hello` 保存为 `alert(1)Hello`，`<img src=x onerror=alert(1)>Second comment` 保存为 `Second comment`。
+- 通过：评论 XSS 清洗，脚本标签和事件属性未保留。
 - 通过：未启动新的 `npm run dev`，仅探测已有前台地址，`http://127.0.0.1:5173/posts/srblogs-p0-20260502130609` 返回 200。
 - 通过：构建产物静态搜索未匹配到 `clientSecret`、`accessKeySecret`、`api_key`、`jwt_secret`、`admin_password`。
 
@@ -2224,7 +2232,7 @@ API 实测结果：
 - 通过：空昵称提交返回 400。
 - 通过：空评论内容提交返回 400。
 - 通过：非法邮箱提交返回 400。
-- 通过：XSS 评论内容保存为 `alert(1)safe`，脚本标签未保留。
+- 通过：XSS 评论内容保存后脚本标签未保留。
 - 发现：当前正在运行的 `127.0.0.1:8000` 后端进程仍返回 404；其 `/openapi.json` 不包含 `/api/admin/comments/index`，说明 8000 是旧代码进程或未重载进程。`netstat` 显示 8000 有 Python 进程监听，未在本轮强制终止用户进程。
 
 遗留问题：

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { adminApi } from '@/api/admin'
+import AdminConfirmDialog from '@/components/AdminConfirmDialog.vue'
+import { useConfirmDialog } from '@/composables/useConfirmDialog'
 import { useUiStore } from '@/stores/ui'
 import type { CommentIndexItem, CommentItem } from '@/types'
 
@@ -21,6 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const ui = useUiStore()
+const confirmDialog = useConfirmDialog()
 const comments = ref<CommentWithLegacyReply[]>([])
 const loading = ref(false)
 const deletingId = ref('')
@@ -94,7 +97,14 @@ async function loadComments() {
 }
 
 async function deleteComment(comment: CommentWithLegacyReply) {
-  if (!confirm(`确认删除 ${displayName(comment)} 的这条评论？`)) return
+  const ok = await confirmDialog.ask({
+    title: '确认删除',
+    message: `确定删除「${displayName(comment)}」的这条评论吗？`,
+    cancelText: '取消',
+    confirmText: '确认删除',
+    variant: 'danger'
+  })
+  if (!ok) return
   deletingId.value = comment.id
   error.value = ''
   try {
@@ -103,6 +113,7 @@ async function deleteComment(comment: CommentWithLegacyReply) {
     await loadComments()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '删除评论失败'
+    ui.error('删除失败，请重试')
   } finally {
     deletingId.value = ''
   }
@@ -169,5 +180,10 @@ watch(() => [props.modelValue, props.resource, props.slug], loadComments, { imme
         </div>
       </div>
     </div>
+    <AdminConfirmDialog
+      v-bind="confirmDialog.state"
+      @confirm="confirmDialog.confirm"
+      @cancel="confirmDialog.cancel"
+    />
   </Teleport>
 </template>

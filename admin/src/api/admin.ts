@@ -4,14 +4,38 @@ type InstallStatus = { installed: boolean; needsInstall: boolean; missingItems: 
 
 export type UpdateStatus = {
   repo: string
+  currentVersion: string
+  latestVersion: string
+  hasUpdate: boolean
+  releaseUrl: string
+  publishedAt: string
+  notes: string
+  status: 'unknown' | 'latest' | 'update_available' | 'running' | 'unsupported' | 'failed' | 'error' | string
+  message: string
+  errorCode: string
+  errorMessage: string
+  platform: string
+  updateSupported: boolean
+  updateErrorCode: string
+  updateErrorMessage: string
   current: { version: string; source: string }
-  latest: { tag?: string; name?: string; url?: string; publishedAt?: string; body?: string; error?: string }
+  latest: {
+    tag?: string
+    name?: string
+    url?: string
+    publishedAt?: string
+    body?: string
+    error?: string
+    errorType?: string
+    errorCode?: string
+  }
   ignoredTag: string
   lastCheckedAt: string
   updateAvailable: boolean
   updateEnabled: boolean
   updateConfigured: boolean
   run: { status?: string; pid?: number; tag?: string; startedAt?: string; log?: string }
+  debugLogs: string[]
 }
 
 export const adminApi = {
@@ -113,19 +137,19 @@ export const adminApi = {
     return data
   },
   updateStatus: async () => {
-    const { data } = await http.get<UpdateStatus>('/admin/updates/status')
+    const { data } = await http.get<UpdateStatus>('/admin/update/status')
     return data
   },
   checkUpdate: async () => {
-    const { data } = await http.post<UpdateStatus>('/admin/updates/check')
+    const { data } = await http.post<UpdateStatus>('/admin/update/check')
     return data
   },
   ignoreUpdate: async (tag: string) => {
-    const { data } = await http.post<UpdateStatus>('/admin/updates/ignore', { tag })
+    const { data } = await http.post<UpdateStatus>('/admin/update/ignore', { tag })
     return data
   },
   runUpdate: async (tag = '') => {
-    const { data } = await http.post<UpdateStatus>('/admin/updates/run', { tag })
+    const { data } = await http.post<UpdateStatus>('/admin/update/run', { tag })
     return data
   }
 }
