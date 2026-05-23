@@ -66,10 +66,30 @@ while [ "$#" -gt 0 ]; do
 done
 
 ENV_FILE="$ENV_DIR/backend.env"
-INSTALL_LOCK="$APP_DIR/backend/data/.install.lock"
 
 command_exists() {
   command -v "$1" >/dev/null 2>&1
+}
+
+settings_data_dir() {
+  local value=""
+  if [ -f "$ENV_FILE" ]; then
+    value="$(grep -E '^DATA_DIR=' "$ENV_FILE" 2>/dev/null | tail -n 1 || true)"
+    value="${value#DATA_DIR=}"
+    value="${value%\"}"
+    value="${value#\"}"
+    value="${value%\'}"
+    value="${value#\'}"
+  fi
+  if [ -z "$value" ]; then
+    printf '%s\n' "$APP_DIR/backend/data"
+  elif [[ "$value" = /* ]]; then
+    printf '%s\n' "$value"
+  elif [[ "$value" = data || "$value" = data/* ]]; then
+    printf '%s\n' "$APP_DIR/backend/$value"
+  else
+    printf '%s\n' "$APP_DIR/$value"
+  fi
 }
 
 node_major() {
@@ -145,11 +165,7 @@ check_http() {
   if curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8000/api/install/status >"$status_file" 2>/dev/null; then
     pass "/api/install/status is reachable."
     if grep -q '"installed"[[:space:]]*:[[:space:]]*true' "$status_file"; then
-      if curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8000/api/settings/public >/dev/null 2>&1; then
-        pass "/api/settings/public is reachable."
-      else
-        fail "/api/settings/public is not reachable after installation."
-      fi
+      check_settings_chain
     else
       warn "system is not installed yet; /api/settings/public may return INSTALL_REQUIRED."
     fi
@@ -166,6 +182,78 @@ check_http() {
     check_admin_assets "$admin_html"
   else
     fail "/admin/login is not reachable through Nginx."
+  fi
+}
+
+settings_summary() {
+  local body_file="$1"
+  local version="-"
+  if [ -f "$APP_DIR/VERSION" ]; then
+    version="$(tr -d '\r\n' <"$APP_DIR/VERSION" 2>/dev/null || echo "-")"
+  fi
+  if command_exists python3.11; then
+    local summary
+    summary="$(python3.11 - "$body_file" "$version" <<'PY' 2>/dev/null || true
+import json
+import sys
+
+path = sys.argv[1]
+version = sys.argv[2]
+with open(path, "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+title = data.get("siteTitle") or data.get("title") or ""
+subtitle = data.get("subtitle") or data.get("description") or ""
+print(f"settings summary: siteTitle={title!r}, subtitle={subtitle!r}, version={version or '-'}")
+PY
+)"
+    if [ -n "$summary" ]; then
+      log_line "$summary"
+    else
+      warn "could not parse /api/settings/public response body."
+    fi
+  else
+    log_line "settings summary: python3.11 unavailable; raw settings body stored at $body_file, version=$version"
+  fi
+}
+
+check_cache_header() {
+  local label="$1"
+  local headers_file="$2"
+  if grep -iq '^cache-control:.*no-store' "$headers_file"; then
+    pass "$label Cache-Control contains no-store."
+  else
+    warn "$label Cache-Control does not contain no-store; /api/settings/public may be cached by browser or proxy."
+  fi
+}
+
+check_settings_chain() {
+  local data_dir
+  data_dir="$(settings_data_dir)"
+  local data_file="$data_dir/settings.json"
+  local backend_headers="/tmp/srblogs-doctor-settings-backend-headers.$$"
+  local backend_body="/tmp/srblogs-doctor-settings-backend-body.$$"
+  local nginx_headers="/tmp/srblogs-doctor-settings-nginx-headers.$$"
+  local nginx_body="/tmp/srblogs-doctor-settings-nginx-body.$$"
+
+  if [ -f "$data_file" ]; then
+    pass "production settings file exists: $data_file"
+  else
+    fail "production settings file is missing: $data_file"
+  fi
+
+  if curl --fail --silent --show-error --max-time 10 -D "$backend_headers" -o "$backend_body" http://127.0.0.1:8000/api/settings/public 2>/dev/null; then
+    pass "/api/settings/public is reachable from backend."
+    settings_summary "$backend_body"
+    check_cache_header "backend /api/settings/public" "$backend_headers"
+  else
+    fail "/api/settings/public is not reachable from backend after installation."
+  fi
+
+  if curl --fail --silent --show-error --max-time 10 -D "$nginx_headers" -o "$nginx_body" http://127.0.0.1/api/settings/public 2>/dev/null; then
+    pass "/api/settings/public is reachable through Nginx."
+    check_cache_header "Nginx /api/settings/public" "$nginx_headers"
+  else
+    fail "/api/settings/public is not reachable through Nginx."
   fi
 }
 
@@ -187,7 +275,9 @@ check_admin_assets() {
 
 check_files() {
   [ -d "$APP_DIR" ] && pass "$APP_DIR exists." || fail "$APP_DIR is missing."
-  [ -d "$APP_DIR/backend/data" ] && pass "backend/data exists." || fail "backend/data is missing."
+  local data_dir
+  data_dir="$(settings_data_dir)"
+  [ -d "$data_dir" ] && pass "data directory exists: $data_dir" || fail "data directory is missing: $data_dir"
   [ -d "$APP_DIR/backend/.venv" ] && pass "backend virtualenv exists." || fail "backend virtualenv is missing."
   [ -f "$APP_DIR/frontend/dist/index.html" ] && pass "frontend dist exists." || fail "frontend dist is missing."
   [ -f "$APP_DIR/admin/dist/index.html" ] && pass "admin dist exists." || fail "admin dist is missing."
@@ -207,7 +297,9 @@ check_env_permissions() {
     600|640) pass "$ENV_FILE mode is $mode." ;;
     *) warn "$ENV_FILE mode is $mode; 600 or 640 is recommended." ;;
   esac
-  if [ -f "$INSTALL_LOCK" ] && [[ "$mode" =~ ^[0-7]{3,4}$ ]]; then
+  local install_lock
+  install_lock="$(settings_data_dir)/.install.lock"
+  if [ -f "$install_lock" ] && [[ "$mode" =~ ^[0-7]{3,4}$ ]]; then
     local perm owner_digit group_digit other_digit srblogs_writable=0
     perm="${mode: -3}"
     owner_digit="${perm:0:1}"
@@ -227,7 +319,7 @@ check_env_permissions() {
      grep -Eq "^JWT_SECRET=['\"]?(please-change-this-secret|change-me)['\"]?$" "$ENV_FILE" 2>/dev/null; then
     warn "$ENV_FILE still contains a weak default credential or secret placeholder."
   fi
-  if [ -f "$INSTALL_LOCK" ]; then
+  if [ -f "$install_lock" ]; then
     if grep -Eq '^ADMIN_USERNAME=' "$ENV_FILE" 2>/dev/null; then
       pass "installed system has ADMIN_USERNAME configured."
     else

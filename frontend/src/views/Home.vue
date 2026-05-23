@@ -293,7 +293,7 @@ onMounted(async () => {
     contentApi.list('moments'),
     contentApi.list('chatters'),
     contentApi.json<Array<PhotoItem | PhotoAlbum>>('/photos'),
-    contentApi.json<SiteSettings>('/settings/public'),
+    contentApi.publicSettings<SiteSettings>(),
     contentApi.json<MusicItem[]>('/music'),
     contentApi.json<PageConfig>('/pages/config')
   ])

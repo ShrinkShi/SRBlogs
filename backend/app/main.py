@@ -29,6 +29,12 @@ from app.services.install_service import ensure_base_data_dirs, is_installed
 settings = get_settings()
 app = FastAPI(title=settings.app_name)
 
+NO_STORE_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
+
 
 def _error_code(status_code: int) -> str:
     return {
@@ -89,6 +95,14 @@ async def install_guard(request: Request, call_next):
             content={"code": "INSTALL_REQUIRED", "message": "SRBlogs 尚未完成安装。", "detail": {"installUrl": "/install"}},
         )
     return await call_next(request)
+
+
+@app.middleware("http")
+async def api_no_store(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/api/"):
+        response.headers.update(NO_STORE_HEADERS)
+    return response
 
 app.include_router(install_router, prefix="/api")
 app.include_router(auth_router, prefix="/api")

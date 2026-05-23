@@ -93,7 +93,7 @@ function applyTheme() {
 }
 
 onMounted(async () => {
-  try { settings.value = await contentApi.json<SiteSettings>('/settings/public') } catch { settings.value = null }
+  try { settings.value = await contentApi.publicSettings<SiteSettings>() } catch { settings.value = null }
   ui.applyInteraction(settings.value?.interaction)
   try { player.setTracks(await contentApi.json<MusicItem[]>('/music')) } catch { player.setTracks([]) }
   applyTheme()

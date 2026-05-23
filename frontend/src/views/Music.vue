@@ -102,7 +102,7 @@ async function load() {
   try {
     const [music, publicSettings, config] = await Promise.all([
       contentApi.json<MusicItem[]>('/music'),
-      contentApi.json<SiteSettings>('/settings/public'),
+      contentApi.publicSettings<SiteSettings>(),
       contentApi.json<PageConfig>('/pages/config')
     ])
     tracks.value = music

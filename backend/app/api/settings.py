@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 
 from app.config import get_settings
 from app.models.schemas import JsonWrite
@@ -13,6 +13,11 @@ from app.services.auth_service import require_admin
 from app.services.json_service import JsonStore
 
 router = APIRouter(tags=["settings"])
+NO_STORE_HEADERS = {
+    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+    "Pragma": "no-cache",
+    "Expires": "0",
+}
 
 DEFAULT_THEME_ID = "shrink-red-glass"
 LEGACY_THEME_IDS = {"nebula", "sakura", "aurora", "cyber"}
@@ -533,7 +538,8 @@ def _strip_computed_fields(data: dict[str, Any]) -> dict[str, Any]:
 
 
 @router.get("/settings/public")
-def read_public_settings():
+def read_public_settings(response: Response):
+    response.headers.update(NO_STORE_HEADERS)
     return public_settings(_store().read())
 
 
@@ -570,9 +576,11 @@ def write_admin_settings(payload: JsonWrite, actor: str = Depends(require_admin)
             if secret_key in current_section and (incoming_value is None or incoming_value == ""):
                 incoming_section[secret_key] = current_value
     try:
-        _store().write(incoming)
+        store = _store()
+        store.write(incoming)
+        saved = store.read()
         write_audit(actor=actor, action="settings.update", resource="settings", target="settings.json", result="success", message="Settings updated")
-        return admin_settings(incoming)
+        return admin_settings(saved)
     except Exception as exc:
         write_audit(actor=actor, action="settings.update", resource="settings", target="settings.json", result="failed", message=str(exc))
         raise

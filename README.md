@@ -462,6 +462,7 @@ SRBlogs/
 ## 部署注意事项
 
 - 前台开发环境可使用 `VITE_API_BASE_URL=http://127.0.0.1:8000/api`；生产环境推荐通过同域 `/api` 反向代理。
+- `/api/*` 动态接口必须禁用缓存；当前后端和 Nginx 模板都会用 `location ^~ /api/` 反代并返回 `Cache-Control: no-store, no-cache, must-revalidate, max-age=0`，避免后台保存设置后前台仍读到旧配置。
 - 管理端使用 `/admin/` history base，Nginx 必须将 `/admin/` 回退到 `/admin/index.html`。
 - 前台 history mode 需要将未知路径回退到 `/index.html`。
 - 后端生产建议监听内网地址，由 Nginx 对外暴露；如果跨主机部署，需要调整 `HOST`、`PORT` 和 `CORS_ORIGINS`。
@@ -470,6 +471,7 @@ SRBlogs/
 - 不要直接暴露 `.env`、`.manual_backups`、`audit`、源代码目录、`node_modules` 或构建内部文件。
 - 首次部署后访问 `/install` 完成初始化；安装完成会创建 `backend/data/.install.lock`，重复访问安装 API 会被拒绝。
 - 生产推荐先上传 zip，再执行 `deploy/install.sh --zip`；更新时使用 `deploy/update.sh --zip`，不要直接覆盖 `/opt/srblogs`。
+- 如后台保存站点标题、主题外观后前台刷新仍不生效，运行 `sudo bash /opt/srblogs/deploy/doctor.sh`，检查 `settings.json`、`/api/settings/public` 内容和 Cache-Control 响应头。
 - 如更新失败且出现 `rollback attempted but healthcheck failed`，优先查看 `/var/log/srblogs/update.TIMESTAMP.log` 和 `sudo journalctl -u srblogs-backend -n 100 --no-pager`。
 
 ## 安全说明

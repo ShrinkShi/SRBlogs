@@ -49,7 +49,7 @@ async function load() {
   error.value = ''
   try {
     const [publicSettings, visitorState, list] = await Promise.all([
-      contentApi.json<SiteSettings>('/settings/public'),
+      contentApi.publicSettings<SiteSettings>(),
       contentApi.visitorMe(),
       contentApi.comments(props.resource, props.slug)
     ])

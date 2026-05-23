@@ -27,6 +27,16 @@ export const contentApi = {
     const { data } = await http.get<T>(path)
     return data
   },
+  publicSettings: async <T>() => {
+    const { data } = await http.get<T>('/settings/public', {
+      params: { _t: Date.now() },
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache'
+      }
+    })
+    return data
+  },
   installStatus: async () => {
     const { data } = await http.get<InstallStatus>('/install/status')
     return data
