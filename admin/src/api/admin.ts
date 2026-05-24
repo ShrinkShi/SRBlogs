@@ -2,6 +2,48 @@ import { http } from './http'
 import type { AuditLogResponse, BackupItem, CommentIndexItem, CommentItem, ContentItem, Stats } from '@/types'
 type InstallStatus = { installed: boolean; needsInstall: boolean; missingItems: string[] }
 
+export type UpdateTask = {
+  taskId: string
+  status: 'idle' | 'running' | 'success' | 'failed' | string
+  startedAt: string
+  finishedAt: string
+  pid: number | null
+  exitCode: number | null
+  currentStep: string
+  progress: number
+  logPath: string
+  lastLines: string[]
+  updatedAt?: string
+  lastLogAt?: string
+  errorCode?: string
+  errorMessage: string
+  tag: string
+}
+
+export type UpdateLogsResponse = {
+  taskId: string
+  status: string
+  logPath: string
+  lines: string[]
+}
+
+export type UpdateProgress = {
+  taskId: string
+  status: string
+  currentStep: string
+  progress: number
+  lastLines: string[]
+  startedAt: string
+  finishedAt?: string
+  updatedAt: string
+  lastLogAt?: string
+  pid?: number | null
+  exitCode?: number | null
+  errorCode?: string
+  errorMessage?: string
+  logPath?: string
+}
+
 export type UpdateStatus = {
   repo: string
   currentVersion: string
@@ -34,7 +76,8 @@ export type UpdateStatus = {
   updateAvailable: boolean
   updateEnabled: boolean
   updateConfigured: boolean
-  run: { status?: string; pid?: number; tag?: string; startedAt?: string; log?: string }
+  run: { status?: string; pid?: number; tag?: string; startedAt?: string; finishedAt?: string; log?: string; taskId?: string; exitCode?: number | null; errorCode?: string; message?: string }
+  task?: UpdateTask
   debugLogs: string[]
 }
 
@@ -150,6 +193,18 @@ export const adminApi = {
   },
   runUpdate: async (tag = '') => {
     const { data } = await http.post<UpdateStatus>('/admin/update/run', { tag })
+    return data
+  },
+  updateTask: async () => {
+    const { data } = await http.get<UpdateTask>('/admin/update/task')
+    return data
+  },
+  updateLogs: async (lines = 100) => {
+    const { data } = await http.get<UpdateLogsResponse>('/admin/update/logs', { params: { lines } })
+    return data
+  },
+  updateProgress: async (lines = 100) => {
+    const { data } = await http.get<UpdateProgress>('/admin/update/progress', { params: { lines } })
     return data
   }
 }

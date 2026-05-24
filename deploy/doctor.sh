@@ -145,12 +145,50 @@ check_services() {
   else
     pass "no legacy srblogs.service unit found."
   fi
+  if [ -f /etc/systemd/system/srblogs-backend.service ]; then
+    if grep -q '^KillMode=process' /etc/systemd/system/srblogs-backend.service 2>/dev/null; then
+      pass "srblogs-backend.service keeps update runner alive during backend restart."
+    else
+      warn "srblogs-backend.service is missing KillMode=process; WebUI-triggered update may be interrupted during restart."
+    fi
+  fi
   if command_exists ss && ss -ltn | grep -q ':8000 '; then
     pass "port 8000 is listening."
   elif command_exists netstat && netstat -ltn | grep -q ':8000 '; then
     pass "port 8000 is listening."
   else
     fail "port 8000 is not listening."
+  fi
+}
+
+check_sudo_nopasswd() {
+  if ! command_exists sudo; then
+    warn "sudo is missing; WebUI update cannot escalate to run deploy/update.sh."
+    return
+  fi
+  if [ "$(id -u)" -eq 0 ]; then
+    local service_user="srblogs"
+    if [ -f /etc/systemd/system/srblogs-backend.service ]; then
+      service_user="$(grep -E '^User=' /etc/systemd/system/srblogs-backend.service 2>/dev/null | tail -n 1 | cut -d= -f2- || echo srblogs)"
+      service_user="${service_user:-srblogs}"
+    fi
+    if ! id "$service_user" >/dev/null 2>&1; then
+      warn "service user $service_user does not exist; cannot verify WebUI update sudo permission."
+      return
+    fi
+    local output
+    if output="$(sudo -u "$service_user" sudo -n true 2>&1)"; then
+      pass "sudo -n true succeeded for service user $service_user; WebUI update can run deploy/update.sh."
+    else
+      warn "sudo -n true failed for service user $service_user; WebUI update will fail unless NOPASSWD sudo is configured. Reason: ${output:-unknown}"
+    fi
+    return
+  fi
+  local output
+  if output="$(sudo -n true 2>&1)"; then
+    pass "sudo -n true succeeded; WebUI update can run deploy/update.sh without password prompt."
+  else
+    warn "sudo -n true failed; WebUI update will fail unless NOPASSWD sudo is configured. Reason: ${output:-unknown}"
   fi
 }
 
@@ -283,6 +321,79 @@ check_files() {
   [ -f "$APP_DIR/admin/dist/index.html" ] && pass "admin dist exists." || fail "admin dist is missing."
 }
 
+check_update_task() {
+  local data_dir update_dir task_file info status pid log_path exit_code
+  data_dir="$(settings_data_dir)"
+  update_dir="$data_dir/update_logs"
+  task_file="$update_dir/update-task.json"
+
+  if [ -d "$update_dir" ]; then
+    pass "update_logs directory exists: $update_dir"
+  else
+    warn "update_logs directory is missing: $update_dir"
+    return
+  fi
+
+  if [ ! -f "$task_file" ]; then
+    warn "no update task record found yet: $task_file"
+    return
+  fi
+
+  if ! command_exists python3.11; then
+    warn "python3.11 unavailable; cannot parse update task record."
+    return
+  fi
+
+  info="$(python3.11 - "$task_file" <<'PY' 2>/dev/null || true
+import json
+import sys
+
+path = sys.argv[1]
+with open(path, "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+for key in ("taskId", "status", "pid", "exitCode", "currentStep", "progress", "logPath", "startedAt", "finishedAt", "errorMessage"):
+    value = data.get(key)
+    if value is None:
+        value = ""
+    print(f"{key}={value}")
+PY
+)"
+  if [ -z "$info" ]; then
+    warn "could not parse update task record: $task_file"
+    return
+  fi
+
+  status="$(printf '%s\n' "$info" | sed -n 's/^status=//p' | tail -n 1)"
+  pid="$(printf '%s\n' "$info" | sed -n 's/^pid=//p' | tail -n 1)"
+  log_path="$(printf '%s\n' "$info" | sed -n 's/^logPath=//p' | tail -n 1)"
+  exit_code="$(printf '%s\n' "$info" | sed -n 's/^exitCode=//p' | tail -n 1)"
+  log_line "update task: $(printf '%s' "$info" | tr '\n' ' ')"
+
+  if [ "$status" = "running" ]; then
+    if [ -n "$pid" ] && kill -0 "$pid" >/dev/null 2>&1; then
+      pass "latest update task is running with pid $pid."
+    else
+      warn "latest update task is running but pid is not alive; stale task may need review."
+    fi
+  elif [ "$status" = "success" ]; then
+    pass "latest update task completed successfully."
+  elif [ "$status" = "failed" ]; then
+    warn "latest update task failed with exitCode=${exit_code:-unknown}; review logs."
+  elif [ "$status" = "idle" ] || [ -z "$status" ]; then
+    pass "no update task is running."
+  else
+    warn "latest update task has unknown status: $status"
+  fi
+
+  if [ -n "$log_path" ] && [ -f "$log_path" ]; then
+    pass "latest update log exists: $log_path"
+  elif [ -n "$log_path" ]; then
+    warn "latest update log path is recorded but missing: $log_path"
+  else
+    warn "latest update task has no logPath."
+  fi
+}
+
 check_env_permissions() {
   if [ ! -f "$ENV_FILE" ]; then
     fail "$ENV_FILE is missing."
@@ -368,15 +479,17 @@ check_swap() {
 main() {
   if [ "$DRY_RUN" -eq 1 ]; then
     log_line "SRBlogs doctor dry-run plan for $APP_DIR on domain $DOMAIN."
-    log_line "Would check Python, Node/npm, services, port 8000, HTTP endpoints, permissions, dist files, nginx defaults, and swap."
+    log_line "Would check Python, Node/npm, services, sudo -n true, port 8000, HTTP endpoints, settings cache, update task logs, permissions, dist files, nginx defaults, and swap."
     log_line "Summary: PASS=0 WARN=0 FAIL=0"
     return 0
   fi
   check_python
   check_node
   check_services
+  check_sudo_nopasswd
   check_http
   check_files
+  check_update_task
   check_env_permissions
   check_nginx_defaults
   check_swap

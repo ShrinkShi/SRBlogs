@@ -5,6 +5,9 @@
 - 后台删除、恢复、导入、评论删除等确认操作改为项目内自定义确认弹窗，不再使用浏览器原生 `confirm` / `alert` / `prompt`。
 - Toast 支持成功与失败两种状态，删除、更新、备份等操作失败时使用红色项目内提示反馈。
 - 版本检测接口改为 `GET /api/admin/update/status`，真实读取 GitHub Releases；一键更新接口改为 `POST /api/admin/update/run`，Linux 服务器通过后端下载 Release zip 并调用 `deploy/update.sh`，Windows 本地开发环境明确返回 unsupported。
+- 一键更新新增持久化任务状态与日志查询接口，后台版本弹窗可轮询显示 `running / success / failed`、当前步骤、进度、PID、退出码和最近日志；`doctor.sh` 增加 update task/log 诊断。
+- WebUI 更新增加 `sudo -n true` 权限预检、`sudo_password_required` 错误提示、stale running task 自动修复和 `/api/admin/update/progress` 进度接口。
+- systemd unit 增加 `KillMode=process`，避免 WebUI 触发更新时 `deploy/update.sh` 在后端重启阶段被同一 cgroup 杀掉。
 - 保留 `/api/admin/updates/*` 旧路径兼容，避免旧管理端构建立即失效。
 
 ## 2026-05-22 - 历史安装与管理员凭据方案清理

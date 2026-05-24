@@ -442,6 +442,7 @@ Environment=BACKEND_DIR=$APP_DIR/backend
 ExecStart=/usr/bin/env bash $APP_DIR/deploy/start-backend.sh
 Restart=always
 RestartSec=5
+KillMode=process
 
 [Install]
 WantedBy=multi-user.target

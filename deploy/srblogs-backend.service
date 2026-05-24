@@ -13,6 +13,7 @@ Environment=BACKEND_DIR=/opt/srblogs/backend
 ExecStart=/usr/bin/env bash /opt/srblogs/deploy/start-backend.sh
 Restart=always
 RestartSec=5
+KillMode=process
 
 [Install]
 WantedBy=multi-user.target

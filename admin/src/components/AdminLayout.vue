@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUiStore } from '@/stores/ui'
-import { adminApi, type UpdateStatus } from '@/api/admin'
+import { adminApi, type UpdateStatus, type UpdateTask } from '@/api/admin'
 
 type NavItem = {
   label: string
@@ -26,6 +26,11 @@ const updateError = ref('')
 const localDebugLogs = ref<string[]>([])
 const versionModalOpen = ref(false)
 const versionDebugOpen = ref(false)
+const updateTask = ref<UpdateTask | null>(null)
+const updateLogLines = ref<string[]>([])
+const updatePollingTimer = ref<number | null>(null)
+const updateReconnectHint = ref(false)
+const updateHadRunningTask = ref(false)
 
 const groups: NavGroup[] = [
   {
@@ -79,6 +84,8 @@ const detectionStatusLabel = computed(() => {
     github_rate_limited: 'GitHub API 限流',
     unsupported_platform: '当前环境不支持一键更新',
     update_script_missing: '未找到更新脚本',
+    sudo_password_required: '当前服务器未配置免密码 sudo，无法通过 WebUI 一键更新。',
+    stale_task: '更新进程已经退出，任务状态已自动修复。',
     version_constant_missing: '当前版本常量缺失',
     unknown_error: updateStatus.value?.errorMessage || updateStatus.value?.message || '未知错误'
   }
@@ -104,8 +111,61 @@ const shouldShowDebugToggle = computed(() => {
         !updateStatus.value?.updateSupported)
   )
 })
+const activeUpdateTask = computed(() => updateTask.value || updateStatus.value?.task || null)
+const taskStatusLabel = computed(() => {
+  const status = activeUpdateTask.value?.status || 'idle'
+  const labels: Record<string, string> = {
+    idle: '空闲',
+    running: updateReconnectHint.value ? '后端重启中，正在重连' : '更新中',
+    success: '更新完成',
+    failed: '更新失败'
+  }
+  return labels[status] || status
+})
+const taskStepLabel = computed(() => {
+  const step = activeUpdateTask.value?.currentStep || 'idle'
+  const labels: Record<string, string> = {
+    idle: '等待开始',
+    preparing: '准备更新',
+    download: '下载 Release',
+    backup: '备份旧版本',
+    extract: '解压更新包',
+    build: '安装依赖与构建',
+    install: '切换版本',
+    nginx: '检查 Nginx',
+    systemd: '重启后端服务',
+    healthcheck: '健康检查',
+    cleanup: '清理临时文件',
+    done: '完成'
+  }
+  return labels[step] || step || '运行中'
+})
+const taskProgress = computed(() => {
+  const value = Number(activeUpdateTask.value?.progress ?? 0)
+  if (!Number.isFinite(value)) return 0
+  return Math.max(0, Math.min(100, value))
+})
+const displayedUpdateLogs = computed(() => {
+  if (updateLogLines.value.length) return updateLogLines.value
+  return activeUpdateTask.value?.lastLines || []
+})
+const taskIsRunning = computed(() => activeUpdateTask.value?.status === 'running')
+const showTaskProgress = computed(() => Boolean(activeUpdateTask.value && activeUpdateTask.value.status !== 'idle'))
+const taskPossiblyStuck = computed(() => {
+  if (!taskIsRunning.value) return false
+  const stamp = activeUpdateTask.value?.lastLogAt || activeUpdateTask.value?.updatedAt
+  if (!stamp) return false
+  const value = new Date(stamp).getTime()
+  if (!Number.isFinite(value)) return false
+  return Date.now() - value > 5 * 60 * 1000
+})
 const canRunUpdate = computed(() => {
-  return Boolean(updateStatus.value?.updateSupported && !updateStatus.value.errorCode && (updateStatus.value.hasUpdate || updateStatus.value.updateAvailable))
+  return Boolean(
+    updateStatus.value?.updateSupported &&
+      !updateStatus.value.errorCode &&
+      !taskIsRunning.value &&
+      (updateStatus.value.hasUpdate || updateStatus.value.updateAvailable)
+  )
 })
 
 function isItemActive(item: NavItem): boolean {
@@ -123,6 +183,9 @@ async function loadUpdateStatus() {
   localDebugLogs.value = []
   try {
     updateStatus.value = await adminApi.updateStatus()
+    if (updateStatus.value.task) {
+      updateTask.value = updateStatus.value.task
+    }
   } catch (exc) {
     updateError.value = exc instanceof Error ? exc.message : '版本状态加载失败'
     localDebugLogs.value = [`前端请求 /api/admin/update/status 失败: ${updateError.value}`]
@@ -132,10 +195,74 @@ async function loadUpdateStatus() {
   }
 }
 
+function stopUpdatePolling() {
+  if (updatePollingTimer.value) {
+    window.clearInterval(updatePollingTimer.value)
+    updatePollingTimer.value = null
+  }
+}
+
+function startUpdatePolling() {
+  if (updatePollingTimer.value) return
+  updatePollingTimer.value = window.setInterval(() => {
+    void loadUpdateTask({ silent: true })
+  }, 2000)
+}
+
+async function loadUpdateTask(options: { silent?: boolean } = {}) {
+  try {
+    const [task, progress] = await Promise.all([adminApi.updateTask(), adminApi.updateProgress(100)])
+    updateTask.value = {
+      ...task,
+      status: progress.status || task.status,
+      currentStep: progress.currentStep || task.currentStep,
+      progress: Number.isFinite(progress.progress) ? progress.progress : task.progress,
+      lastLines: progress.lastLines || task.lastLines || [],
+      updatedAt: progress.updatedAt || task.updatedAt,
+      lastLogAt: progress.lastLogAt || task.lastLogAt,
+      errorCode: progress.errorCode || task.errorCode,
+      errorMessage: progress.errorMessage || task.errorMessage,
+      exitCode: progress.exitCode ?? task.exitCode,
+      finishedAt: progress.finishedAt || task.finishedAt,
+      logPath: progress.logPath || task.logPath
+    }
+    updateLogLines.value = updateTask.value.lastLines || []
+    updateReconnectHint.value = false
+    if (updateTask.value.status === 'running') {
+      updateHadRunningTask.value = true
+      startUpdatePolling()
+      return
+    }
+    stopUpdatePolling()
+    if (updateHadRunningTask.value) {
+      if (updateTask.value.status === 'success') ui.show('更新完成')
+      if (updateTask.value.status === 'failed') ui.error(updateTask.value.errorCode === 'stale_task' ? '更新进程已经退出，任务状态已自动修复。' : '更新失败，请查看日志')
+      updateHadRunningTask.value = false
+    }
+  } catch (exc) {
+    if (updateHadRunningTask.value || taskIsRunning.value) {
+      updateReconnectHint.value = true
+      startUpdatePolling()
+      return
+    }
+    if (!options.silent) {
+      updateError.value = exc instanceof Error ? exc.message : '更新任务状态加载失败'
+      ui.error('更新任务状态加载失败')
+    }
+  }
+}
+
 async function openVersionModal() {
   versionModalOpen.value = true
   versionDebugOpen.value = false
   await loadUpdateStatus()
+  await loadUpdateTask({ silent: true })
+  if (taskIsRunning.value) startUpdatePolling()
+}
+
+function closeVersionModal() {
+  versionModalOpen.value = false
+  stopUpdatePolling()
 }
 
 async function checkRelease() {
@@ -168,10 +295,23 @@ async function runReleaseUpdate() {
   updateError.value = ''
   try {
     updateStatus.value = await adminApi.runUpdate(latestTag.value)
-    if (updateStatus.value.status === 'unsupported' || updateStatus.value.status === 'unsupported_platform') {
-      updateError.value = updateStatus.value.message || updateStatus.value.updateErrorMessage || '当前环境不支持一键更新，请在 Linux 服务器执行'
+    if (updateStatus.value.task) updateTask.value = updateStatus.value.task
+    const runErrorCode = updateStatus.value.updateErrorCode || updateStatus.value.run?.errorCode || updateStatus.value.task?.errorCode || ''
+    if (
+      updateStatus.value.status === 'unsupported' ||
+      updateStatus.value.status === 'unsupported_platform' ||
+      updateStatus.value.status === 'failed' ||
+      runErrorCode === 'sudo_password_required'
+    ) {
+      updateError.value =
+        runErrorCode === 'sudo_password_required'
+          ? '当前服务器未配置免密码 sudo，无法通过 WebUI 一键更新。'
+          : updateStatus.value.message || updateStatus.value.updateErrorMessage || '当前环境不支持一键更新，请在 Linux 服务器执行'
       ui.error(updateError.value)
     } else {
+      updateHadRunningTask.value = true
+      await loadUpdateTask({ silent: true })
+      startUpdatePolling()
       ui.show('更新任务已启动')
     }
   } catch (exc) {
@@ -183,7 +323,12 @@ async function runReleaseUpdate() {
   }
 }
 
+function refreshAdminPage() {
+  window.location.reload()
+}
+
 onMounted(loadUpdateStatus)
+onBeforeUnmount(stopUpdatePolling)
 </script>
 
 <template>
@@ -248,7 +393,7 @@ onMounted(loadUpdateStatus)
             <p class="text-xs font-bold uppercase tracking-[.24em] text-slate-500">release</p>
             <h2 class="mt-2 text-2xl font-black text-slate-950">版本更新</h2>
           </div>
-          <button type="button" class="admin-btn admin-btn-ghost" @click="versionModalOpen = false">关闭</button>
+          <button type="button" class="admin-btn admin-btn-ghost" @click="closeVersionModal">关闭</button>
         </div>
 
         <div class="mt-5 grid gap-3">
@@ -291,11 +436,56 @@ onMounted(loadUpdateStatus)
           </p>
         </div>
 
-        <div v-if="updateStatus?.run?.status" class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-          <p><b>更新任务：</b>{{ updateStatus.run.status }}</p>
-          <p v-if="updateStatus.run.pid"><b>PID：</b>{{ updateStatus.run.pid }}</p>
-          <p v-if="updateStatus.run.startedAt"><b>启动时间：</b>{{ updateStatus.run.startedAt }}</p>
-          <p v-if="updateStatus.run.log"><b>日志：</b>{{ updateStatus.run.log }}</p>
+        <div v-if="showTaskProgress" class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h3 class="text-sm font-black text-slate-950">更新进度</h3>
+            <span
+              class="rounded-full px-3 py-1 text-xs font-black"
+              :class="{
+                'bg-emerald-100 text-emerald-700': activeUpdateTask?.status === 'success',
+                'bg-red-100 text-red-700': activeUpdateTask?.status === 'failed',
+                'bg-slate-900 text-white': activeUpdateTask?.status === 'running',
+                'bg-slate-100 text-slate-600': !activeUpdateTask || activeUpdateTask.status === 'idle'
+              }"
+            >
+              {{ taskStatusLabel }}
+            </span>
+          </div>
+
+          <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+            <div
+              class="h-full rounded-full transition-all"
+              :class="activeUpdateTask?.status === 'failed' ? 'bg-red-500' : 'bg-emerald-500'"
+              :style="{ width: `${taskProgress || (taskIsRunning ? 12 : 0)}%` }"
+            ></div>
+          </div>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <p><b>当前步骤：</b>{{ taskStepLabel }}</p>
+            <p><b>进度：</b>{{ taskProgress ? `${taskProgress}%` : (taskIsRunning ? '运行中' : '-') }}</p>
+            <p><b>开始时间：</b>{{ activeUpdateTask?.startedAt || '-' }}</p>
+            <p><b>结束时间：</b>{{ activeUpdateTask?.finishedAt || '-' }}</p>
+            <p><b>PID：</b>{{ activeUpdateTask?.pid || '-' }}</p>
+            <p><b>exitCode：</b>{{ activeUpdateTask?.exitCode ?? '-' }}</p>
+            <p class="sm:col-span-2"><b>日志文件：</b>{{ activeUpdateTask?.logPath || '-' }}</p>
+            <p v-if="activeUpdateTask?.errorMessage" class="sm:col-span-2 text-red-600">
+              <b>错误：</b>{{ activeUpdateTask.errorMessage }}
+            </p>
+          </div>
+
+          <p v-if="updateReconnectHint" class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
+            后端重启中，正在重连...
+          </p>
+          <p v-if="taskPossiblyStuck" class="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700">
+            最近 5 分钟没有新的日志输出，任务可能已卡住，请查看日志文件。
+          </p>
+
+          <pre class="mt-3 max-h-72 overflow-auto rounded-xl bg-slate-950 p-4 text-xs leading-5 text-slate-100">{{ displayedUpdateLogs.length ? displayedUpdateLogs.join('\n') : '暂无更新日志。' }}</pre>
+
+          <div v-if="activeUpdateTask?.status === 'success'" class="mt-4 flex flex-wrap justify-end gap-2">
+            <button type="button" class="admin-btn admin-btn-ghost" @click="closeVersionModal">关闭</button>
+            <button type="button" class="admin-btn admin-btn-primary" @click="refreshAdminPage">刷新后台</button>
+          </div>
         </div>
 
         <p v-if="updateStatus && !updateStatus.updateSupported" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
@@ -309,10 +499,10 @@ onMounted(loadUpdateStatus)
           <button
             class="admin-btn admin-btn-primary"
             type="button"
-            :disabled="!canRunUpdate || updateActionLoading"
+            :disabled="!canRunUpdate || updateActionLoading || taskIsRunning"
             @click="runReleaseUpdate"
           >
-            {{ updateActionLoading ? '启动中...' : '立即更新' }}
+            {{ updateActionLoading ? '启动中...' : taskIsRunning ? '更新中' : '立即更新' }}
           </button>
         </div>
       </div>

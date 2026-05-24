@@ -282,7 +282,7 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
-诊断项包括 Python 3.11、Node/npm、nginx、systemd、8000 端口、安装状态接口、公开设置接口、目录权限、构建产物、默认 Nginx 冲突、swap 和默认弱密钥。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
+诊断项包括 Python 3.11、Node/npm、nginx、systemd、`sudo -n true`、8000 端口、安装状态接口、公开设置接口、更新任务日志、目录权限、构建产物、默认 Nginx 冲突、swap 和默认弱密钥。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
 
 #### 保守安全策略
 
@@ -322,8 +322,13 @@ sudo systemctl enable --now srblogs-backend
 
 - `GET /api/admin/update/status`：读取 `backend/app/version.py` 当前版本，检测 GitHub Latest Release，并返回 `errorCode`、`errorMessage`、`platform` 和 `debugLogs`。
 - `POST /api/admin/update/run`：仅管理员可调用。Linux 服务器会下载 Release zip 并调用 `deploy/update.sh`；Windows 本地开发环境直接返回 `unsupported_platform`，不会尝试执行 shell 更新。
+- `GET /api/admin/update/task`：返回最近一次更新任务的 `taskId`、`status`、`pid`、`exitCode`、`currentStep`、`progress` 和日志路径。
+- `GET /api/admin/update/logs?lines=100`：返回最近 N 行更新日志，后台版本弹窗会每 2 秒轮询展示进度和终端日志。
+- `GET /api/admin/update/progress`：返回面向 WebUI 的当前步骤、百分比、最近日志和 `updatedAt`，用于判断长时间无日志输出的卡住风险。
 
 如果 GitHub 没有创建 Release，弹窗会显示“未找到 GitHub Release”；如果网络不可达、超时或 API 限流，会显示对应错误并可展开“查看日志”。
+
+WebUI 触发的一键更新会在后台写入 `backend/data/update_logs/update-task.json` 和 `update-YYYYMMDDHHMMSS.log`。如果后端不是 root 运行，服务器必须配置免密码 sudo；否则接口会返回 `sudo_password_required`，不会启动更新任务。`srblogs-backend.service` 需要包含 `KillMode=process`，确保更新脚本在后端重启时继续执行并写回最终退出码。
 
 确认服务状态和日志：
 

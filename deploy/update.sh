@@ -53,6 +53,10 @@ log_line() {
   fi
 }
 
+progress_step() {
+  log_line "[$1%] $2"
+}
+
 ensure_log_dir() {
   if [ "$DRY_RUN" -eq 0 ]; then
     mkdir -p "$LOG_DIR"
@@ -269,10 +273,13 @@ npm_install_and_build() {
 }
 
 build_staging() {
+  progress_step 30 "install deps"
   run_cmd bash -c "cd '$NORMALIZED_SOURCE/backend' && python3.11 -m venv .venv"
   run_cmd "$NORMALIZED_SOURCE/backend/.venv/bin/python" -m pip install --upgrade pip
   run_cmd "$NORMALIZED_SOURCE/backend/.venv/bin/python" -m pip install -r "$NORMALIZED_SOURCE/backend/requirements.txt"
+  progress_step 50 "build frontend"
   npm_install_and_build "$NORMALIZED_SOURCE/frontend"
+  progress_step 60 "build admin"
   npm_install_and_build "$NORMALIZED_SOURCE/admin"
   run_cmd bash -c "cd '$NORMALIZED_SOURCE' && '$NORMALIZED_SOURCE/backend/.venv/bin/python' -m compileall backend/app"
 }
@@ -345,6 +352,7 @@ Environment=BACKEND_DIR=$APP_DIR/backend
 ExecStart=/usr/bin/env bash $APP_DIR/deploy/start-backend.sh
 Restart=always
 RestartSec=5
+KillMode=process
 
 [Install]
 WantedBy=multi-user.target
@@ -434,19 +442,28 @@ main() {
     log_line "[dry-run] would backup app/env/nginx/systemd, build staging, switch release, run healthchecks."
     return 0
   fi
+  progress_step 5 "preparing"
   ensure_python311 || fail_update "python3.11 check failed"
   ensure_node || fail_update "node check failed"
+  progress_step 10 "backup"
   backup_current || fail_update "backup failed"
   cleanup_backups
+  progress_step 20 "extract"
   normalize_source || fail_update "source normalization failed"
+  progress_step 70 "migrate"
   migrate_data || fail_update "data migration failed"
   build_staging || fail_update "dependency install or build failed"
+  progress_step 75 "switch release"
   switch_release
+  progress_step 80 "nginx"
   install_configs || fail_update "config installation failed"
   safe_nginx_test || fail_update "nginx -t failed"
+  progress_step 85 "restart service"
   safe_systemctl restart srblogs-backend || fail_update "systemd restart failed"
   safe_systemctl reload nginx || fail_update "nginx reload failed"
+  progress_step 95 "healthcheck"
   run_healthchecks || fail_update "API healthcheck failed"
+  progress_step 100 "completed"
   log_line "Update complete."
   log_line "Backup: $BACKUP_DIR"
 }
