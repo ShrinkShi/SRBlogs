@@ -66,6 +66,8 @@ while [ "$#" -gt 0 ]; do
 done
 
 ENV_FILE="$ENV_DIR/backend.env"
+HEALTH_LAST_ERROR=""
+HEALTH_OK_URL=""
 
 command_exists() {
   command -v "$1" >/dev/null 2>&1
@@ -192,13 +194,42 @@ check_sudo_nopasswd() {
   fi
 }
 
+api_health_once() {
+  local url output
+  for url in http://127.0.0.1:8000/api/health http://127.0.0.1:8000/api/system/health; do
+    log_line "[health] checking $url"
+    if output="$(curl --fail --silent --show-error --max-time 5 "$url" 2>&1)"; then
+      HEALTH_OK_URL="$url"
+      log_line "[health] ok: $url"
+      return 0
+    fi
+    HEALTH_LAST_ERROR="$url -> ${output:-curl failed}"
+    log_line "[health] failed: $HEALTH_LAST_ERROR"
+  done
+  return 1
+}
+
+wait_for_api_health() {
+  local attempt
+  HEALTH_LAST_ERROR=""
+  HEALTH_OK_URL=""
+  for attempt in $(seq 1 30); do
+    if api_health_once; then
+      return 0
+    fi
+    log_line "[health] attempt $attempt/30 failed. Last error: ${HEALTH_LAST_ERROR:-unknown}"
+    sleep 2
+  done
+  return 1
+}
+
 check_http() {
   local status_file="/tmp/srblogs-doctor-install-status.$$"
   local admin_html="/tmp/srblogs-doctor-admin-login.$$"
-  if curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8000/api/health >/dev/null 2>&1; then
-    pass "/api/health is reachable."
+  if wait_for_api_health; then
+    pass "backend health is reachable. Endpoint: $HEALTH_OK_URL"
   else
-    fail "/api/health is not reachable."
+    fail "backend health is not reachable after 30 attempts. Last error: ${HEALTH_LAST_ERROR:-unknown}"
   fi
   if curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8000/api/install/status >"$status_file" 2>/dev/null; then
     pass "/api/install/status is reachable."

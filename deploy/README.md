@@ -19,7 +19,7 @@
 - `start-backend.sh`：从项目虚拟环境启动 FastAPI。
 - `srblogs-backend.service`：systemd 参考 unit。
 - `nginx.srblogs.conf`：Nginx 参考配置。
-- `healthcheck.sh`：简单 HTTP 健康检查。
+- `healthcheck.sh`：HTTP 健康检查，优先检查 `/api/health`，兼容旧的 `/api/system/health`。
 
 ## 首次安装
 
@@ -70,7 +70,7 @@ sudo bash /opt/srblogs/deploy/update.sh --zip /opt/SRBlogs-main.zip
 sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
-`update.sh` 会将当前应用、`/etc/srblogs/backend.env`、Nginx 配置和 systemd unit 统一备份到 `/opt/srblogs.backup.TIMESTAMP/`。脚本先在 staging 中完成依赖安装和构建，再切换版本。依赖安装、构建、`nginx -t`、systemd restart 或 API healthcheck 失败都会触发回滚，并对恢复后的旧版本执行 healthcheck。
+`update.sh` 会将当前应用、`/etc/srblogs/backend.env`、Nginx 配置和 systemd unit 统一备份到 `/opt/srblogs.backup.TIMESTAMP/`。脚本先在 staging 中完成依赖安装和构建，再切换版本。依赖安装、构建、`nginx -t`、systemd restart 或 API healthcheck 失败都会触发回滚，并对恢复后的旧版本执行 healthcheck。healthcheck 会优先尝试 `/api/health`，再兼容旧的 `/api/system/health`，最多重试 30 次、每次间隔 2 秒，并输出失败原因。
 
 ## 安全规则
 

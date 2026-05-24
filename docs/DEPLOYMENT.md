@@ -48,7 +48,7 @@ zip 包可以直接包含 `admin/ backend/ frontend/`，也可以多一层根目
 - 有 `package-lock.json` 时使用 `npm ci`，否则使用 `npm install`。
 - 使用 `NODE_OPTIONS=--max-old-space-size=1024` 构建前台和后台。
 - 安装 systemd 和 Nginx 配置。
-- 启动 nginx 和 `srblogs-backend`。
+- 启动 nginx 和 `srblogs-backend`，并按 `/api/health`、`/api/system/health` 顺序重试健康检查。
 
 可选参数：
 
@@ -127,7 +127,7 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 - `/etc/nginx/conf.d/srblogs.conf`
 - `/etc/systemd/system/srblogs-backend.service`
 
-更新流程会先在 staging 中构建，再将 current 切到 previous，将 staging 切到 current，随后更新配置、重启服务并检查 `/api/health`、`/api/install/status`，已安装时还会检查 `/api/settings/public`。任一关键步骤失败都会回滚。
+更新流程会先在 staging 中构建，再将 current 切到 previous，将 staging 切到 current，随后更新配置、重启服务并检查 `/api/health`、`/api/install/status`，已安装时还会检查 `/api/settings/public`。健康检查会优先尝试 `/api/health`，再兼容旧的 `/api/system/health`，最多重试 30 次、每次间隔 2 秒。任一关键步骤失败都会回滚。
 
 如果回滚后的 `/api/health` 仍失败，脚本会输出：
 
@@ -151,7 +151,7 @@ dry-run：
 sudo bash /opt/srblogs/deploy/doctor.sh --dry-run
 ```
 
-`doctor.sh` 检查 Python、Node/npm、nginx、systemd、8000 端口、API 端点、目录权限、`backend.env`、前台/后台构建产物、默认 Nginx 冲突、旧 `srblogs.service`、旧明文 `ADMIN_PASSWORD`、安装状态与管理员凭据一致性、swap 和默认弱密钥。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
+`doctor.sh` 检查 Python、Node/npm、nginx、systemd、8000 端口、API 端点、目录权限、`backend.env`、前台/后台构建产物、默认 Nginx 冲突、旧 `srblogs.service`、旧明文 `ADMIN_PASSWORD`、安装状态与管理员凭据一致性、swap 和默认弱密钥。后端健康检查会输出真实可用 endpoint。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
 
 最后输出：
 

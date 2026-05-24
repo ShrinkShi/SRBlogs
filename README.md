@@ -282,7 +282,7 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
-诊断项包括 Python 3.11、Node/npm、nginx、systemd、`sudo -n true`、8000 端口、安装状态接口、公开设置接口、更新任务日志、目录权限、构建产物、默认 Nginx 冲突、swap 和默认弱密钥。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
+诊断项包括 Python 3.11、Node/npm、nginx、systemd、`sudo -n true`、8000 端口、安装状态接口、公开设置接口、更新任务日志、目录权限、构建产物、默认 Nginx 冲突、swap 和默认弱密钥。后端健康检查优先使用 `/api/health`，兼容旧的 `/api/system/health`，最多重试 30 次、每次间隔 2 秒，并输出真实可用 endpoint。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
 
 #### 保守安全策略
 
@@ -478,6 +478,7 @@ SRBlogs/
 - 生产推荐先上传 zip，再执行 `deploy/install.sh --zip`；更新时使用 `deploy/update.sh --zip`，不要直接覆盖 `/opt/srblogs`。
 - 如后台保存站点标题、主题外观后前台刷新仍不生效，运行 `sudo bash /opt/srblogs/deploy/doctor.sh`，检查 `settings.json`、`/api/settings/public` 内容和 Cache-Control 响应头。
 - 如更新失败且出现 `rollback attempted but healthcheck failed`，优先查看 `/var/log/srblogs/update.TIMESTAMP.log` 和 `sudo journalctl -u srblogs-backend -n 100 --no-pager`。
+- 更新脚本的健康检查以 `GET /api/health` 为准，返回示例为 `{"ok":true,"app":"SRBlogs API"}`；旧路径 `/api/system/health` 仅作为兼容兜底。
 
 ## 安全说明
 

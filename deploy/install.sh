@@ -80,6 +80,9 @@ safe_chmod() { run_cmd chmod "$@"; }
 safe_systemctl() { run_cmd systemctl "$@"; }
 safe_nginx_test() { run_cmd nginx -t; }
 
+HEALTH_LAST_ERROR=""
+HEALTH_OK_URL=""
+
 write_file() {
   local path="$1"
   local content="$2"
@@ -460,6 +463,37 @@ install_systemd() {
   safe_systemctl enable nginx
 }
 
+api_health_once() {
+  local url output
+  for url in http://127.0.0.1:8000/api/health http://127.0.0.1:8000/api/system/health; do
+    log_line "[health] checking $url"
+    if output="$(curl --fail --silent --show-error --max-time 5 "$url" 2>&1)"; then
+      HEALTH_OK_URL="$url"
+      log_line "[health] ok: $url"
+      return 0
+    fi
+    HEALTH_LAST_ERROR="$url -> ${output:-curl failed}"
+    log_line "[health] failed: $HEALTH_LAST_ERROR"
+  done
+  return 1
+}
+
+wait_for_api_health() {
+  local attempt
+  HEALTH_LAST_ERROR=""
+  HEALTH_OK_URL=""
+  for attempt in $(seq 1 30); do
+    if api_health_once; then
+      log_line "[health] usable endpoint: $HEALTH_OK_URL"
+      return 0
+    fi
+    log_line "[health] attempt $attempt/30 failed. Last error: ${HEALTH_LAST_ERROR:-unknown}"
+    sleep 2
+  done
+  log_line "[health] failed after 30 attempts. Last error: ${HEALTH_LAST_ERROR:-unknown}"
+  return 1
+}
+
 valid_ipv4() {
   local value="$1"
   [[ "$value" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]
@@ -551,6 +585,7 @@ main() {
   safe_nginx_test
   safe_systemctl restart srblogs-backend
   safe_systemctl restart nginx
+  wait_for_api_health || { log_line "[error] backend healthcheck failed after service restart."; exit 1; }
   print_access_info
 }
 
