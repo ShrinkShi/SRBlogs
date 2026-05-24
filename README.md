@@ -12,7 +12,7 @@ SRBlogs 是一个基于 Vue 3 + FastAPI 的个人博客系统，包含访客前�
 ## 在线体验 / 项目状态
 
 - 在线演示：暂无在线演示。
-- 当前版本：`v1.2.0`。
+- 当前版本：`v1.2.2`。
 - 当前状态：可本地运行；Linux 服务器支持一键安装、一键更新和一键诊断；真实域名、HTTPS 与第三方服务仍需按环境验收。
 - 默认本地地址：前台 `http://127.0.0.1:5173`，后台 `http://127.0.0.1:5174/admin/`，后端 `http://127.0.0.1:8000`。
 
@@ -21,7 +21,7 @@ SRBlogs 是一个基于 Vue 3 + FastAPI 的个人博客系统，包含访客前�
 README 当前未内置截图，避免继续展示旧版后台 UI。建议发布前补充以下截图：
 
 - 前台首页：展示当前主题、内容卡片和运行时间。
-- 后台文章编辑：展示 v1.2.0 双栏编辑器、Markdown 工具栏和预览。
+- 后台文章编辑：展示 v1.2.2 双栏编辑器、Markdown 工具栏和预览。
 - 后台内容管理：展示文章、图片、音乐的嵌入式评论管理入口。
 - Linux 安装向导：展示 `/install` 首次初始化流程。
 
@@ -47,7 +47,7 @@ SRBlogs 面向个人站长、内容创作者和需要轻量自托管博客的开
 
 ## 后台管理体验
 
-v1.2.0 的后台主流程围绕内容维护收敛：
+v1.2.2 的后台主流程围绕内容维护收敛：
 
 - 左侧导航只保留“内容”和“设置”，评论不再是独立入口，而是嵌入文章、图片、音乐条目。
 - 文章新增/编辑页为左侧正文、右侧元信息的双栏布局，Slug 收进高级设置。
@@ -282,7 +282,7 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
-诊断项包括 Python 3.11、Node/npm、nginx、systemd、`sudo -n true`、8000 端口、安装状态接口、公开设置接口、更新任务日志、目录权限、构建产物、默认 Nginx 冲突、swap 和默认弱密钥。后端健康检查优先使用 `/api/health`，兼容旧的 `/api/system/health`，最多重试 30 次、每次间隔 2 秒，并输出真实可用 endpoint。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
+诊断项包括 Python 3.11、Node/npm、nginx、systemd、`sudo -n true`、8000 端口、安装状态接口、后端版本、公开设置接口、更新任务日志、`backend/data` 写入权限、构建产物、默认 Nginx 冲突、swap 和默认弱密钥。后端健康检查优先使用 `/api/health`，兼容旧的 `/api/system/health`，最多重试 30 次、每次间隔 2 秒，并输出真实可用 endpoint。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
 
 #### 保守安全策略
 
@@ -341,6 +341,7 @@ sudo journalctl -u srblogs-backend -n 100 --no-pager
 
 ```bash
 sudo chown -R srblogs:srblogs /opt/srblogs/backend/data
+sudo chmod -R u+rwX,g+rwX /opt/srblogs/backend/data
 ```
 
 部署后可以运行健康检查：
@@ -421,7 +422,7 @@ SRBlogs/
 │   ├── app/api/              # API 路由
 │   ├── app/services/         # 内容、上传、备份、审计等服务
 │   ├── app/models/           # Pydantic 模型
-│   ├── app/version.py        # v1.2.0 统一版本与 GitHub 仓库常量
+│   ├── app/version.py        # v1.2.2 统一版本与 GitHub 仓库常量
 │   ├── scripts/              # 管理员密码与安装状态维护工具
 │   ├── data/                 # Markdown、JSON、评论、上传和日志数据
 │   └── requirements.txt      # 后端依赖
@@ -444,6 +445,7 @@ SRBlogs/
 - Swagger UI：`http://127.0.0.1:8000/docs`
 - OpenAPI JSON：`http://127.0.0.1:8000/openapi.json`
 - 健康检查：`GET http://127.0.0.1:8000/api/health`
+- 当前版本：`GET http://127.0.0.1:8000/api/version`
 - RSS：`GET http://127.0.0.1:8000/api/rss.xml`
 - Sitemap：`GET http://127.0.0.1:8000/api/sitemap.xml`
 - Robots：`GET http://127.0.0.1:8000/robots.txt`
@@ -491,7 +493,7 @@ SRBlogs/
 
 ## 已知问题
 
-- README 暂未包含 v1.2.0 截图，发布 GitHub Release 前建议补充前台、后台编辑器、评论弹窗和安装向导截图。
+- README 暂未包含 v1.2.2 截图，发布 GitHub Release 前建议补充前台、后台编辑器、评论弹窗和安装向导截图。
 - 真实服务器、域名和 HTTPS 部署实操仍需按目标环境执行验收。
 - GitHub/QQ OAuth、SMTP、OSS、AI Provider 需要配置真实服务后再进行联调。
 - 仓库当前没有自动化单元测试套件，主要依赖构建、后端语法检查、健康检查和手动 QA。

@@ -151,7 +151,7 @@ dry-run：
 sudo bash /opt/srblogs/deploy/doctor.sh --dry-run
 ```
 
-`doctor.sh` 检查 Python、Node/npm、nginx、systemd、8000 端口、API 端点、目录权限、`backend.env`、前台/后台构建产物、默认 Nginx 冲突、旧 `srblogs.service`、旧明文 `ADMIN_PASSWORD`、安装状态与管理员凭据一致性、swap 和默认弱密钥。后端健康检查会输出真实可用 endpoint。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
+`doctor.sh` 检查 Python、Node/npm、nginx、systemd、8000 端口、API 端点、后端版本、`backend/data` 写入权限、`backend.env`、前台/后台构建产物、默认 Nginx 冲突、旧 `srblogs.service`、旧明文 `ADMIN_PASSWORD`、安装状态与管理员凭据一致性、swap 和默认弱密钥。后端健康检查会输出真实可用 endpoint。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
 
 最后输出：
 

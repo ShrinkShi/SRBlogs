@@ -3,6 +3,7 @@ set -euo pipefail
 
 APP_DIR="/opt/srblogs"
 ENV_DIR="/etc/srblogs"
+SERVICE_USER="srblogs"
 DOMAIN="_"
 ZIP_PATH=""
 SOURCE_PATH=""
@@ -265,6 +266,19 @@ migrate_data() {
   fi
 }
 
+fix_data_permissions() {
+  local root="${1:-$APP_DIR/backend/data}"
+  run_cmd mkdir -p \
+    "$root" \
+    "$root/update_logs" \
+    "$root/update_downloads" \
+    "$root/.backups" \
+    "$root/.manual_backups" \
+    "$root/uploads"
+  safe_chown -R "$SERVICE_USER:$SERVICE_USER" "$root"
+  safe_chmod -R u+rwX,g+rwX "$root"
+}
+
 npm_install_and_build() {
   local dir="$1"
   if [ -f "$dir/package-lock.json" ]; then
@@ -424,6 +438,7 @@ rollback() {
     if [ -f "$BACKUP_DIR/backend.env" ]; then safe_cp -a "$BACKUP_DIR/backend.env" "$ENV_FILE"; fi
     if [ -f "$BACKUP_DIR/srblogs.conf" ]; then safe_cp -a "$BACKUP_DIR/srblogs.conf" "$NGINX_CONF"; fi
     if [ -f "$BACKUP_DIR/srblogs-backend.service" ]; then safe_cp -a "$BACKUP_DIR/srblogs-backend.service" "$SYSTEMD_UNIT"; fi
+    fix_data_permissions "$APP_DIR/backend/data"
     safe_systemctl daemon-reload
     safe_systemctl restart srblogs-backend
     safe_systemctl reload nginx
@@ -482,9 +497,11 @@ main() {
   normalize_source || fail_update "source normalization failed"
   progress_step 70 "migrate"
   migrate_data || fail_update "data migration failed"
+  fix_data_permissions "$NORMALIZED_SOURCE/backend/data" || fail_update "data permission fix failed"
   build_staging || fail_update "dependency install or build failed"
   progress_step 75 "switch release"
   switch_release
+  fix_data_permissions "$APP_DIR/backend/data" || fail_update "data permission fix failed"
   progress_step 80 "nginx"
   install_configs || fail_update "config installation failed"
   safe_nginx_test || fail_update "nginx -t failed"

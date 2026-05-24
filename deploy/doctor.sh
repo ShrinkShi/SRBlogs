@@ -4,6 +4,7 @@ set -euo pipefail
 APP_DIR="/opt/srblogs"
 ENV_DIR="/etc/srblogs"
 DOMAIN="_"
+TARGET_VERSION="1.2.2"
 DRY_RUN=0
 PASS_COUNT=0
 WARN_COUNT=0
@@ -71,6 +72,15 @@ HEALTH_OK_URL=""
 
 command_exists() {
   command -v "$1" >/dev/null 2>&1
+}
+
+service_user() {
+  local value="srblogs"
+  if [ -f /etc/systemd/system/srblogs-backend.service ]; then
+    value="$(grep -E '^User=' /etc/systemd/system/srblogs-backend.service 2>/dev/null | tail -n 1 | cut -d= -f2- || echo srblogs)"
+    value="${value:-srblogs}"
+  fi
+  printf '%s\n' "$value"
 }
 
 settings_data_dir() {
@@ -169,11 +179,8 @@ check_sudo_nopasswd() {
     return
   fi
   if [ "$(id -u)" -eq 0 ]; then
-    local service_user="srblogs"
-    if [ -f /etc/systemd/system/srblogs-backend.service ]; then
-      service_user="$(grep -E '^User=' /etc/systemd/system/srblogs-backend.service 2>/dev/null | tail -n 1 | cut -d= -f2- || echo srblogs)"
-      service_user="${service_user:-srblogs}"
-    fi
+    local service_user
+    service_user="$(service_user)"
     if ! id "$service_user" >/dev/null 2>&1; then
       warn "service user $service_user does not exist; cannot verify WebUI update sudo permission."
       return
@@ -251,6 +258,31 @@ check_http() {
     check_admin_assets "$admin_html"
   else
     fail "/admin/login is not reachable through Nginx."
+  fi
+}
+
+check_version_endpoint() {
+  local body="/tmp/srblogs-doctor-version.$$"
+  if curl --fail --silent --show-error --max-time 10 http://127.0.0.1:8000/api/version >"$body" 2>/dev/null; then
+    local version
+    version="$(python3.11 - "$body" <<'PY' 2>/dev/null || true
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    data = json.load(handle)
+print(str(data.get("version") or ""))
+PY
+)"
+    if [ -z "$version" ]; then
+      warn "/api/version is reachable but version could not be parsed."
+    elif [ "$version" = "$TARGET_VERSION" ] || [ "$version" = "v$TARGET_VERSION" ]; then
+      pass "backend version is v$TARGET_VERSION."
+    else
+      warn "backend version is $version; expected v$TARGET_VERSION."
+    fi
+  else
+    warn "/api/version is not reachable; cannot verify backend version."
   fi
 }
 
@@ -350,6 +382,49 @@ check_files() {
   [ -d "$APP_DIR/backend/.venv" ] && pass "backend virtualenv exists." || fail "backend virtualenv is missing."
   [ -f "$APP_DIR/frontend/dist/index.html" ] && pass "frontend dist exists." || fail "frontend dist is missing."
   [ -f "$APP_DIR/admin/dist/index.html" ] && pass "admin dist exists." || fail "admin dist is missing."
+}
+
+data_fix_hint() {
+  local path="$1"
+  log_line "Fix data permissions with:"
+  log_line "  sudo chown -R srblogs:srblogs $path"
+  log_line "  sudo chmod -R u+rwX,g+rwX $path"
+}
+
+check_srblogs_writable() {
+  local path="$1"
+  local user
+  user="$(service_user)"
+  if [ ! -d "$path" ]; then
+    fail "$path is missing."
+    data_fix_hint "$(settings_data_dir)"
+    return
+  fi
+  if ! id "$user" >/dev/null 2>&1; then
+    warn "service user $user does not exist; cannot verify writability for $path."
+    return
+  fi
+  if command_exists sudo; then
+    if sudo -u "$user" test -w "$path" 2>/dev/null; then
+      pass "$path is writable by $user."
+    else
+      fail "$path is not writable by $user."
+      data_fix_hint "$(settings_data_dir)"
+    fi
+  elif [ "$(id -un 2>/dev/null || true)" = "$user" ] && [ -w "$path" ]; then
+    pass "$path is writable by $user."
+  else
+    warn "sudo is unavailable; cannot verify $path writability as $user."
+  fi
+}
+
+check_data_permissions() {
+  local data_dir
+  data_dir="$(settings_data_dir)"
+  check_srblogs_writable "$data_dir"
+  check_srblogs_writable "$data_dir/update_logs"
+  check_srblogs_writable "$data_dir/update_downloads"
+  check_srblogs_writable "$data_dir/uploads"
 }
 
 check_update_task() {
@@ -510,7 +585,7 @@ check_swap() {
 main() {
   if [ "$DRY_RUN" -eq 1 ]; then
     log_line "SRBlogs doctor dry-run plan for $APP_DIR on domain $DOMAIN."
-    log_line "Would check Python, Node/npm, services, sudo -n true, port 8000, HTTP endpoints, settings cache, update task logs, permissions, dist files, nginx defaults, and swap."
+    log_line "Would check Python, Node/npm, services, sudo -n true, port 8000, HTTP endpoints, backend version, settings cache, data/update log permissions, update task logs, dist files, nginx defaults, and swap."
     log_line "Summary: PASS=0 WARN=0 FAIL=0"
     return 0
   fi
@@ -519,7 +594,9 @@ main() {
   check_services
   check_sudo_nopasswd
   check_http
+  check_version_endpoint
   check_files
+  check_data_permissions
   check_update_task
   check_env_permissions
   check_nginx_defaults

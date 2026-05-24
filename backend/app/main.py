@@ -25,6 +25,7 @@ from app.api.admin_tools import router as admin_tools_router
 from app.api.updates import router as updates_router
 from app.api.install import router as install_router
 from app.services.install_service import ensure_base_data_dirs, is_installed
+from app.version import APP_NAME, APP_VERSION
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name)
@@ -86,6 +87,7 @@ async def install_guard(request: Request, call_next):
         return await call_next(request)
     allowed = {
         "/api/health",
+        "/api/version",
         "/api/install/status",
         "/api/install",
     }
@@ -132,3 +134,8 @@ app.include_router(seo_router)
 @app.get("/api/health")
 def health():
     return {"ok": True, "app": settings.app_name}
+
+
+@app.get("/api/version")
+def version():
+    return {"app": APP_NAME, "version": APP_VERSION}

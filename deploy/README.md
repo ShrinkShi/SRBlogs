@@ -91,6 +91,8 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 - 上传目录：`/opt/srblogs/backend/data/uploads`
 - 审计日志：`/opt/srblogs/backend/data/audit/audit.log`
 - 安装锁：`/opt/srblogs/backend/data/.install.lock`
+- 更新日志：`/opt/srblogs/backend/data/update_logs`
+- 更新下载缓存：`/opt/srblogs/backend/data/update_downloads`
 - 后端日志：`sudo journalctl -u srblogs-backend -n 100 --no-pager`
 - 服务状态：`systemctl status srblogs-backend --no-pager`
 - 最近日志：`sudo journalctl -u srblogs-backend -n 100 --no-pager`
@@ -113,6 +115,13 @@ sudo systemctl restart srblogs-backend
 ```
 
 安装完成后应尽量收紧 `/etc/srblogs/backend.env` 权限。`doctor.sh` 会在已安装状态下检测该文件是否仍可被 `srblogs` 服务用户写入，并输出 WARN。
+
+`backend/data` 必须保持 `srblogs` 服务用户可写，尤其是 `update_logs`、`update_downloads` 和 `uploads`。修复命令：
+
+```bash
+sudo chown -R srblogs:srblogs /opt/srblogs/backend/data
+sudo chmod -R u+rwX,g+rwX /opt/srblogs/backend/data
+```
 
 ## 静态检查
 

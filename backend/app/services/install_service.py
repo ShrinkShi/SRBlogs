@@ -71,8 +71,10 @@ def ensure_base_data_dirs() -> None:
         "photos",
         "uploads",
         "audit",
+        ".backups",
         ".manual_backups",
         "update_logs",
+        "update_downloads",
     ):
         (base / relative).mkdir(parents=True, exist_ok=True)
 

@@ -290,14 +290,27 @@ sync_project() {
 }
 
 prepare_env_and_data() {
-  run_cmd mkdir -p "$ENV_DIR" "$APP_DIR/backend/data/uploads" "$APP_DIR/backend/data/audit" "$APP_DIR/backend/data/.manual_backups"
+  run_cmd mkdir -p "$ENV_DIR"
   if [ ! -f "$ENV_FILE" ]; then
     safe_cp "$APP_DIR/backend/.env.production.example" "$ENV_FILE"
   fi
-  safe_chown "$SERVICE_USER:$SERVICE_USER" "$ENV_DIR" "$ENV_FILE"
-  safe_chmod 700 "$ENV_DIR"
-  safe_chmod 600 "$ENV_FILE"
-  safe_chown -R "$SERVICE_USER:$SERVICE_USER" "$APP_DIR/backend"
+  safe_chown "root:$SERVICE_USER" "$ENV_DIR" "$ENV_FILE"
+  safe_chmod 750 "$ENV_DIR"
+  safe_chmod 640 "$ENV_FILE"
+  fix_data_permissions
+}
+
+fix_data_permissions() {
+  local data_dir="$APP_DIR/backend/data"
+  run_cmd mkdir -p \
+    "$data_dir" \
+    "$data_dir/update_logs" \
+    "$data_dir/update_downloads" \
+    "$data_dir/.backups" \
+    "$data_dir/.manual_backups" \
+    "$data_dir/uploads"
+  safe_chown -R "$SERVICE_USER:$SERVICE_USER" "$data_dir"
+  safe_chmod -R u+rwX,g+rwX "$data_dir"
 }
 
 install_backend() {
