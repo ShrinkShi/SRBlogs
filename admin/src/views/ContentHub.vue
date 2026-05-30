@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import PostsManage from '@/views/PostsManage.vue'
 import ChatterManage from '@/views/ChatterManage.vue'
+import MomentsManage from '@/views/MomentsManage.vue'
 import PhotowallManage from '@/views/PhotowallManage.vue'
 import MusicManage from '@/views/MusicManage.vue'
 import ProjectsManage from '@/views/ProjectsManage.vue'
@@ -19,6 +20,7 @@ const articleKind = computed<'posts' | 'chatters'>(() => route.query.kind === 'c
   <section class="admin-workspace">
     <PostsManage v-if="section === 'articles' && articleKind === 'posts'" />
     <ChatterManage v-else-if="section === 'articles' && articleKind === 'chatters'" />
+    <MomentsManage v-else-if="section === 'moments'" />
     <PhotowallManage v-else-if="section === 'photos'" />
     <MusicManage v-else-if="section === 'music'" />
     <ProjectsManage v-else-if="section === 'projects'" />

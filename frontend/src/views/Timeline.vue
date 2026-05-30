@@ -26,7 +26,6 @@ onMounted(load)
   <section class="grid gap-5">
     <GlassCard class="page-title-block text-center">
       <h1 class="text-4xl font-black text-white">时间线</h1>
-      <p class="mt-3 text-white/56">按时间查看公开动态。</p>
     </GlassCard>
     <GlassCard v-if="loading"><p class="text-white/60">时间线加载中...</p></GlassCard>
     <GlassCard v-else-if="error">

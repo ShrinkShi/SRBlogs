@@ -1,22 +1,25 @@
 ﻿<script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import CommentBox from '@/components/CommentBox.vue'
 import PlayerVolumeControl from '@/components/PlayerVolumeControl.vue'
 import { contentApi } from '@/api/content'
-import type { MusicItem, PageConfig, SiteSettings } from '@/types'
+import type { MusicItem, PageConfig } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { usePlayerStore } from '@/stores/player'
 import { useUiStore } from '@/stores/ui'
 
+type LyricEntry = { time: number; text: string }
+type LyricLine = { key: string; text: string; active: boolean }
+
 const tracks = ref<MusicItem[]>([])
-const settings = ref<SiteSettings | null>(null)
 const pageConfig = ref<PageConfig | null>(null)
 const loading = ref(false)
 const error = ref('')
 const activeTab = ref<'lyrics' | 'playlist'>('lyrics')
 const lyricText = ref('')
+const activeLyricNode = ref<HTMLElement | null>(null)
 const player = usePlayerStore()
 const ui = useUiStore()
 
@@ -37,16 +40,88 @@ const currentSongId = computed(() => player.songKey(currentTrack.value))
 const likedCurrent = computed(() => currentSongId.value ? player.isLiked(currentSongId.value) : false)
 const currentLikes = computed(() => Math.max(0, Number(currentTrack.value?.likes || 0)))
 const playModeLabel = computed(() => player.playMode === 'sequence' ? '顺序播放' : player.playMode === 'shuffle' ? '随机播放' : '单曲循环')
-const displayLyrics = computed(() => {
-  const inline = currentTrack.value?.lyrics?.trim()
-  const remote = lyricText.value.trim()
-  const source = remote || inline
-  if (!source) return '暂无歌词，播放时会显示当前歌曲信息。'
-  return source
-    .split('\n')
-    .map((line) => line.replace(/^\[[^\]]+\]/, '').trim())
-    .filter(Boolean)
-    .join('\n')
+const lyricSource = computed(() => lyricText.value.trim() || currentTrack.value?.lyrics?.trim() || '')
+const lyricEntries = computed(() => parseLrc(lyricSource.value))
+const activeLyricIndex = computed(() => {
+  const entries = lyricEntries.value
+  if (!entries.length) return -1
+  const current = Math.max(0, player.currentTime || 0)
+  if (current < entries[0].time) return -1
+  let activeIndex = 0
+  entries.forEach((entry, index) => {
+    if (entry.time <= current) activeIndex = index
+  })
+  return activeIndex
+})
+const lyricLines = computed<LyricLine[]>(() => {
+  const entries = lyricEntries.value
+  if (entries.length) {
+    return entries.map((entry, index) => ({
+      key: `${entry.time}-${index}`,
+      text: entry.text,
+      active: index === activeLyricIndex.value
+    }))
+  }
+  const source = lyricSource.value
+  if (source) {
+    const lines = source
+      .split('\n')
+      .map((line) => line.replace(/^\[[^\]]+\]/, '').trim())
+      .filter(Boolean)
+    if (lines.length) {
+      return lines.map((line, index) => ({
+        key: `plain-${index}`,
+        text: line,
+        active: false
+      }))
+    }
+  }
+  const fallback = currentTrack.value
+    ? `${currentTrack.value.title} - ${currentTrack.value.artist} / ${player.playing ? '正在播放' : '等待播放'}`
+    : '暂无歌词，播放时会显示当前歌曲信息。'
+  return [{ key: 'fallback', text: fallback, active: false }]
+})
+
+function parseTimeTag(tag: string) {
+  const match = tag.match(/^(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?$/)
+  if (!match) return null
+  const minutes = Number(match[1])
+  const seconds = Number(match[2])
+  const fraction = match[3] ? Number(`0.${match[3].padEnd(3, '0').slice(0, 3)}`) : 0
+  return minutes * 60 + seconds + fraction
+}
+
+function parseLrc(source: string): LyricEntry[] {
+  const entries: LyricEntry[] = []
+  source.split('\n').forEach((rawLine) => {
+    const line = rawLine.trim()
+    if (!line) return
+    const tags = [...line.matchAll(/\[([0-9:.]+)\]/g)]
+    if (!tags.length) return
+    const text = line.replace(/\[[^\]]+\]/g, '').trim()
+    tags.forEach((tag) => {
+      const time = parseTimeTag(tag[1])
+      if (time !== null && text) entries.push({ time, text })
+    })
+  })
+  return entries.sort((a, b) => a.time - b.time)
+}
+
+function setActiveLyricNode(el: unknown) {
+  activeLyricNode.value = el instanceof HTMLElement ? el : null
+}
+
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+}
+
+watch([activeLyricIndex, activeTab], async () => {
+  if (activeTab.value !== 'lyrics' || activeLyricIndex.value < 0) return
+  await nextTick()
+  activeLyricNode.value?.scrollIntoView({
+    block: 'center',
+    behavior: prefersReducedMotion() ? 'auto' : 'smooth'
+  })
 })
 
 function formatTime(value: number) {
@@ -100,13 +175,11 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const [music, publicSettings, config] = await Promise.all([
+    const [music, config] = await Promise.all([
       contentApi.json<MusicItem[]>('/music'),
-      contentApi.publicSettings<SiteSettings>(),
       contentApi.json<PageConfig>('/pages/config')
     ])
     tracks.value = music
-    settings.value = publicSettings
     pageConfig.value = config
     player.setTracks(music)
   } catch (exc) {
@@ -135,9 +208,7 @@ onMounted(load)
   <section class="page-layout-grid">
     <GlassCard class="page-title-block">
       <div class="mx-auto max-w-3xl text-center">
-        <p class="text-xs font-bold uppercase tracking-[.32em] text-fuchsia-100/45">music</p>
-        <h1 class="mt-2 text-4xl font-black text-white">{{ pageTitle }}</h1>
-        <p class="mt-3 text-white/56">{{ pageSubtitle }} 公开音乐配置：{{ settings?.cloudMusicIds?.join(' / ') || '未配置' }}</p>
+        <h1 class="text-4xl font-black text-white">{{ pageTitle }}</h1>
       </div>
     </GlassCard>
 
@@ -201,8 +272,16 @@ onMounted(load)
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'playlist' ? 'bg-[var(--accent)] text-white' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'playlist'">歌单</button>
         </div>
 
-        <div v-if="activeTab === 'lyrics'" class="music-tab-content mt-5 max-h-[32rem] overflow-auto whitespace-pre-line rounded-[24px] p-5 text-center text-sm leading-8">
-          {{ displayLyrics }}
+        <div v-if="activeTab === 'lyrics'" class="music-tab-content music-lyrics-reader mt-5 max-h-[32rem] overflow-auto rounded-[24px] p-5 text-center text-sm leading-8">
+          <p
+            v-for="line in lyricLines"
+            :key="line.key"
+            :ref="line.active ? setActiveLyricNode : undefined"
+            class="music-lyric-line"
+            :class="{ 'music-lyric-line-active': line.active }"
+          >
+            {{ line.text }}
+          </p>
         </div>
 
         <div v-else class="music-tab-content mt-5 grid max-h-[32rem] gap-3 overflow-auto rounded-[24px] p-3">

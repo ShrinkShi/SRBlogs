@@ -13,5 +13,13 @@ const emptyItem = { name: '', url: '', description: '', avatar: '', tags: [] }
 </script>
 
 <template>
-  <StructuredJsonManager title="友链管理" path="/friends" item-name="友链" :fields="fields" :empty-item="emptyItem" />
+  <StructuredJsonManager
+    title="友链管理"
+    path="/friends"
+    item-name="友链"
+    :fields="fields"
+    :empty-item="emptyItem"
+    comment-resource="friends"
+    comment-type-label="友链"
+  />
 </template>

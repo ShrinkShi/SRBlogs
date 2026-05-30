@@ -112,9 +112,7 @@ onMounted(() => {
   <section class="page-layout-grid">
     <GlassCard class="page-title-block">
       <div class="mx-auto max-w-5xl text-center">
-        <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">{{ sectionConfig.eyebrow }}</p>
-        <h1 class="mt-2 text-4xl font-black text-white">{{ sectionConfig.title }}</h1>
-        <p class="mx-auto mt-3 max-w-2xl text-white/56">{{ sectionConfig.subtitle }}</p>
+        <h1 class="text-4xl font-black text-white">{{ sectionConfig.title }}</h1>
       </div>
     </GlassCard>
 

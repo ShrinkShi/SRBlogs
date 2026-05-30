@@ -2,6 +2,7 @@ import { computed, unref, watchEffect, type MaybeRefOrGetter } from 'vue'
 
 interface SeoInput {
   title: MaybeRefOrGetter<string>
+  siteName?: MaybeRefOrGetter<string | undefined>
   description?: MaybeRefOrGetter<string | undefined>
   image?: MaybeRefOrGetter<string | undefined>
   type?: MaybeRefOrGetter<string | undefined>
@@ -35,7 +36,9 @@ function absoluteUrl(pathOrUrl: string) {
 export function useSeo(input: SeoInput) {
   const titleText = computed(() => {
     const raw = valueOf(input.title)?.trim() || siteName
-    return raw.includes(siteName) ? raw : `${raw} · ${siteName}`
+    const suffix = input.siteName === undefined ? siteName : valueOf(input.siteName)?.trim()
+    if (!suffix || raw.includes(suffix)) return raw
+    return `${raw} · ${suffix}`
   })
 
   watchEffect(() => {

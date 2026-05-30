@@ -5,6 +5,12 @@ export interface ContentMeta {
   draft: boolean
   cover?: string
   summary?: string
+  images?: string[]
+  location?: string
+  view_count?: number
+  like_count?: number
+  comment_count?: number
+  share_count?: number
 }
 
 export interface ContentItem {
@@ -233,14 +239,18 @@ export interface AboutPageConfig {
 export interface SiteSettings {
   siteTitle?: string
   subtitle?: string
+  siteDescription?: string
   author?: string
   avatar?: string
   description?: string
+  profileIntro?: string
   socialLinks?: Record<string, string>
   title?: string
   authorName?: string
   bio?: string
   avatarUrl?: string
+  icp?: string
+  beian?: string
   defaultPostCover?: string
   photoWallImage?: string
   bgImages?: string[]

@@ -2,7 +2,7 @@
   "title": "时锐 | Shrink",
   "authorName": "Shrink",
   "bio": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
-  "avatarUrl": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=500&auto=format&fit=crop",
+  "avatarUrl": "http://127.0.0.1:8000/uploads/d702e73239ce489ebdb495851d07da42.jpg",
   "defaultPostCover": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop",
   "photoWallImage": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
   "bgImages": [
@@ -81,8 +81,8 @@
   "siteTitle": "时锐 | Shrink",
   "subtitle": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
   "author": "Shrink",
-  "avatar": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=500&auto=format&fit=crop",
-  "description": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
+  "avatar": "http://127.0.0.1:8000/uploads/d702e73239ce489ebdb495851d07da42.jpg",
+  "description": "",
   "socialLinks": {
     "github": "https://github.com/ShrinkShi",
     "gitee": "https://gitee.com/yourname",
@@ -137,6 +137,9 @@
         }
       ],
       "activeBgIndex": 0,
+      "slideshowEnabled": true,
+      "slideshowInterval": 8.5,
+      "slideshowEffect": "fade",
       "overlayColor": "#ffffff",
       "overlayOpacity": "0",
       "pageBg": "#f7f7f7",
@@ -177,6 +180,9 @@
         }
       ],
       "activeBgIndex": 0,
+      "slideshowEnabled": true,
+      "slideshowInterval": 8.5,
+      "slideshowEffect": "fade",
       "overlayColor": "#000000",
       "overlayOpacity": "0.24",
       "pageBg": "#050505",
@@ -827,8 +833,22 @@
         "modes": {
           "day": {
             "bgImage": "",
-            "bgImages": [],
+            "bgImages": [
+              {
+                "url": "http://127.0.0.1:8000/uploads/f83c59eebb364022aa5d360f6ef0c2c5.png",
+                "name": "壁纸 1",
+                "enabled": true
+              },
+              {
+                "url": "http://127.0.0.1:8000/uploads/61ec81221a394295a416ea622fd15333.png",
+                "name": "壁纸 2",
+                "enabled": true
+              }
+            ],
             "activeBgIndex": 0,
+            "slideshowEnabled": true,
+            "slideshowInterval": 8.5,
+            "slideshowEffect": "fade",
             "overlayColor": "#ffffff",
             "overlayOpacity": "0",
             "pageBg": "#f7f7f7",
@@ -856,8 +876,22 @@
           },
           "night": {
             "bgImage": "",
-            "bgImages": [],
+            "bgImages": [
+              {
+                "url": "http://127.0.0.1:8000/uploads/fb5ea13fc5584f4fa924bae5d98698ea.png",
+                "name": "壁纸 1",
+                "enabled": true
+              },
+              {
+                "url": "http://127.0.0.1:8000/uploads/1f05141d41ac417bb358445c78e19abe.png",
+                "name": "壁纸 2",
+                "enabled": true
+              }
+            ],
             "activeBgIndex": 0,
+            "slideshowEnabled": true,
+            "slideshowInterval": 8.5,
+            "slideshowEffect": "fade",
             "overlayColor": "#000000",
             "overlayOpacity": "0.24",
             "pageBg": "#050505",
@@ -1541,7 +1575,10 @@
         "fontSizeBase": "16",
         "titleScale": "1.2",
         "radius": "24",
-        "blur": "18"
+        "blur": "18",
+        "slideshowEnabled": true,
+        "slideshowInterval": 8.5,
+        "slideshowEffect": "fade"
       },
       "night": {
         "bgImage": "",
@@ -1581,7 +1618,10 @@
         "fontSizeBase": "16",
         "titleScale": "1.2",
         "radius": "24",
-        "blur": "18"
+        "blur": "18",
+        "slideshowEnabled": true,
+        "slideshowInterval": 8.5,
+        "slideshowEffect": "fade"
       }
     }
   },
@@ -1675,5 +1715,9 @@
       ]
     }
   },
-  "siteStartTime": "2026-05-22T15:41:51+08:00"
+  "siteStartTime": "2026-05-22T15:41:51+08:00",
+  "siteDescription": "",
+  "icp": "京ICP备2026028577",
+  "beian": "京ICP备2026028577",
+  "profileIntro": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。"
 }

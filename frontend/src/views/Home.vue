@@ -40,15 +40,19 @@ const homeSearchQ = ref('')
 const homeSearchResults = ref<SearchResultItem[]>([])
 const homeSearchLoading = ref(false)
 const homeSearchError = ref('')
+const animatedLyricLine = ref('')
 const ui = useUiStore()
 const player = usePlayerStore()
 let clockTimer = 0
 let carouselTimer = 0
 let searchTimer = 0
+let lyricAnimationTimer = 0
+let lyricAnimationToken = 0
 
 useSeo({
   title: () => settings.value?.siteTitle || settings.value?.title || '首页',
-  description: () => settings.value?.description || settings.value?.bio || 'SRBlogs 首页',
+  siteName: () => settings.value?.subtitle || '',
+  description: () => settings.value?.siteDescription || settings.value?.description || settings.value?.bio || 'SRBlogs 首页',
   image: () => settings.value?.avatar || settings.value?.avatarUrl || settings.value?.bgImages?.[0],
   path: '/'
 })
@@ -79,7 +83,7 @@ const currentPhoto = computed(() => photoSlides.value[photoIndex.value] || photo
 const latestUpdates = computed<UpdateItem[]>(() => {
   const mapItem = (type: UpdateItem['type'], item: ContentItem): UpdateItem => ({
     type,
-    label: type === 'posts' ? '文章' : type === 'chatters' ? '杂谈' : '瞬间',
+    label: type === 'posts' ? '文章' : type === 'chatters' ? '杂谈' : '说说',
     title: item.meta.title,
     date: item.meta.date,
     summary: item.meta.summary || item.content.replace(/[#>*_`-]/g, '').slice(0, 120),
@@ -141,6 +145,49 @@ const lyricLine = computed(() => {
   return '暂无歌词数据，添加歌曲后这里会显示当前播放信息'
 })
 
+function clearLyricAnimationTimer() {
+  if (lyricAnimationTimer) {
+    window.clearTimeout(lyricAnimationTimer)
+    lyricAnimationTimer = 0
+  }
+}
+
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+}
+
+function animateHomeLyricTo(next: string) {
+  const target = next || ' '
+  const token = ++lyricAnimationToken
+  clearLyricAnimationTimer()
+
+  if (prefersReducedMotion()) {
+    animatedLyricLine.value = target
+    return
+  }
+
+  const deleteStep = () => {
+    if (token !== lyricAnimationToken) return
+    if (animatedLyricLine.value.length > 0) {
+      animatedLyricLine.value = animatedLyricLine.value.slice(0, -1)
+      lyricAnimationTimer = window.setTimeout(deleteStep, 12)
+      return
+    }
+
+    let index = 0
+    const inputStep = () => {
+      if (token !== lyricAnimationToken) return
+      if (index >= target.length) return
+      index += 1
+      animatedLyricLine.value = target.slice(0, index)
+      lyricAnimationTimer = window.setTimeout(inputStep, 24)
+    }
+    inputStep()
+  }
+
+  deleteStep()
+}
+
 watch(() => track.value?.lyricUrl, async (url) => {
   remoteLyrics.value = ''
   if (!url) return
@@ -164,6 +211,9 @@ watch(homeSearchQ, () => {
   if (searchTimer) window.clearTimeout(searchTimer)
   searchTimer = window.setTimeout(runHomeSearch, 260)
 })
+watch(lyricLine, (line) => {
+  animateHomeLyricTo(line)
+}, { immediate: true })
 const lyricStyle = computed(() => {
   const len = lyricLine.value.length
   const size = len > 60 ? '.78rem' : len > 42 ? '.88rem' : len > 28 ? '.98rem' : '1.08rem'
@@ -190,6 +240,7 @@ const playModeLabel = computed(() => player.playMode === 'sequence' ? '顺序播
 const recordStyle = computed<Record<string, string>>(() => (
   track.value?.cover ? { '--record-cover': `url(${track.value.cover})` } : {} as Record<string, string>
 ))
+const icpRecord = computed(() => '京ICP备2026028577')
 const homeSettings = computed<SiteSettings | null>(() => {
   const profile = pageConfig.value?.homeProfile
   if (!profile) return settings.value
@@ -197,7 +248,8 @@ const homeSettings = computed<SiteSettings | null>(() => {
     ...(settings.value || {}),
     author: profile.author || settings.value?.author,
     avatar: profile.avatar || settings.value?.avatar,
-    description: profile.description || settings.value?.description,
+    bio: profile.description || settings.value?.bio,
+    description: settings.value?.description,
     socialLinks: profile.socialLinks || settings.value?.socialLinks
   }
 })
@@ -315,6 +367,8 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  ++lyricAnimationToken
+  clearLyricAnimationTimer()
   if (clockTimer) window.clearInterval(clockTimer)
   if (carouselTimer) window.clearInterval(carouselTimer)
   if (searchTimer) window.clearTimeout(searchTimer)
@@ -401,7 +455,12 @@ onBeforeUnmount(() => {
 
       <GlassCard hover class="sr-hero-panel lyrics-compact">
       <div class="flex h-full min-h-[38px] flex-col items-center justify-center px-4 py-2 text-center">
-        <p class="home-lyric-line mx-auto max-w-full truncate text-center font-black leading-tight" :style="lyricStyle">{{ lyricLine }}</p>
+        <p class="home-lyric-line mx-auto max-w-full truncate text-center font-black leading-tight" :style="lyricStyle">
+          <span class="home-typewriter-lyric" aria-live="polite">
+            <span class="home-typewriter-text">{{ animatedLyricLine || '\u00a0' }}</span>
+            <span class="home-typewriter-cursor" aria-hidden="true"></span>
+          </span>
+        </p>
       </div>
     </GlassCard>
 
@@ -430,7 +489,7 @@ onBeforeUnmount(() => {
             <div class="image-contrast-overlay absolute inset-0"></div>
             <div class="home-carousel-copy">
               <span class="sr-chip px-3 py-1 text-xs">{{ currentPhoto.date || 'photo' }}</span>
-              <h2 class="mt-3 line-clamp-2 text-3xl font-black text-white">{{ currentPhoto.title || '照片墙' }}</h2>
+              <h2 class="mt-3 line-clamp-2 text-3xl font-black text-white">{{ currentPhoto.title || '相册' }}</h2>
               <p class="mt-3 line-clamp-2 text-sm leading-6 text-white/68">{{ currentPhoto.description || '记录生活里的片段和场景。' }}</p>
             </div>
             <div v-if="photoSlides.length > 1" class="home-carousel-dots">
@@ -454,11 +513,11 @@ onBeforeUnmount(() => {
             </RouterLink>
             <div v-else class="home-text-carousel home-updates-carousel-card grid place-items-center text-white/58">暂无更新内容</div>
 
-            <button type="button" class="home-theme-card sr-card-hover" @click="ui.toggleColorMode">
-              <span class="mode-orb grid h-20 w-20 place-items-center rounded-[28px] text-4xl" aria-hidden="true">{{ ui.colorMode === 'day' ? '☀️' : '🌙' }}</span>
-              <span class="mt-5 block text-2xl font-black text-white">{{ ui.colorMode === 'day' ? '日间模式' : '夜间模式' }}</span>
-              <span class="mt-3 block text-sm leading-6 text-white/58">{{ ui.colorMode === 'day' ? '燎原破晓的黎明' : '赤旗翻转的长夜' }}</span>
-            </button>
+            <RouterLink to="/moments" class="home-theme-card sr-card-hover">
+              <span class="mode-orb grid h-20 w-20 place-items-center rounded-[28px] text-4xl" aria-hidden="true">✦</span>
+              <span class="mt-5 block text-2xl font-black text-white">说说</span>
+              <span class="mt-3 block text-sm leading-6 text-white/58">查看短动态、图片和生活片段。</span>
+            </RouterLink>
       </div>
 
     <GlassCard hover dense class="home-status-card home-card-opacity">
@@ -480,7 +539,9 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="home-status-cell home-icp-cell">
-          <b class="block text-sm">备案号待获取</b>
+          <a class="block text-sm font-black" href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">
+            {{ icpRecord }}
+          </a>
         </div>
       </div>
     </GlassCard>

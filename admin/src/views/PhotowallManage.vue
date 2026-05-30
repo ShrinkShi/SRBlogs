@@ -15,12 +15,12 @@ const emptyItem = { title: '', description: '', cover: '', date: '', tags: [], p
 
 <template>
   <StructuredJsonManager
-    title="图片管理"
+    title="相册管理"
     path="/photos"
     item-name="相册"
     :fields="fields"
     :empty-item="emptyItem"
     comment-resource="photos"
-    comment-type-label="图片"
+    comment-type-label="相册"
   />
 </template>

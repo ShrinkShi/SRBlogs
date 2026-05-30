@@ -6,10 +6,10 @@ defineProps<{ item: SearchResultItem }>()
 
 const typeLabels: Record<string, string> = {
   posts: '文章',
-  moments: '瞬间',
+  moments: '说说',
   chatters: '杂谈',
   projects: '项目',
-  photos: '图片',
+  photos: '相册',
   friends: '友链',
   music: '音乐'
 }

@@ -8,11 +8,11 @@ const route = useRoute()
 const links = [
   ['首页', '/'],
   ['文章', '/posts'],
-  ['图片', '/photowall'],
+  ['相册', '/photowall'],
+  ['说说', '/moments'],
   ['音乐', '/music'],
   ['项目', '/projects'],
-  ['友链', '/friends'],
-  ['关于', '/about']
+  ['友链', '/friends']
 ]
 const activePath = computed(() => route.path)
 let lastY = 0

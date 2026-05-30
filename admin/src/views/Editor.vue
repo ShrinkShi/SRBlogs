@@ -22,7 +22,9 @@ const meta = reactive({
   tagsText: '',
   draft: true,
   cover: '',
-  summary: ''
+  summary: '',
+  location: '',
+  imagesText: ''
 })
 const slug = ref(`post-${Date.now()}`)
 const saving = ref(false)
@@ -37,8 +39,10 @@ const markdownMode = ref<'write' | 'preview'>('write')
 const bodyTextarea = ref<HTMLTextAreaElement | null>(null)
 const bodyImageInput = ref<HTMLInputElement | null>(null)
 const coverImageInput = ref<HTMLInputElement | null>(null)
+const momentImageInput = ref<HTMLInputElement | null>(null)
 const bodyImageUploading = ref(false)
 const coverUploading = ref(false)
+const momentImageUploading = ref(false)
 const markdownToast = reactive({
   message: '',
   type: 'success' as 'success' | 'error'
@@ -54,7 +58,8 @@ const slugPattern = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$/
 const slugHelp = 'slug 会出现在公开 URL 中，只允许字母、数字、下划线和连字符。'
 const summaryLength = computed(() => meta.summary.trim().length)
 const summaryWarning = computed(() => summaryLength.value > 120)
-const returnPath = computed(() => section.value === 'chatters' ? '/content/articles?kind=chatters' : '/content/articles')
+const isMomentEditor = computed(() => section.value === 'moments')
+const returnPath = computed(() => section.value === 'moments' ? '/content/moments' : section.value === 'chatters' ? '/content/articles?kind=chatters' : '/content/articles')
 const markdownDirty = computed(() => editorOpen.value && content.value !== initialMarkdown.value)
 const dateInput = computed({
   get: () => {
@@ -96,6 +101,8 @@ onMounted(async () => {
     meta.draft = item.meta.draft
     meta.cover = item.meta.cover || ''
     meta.summary = item.meta.summary || ''
+    meta.location = item.meta.location || ''
+    meta.imagesText = Array.isArray(item.meta.images) ? item.meta.images.join('\n') : ''
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '内容加载失败'
   }
@@ -139,7 +146,8 @@ function validateForm() {
 
 function buildPayload(draftOverride?: boolean): ContentItem | null {
   if (!validateForm()) return null
-  const cover = meta.cover.trim() || defaultCover.value
+  const images = meta.imagesText.split(/\r?\n/).map((item) => item.trim()).filter(Boolean)
+  const cover = meta.cover.trim() || images[0] || (isMomentEditor.value ? '' : defaultCover.value)
   return {
     slug: slug.value.trim(),
     meta: {
@@ -148,7 +156,9 @@ function buildPayload(draftOverride?: boolean): ContentItem | null {
       tags: meta.tagsText.split(',').map((item) => item.trim()).filter(Boolean),
       draft: draftOverride ?? meta.draft,
       cover,
-      summary: meta.summary.trim()
+      summary: meta.summary.trim(),
+      images,
+      location: meta.location.trim()
     },
     content: content.value
   }
@@ -367,6 +377,10 @@ function chooseCoverImage() {
   coverImageInput.value?.click()
 }
 
+function chooseMomentImage() {
+  momentImageInput.value?.click()
+}
+
 async function uploadBodyImage(files: FileList | null) {
   const file = files?.[0]
   if (!file) return
@@ -409,6 +423,28 @@ async function uploadCoverImage(files: FileList | null) {
     if (coverImageInput.value) coverImageInput.value.value = ''
   }
 }
+
+async function uploadMomentImages(files: FileList | null) {
+  const selected = Array.from(files || []).filter((file) => file.type.startsWith('image/'))
+  if (!selected.length) return
+  momentImageUploading.value = true
+  error.value = ''
+  try {
+    const urls: string[] = []
+    for (const file of selected.slice(0, Math.max(0, 9 - meta.imagesText.split(/\r?\n/).filter((item) => item.trim()).length))) {
+      const data = await adminApi.upload(file)
+      urls.push(data.url)
+    }
+    meta.imagesText = [meta.imagesText.trim(), ...urls].filter(Boolean).join('\n')
+    if (!meta.cover && urls[0]) meta.cover = urls[0]
+    ui.show('说说图片已上传')
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '说说图片上传失败'
+  } finally {
+    momentImageUploading.value = false
+    if (momentImageInput.value) momentImageInput.value.value = ''
+  }
+}
 </script>
 
 <template>
@@ -417,8 +453,8 @@ async function uploadCoverImage(files: FileList | null) {
       <div class="editor-main-panel">
         <section class="editor-panel-section editor-panel-section-first">
           <label class="field">
-            标题
-            <input v-model="meta.title" aria-label="标题" class="admin-input editor-title-input" placeholder="请输入文章标题" />
+            {{ isMomentEditor ? '说说标题 / 摘要' : '标题' }}
+            <input v-model="meta.title" aria-label="标题" class="admin-input editor-title-input" :placeholder="isMomentEditor ? '用于后台识别和详情页标题' : '请输入文章标题'" />
           </label>
         </section>
 
@@ -472,7 +508,7 @@ async function uploadCoverImage(files: FileList | null) {
               v-model="content"
               class="github-editor-textarea"
               aria-label="Markdown 正文"
-              placeholder="在这里编写 Markdown 正文，支持直接粘贴大段内容。"
+              :placeholder="isMomentEditor ? '写一条说说，支持换行和 Markdown。' : '在这里编写 Markdown 正文，支持直接粘贴大段内容。'"
             ></textarea>
             <div v-else class="github-editor-preview">
               <MarkdownPreview :content="content" />
@@ -496,8 +532,8 @@ async function uploadCoverImage(files: FileList | null) {
 
       <aside class="editor-side editor-side-panel">
         <section class="editor-panel-section editor-panel-section-first">
-          <h2 class="editor-group-title">文章类型</h2>
-          <div class="admin-radio-group mt-3" role="radiogroup" aria-label="内容类型">
+          <h2 class="editor-group-title">{{ isMomentEditor ? '内容类型' : '文章类型' }}</h2>
+          <div v-if="!isMomentEditor" class="admin-radio-group mt-3" role="radiogroup" aria-label="内容类型">
             <label class="admin-radio-pill" :class="section === 'posts' ? 'admin-active-option admin-radio-pill-active' : ''">
               <input v-model="section" type="radio" value="posts" />
               <span>正经</span>
@@ -507,6 +543,7 @@ async function uploadCoverImage(files: FileList | null) {
               <span>杂谈</span>
             </label>
           </div>
+          <p v-else class="mt-3 text-sm font-bold text-slate-500">说说 / 时间线动态</p>
         </section>
 
         <section class="editor-panel-section">
@@ -517,6 +554,11 @@ async function uploadCoverImage(files: FileList | null) {
         <section class="editor-panel-section">
           <h2 class="editor-group-title">标签</h2>
           <input v-model="meta.tagsText" aria-label="标签" class="admin-input mt-3" placeholder="Vue, FastAPI, Blog" />
+        </section>
+
+        <section v-if="isMomentEditor" class="editor-panel-section">
+          <h2 class="editor-group-title">定位</h2>
+          <input v-model="meta.location" aria-label="定位" class="admin-input mt-3" placeholder="北京 / 家里 / 路上" />
         </section>
 
         <section class="editor-panel-section">
@@ -545,6 +587,16 @@ async function uploadCoverImage(files: FileList | null) {
             </button>
             <input ref="coverImageInput" class="hidden" type="file" accept="image/*" @change="uploadCoverImage(($event.target as HTMLInputElement).files)" />
           </div>
+        </section>
+
+        <section v-if="isMomentEditor" class="editor-panel-section">
+          <h2 class="editor-group-title">说说图片</h2>
+          <p class="mt-2 text-xs font-bold text-slate-500">每行一个图片 URL，最多展示 9 张。上传后会自动追加。</p>
+          <textarea v-model="meta.imagesText" rows="5" aria-label="说说图片" class="admin-input mt-3 resize-y" placeholder="https://..."></textarea>
+          <button class="admin-btn admin-btn-ghost mt-3 px-3 py-2 text-sm" type="button" :disabled="momentImageUploading" @click="chooseMomentImage">
+            {{ momentImageUploading ? '上传中...' : '上传图片' }}
+          </button>
+          <input ref="momentImageInput" class="hidden" type="file" accept="image/*" multiple @change="uploadMomentImages(($event.target as HTMLInputElement).files)" />
         </section>
 
         <details class="editor-details editor-panel-section">

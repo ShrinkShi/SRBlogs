@@ -5,6 +5,12 @@ export interface ContentMeta {
   draft: boolean
   cover?: string
   summary?: string
+  images?: string[]
+  location?: string
+  view_count?: number
+  like_count?: number
+  comment_count?: number
+  share_count?: number
 }
 export interface ContentItem {
   slug: string
@@ -27,7 +33,7 @@ export interface CommentItem {
 }
 
 export interface CommentIndexItem {
-  resource: 'posts' | 'moments' | 'chatters' | 'music' | 'photos'
+  resource: 'posts' | 'moments' | 'chatters' | 'music' | 'photos' | 'friends'
   slug: string
   count: number
   updatedAt: string

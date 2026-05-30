@@ -21,6 +21,12 @@ class ContentMeta(BaseModel):
     draft: bool = False
     cover: str = ""
     summary: str = ""
+    images: list[str] = Field(default_factory=list)
+    location: str = ""
+    view_count: int = 0
+    like_count: int = 0
+    comment_count: int = 0
+    share_count: int = 0
 
     @field_validator("title")
     @classmethod

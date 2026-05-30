@@ -43,7 +43,8 @@ DEFAULT_PAGE_TEXT: dict[str, dict[str, str]] = {
     "home": {"title": "首页", "subtitle": "名片、音乐、歌词、轮播与状态区。"},
     "posts": {"title": "文章归档", "subtitle": "从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。"},
     "chatters": {"title": "云端杂谈", "subtitle": "长一点的念头，短一点的文章。"},
-    "photos": {"title": "图片", "subtitle": "相册记录从后端 JSON 动态读取，点击封面可查看组内照片。"},
+    "moments": {"title": "说说", "subtitle": "短动态、图片和生活片段。"},
+    "photos": {"title": "相册", "subtitle": "相册记录从后端 JSON 动态读取，点击封面可查看组内照片。"},
     "music": {"title": "音乐歌单", "subtitle": "全局播放器、歌词和歌单共享同一播放状态。"},
     "projects": {"title": "项目陈列柜", "subtitle": "记录正在构建和已经完成的作品。"},
     "friends": {"title": "星际友链", "subtitle": "把值得长期访问的站点放在这里。"},
@@ -59,9 +60,9 @@ DEFAULT_PAGE_LAYOUTS: dict[str, dict[str, Any]] = {
             "musicPlayer": _component(2, 6, 2, "音乐播放器", "musicPlayer"),
             "lyrics": _component(3, 12, 1, "歌词区", "lyrics"),
             "latestPostsCarousel": _component(4, 4, 3, "最新文章轮播", "latestPostsCarousel"),
-            "photoCarousel": _component(5, 8, 2, "图片轮播", "photoCarousel"),
+            "photoCarousel": _component(5, 8, 2, "相册轮播", "photoCarousel"),
             "updatesCarousel": _component(6, 8, 2, "更新内容轮播", "updatesCarousel"),
-            "themeToggle": _component(7, 4, 2, "昼夜切换卡片", "themeToggle"),
+            "themeToggle": _component(7, 4, 2, "旧版主题卡片", "themeToggle"),
             "statusBar": _component(8, 12, 1, "底部状态区", "statusBar"),
         },
     },
@@ -137,9 +138,9 @@ DEFAULT_PAGE_LAYOUTS["home"]["components"].update(
         "musicPlayer": _component(2, 6, 2, "音乐播放器", "musicPlayer"),
         "lyrics": _component(3, 12, 1, "歌词区", "lyrics"),
         "latestPostsCarousel": _component(4, 4, 4, "最新文章轮播", "latestPostsCarousel", row_span=2),
-        "photoCarousel": _component(5, 8, 2, "图片轮播", "photoCarousel"),
+        "photoCarousel": _component(5, 8, 2, "相册轮播", "photoCarousel"),
         "updatesCarousel": _component(6, 4, 2, "更新内容轮播", "updatesCarousel"),
-        "themeToggle": _component(7, 4, 2, "昼夜切换卡片", "themeToggle"),
+        "themeToggle": _component(7, 4, 2, "旧版主题卡片", "themeToggle"),
         "statusBar": _component(8, 12, 1, "底部状态区", "statusBar"),
     }
 )
@@ -249,7 +250,7 @@ def _merge_defaults(data: dict[str, Any]) -> dict[str, Any]:
     if not profile.get("avatar"):
         profile["avatar"] = settings.get("avatar") or settings.get("avatarUrl") or ""
     if not profile.get("description"):
-        profile["description"] = settings.get("description") or settings.get("bio") or ""
+        profile["description"] = settings.get("profileIntro") or settings.get("bio") or ""
     if not profile.get("socialLinks"):
         profile["socialLinks"] = settings.get("socialLinks") or settings.get("social") or {}
     return merged

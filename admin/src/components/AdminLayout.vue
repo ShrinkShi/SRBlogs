@@ -38,7 +38,8 @@ const groups: NavGroup[] = [
     title: '内容',
     items: [
       { label: '文章', path: '/content/articles' },
-      { label: '图片', path: '/content/photos' },
+      { label: '相册', path: '/content/photos' },
+      { label: '说说', path: '/content/moments' },
       { label: '音乐', path: '/content/music' },
       { label: '项目', path: '/content/projects' },
       { label: '友链', path: '/content/friends' },

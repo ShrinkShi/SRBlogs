@@ -21,15 +21,15 @@ const error = ref('')
 const typeOptions: { label: string; value: DiscoveryType }[] = [
   { label: '全部', value: 'all' },
   { label: '文章', value: 'posts' },
-  { label: '瞬间', value: 'moments' },
+  { label: '说说', value: 'moments' },
   { label: '杂谈', value: 'chatters' },
   { label: '项目', value: 'projects' },
-  { label: '照片', value: 'photos' },
+  { label: '相册', value: 'photos' },
   { label: '友链', value: 'friends' },
   { label: '音乐', value: 'music' }
 ]
 
-useSeo({ title: () => q.value ? `搜索：${q.value}` : '全站搜索', description: '搜索 SRBlogs 的文章、瞬间、杂谈、项目、照片、友链和音乐。', path: () => `/search${window.location.search}` })
+useSeo({ title: () => q.value ? `搜索：${q.value}` : '全站搜索', description: '搜索 SRBlogs 的文章、说说、杂谈、项目、相册、友链和音乐。', path: () => `/search${window.location.search}` })
 
 const activeQuery = computed(() => ({ q: q.value.trim(), type: type.value, tag: tag.value.trim() }))
 
@@ -82,10 +82,9 @@ onMounted(async () => {
 <template>
   <section class="grid gap-5">
     <GlassCard class="page-title-block text-center">
-      <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">search</p>
-      <h1 class="mt-2 text-4xl font-black text-white">全站搜索</h1>
+      <h1 class="text-4xl font-black text-white">全站搜索</h1>
       <form class="search-input-theme mx-auto mt-5 flex w-full max-w-5xl items-center gap-2 rounded-[22px] border px-3 py-2 shadow-inner shadow-white/[0.04] transition md:w-[82%]" @submit.prevent="syncQuery(); load()">
-        <input v-model="q" aria-label="搜索关键词" class="min-w-0 flex-1 bg-transparent text-sm outline-none" placeholder="搜索文章、瞬间、项目、音乐..." />
+        <input v-model="q" aria-label="搜索关键词" class="min-w-0 flex-1 bg-transparent text-sm outline-none" placeholder="搜索文章、说说、项目、音乐..." />
         <button type="submit" class="search-button-theme grid h-8 w-8 shrink-0 place-items-center rounded-full bg-slate-950/88 shadow-[0_8px_18px_rgba(0,0,0,.22)] transition hover:scale-105" aria-label="搜索">
           <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="7" />

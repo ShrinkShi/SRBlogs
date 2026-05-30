@@ -23,7 +23,7 @@ const props = defineProps<{
   itemName: string
   fields: StructuredField[]
   emptyItem: Record<string, unknown>
-  commentResource?: 'music' | 'photos'
+  commentResource?: 'music' | 'photos' | 'friends'
   commentTypeLabel?: string
 }>()
 
@@ -46,7 +46,7 @@ const dragPhotoIndex = ref<number | null>(null)
 const query = ref('')
 const commentIndex = ref<CommentIndexItem[]>([])
 const activeCommentTarget = ref<{
-  resource: 'music' | 'photos'
+  resource: 'music' | 'photos' | 'friends'
   slug: string
   title: string
   typeLabel: string
@@ -172,6 +172,9 @@ function commentSlug(item: Record<string, unknown>, index: number) {
   if (props.commentResource === 'music') {
     return slugify(item.id || item.title || `music-${index + 1}`, `music-${index + 1}`)
   }
+  if (props.commentResource === 'friends') {
+    return slugify(item.name || item.url || `friend-${index + 1}`, `friend-${index + 1}`)
+  }
   return ''
 }
 
@@ -217,6 +220,32 @@ function updateTags(key: string, value: string) {
 function updateNumber(key: string, value: string) {
   form.value[key] = value === '' ? '' : Number(value)
   dirty.value = true
+}
+
+function numberFrom(item: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = item[key]
+    const numberValue = Number(value)
+    if (Number.isFinite(numberValue)) return Math.max(0, numberValue)
+  }
+  return 0
+}
+
+function tagsFor(item: Record<string, unknown>) {
+  return Array.isArray(item.tags) ? item.tags.map(String).filter(Boolean) : []
+}
+
+function itemTime(item: Record<string, unknown>) {
+  return String(item.date || item.updatedAt || item.createdAt || item.status || '无日期')
+}
+
+function statsFor(item: Record<string, unknown>, index: number) {
+  return {
+    views: numberFrom(item, ['views', 'viewCount', 'visits', 'readCount']),
+    likes: numberFrom(item, ['likes', 'likeCount']),
+    comments: commentCountFor(item, index),
+    shares: numberFrom(item, ['shares', 'shareCount', 'forwards'])
+  }
 }
 
 function validateForm() {
@@ -414,29 +443,48 @@ onMounted(load)
     <div class="admin-table-card">
       <p v-if="loading" class="p-6 text-slate-500">加载中...</p>
       <p v-else-if="!filteredItems.length" class="p-6 text-slate-500">暂无{{ itemName }}记录。</p>
-      <article v-else v-for="(item, index) in filteredItems" :key="`${index}-${item.url || item.name || item.title}`" class="admin-list-row">
-        <div class="grid gap-4 lg:grid-cols-[8rem_minmax(0,1fr)_auto] lg:items-center">
-          <div class="h-24 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
+      <article v-else v-for="(item, index) in filteredItems" :key="`${index}-${item.url || item.name || item.title}`" class="admin-list-row admin-manage-row">
+        <div class="admin-manage-item">
+          <div class="admin-manage-cover">
             <img v-if="itemCover(item)" :src="itemCover(item)" alt="" class="h-full w-full object-cover" loading="lazy" />
             <div v-else class="grid h-full place-items-center text-xs font-bold text-slate-400">默认封面</div>
           </div>
-          <div class="min-w-0">
-            <h3 class="break-words text-lg font-black text-slate-950">{{ itemLabel(item, index) }}</h3>
-            <p class="mt-1 break-all font-mono text-xs text-slate-500">{{ item.url || item.id || item.status || item.path || '未填写链接或 ID' }}</p>
-            <p class="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{{ itemDescription(item) || '未填写简介' }}</p>
-            <div class="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-              <span v-if="item.tags && Array.isArray(item.tags)">{{ item.tags.length }} 个标签</span>
+          <div class="admin-manage-info">
+            <div class="admin-manage-title-line">
+              <h3>{{ itemLabel(item, index) }}</h3>
+            </div>
+            <p class="admin-manage-time">{{ itemTime(item) }}</p>
+            <p class="admin-manage-desc">{{ itemDescription(item) || '未填写简介' }}</p>
+            <div class="admin-manage-tags">
+              <span v-if="!tagsFor(item).length">无标签</span>
+              <span v-for="tag in tagsFor(item)" :key="tag"># {{ tag }}</span>
               <span v-if="item.photos && Array.isArray(item.photos)">{{ item.photos.length }} 张照片</span>
-              <span v-if="item.likes !== undefined">{{ item.likes }} 喜欢</span>
-              <span v-if="item.date">{{ item.date }}</span>
+            </div>
+            <div class="admin-manage-stats">
+              <span title="浏览" aria-label="浏览">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="3" /></svg>
+                {{ statsFor(item, index).views }}
+              </span>
+              <span title="点赞" aria-label="点赞">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3m0 11V10l5-8 1 1a4 4 0 0 1 .8 4.1L13 10h5.6a2 2 0 0 1 2 2.3l-1.4 7.5a2 2 0 0 1-2 1.7H7Z" /></svg>
+                {{ statsFor(item, index).likes }}
+              </span>
+              <span title="评论" aria-label="评论">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5Z" /></svg>
+                {{ statsFor(item, index).comments }}
+              </span>
+              <span title="转发" aria-label="转发">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" /><path d="M5 5h5M5 5v5M19 19h-5M19 19v-5" /></svg>
+                {{ statsFor(item, index).shares }}
+              </span>
             </div>
           </div>
-          <div class="flex flex-wrap gap-2 lg:justify-end">
+          <div class="admin-manage-actions">
+            <button class="admin-btn admin-btn-ghost text-sm" type="button" @click="editItem(index)">✏️ 编辑</button>
+            <button class="admin-btn admin-btn-danger text-sm" type="button" @click="removeItem(index)">❌ 删除</button>
             <button v-if="commentResource" class="admin-btn admin-btn-ghost text-sm" type="button" @click="openComments(item, index)">
-              评论({{ commentCountFor(item, index) }})
+              🗨︎ 评论管理
             </button>
-            <button class="admin-btn admin-btn-ghost text-sm" type="button" @click="editItem(index)">编辑</button>
-            <button class="admin-btn admin-btn-danger text-sm" type="button" @click="removeItem(index)">删除</button>
           </div>
         </div>
       </article>

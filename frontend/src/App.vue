@@ -30,19 +30,19 @@ function solidColor(value: string | undefined, fallback: string) {
 function applyTheme() {
   const root = document.documentElement
   const config = settings.value?.themeConfig || {}
-  const mode = ui.colorMode || config.mode || 'night'
+  const mode = 'night'
   const activeTheme = config.activeTheme || settings.value?.theme || 'shrink-red-glass'
   const activePackage = config.themePackages?.[activeTheme]
-  const packageTokens = mode === 'day' ? activePackage?.modes?.day : activePackage?.modes?.night
-  const localTokens = mode === 'day' ? config.day : config.night
+  const packageTokens = activePackage?.modes?.night
+  const localTokens = config.night
   const tokens = { ...(packageTokens || {}), ...(localTokens || {}) }
   root.dataset.colorMode = mode
   const preferredScale = ui.fontScale || config.fontScale
   root.dataset.fontScale = preferredScale || 'medium'
   root.style.setProperty('--app-font-family', '"Consolas-with-Yahei", Consolas, "Microsoft YaHei", "微软雅黑", "Courier New", monospace')
-  const solidCard = solidColor(tokens?.bgCard || tokens?.cardBg, mode === 'day' ? '#ffffff' : '#141416')
-  const solidElevated = solidColor(tokens?.bgCardElevated || tokens?.cardBg, mode === 'day' ? '#ffffff' : '#202023')
-  const solidNav = solidColor(tokens?.navBg, mode === 'day' ? '#f8fafc' : '#08080a')
+  const solidCard = solidColor(tokens?.bgCard || tokens?.cardBg, '#141416')
+  const solidElevated = solidColor(tokens?.bgCardElevated || tokens?.cardBg, '#202023')
+  const solidNav = solidColor(tokens?.navBg, '#08080a')
   const map: Record<string, string | undefined> = {
     '--bg-page': tokens?.bgPage || tokens?.pageBg,
     '--bg-card': solidCard,
@@ -65,7 +65,7 @@ function applyTheme() {
     else root.style.removeProperty(key)
   })
   if (tokens?.overlayOpacity !== undefined) {
-    const overlayOpacity = mode === 'day' ? 0 : Math.min(1, Math.max(0, Number(tokens.overlayOpacity)))
+    const overlayOpacity = Math.min(1, Math.max(0, Number(tokens.overlayOpacity)))
     root.style.setProperty('--bg-overlay-opacity', String(overlayOpacity))
   } else {
     root.style.removeProperty('--bg-overlay-opacity')
@@ -98,7 +98,7 @@ onMounted(async () => {
   try { player.setTracks(await contentApi.json<MusicItem[]>('/music')) } catch { player.setTracks([]) }
   applyTheme()
 })
-watch([settings, () => ui.colorMode, () => ui.fontScale], () => {
+watch([settings, () => ui.fontScale], () => {
   ui.applyInteraction(settings.value?.interaction)
   applyTheme()
 })

@@ -37,9 +37,7 @@ onMounted(load)
 <template>
   <section class="page-layout-grid">
     <GlassCard class="page-title-block text-center">
-      <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">projects</p>
-      <h1 class="mt-2 text-4xl font-black text-white">{{ pageTitle }}</h1>
-      <p class="mt-3 text-white/56">{{ pageSubtitle }}</p>
+      <h1 class="text-4xl font-black text-white">{{ pageTitle }}</h1>
     </GlassCard>
 
     <div>

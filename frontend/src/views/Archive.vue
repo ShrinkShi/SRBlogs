@@ -9,8 +9,8 @@ import { useSeo } from '@/composables/useSeo'
 const archive = ref<ArchiveResponse>({ years: [] })
 const loading = ref(true)
 const error = ref('')
-const typeLabels: Record<string, string> = { posts: '文章', moments: '瞬间', chatters: '杂谈' }
-useSeo({ title: '内容归档', description: '按年份和月份浏览 SRBlogs 的公开文章、瞬间和杂谈。', path: '/archive' })
+const typeLabels: Record<string, string> = { posts: '文章', moments: '说说', chatters: '杂谈' }
+useSeo({ title: '内容归档', description: '按年份和月份浏览 SRBlogs 的公开文章、说说和杂谈。', path: '/archive' })
 
 async function load() {
   loading.value = true
@@ -30,9 +30,7 @@ onMounted(load)
 <template>
   <section class="grid gap-5">
     <GlassCard class="page-title-block text-center">
-      <p class="text-xs font-bold uppercase tracking-[.32em] text-cyan-100/45">archive</p>
-      <h1 class="mt-2 text-4xl font-black text-white">内容归档</h1>
-      <p class="mt-3 text-white/56">按年月聚合公开文章、瞬间和杂谈。</p>
+      <h1 class="text-4xl font-black text-white">内容归档</h1>
     </GlassCard>
     <StateBlock v-if="loading" message="归档加载中..." />
     <StateBlock v-else-if="error" title="归档加载失败" :message="error" @retry="load" />

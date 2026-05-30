@@ -17,7 +17,7 @@ const pageKey = computed<PageKey>(() => {
 const pages: Array<{ key: PageKey; label: string; path: string; note: string }> = [
   { key: 'home', label: '首页', path: '/', note: '名片、头像、简介与社交链接' },
   { key: 'posts', label: '文章', path: '/posts', note: '文章页标题、副标题与杂谈板块文案' },
-  { key: 'photos', label: '图片', path: '/photowall', note: '图片页标题与说明文案' },
+  { key: 'photos', label: '相册', path: '/photowall', note: '相册页标题与说明文案' },
   { key: 'music', label: '音乐', path: '/music', note: '音乐页标题与说明文案' },
   { key: 'projects', label: '项目', path: '/projects', note: '项目页标题与说明文案' },
   { key: 'friends', label: '友链', path: '/friends', note: '友链页标题与说明文案' },
@@ -28,7 +28,7 @@ const defaultText: Record<TextKey, { title: string; subtitle: string }> = {
   home: { title: '首页', subtitle: '名片、音乐、歌词、轮播与状态区。' },
   posts: { title: '文章归档', subtitle: '从 FastAPI 读取 Markdown 内容，草稿默认不会出现在公开列表。' },
   chatters: { title: '云端杂谈', subtitle: '长一点的念头，短一点的文章。' },
-  photos: { title: '图片', subtitle: '相册记录从后端 JSON 动态读取，点击封面可查看组内照片。' },
+  photos: { title: '相册', subtitle: '相册记录从后端 JSON 动态读取，点击封面可查看组内照片。' },
   music: { title: '音乐歌单', subtitle: '左侧控制播放，右侧查看歌词和歌单。' },
   projects: { title: '项目陈列柜', subtitle: '记录正在构建和已经完成的作品。' },
   friends: { title: '星际友链', subtitle: '把值得长期访问的站点放在这里。' },
@@ -281,7 +281,7 @@ onMounted(load)
           </div>
 
           <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-            旧版页面布局字段仅作为兼容数据保存在配置文件中，不再影响前台实际布局。文章、图片、音乐、项目、友链、关于和留言数据不会被这里的保存操作删除。
+            旧版页面布局字段仅作为兼容数据保存在配置文件中，不再影响前台实际布局。文章、相册、音乐、项目、友链、关于和留言数据不会被这里的保存操作删除。
           </div>
 
           <div class="admin-bottom-actions">

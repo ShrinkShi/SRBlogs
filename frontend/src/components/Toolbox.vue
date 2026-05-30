@@ -32,10 +32,10 @@ const tags = ref<TagItem[]>([])
 const typeOptions: { label: string; value: DiscoveryType }[] = [
   { label: '全部', value: 'all' },
   { label: '文章', value: 'posts' },
-  { label: '瞬间', value: 'moments' },
+  { label: '说说', value: 'moments' },
   { label: '杂谈', value: 'chatters' },
   { label: '项目', value: 'projects' },
-  { label: '图片', value: 'photos' },
+  { label: '相册', value: 'photos' },
   { label: '友链', value: 'friends' },
   { label: '音乐', value: 'music' }
 ]
@@ -56,8 +56,8 @@ const bgCount = computed(() => {
   const config = props.settings?.themeConfig
   const activeTheme = config?.activeTheme || props.settings?.theme || 'shrink-red-glass'
   const activePackage = config?.themePackages?.[activeTheme]
-  const localTokens = ui.colorMode === 'day' ? config?.day : config?.night
-  const packageTokens = ui.colorMode === 'day' ? activePackage?.modes?.day : activePackage?.modes?.night
+  const localTokens = config?.night
+  const packageTokens = activePackage?.modes?.night
   const modeTokens = { ...(packageTokens || {}), ...(localTokens || {}) } as { bgImages?: unknown; bgImage?: unknown }
   const modeCount = countBackgrounds(modeTokens.bgImages) || countBackgrounds(modeTokens.bgImage)
   const legacyCount = countBackgrounds(props.settings?.bgImages)
@@ -224,7 +224,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div data-toolbox-root class="fixed bottom-5 left-5 z-40" :class="ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night'">
+  <div data-toolbox-root class="fixed bottom-5 left-5 z-40 toolbox-night">
     <div
       v-if="menuOpen"
       class="toolbox-menu mb-3 grid min-w-40 gap-2 rounded-[26px] border p-3 text-sm shadow-2xl"
@@ -252,8 +252,7 @@ onBeforeUnmount(() => {
     <section
       v-if="activePanel === 'calculator'"
       data-toolbox-modal
-      class="toolbox-calculator-panel fixed bottom-24 left-5 z-[92] grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[28px] border p-4 shadow-2xl"
-      :class="ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night'"
+      class="toolbox-calculator-panel fixed bottom-24 left-5 z-[92] grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[28px] border p-4 shadow-2xl toolbox-night"
       role="dialog"
       aria-label="计算器"
       @click.stop
@@ -283,12 +282,12 @@ onBeforeUnmount(() => {
       v-if="activePanel === 'search' || activePanel === 'settings'"
       data-toolbox-modal
       class="toolbox-modal-overlay fixed inset-0 z-[90] grid place-items-center p-4"
-      :class="ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night'"
+      :class="'toolbox-night'"
       role="dialog"
       aria-modal="true"
       @click.self="closePanel"
     >
-      <section class="toolbox-modal toolbox-modal-panel max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border shadow-2xl" :class="[activePanel === 'search' ? 'toolbox-modal-panel-search' : 'toolbox-modal-panel-settings', ui.colorMode === 'day' ? 'toolbox-day' : 'toolbox-night']">
+      <section class="toolbox-modal toolbox-modal-panel max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-[32px] border shadow-2xl" :class="[activePanel === 'search' ? 'toolbox-modal-panel-search' : 'toolbox-modal-panel-settings', 'toolbox-night']">
         <header class="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
           <div>
             <p class="text-xs font-bold uppercase tracking-[.28em] text-cyan-100/45">toolbox</p>
@@ -325,13 +324,6 @@ onBeforeUnmount(() => {
           </div>
 
           <div v-else class="grid gap-5 md:grid-cols-2">
-            <label class="toolbox-setting">
-              <span>昼夜模式</span>
-              <select :value="ui.colorMode" @change="ui.setColorMode(($event.target as HTMLSelectElement).value as 'day' | 'night')">
-                <option value="day">日间</option>
-                <option value="night">夜间</option>
-              </select>
-            </label>
             <label class="toolbox-setting">
               <span>主题</span>
               <select :value="ui.theme" @change="ui.setTheme(($event.target as HTMLSelectElement).value)">

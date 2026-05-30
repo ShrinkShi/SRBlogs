@@ -6,7 +6,7 @@ import type { Stats } from '@/types'
 const stats = ref<Stats>({ posts: 0, moments: 0, chatters: 0, photos: 0 })
 const quick = [
   ['写新文章', '/editor/posts', '进入沉浸式 Markdown 编辑器'],
-  ['管理照片墙', '/photos', '上传与维护图床 URL'],
+  ['管理相册', '/photos', '上传与维护相册图片 URL'],
   ['图床与 AI 设置', '/settings', '配置上传、聊天与部署参数'],
   ['打开前台', '/', '预览博客展示效果']
 ]

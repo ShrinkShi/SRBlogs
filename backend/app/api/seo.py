@@ -107,7 +107,6 @@ def sitemap():
         "/projects",
         "/music",
         "/photowall",
-        "/about",
         "/timeline",
         "/search",
         "/tags",

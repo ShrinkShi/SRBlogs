@@ -36,11 +36,11 @@ export const useUiStore = defineStore('ui', {
       this.setTheme(themes[(i + 1) % themes.length])
     },
     setColorMode(mode: 'day' | 'night') {
-      this.colorMode = mode
-      localStorage.setItem('sr-color-mode', mode)
+      this.colorMode = 'night'
+      localStorage.setItem('sr-color-mode', 'night')
     },
     toggleColorMode() {
-      this.setColorMode(this.colorMode === 'night' ? 'day' : 'night')
+      this.setColorMode('night')
     },
     setBgIndex(index: number) {
       this.bgIndex = index

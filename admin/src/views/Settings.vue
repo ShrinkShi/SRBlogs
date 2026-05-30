@@ -4,6 +4,7 @@ import { adminApi } from '@/api/admin'
 import { useUiStore } from '@/stores/ui'
 
 type AnyRecord = Record<string, any>
+type SettingsTab = 'site' | 'profile' | 'theme' | 'comments'
 
 const ui = useUiStore()
 const loading = ref(false)
@@ -12,16 +13,29 @@ const error = ref('')
 const success = ref('')
 const rawSettings = ref<AnyRecord>({})
 const aboutPage = ref<AnyRecord>({})
+const pageConfig = ref<AnyRecord>({})
 const clickSoundFile = ref<File | null>(null)
+const avatarFile = ref<File | null>(null)
 const wallpaperUploading = ref<{ day: boolean; night: boolean }>({ day: false, night: false })
+const activeTab = ref<SettingsTab>('site')
+
+const settingTabs: Array<{ key: SettingsTab; label: string; icon: string }> = [
+  { key: 'site', label: '站点信息', icon: 'M4 5h16v14H4zM8 9h8M8 13h5' },
+  { key: 'profile', label: '我的信息', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0' },
+  { key: 'theme', label: '主题外观', icon: 'M12 3a9 9 0 0 0 0 18 4.5 4.5 0 0 1 0-9 4.5 4.5 0 0 0 0-9Z' },
+  { key: 'comments', label: '评论设置', icon: 'M4 5h16v10H8l-4 4V5Z' }
+]
 
 const form = ref({
   site: {
     title: '',
-    subtitle: ''
+    subtitle: '',
+    description: '',
+    icp: ''
   },
   profile: {
     name: '',
+    avatar: '',
     intro: '',
     github: '',
     email: '',
@@ -58,7 +72,7 @@ const form = ref({
   }
 })
 
-const wallpaperHint = computed(() => '每行一个壁纸 URL。保存后前台按当前主题的昼夜模式读取。')
+const wallpaperHint = computed(() => '每行一个壁纸 URL。前台固定夜晚模式，会读取这里的背景配置。')
 
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value || {}))
@@ -89,14 +103,15 @@ function normalizeSlideshowEffect(value: unknown) {
 
 function defaultAboutPage(): AnyRecord {
   return {
-    hero: { name: '', description: '' },
+    hero: { name: '', avatar: '', description: '' },
     contact: { github: '', githubUrl: '', email: '', qq: '', wechat: '' }
   }
 }
 
-function applyLoadedSettings(settings: AnyRecord, about: AnyRecord) {
+function applyLoadedSettings(settings: AnyRecord, about: AnyRecord, pages: AnyRecord) {
   rawSettings.value = clone(settings)
   aboutPage.value = { ...defaultAboutPage(), ...clone(about) }
+  pageConfig.value = clone(pages)
   const themeConfig = settings.themeConfig || {}
   const activeTheme = themeConfig.activeTheme || settings.theme || 'shrink-red-glass'
   const activePackage = themeConfig.themePackages?.[activeTheme] || {}
@@ -106,19 +121,24 @@ function applyLoadedSettings(settings: AnyRecord, about: AnyRecord) {
   const interaction = settings.interaction || {}
   const contact = aboutPage.value.contact || {}
   const hero = aboutPage.value.hero || {}
+  const homeProfile = pages.homeProfile || {}
   const social = settings.socialLinks || {}
   const gitalk = settings.gitalkConfig || {}
   const qqOAuth = settings.qqOAuth || {}
   const serverSecrets = settings.serverSecrets || {}
+  const legacyPersonalDescription = settings.description && settings.description !== settings.subtitle ? settings.description : ''
 
   form.value = {
     site: {
       title: String(settings.siteTitle || settings.title || ''),
-      subtitle: String(settings.subtitle || settings.description || '')
+      subtitle: String(settings.subtitle || ''),
+      description: String(settings.siteDescription || legacyPersonalDescription || ''),
+      icp: String(settings.icp || settings.beian || '')
     },
     profile: {
-      name: String(hero.name || settings.author || ''),
-      intro: String(hero.description || settings.description || ''),
+      name: String(homeProfile.author || hero.name || settings.author || settings.authorName || ''),
+      avatar: String(homeProfile.avatar || hero.avatar || settings.avatar || settings.avatarUrl || ''),
+      intro: String(homeProfile.description || hero.description || settings.bio || legacyPersonalDescription || ''),
       github: String(contact.githubUrl || social.github || contact.github || ''),
       email: String(contact.email || social.email || ''),
       qq: String(contact.qq || social.qq || ''),
@@ -160,11 +180,12 @@ async function load() {
   error.value = ''
   success.value = ''
   try {
-    const [settings, about] = await Promise.all([
+    const [settings, about, pages] = await Promise.all([
       adminApi.json<AnyRecord>('/admin/settings'),
-      adminApi.json<AnyRecord>('/admin/about-page').catch(() => defaultAboutPage())
+      adminApi.json<AnyRecord>('/admin/about-page').catch(() => defaultAboutPage()),
+      adminApi.json<AnyRecord>('/admin/pages/config').catch(() => ({}))
     ])
-    applyLoadedSettings(settings, about)
+    applyLoadedSettings(settings, about, pages)
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '设置加载失败'
   } finally {
@@ -180,6 +201,18 @@ async function uploadClickSound() {
     ui.show('点击音效已上传')
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '点击音效上传失败'
+  }
+}
+
+async function uploadAvatar() {
+  if (!avatarFile.value) return
+  try {
+    const data = await adminApi.upload(avatarFile.value)
+    form.value.profile.avatar = data.url
+    avatarFile.value = null
+    ui.show('头像已上传')
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '头像上传失败'
   }
 }
 
@@ -205,7 +238,7 @@ async function uploadWallpapers(mode: 'day' | 'night', files: FileList | null) {
       urls.push(data.url)
     }
     appendWallpaperUrls(mode, urls)
-    ui.show(`${mode === 'day' ? '白天' : '夜晚'}壁纸已上传`)
+    ui.show(`${mode === 'day' ? '兼容' : '背景'}壁纸已上传`)
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '壁纸上传失败'
   } finally {
@@ -218,8 +251,16 @@ function buildSettingsPayload() {
   next.siteTitle = form.value.site.title
   next.title = form.value.site.title
   next.subtitle = form.value.site.subtitle
-  next.description = form.value.site.subtitle
+  next.siteDescription = form.value.site.description
+  next.description = form.value.site.description
+  next.icp = form.value.site.icp
+  next.beian = form.value.site.icp
   next.author = form.value.profile.name
+  next.authorName = form.value.profile.name
+  next.avatar = form.value.profile.avatar
+  next.avatarUrl = form.value.profile.avatar
+  next.bio = form.value.profile.intro
+  next.profileIntro = form.value.profile.intro
   next.socialLinks = {
     ...(next.socialLinks || {}),
     github: form.value.profile.github,
@@ -254,6 +295,7 @@ function buildSettingsPayload() {
     slideshowInterval: normalizeSlideshowInterval(form.value.theme.nightSlideshowInterval),
     slideshowEffect: normalizeSlideshowEffect(form.value.theme.nightSlideshowEffect)
   }
+  modes.day = { ...(modes.day || themeConfig.day || {}), ...modes.night }
   const activeTheme = String(themeConfig.activeTheme || next.theme || 'shrink-red-glass')
   const themePackages = { ...(themeConfig.themePackages || {}) }
   const activePackage = themePackages[activeTheme]
@@ -265,11 +307,7 @@ function buildSettingsPayload() {
         ...(packageRecord.modes || {}),
         day: {
           ...((packageRecord.modes || {}).day || {}),
-          bgImages: modes.day.bgImages,
-          activeBgIndex: modes.day.activeBgIndex,
-          slideshowEnabled: modes.day.slideshowEnabled,
-          slideshowInterval: modes.day.slideshowInterval,
-          slideshowEffect: modes.day.slideshowEffect
+          ...modes.night
         },
         night: {
           ...((packageRecord.modes || {}).night || {}),
@@ -327,6 +365,7 @@ function buildAboutPayload() {
   next.hero = {
     ...(next.hero || {}),
     name: form.value.profile.name,
+    avatar: form.value.profile.avatar,
     description: form.value.profile.intro
   }
   next.contact = {
@@ -340,6 +379,24 @@ function buildAboutPayload() {
   return next
 }
 
+function buildPagesPayload() {
+  const next = clone(pageConfig.value || {})
+  next.homeProfile = {
+    ...(next.homeProfile || {}),
+    author: form.value.profile.name,
+    avatar: form.value.profile.avatar,
+    description: form.value.profile.intro,
+    socialLinks: {
+      ...((next.homeProfile || {}).socialLinks || {}),
+      github: form.value.profile.github,
+      email: form.value.profile.email,
+      qq: form.value.profile.qq,
+      wechat: form.value.profile.wechat
+    }
+  }
+  return next
+}
+
 async function save() {
   saving.value = true
   error.value = ''
@@ -347,6 +404,7 @@ async function save() {
   try {
     await adminApi.putJson('/admin/settings', buildSettingsPayload())
     await adminApi.putJson('/admin/about-page', buildAboutPayload())
+    await adminApi.putJson('/admin/pages/config', buildPagesPayload())
     success.value = '设置已保存'
     ui.show('设置已保存')
     await load()
@@ -367,18 +425,44 @@ onMounted(load)
 
     <p v-if="loading" class="admin-card text-slate-500">设置加载中...</p>
     <div v-else class="grid gap-5">
-      <div class="admin-card">
+      <nav class="settings-subnav" aria-label="设置中心子导航">
+        <button
+          v-for="tab in settingTabs"
+          :key="tab.key"
+          type="button"
+          class="settings-subnav-item"
+          :class="{ 'settings-subnav-item-active': activeTab === tab.key }"
+          @click="activeTab = tab.key"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path :d="tab.icon" />
+          </svg>
+          <span>{{ tab.label }}</span>
+        </button>
+      </nav>
+
+      <div v-if="activeTab === 'site'" class="admin-card">
         <h2 class="text-xl font-black text-slate-950">站点信息</h2>
         <div class="settings-form-grid mt-4">
           <label class="settings-row"><span>站点标题</span><input v-model="form.site.title" class="admin-input" /></label>
           <label class="settings-row"><span>副标题</span><input v-model="form.site.subtitle" class="admin-input" /></label>
+          <label class="settings-row settings-row-textarea"><span>站点描述</span><textarea v-model="form.site.description" class="admin-input min-h-24"></textarea></label>
+          <label class="settings-row"><span>备案号</span><input v-model="form.site.icp" class="admin-input" placeholder="例如：粤 ICP 备 xxxxxxxx 号" /></label>
         </div>
       </div>
 
-      <div class="admin-card">
+      <div v-else-if="activeTab === 'profile'" class="admin-card">
         <h2 class="text-xl font-black text-slate-950">我的信息</h2>
         <div class="settings-form-grid mt-4">
           <label class="settings-row"><span>名称</span><input v-model="form.profile.name" class="admin-input" /></label>
+          <label class="settings-row settings-row-textarea">
+            <span>头像</span>
+            <div class="settings-inline-upload">
+              <input v-model="form.profile.avatar" class="admin-input" placeholder="头像 URL 或上传后的地址" />
+              <input class="admin-input" type="file" accept="image/*" @change="avatarFile = (($event.target as HTMLInputElement).files?.[0] || null)" />
+              <button class="admin-btn admin-btn-ghost" type="button" :disabled="!avatarFile" @click="uploadAvatar">上传</button>
+            </div>
+          </label>
           <label class="settings-row"><span>GitHub 链接</span><input v-model="form.profile.github" class="admin-input" placeholder="https://github.com/ShrinkShi" /></label>
           <label class="settings-row settings-row-textarea"><span>简介</span><textarea v-model="form.profile.intro" class="admin-input min-h-28"></textarea></label>
           <label class="settings-row"><span>Email 复制内容</span><input v-model="form.profile.email" class="admin-input" /></label>
@@ -387,7 +471,7 @@ onMounted(load)
         </div>
       </div>
 
-      <div class="admin-card">
+      <div v-else-if="activeTab === 'theme'" class="admin-card">
         <h2 class="text-xl font-black text-slate-950">主题外观</h2>
         <div class="settings-form-grid mt-4">
           <label class="settings-row settings-switch-row">
@@ -411,45 +495,11 @@ onMounted(load)
 
         <div class="mt-5 grid gap-4">
           <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <h3 class="font-black text-slate-950">白天模式壁纸</h3>
+            <h3 class="font-black text-slate-950">背景壁纸</h3>
             <p class="mt-1 text-xs text-slate-500">{{ wallpaperHint }} 也可以直接上传图片，上传后会自动追加 URL。</p>
             <div class="mt-3 flex flex-wrap items-center gap-2">
               <label class="admin-btn admin-btn-ghost cursor-pointer">
-                {{ wallpaperUploading.day ? '上传中...' : '上传白天壁纸' }}
-                <input
-                  class="hidden"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  :disabled="wallpaperUploading.day"
-                  @change="uploadWallpapers('day', ($event.target as HTMLInputElement).files); (($event.target as HTMLInputElement).value = '')"
-                />
-              </label>
-            </div>
-            <textarea v-model="form.theme.dayWallpapers" class="admin-input mt-3 min-h-36 font-mono text-sm"></textarea>
-            <div class="settings-form-grid mt-3">
-              <label class="settings-row"><span>默认壁纸序号</span><input v-model.number="form.theme.dayActiveIndex" class="admin-input" type="number" min="0" /></label>
-              <label class="settings-row settings-switch-row">
-                <span>启用白天壁纸轮播</span>
-                <input v-model="form.theme.daySlideshowEnabled" type="checkbox" />
-              </label>
-              <label class="settings-row"><span>轮播间隔（秒）</span><input v-model.number="form.theme.daySlideshowInterval" class="admin-input" type="number" min="3" max="60" step="0.5" /></label>
-              <label class="settings-row">
-                <span>切换动画</span>
-                <select v-model="form.theme.daySlideshowEffect" class="admin-input">
-                  <option value="fade">淡入淡出</option>
-                  <option value="soft-blur">柔焦淡入</option>
-                  <option value="none">无动画</option>
-                </select>
-              </label>
-            </div>
-          </div>
-          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <h3 class="font-black text-slate-950">夜晚模式壁纸</h3>
-            <p class="mt-1 text-xs text-slate-500">{{ wallpaperHint }} 也可以直接上传图片，上传后会自动追加 URL。</p>
-            <div class="mt-3 flex flex-wrap items-center gap-2">
-              <label class="admin-btn admin-btn-ghost cursor-pointer">
-                {{ wallpaperUploading.night ? '上传中...' : '上传夜晚壁纸' }}
+                {{ wallpaperUploading.night ? '上传中...' : '上传壁纸' }}
                 <input
                   class="hidden"
                   type="file"
@@ -464,7 +514,7 @@ onMounted(load)
             <div class="settings-form-grid mt-3">
               <label class="settings-row"><span>默认壁纸序号</span><input v-model.number="form.theme.nightActiveIndex" class="admin-input" type="number" min="0" /></label>
               <label class="settings-row settings-switch-row">
-                <span>启用夜晚壁纸轮播</span>
+                <span>启用壁纸轮播</span>
                 <input v-model="form.theme.nightSlideshowEnabled" type="checkbox" />
               </label>
               <label class="settings-row"><span>轮播间隔（秒）</span><input v-model.number="form.theme.nightSlideshowInterval" class="admin-input" type="number" min="3" max="60" step="0.5" /></label>
@@ -481,7 +531,7 @@ onMounted(load)
         </div>
       </div>
 
-      <div class="admin-card">
+      <div v-else-if="activeTab === 'comments'" class="admin-card">
         <h2 class="text-xl font-black text-slate-950">评论设置</h2>
         <p class="mt-2 text-sm text-slate-600">前台留言支持 OAuth 登录，密钥只保存在后端，不回显明文。</p>
         <div class="settings-form-grid mt-4">

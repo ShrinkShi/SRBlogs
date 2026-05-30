@@ -565,6 +565,63 @@ body::before {
   background: var(--bg-card-elevated) !important;
 }
 
+.music-lyrics-reader {
+  display: grid;
+  align-content: start;
+  gap: .35rem;
+  scroll-behavior: smooth;
+}
+
+.music-lyric-line {
+  margin: 0;
+  border-radius: 999px;
+  padding: .18rem .7rem;
+  color: var(--text-muted) !important;
+  transition: color .22s var(--motion-ease), background .22s var(--motion-ease), transform .22s var(--motion-ease);
+}
+
+.music-lyric-line-active {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--text-primary) !important;
+  transform: scale(1.035);
+}
+
+.home-typewriter-lyric {
+  display: inline-flex;
+  min-height: 2.2em;
+  max-width: 100%;
+  align-items: baseline;
+  justify-content: center;
+  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+.home-typewriter-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-typewriter-cursor {
+  display: inline-block;
+  width: .08em;
+  height: 1.15em;
+  margin-left: .14em;
+  border-radius: 999px;
+  background: currentColor;
+  transform: translateY(.16em);
+  animation: lyric-cursor-blink 1s steps(2, start) infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes lyric-cursor-blink {
+  0%,
+  45% { opacity: 1; }
+  46%,
+  100% { opacity: 0; }
+}
+
 .music-lyrics-panel > div:nth-child(2) {
   color: var(--text-secondary) !important;
   background: var(--bg-card-elevated) !important;
@@ -1066,9 +1123,18 @@ body::before {
   box-shadow: none;
 }
 
-.home-icp-cell b {
+.home-icp-cell b,
+.home-icp-cell a {
   color: var(--text-primary) !important;
   white-space: nowrap;
+}
+
+.home-icp-cell a {
+  text-decoration: none;
+}
+
+.home-icp-cell a:hover {
+  color: var(--accent) !important;
 }
 
 .readme-badges {
@@ -1705,6 +1771,171 @@ body::before {
 .music-lyrics-panel > .flex:first-child button[class*="bg-[var"]:hover {
   color: #fff !important;
 }
+
+.sayings-page {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.sayings-timeline {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  padding-left: 1.2rem;
+}
+
+.sayings-timeline::before {
+  content: '';
+  position: absolute;
+  left: .42rem;
+  top: .4rem;
+  bottom: .4rem;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--accent) 60%, transparent), transparent);
+}
+
+.saying-card {
+  position: relative;
+  min-width: 0;
+}
+
+.saying-dot {
+  position: absolute;
+  left: -1.04rem;
+  top: 1.55rem;
+  width: .72rem;
+  height: .72rem;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 20px var(--shadow-glow);
+}
+
+.saying-surface {
+  min-width: 0;
+  border: 1px solid var(--border-glass);
+  border-radius: 24px;
+  background: var(--bg-card-elevated);
+  padding: clamp(1rem, 2vw, 1.35rem);
+  box-shadow: 0 18px 48px color-mix(in srgb, #000 16%, transparent);
+}
+
+.saying-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.saying-head time,
+.saying-location,
+.saying-stats {
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-weight: 800;
+}
+
+.saying-location {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  margin-top: .38rem;
+}
+
+.saying-location svg,
+.saying-stats svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.saying-detail-link {
+  flex: 0 0 auto;
+  border: 1px solid var(--border-glass);
+  border-radius: 999px;
+  padding: .42rem .75rem;
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: 900;
+}
+
+.saying-detail-link:hover {
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.saying-content {
+  margin-top: .85rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-primary);
+  font-size: var(--fs-base);
+  line-height: 1.85;
+}
+
+.saying-images {
+  display: grid;
+  gap: .5rem;
+  margin-top: 1rem;
+  max-width: min(100%, 34rem);
+}
+
+.saying-images img {
+  border-radius: 16px;
+  border: 1px solid var(--border-glass);
+  background: var(--bg-card);
+}
+
+.saying-images-one {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.saying-images-one > * {
+  aspect-ratio: 16 / 10;
+  max-height: 22rem;
+  overflow: hidden;
+}
+
+.saying-images-four {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.saying-images-nine {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.saying-images-four > *,
+.saying-images-nine > * {
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.saying-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .8rem;
+  margin-top: 1rem;
+}
+
+.saying-stats span {
+  display: inline-flex;
+  align-items: center;
+  gap: .28rem;
+}
+
+@media (max-width: 520px) {
+  .sayings-timeline {
+    padding-left: .85rem;
+  }
+
+  .saying-images-nine {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .glass::after {
   display: none;
 }
@@ -1892,5 +2123,10 @@ body::before {
     animation-iteration-count: 1 !important;
     scroll-behavior: auto !important;
     transition-duration: .01ms !important;
+  }
+
+  .home-typewriter-cursor {
+    animation: none !important;
+    opacity: .72;
   }
 }

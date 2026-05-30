@@ -35,13 +35,13 @@
   },
   "homeProfile": {
     "author": "Shrink",
-    "avatar": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?q=80&w=500&auto=format&fit=crop",
+    "avatar": "http://127.0.0.1:8000/uploads/d702e73239ce489ebdb495851d07da42.jpg",
     "description": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
     "socialLinks": {
-      "github": "",
-      "email": "",
-      "qq": "",
-      "wechat": ""
+      "github": "https://github.com/ShrinkShi",
+      "email": "1363072460@qq.com",
+      "qq": "1363072460",
+      "wechat": "请填写微信号"
     }
   },
   "pageLayouts": {

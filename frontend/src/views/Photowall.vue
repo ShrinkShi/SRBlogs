@@ -19,7 +19,7 @@ const loading = ref(false)
 const error = ref('')
 const pageConfig = ref<PageConfig | null>(null)
 const toneMap = reactive<Record<string, ImageTone>>({})
-const title = computed(() => pageConfig.value?.pageText?.photos?.title || '图片')
+const title = computed(() => pageConfig.value?.pageText?.photos?.title || '相册')
 const subtitle = computed(() => pageConfig.value?.pageText?.photos?.subtitle || '相册记录从后端 JSON 动态读取，点击封面可查看组内照片。')
 useSeo({ title: () => title.value, description: () => subtitle.value, path: '/photowall' })
 
@@ -81,7 +81,7 @@ async function load() {
     rawPhotos.value = await contentApi.json<Array<PhotoItem | PhotoAlbum>>('/photos')
     pageConfig.value = await contentApi.json<PageConfig>('/pages/config')
   } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '照片加载失败'
+    error.value = exc instanceof Error ? exc.message : '相册加载失败'
   } finally {
     loading.value = false
   }
@@ -93,13 +93,11 @@ onMounted(load)
 <template>
   <section class="page-layout-grid">
     <GlassCard class="page-title-block text-center">
-      <p class="text-xs font-bold uppercase tracking-[.32em] text-pink-100/45">photowall</p>
-      <h1 class="mt-2 text-4xl font-black text-white">{{ title }}</h1>
-      <p class="mt-3 text-white/56">{{ subtitle }}</p>
+      <h1 class="text-4xl font-black text-white">{{ title }}</h1>
     </GlassCard>
     <form class="page-local-search" role="search" @submit.prevent>
-      <input v-model="searchQ" type="search" placeholder="搜索相册标题、描述或标签..." aria-label="图片页搜索" />
-      <button type="submit" aria-label="搜索图片">
+      <input v-model="searchQ" type="search" placeholder="搜索相册标题、描述或标签..." aria-label="相册页搜索" />
+      <button type="submit" aria-label="搜索相册">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.7-3.7" />
@@ -115,7 +113,7 @@ onMounted(load)
 
     <div>
       <GlassCard v-if="loading">
-        <p class="text-white/60">照片加载中...</p>
+        <p class="text-white/60">相册加载中...</p>
       </GlassCard>
       <GlassCard v-else-if="error">
         <p class="text-red-200/85">{{ error }}</p>

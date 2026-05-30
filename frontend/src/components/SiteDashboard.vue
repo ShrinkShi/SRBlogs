@@ -37,10 +37,10 @@ onBeforeUnmount(() => {
     </div>
     <div class="home-stats-grid mt-5">
       <div class="sr-card-hover min-w-0 rounded-3xl border border-white/10 bg-white/[0.08] p-4"><b class="block break-words text-3xl text-white">{{ posts }}</b><span class="text-xs text-white/45">文章</span></div>
-      <div class="sr-card-hover min-w-0 rounded-3xl border border-white/10 bg-white/[0.08] p-4"><b class="block break-words text-3xl text-white">{{ moments }}</b><span class="text-xs text-white/45">瞬间</span></div>
+      <div class="sr-card-hover min-w-0 rounded-3xl border border-white/10 bg-white/[0.08] p-4"><b class="block break-words text-3xl text-white">{{ moments }}</b><span class="text-xs text-white/45">说说</span></div>
       <div class="sr-card-hover min-w-0 rounded-3xl border border-white/10 bg-white/[0.08] p-4"><b class="block break-words text-3xl text-white">{{ chatters }}</b><span class="text-xs text-white/45">杂谈</span></div>
       <div class="sr-card-hover min-w-0 rounded-3xl border border-white/10 bg-white/[0.08] p-4"><b class="block break-words text-3xl text-white">{{ projects }}</b><span class="text-xs text-white/45">项目</span></div>
-      <div class="sr-card-hover min-w-0 rounded-3xl border border-white/10 bg-white/[0.08] p-4"><b class="block break-words text-3xl text-white">{{ settings?.counts?.photos || 0 }}</b><span class="text-xs text-white/45">照片</span></div>
+      <div class="sr-card-hover min-w-0 rounded-3xl border border-white/10 bg-white/[0.08] p-4"><b class="block break-words text-3xl text-white">{{ settings?.counts?.photos || 0 }}</b><span class="text-xs text-white/45">相册</span></div>
     </div>
   </GlassCard>
 </template>

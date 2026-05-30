@@ -81,7 +81,7 @@ const error = ref('')
 const sending = ref(false)
 const form = reactive({ name: '', email: '', message: '' })
 
-useSeo({ title: '关于 - SRBlogs', description: '关于 Shrink 的个人介绍、GitHub 活动与联系方式。' })
+useSeo({ title: '首页 - SRBlogs', description: 'Shrink 的个人介绍、GitHub 活动与联系方式。', path: '/' })
 
 const roleWords = ['全栈开发工程师', '游戏开发者', 'MOD作者']
 const typedRole = ref(roleWords[0])
@@ -287,7 +287,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <main class="about-page" :class="{ 'about-day': ui.colorMode === 'day' }">
+  <main class="about-page">
     <section id="about-hero" class="about-section hero-section">
       <div class="about-shell hero-centered">
         <div class="hero-content">

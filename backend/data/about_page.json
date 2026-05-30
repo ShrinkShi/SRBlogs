@@ -4,27 +4,12 @@
     "eyebrow": "你好，我是",
     "name": "Shrink",
     "role": "全栈开发工程师",
-    "description": "物联网工程专业学生，热衷于 MOD、游戏引擎，热爱软件、Web 应用开发。\n致力于用技术创造价值",
+    "description": "在代码、游戏开发与学习记录之间穿梭。这里保存项目复盘、技术笔记、生活动态与一些云端碎碎念。",
     "primaryButtonText": "查看作品",
     "primaryButtonUrl": "/projects",
     "secondaryButtonText": "联系我",
-    "stats": [
-      {
-        "value": "1",
-        "suffix": "+",
-        "label": "年经验"
-      },
-      {
-        "value": "n",
-        "suffix": "+",
-        "label": "个项目"
-      },
-      {
-        "value": "n",
-        "suffix": "+",
-        "label": "次提交"
-      }
-    ]
+    "stats": [],
+    "avatar": "http://127.0.0.1:8000/uploads/d702e73239ce489ebdb495851d07da42.jpg"
   },
   "about": {
     "badge": "<about />",

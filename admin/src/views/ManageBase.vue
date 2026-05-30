@@ -21,7 +21,7 @@ const error = ref('')
 const actionBusy = ref('')
 const commentIndex = ref<CommentIndexItem[]>([])
 const activeCommentTarget = ref<{
-  resource: 'posts' | 'chatters'
+  resource: CommentIndexItem['resource']
   slug: string
   title: string
   typeLabel: string
@@ -35,6 +35,7 @@ const filterOptions: { value: 'all' | 'published' | 'draft'; label: string }[] =
 
 const showArticleKindSwitch = computed(() => props.section === 'posts' || props.section === 'chatters')
 const articleKind = computed<'posts' | 'chatters'>(() => props.section === 'chatters' ? 'chatters' : 'posts')
+const createLabel = computed(() => props.section === 'chatters' ? '杂谈' : props.section === 'moments' ? '说说' : '文章')
 
 const filteredItems = computed(() => items.value.filter((item) => {
   if (filter.value === 'published') return !item.meta.draft
@@ -48,12 +49,6 @@ const filteredItems = computed(() => items.value.filter((item) => {
     || (item.meta.summary || '').toLowerCase().includes(q)
     || item.meta.tags?.some((tag) => tag.toLowerCase().includes(q))
 }))
-
-function publicPath(item: ContentItem) {
-  if (props.section === 'chatters') return `/chatters/${item.slug}`
-  if (props.section === 'moments') return `/moments/${item.slug}`
-  return `/posts/${item.slug}`
-}
 
 function setArticleKind(kind: 'posts' | 'chatters') {
   router.replace({ path: '/content/articles', query: kind === 'chatters' ? { kind } : {} })
@@ -76,19 +71,63 @@ async function load() {
   }
 }
 
-function commentCountFor(resource: 'posts' | 'chatters', slug: string) {
+function commentCountFor(resource: CommentIndexItem['resource'], slug: string) {
   return commentIndex.value.find((item) => item.resource === resource && item.slug === slug)?.count || 0
 }
 
+function commentResource() {
+  return props.section as CommentIndexItem['resource']
+}
+
 function openComments(item: ContentItem) {
-  if (!showArticleKindSwitch.value) return
-  const resource = props.section === 'chatters' ? 'chatters' : 'posts'
+  const resource = commentResource()
   activeCommentTarget.value = {
     resource,
     slug: item.slug,
-    title: item.meta.title,
-    typeLabel: props.section === 'chatters' ? '杂谈' : '文章'
+    title: item.meta.title || item.slug,
+    typeLabel: props.section === 'chatters' ? '杂谈' : props.section === 'moments' ? '说说' : '文章'
   }
+}
+
+function numberFrom(item: ContentItem, keys: string[]) {
+  const record = item as unknown as Record<string, unknown>
+  const meta = item.meta as unknown as Record<string, unknown>
+  for (const key of keys) {
+    const value = record[key] ?? meta[key]
+    const numberValue = Number(value)
+    if (Number.isFinite(numberValue)) return Math.max(0, numberValue)
+  }
+  return 0
+}
+
+function statsFor(item: ContentItem) {
+  const resource = commentResource()
+  return {
+    views: numberFrom(item, ['view_count', 'views', 'viewCount', 'visits', 'readCount']),
+    likes: numberFrom(item, ['like_count', 'likes', 'likeCount']),
+    comments: commentCountFor(resource, item.slug),
+    shares: numberFrom(item, ['share_count', 'shares', 'shareCount', 'forwards'])
+  }
+}
+
+function tagsFor(item: ContentItem) {
+  return Array.isArray(item.meta.tags) ? item.meta.tags : []
+}
+
+function coverFor(item: ContentItem) {
+  return item.meta.cover || item.meta.images?.[0] || ''
+}
+
+function descriptionFor(item: ContentItem) {
+  if (props.section === 'moments') return item.content || item.meta.summary || '未填写说说内容'
+  return item.meta.summary || '未填写卡片简介'
+}
+
+function metaChipsFor(item: ContentItem) {
+  if (props.section === 'moments') {
+    return [item.meta.location ? `定位：${item.meta.location}` : '', item.meta.draft ? '草稿' : '已发布'].filter(Boolean)
+  }
+  return tagsFor(item).length ? tagsFor(item).map((tag) => `# ${tag}`) : ['无标签']
 }
 
 function updateCommentCount(payload: { resource: CommentIndexItem['resource']; slug: string; count: number; title: string }) {
@@ -128,31 +167,6 @@ async function remove(item: ContentItem) {
   }
 }
 
-async function toggleDraft(item: ContentItem, draft: boolean) {
-  const label = draft ? '设为草稿' : '发布'
-  const ok = await confirmDialog.ask({
-    title: `确认${label}`,
-    message: `确定${label}「${item.meta.title || item.slug}」吗？`,
-    cancelText: '取消',
-    confirmText: `确认${label}`,
-    variant: draft ? 'default' : 'danger'
-  })
-  if (!ok) return
-  error.value = ''
-  actionBusy.value = item.slug
-  try {
-    const payload: ContentItem = { ...item, meta: { ...item.meta, draft } }
-    await adminApi.save(props.section, payload, item.slug)
-    ui.show(draft ? '已设为草稿' : '已发布')
-    await load()
-  } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : `${label}失败`
-    ui.error(`${label}失败，请重试`)
-  } finally {
-    actionBusy.value = ''
-  }
-}
-
 onMounted(load)
 </script>
 
@@ -178,7 +192,7 @@ onMounted(load)
             </button>
           </div>
           <button class="admin-btn admin-btn-ghost" type="button" @click="load">刷新</button>
-          <RouterLink :to="`/editor/${section}`" class="admin-btn admin-btn-primary">新增{{ props.section === 'chatters' ? '杂谈' : '文章' }}</RouterLink>
+          <RouterLink :to="`/editor/${section}`" class="admin-btn admin-btn-primary">新增{{ createLabel }}</RouterLink>
         </div>
       </div>
       <input v-model="query" class="admin-input mt-5" placeholder="搜索标题、简介、标签或 slug" />
@@ -189,36 +203,48 @@ onMounted(load)
       <p v-if="loading" class="p-6 text-slate-500">加载中...</p>
       <p v-else-if="!filteredItems.length" class="p-6 text-slate-500">当前条件下暂无内容。</p>
       <div v-else>
-        <article v-for="item in filteredItems" :key="item.slug" class="admin-list-row">
-          <div class="grid gap-4 lg:grid-cols-[8rem_minmax(0,1fr)_auto] lg:items-center">
-            <div class="h-24 overflow-hidden rounded-xl border border-slate-200 bg-slate-100">
-              <img v-if="item.meta.cover" :src="item.meta.cover" alt="" class="h-full w-full object-cover" loading="lazy" />
+        <article v-for="item in filteredItems" :key="item.slug" class="admin-list-row admin-manage-row">
+          <div class="admin-manage-item">
+            <div class="admin-manage-cover">
+              <img v-if="coverFor(item)" :src="coverFor(item)" alt="" class="h-full w-full object-cover" loading="lazy" />
               <div v-else class="grid h-full place-items-center text-xs font-bold text-slate-400">默认封面</div>
             </div>
-            <div class="min-w-0">
-              <div class="flex flex-wrap items-center gap-2">
-                <h3 class="break-words text-lg font-black text-slate-950">{{ item.meta.title }}</h3>
+            <div class="admin-manage-info">
+              <div class="admin-manage-title-line">
+                <h3>{{ item.meta.title || item.slug }}</h3>
                 <span v-if="item.meta.draft" class="rounded-full bg-amber-50 px-2 py-1 text-xs font-bold text-amber-700">草稿</span>
                 <span v-else class="rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">已发布</span>
               </div>
-              <p class="mt-1 break-all font-mono text-xs text-slate-500">{{ item.slug }}</p>
-              <p class="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{{ item.meta.summary || '未填写卡片简介' }}</p>
-              <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                <span>{{ item.meta.date || '无日期' }}</span>
-                <span>{{ item.meta.tags?.length || 0 }} 个标签</span>
-                <span>{{ item.meta.summary?.length || 0 }} 字简介</span>
-                <span>{{ item.content?.length || 0 }} 字正文</span>
+              <p class="admin-manage-time">{{ item.meta.date || item.updatedAt || '无日期' }}</p>
+              <p class="admin-manage-desc">{{ descriptionFor(item) }}</p>
+              <div class="admin-manage-tags">
+                <span v-for="chip in metaChipsFor(item)" :key="chip">{{ chip }}</span>
+              </div>
+              <div class="admin-manage-stats">
+                <span title="浏览" aria-label="浏览">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="3" /></svg>
+                  {{ statsFor(item).views }}
+                </span>
+                <span title="点赞" aria-label="点赞">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3m0 11V10l5-8 1 1a4 4 0 0 1 .8 4.1L13 10h5.6a2 2 0 0 1 2 2.3l-1.4 7.5a2 2 0 0 1-2 1.7H7Z" /></svg>
+                  {{ statsFor(item).likes }}
+                </span>
+                <span title="评论" aria-label="评论">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5Z" /></svg>
+                  {{ statsFor(item).comments }}
+                </span>
+                <span title="转发" aria-label="转发">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" /><path d="M5 5h5M5 5v5M19 19h-5M19 19v-5" /></svg>
+                  {{ statsFor(item).shares }}
+                </span>
               </div>
             </div>
-            <div class="flex flex-wrap gap-2 lg:justify-end">
-              <button v-if="showArticleKindSwitch" class="admin-btn admin-btn-ghost text-sm" type="button" @click="openComments(item)">
-                评论({{ commentCountFor(props.section === 'chatters' ? 'chatters' : 'posts', item.slug) }})
+            <div class="admin-manage-actions">
+              <RouterLink :to="`/editor/${section}/${item.slug}`" class="admin-btn admin-btn-ghost text-sm">✏️ 编辑</RouterLink>
+              <button :disabled="actionBusy === item.slug" class="admin-btn admin-btn-danger text-sm" type="button" @click="remove(item)">❌ 删除</button>
+              <button class="admin-btn admin-btn-ghost text-sm" type="button" @click="openComments(item)">
+                🗨︎ 评论管理
               </button>
-              <RouterLink :to="`/editor/${section}/${item.slug}`" class="admin-btn admin-btn-ghost text-sm">编辑</RouterLink>
-              <a v-if="!item.meta.draft" :href="publicPath(item)" target="_blank" class="admin-btn admin-btn-ghost text-sm">预览</a>
-              <button v-if="item.meta.draft" :disabled="actionBusy === item.slug" class="admin-btn admin-btn-primary text-sm" type="button" @click="toggleDraft(item, false)">发布</button>
-              <button v-else :disabled="actionBusy === item.slug" class="admin-btn admin-btn-ghost text-sm" type="button" @click="toggleDraft(item, true)">设为草稿</button>
-              <button :disabled="actionBusy === item.slug" class="admin-btn admin-btn-danger text-sm" type="button" @click="remove(item)">删除</button>
             </div>
           </div>
         </article>

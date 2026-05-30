@@ -82,6 +82,16 @@ async function loadComments() {
   loading.value = true
   error.value = ''
   try {
+    if (props.resource === 'friends') {
+      comments.value = []
+      emit('count-updated', {
+        resource: props.resource,
+        slug: props.slug,
+        count: 0,
+        title: props.title
+      })
+      return
+    }
     comments.value = await adminApi.comments(props.resource, props.slug) as CommentWithLegacyReply[]
     emit('count-updated', {
       resource: props.resource,

@@ -17,7 +17,7 @@ const error = ref('')
 const typeOptions: { label: string; value: DiscoveryType }[] = [
   { label: '全部', value: 'all' },
   { label: '文章', value: 'posts' },
-  { label: '瞬间', value: 'moments' },
+  { label: '说说', value: 'moments' },
   { label: '杂谈', value: 'chatters' },
   { label: '项目', value: 'projects' }
 ]

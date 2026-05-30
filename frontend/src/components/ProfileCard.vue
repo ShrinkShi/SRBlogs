@@ -9,7 +9,7 @@ const ui = useUiStore()
 
 const avatar = () => props.settings?.avatar || props.settings?.avatarUrl
 const author = () => props.settings?.author || props.settings?.authorName || 'Shrink'
-const description = () => props.settings?.description || props.settings?.bio || '在代码、文字与生活碎片之间，搭建一座轻量而清晰的个人博客。'
+const description = () => props.settings?.bio || props.settings?.profileIntro || '在代码、文字与生活碎片之间，搭建一座轻量而清晰的个人博客。'
 const social = () => props.settings?.socialLinks || props.settings?.social || {}
 const github = () => social().github || 'https://github.com/ShrinkShi'
 const email = () => social().email || 'you@example.com'
@@ -60,7 +60,7 @@ async function copy(value: string, label: string) {
           </RouterLink>
           <RouterLink to="/photowall" class="profile-plain-action min-w-0 p-3 text-center">
             <b class="block break-words text-2xl text-white">{{ props.photos || 0 }}</b>
-            <span class="text-xs text-white/42">照片</span>
+            <span class="text-xs text-white/42">相册</span>
           </RouterLink>
         </div>
 

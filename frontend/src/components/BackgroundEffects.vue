@@ -31,9 +31,9 @@ const modeTokens = computed(() => {
   const config = props.settings?.themeConfig
   const activeTheme = config?.activeTheme || props.settings?.theme || 'shrink-red-glass'
   const activePackage = config?.themePackages?.[activeTheme]
-  const localTokens = ui.colorMode === 'day' ? config?.day : config?.night
-  const packageTokens = ui.colorMode === 'day' ? activePackage?.modes?.day : activePackage?.modes?.night
-  // 后台“白天/夜晚壁纸”是当前主题的直接编辑结果，必须覆盖主题包默认值。
+  const localTokens = config?.night
+  const packageTokens = activePackage?.modes?.night
+  // 前台固定夜晚模式，后台仅保留夜晚背景配置作为可见配置入口。
   return { ...(packageTokens || {}), ...(localTokens || {}) }
 })
 const bgImages = computed(() => {
@@ -84,27 +84,20 @@ watch(() => ui.bgIndex, () => {
     activeBgIndex.value = Math.max(0, next) % Math.max(1, bgImages.value.length)
   }
 })
-watch(() => ui.colorMode, () => {
-  window.setTimeout(() => {
-    if (bgImages.value.length > 1) {
-      activeBgIndex.value = (activeBgIndex.value + 1) % bgImages.value.length
-    }
-  })
-})
 watch([slideshowEnabled, slideshowIntervalMs], startBgTimer, { immediate: true })
 onBeforeUnmount(stopBgTimer)
 
 const overlayStyle = computed(() => ({
-  backgroundColor: modeTokens.value.overlayColor || (ui.colorMode === 'day' ? '#ffffff' : '#000000'),
-  opacity: String(ui.colorMode === 'day' ? 0 : Math.min(1, Math.max(0, Number(modeTokens.value.overlayOpacity ?? 0.58))))
+  backgroundColor: modeTokens.value.overlayColor || '#000000',
+  opacity: String(Math.min(1, Math.max(0, Number(modeTokens.value.overlayOpacity ?? 0.58))))
 }))
 const bgLayerStyle = computed(() => ({
   backgroundImage: bgImage.value ? `url(${bgImage.value})` : '',
-  opacity: String(ui.colorMode === 'day' ? 0.9 : 0.86),
-  filter: ui.colorMode === 'day' ? 'saturate(1.04) contrast(0.98)' : 'saturate(1.02) contrast(1.05)'
+  opacity: '0.86',
+  filter: 'saturate(1.02) contrast(1.05)'
 }))
 const radialStyle = computed(() => ({
-  opacity: String(ui.colorMode === 'day' ? 0.04 : 0.08)
+  opacity: '0.08'
 }))
 </script>
 
@@ -114,7 +107,7 @@ const radialStyle = computed(() => ({
     <Transition :name="transitionName" mode="out-in">
       <div
         v-if="bgImage"
-        :key="`${ui.colorMode}-${bgImage}`"
+        :key="`night-${bgImage}`"
         class="absolute inset-0 scale-[1.02] bg-cover bg-center blur-[1px]"
         :style="bgLayerStyle"
       ></div>
