@@ -5,6 +5,61 @@ export type CommentResource = 'posts' | 'moments' | 'chatters' | 'music' | 'phot
 export type VisitorUser = { provider: 'github' | 'qq'; id: string; login?: string; name?: string; avatar?: string; html_url?: string }
 export type AdminUser = { username: string; role: 'admin' }
 export type InstallStatus = { installed: boolean; needsInstall: boolean; missingItems: string[] }
+export type UpdateTask = {
+  taskId: string
+  status: 'idle' | 'running' | 'success' | 'failed' | string
+  startedAt: string
+  finishedAt: string
+  pid: number | null
+  exitCode: number | null
+  currentStep: string
+  progress: number
+  logPath: string
+  lastLines: string[]
+  updatedAt?: string
+  lastLogAt?: string
+  errorCode?: string
+  errorMessage: string
+  tag: string
+}
+export type UpdateProgress = {
+  taskId: string
+  status: string
+  currentStep: string
+  progress: number
+  lastLines: string[]
+  startedAt: string
+  finishedAt?: string
+  updatedAt: string
+  lastLogAt?: string
+  pid?: number | null
+  exitCode?: number | null
+  errorCode?: string
+  errorMessage?: string
+  logPath?: string
+}
+export type UpdateStatus = {
+  repo: string
+  currentVersion: string
+  latestVersion: string
+  hasUpdate: boolean
+  releaseUrl: string
+  publishedAt: string
+  notes: string
+  status: string
+  message: string
+  errorCode: string
+  errorMessage: string
+  platform: string
+  updateSupported: boolean
+  updateErrorCode: string
+  updateErrorMessage: string
+  updateAvailable: boolean
+  updateEnabled: boolean
+  updateConfigured: boolean
+  task?: UpdateTask
+  debugLogs: string[]
+}
 export type InstallPayload = {
   siteTitle: string
   author: string
@@ -55,7 +110,7 @@ export const contentApi = {
     return data
   },
   githubSummary: async (username: string) => {
-    const { data } = await http.get<GithubSummary>('/github/summary', { params: { username } })
+    const { data } = await http.get<GithubSummary>('/github/summary', { params: { username }, timeout: 45000 })
     return data
   },
   sendContact: async (payload: { name: string; email: string; message: string }) => {
@@ -106,6 +161,26 @@ export const contentApi = {
   },
   adminMe: async () => {
     const { data } = await http.get<AdminUser>('/auth/admin/me')
+    return data
+  },
+  updateStatus: async () => {
+    const { data } = await http.get<UpdateStatus>('/admin/update/status')
+    return data
+  },
+  checkUpdate: async () => {
+    const { data } = await http.post<UpdateStatus>('/admin/update/check')
+    return data
+  },
+  runUpdate: async (tag = '') => {
+    const { data } = await http.post<UpdateStatus>('/admin/update/run', { tag })
+    return data
+  },
+  updateTask: async () => {
+    const { data } = await http.get<UpdateTask>('/admin/update/task')
+    return data
+  },
+  updateProgress: async (lines = 100) => {
+    const { data } = await http.get<UpdateProgress>('/admin/update/progress', { params: { lines } })
     return data
   },
   adminJson: async <T>(path: string) => {

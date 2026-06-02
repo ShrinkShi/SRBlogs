@@ -157,7 +157,7 @@ watch(() => props.modelValue, (open) => {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .16);
   border-radius: 1.35rem;
-  background: #050505;
+  background: #191A1B;
   color: white;
 }
 .front-photo-head,
@@ -177,10 +177,11 @@ watch(() => props.modelValue, (open) => {
 .front-photo-head button,
 .front-photo-cancel,
 .front-photo-upload button {
-  border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: .85rem;
+  border-radius: 999px;
+  background: white;
   padding: .55rem .75rem;
-  color: rgba(255, 255, 255, .72);
+  color: black;
+  font-weight: 900;
 }
 .front-photo-head button {
   display: grid;
@@ -217,7 +218,7 @@ watch(() => props.modelValue, (open) => {
   min-width: 0;
   border: 1px solid rgba(255, 255, 255, .13);
   border-radius: .9rem;
-  background: rgba(255, 255, 255, .08);
+  background: #202123;
   padding: .72rem .82rem;
   color: white;
   outline: none;
@@ -227,10 +228,10 @@ watch(() => props.modelValue, (open) => {
   justify-content: flex-end;
 }
 .front-photo-save {
-  border-radius: .85rem;
-  background: #dcfce7;
+  border-radius: 999px;
+  background: #86efac;
   padding: .62rem 1.1rem;
-  color: #052e16;
+  color: black;
   font-weight: 900;
 }
 .front-photo-error {

@@ -312,7 +312,7 @@ watch(() => props.modelValue, (open) => {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .16);
   border-radius: 1.35rem;
-  background: #050505;
+  background: #191A1B;
   color: white;
   box-shadow: 0 28px 90px rgba(0, 0, 0, .62);
 }
@@ -333,10 +333,11 @@ watch(() => props.modelValue, (open) => {
 .front-editor-cancel,
 .front-editor-small-btn,
 .front-editor-cover-row button {
-  border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: .85rem;
+  border-radius: 999px;
+  background: white;
   padding: .55rem .75rem;
-  color: rgba(255, 255, 255, .72);
+  color: black;
+  font-weight: 900;
 }
 .front-editor-head button {
   display: grid;
@@ -386,7 +387,7 @@ watch(() => props.modelValue, (open) => {
   min-width: 0;
   border: 1px solid rgba(255, 255, 255, .13);
   border-radius: .9rem;
-  background: rgba(255, 255, 255, .08);
+  background: #202123;
   padding: .75rem .85rem;
   color: white;
   outline: none;
@@ -413,7 +414,7 @@ watch(() => props.modelValue, (open) => {
   display: inline-flex;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: .85rem;
+  border-radius: 999px;
 }
 .front-editor-tabs button,
 .front-editor-radio button {
@@ -423,7 +424,7 @@ watch(() => props.modelValue, (open) => {
 }
 .front-editor-tabs button.active,
 .front-editor-radio button.active {
-  background: #111827;
+  background: black;
   color: white;
 }
 .front-editor-markdown textarea {
@@ -446,7 +447,7 @@ watch(() => props.modelValue, (open) => {
   overflow: hidden;
   margin-top: .5rem;
   border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: .9rem;
+  border-radius: 999px;
 }
 .front-editor-cover-row {
   display: grid;
@@ -481,10 +482,10 @@ watch(() => props.modelValue, (open) => {
   gap: .65rem;
 }
 .front-editor-save {
-  border-radius: .85rem;
-  background: #dcfce7;
+  border-radius: 999px;
+  background: #86efac;
   padding: .62rem 1.1rem;
-  color: #052e16;
+  color: black;
   font-weight: 900;
 }
 .front-editor-state {

@@ -3,13 +3,15 @@ from pathlib import Path
 from uuid import uuid4
 
 import bleach
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials
+from jose import JWTError, jwt
 
 from app.config import get_settings
-from app.api.auth import require_visitor_user
+from app.api.auth import read_visitor_user
 from app.models.schemas import CommentCreate, CommentIndexItem, CommentItem
 from app.services.audit_service import write_audit
-from app.services.auth_service import require_admin
+from app.services.auth_service import require_admin, security
 from app.services.content_service import MarkdownStore
 from app.services.file_store import FileStoreError, resolve_data_path, safe_read_json, validate_slug
 from app.services.json_service import JsonStore
@@ -85,6 +87,48 @@ def _public_comment(comment: dict, options: dict) -> dict:
     return item
 
 
+def _admin_avatar() -> str:
+    data = JsonStore(get_settings().data_path, "settings.json", {}).read()
+    if not isinstance(data, dict):
+        return ""
+    candidates = [
+        data.get("avatar"),
+        data.get("avatarUrl"),
+        data.get("adminAvatar"),
+        data.get("authorAvatar"),
+    ]
+    for value in candidates:
+        if value:
+            return bleach.clean(str(value), tags=[], strip=True)
+    return ""
+
+
+def _comment_identity(request: Request, admin_actor: str | None) -> dict:
+    if admin_actor:
+        return {
+            "provider": "admin",
+            "id": admin_actor,
+            "name": "管理员",
+            "avatar": _admin_avatar(),
+        }
+    visitor_user = read_visitor_user(request)
+    if not visitor_user or not visitor_user.get("id"):
+        raise HTTPException(status_code=401, detail="请先登录后再留言。")
+    return visitor_user
+
+
+def _read_admin_or_none(credentials: HTTPAuthorizationCredentials | None = Depends(security)) -> str | None:
+    if credentials is None:
+        return None
+    settings = get_settings()
+    try:
+        payload = jwt.decode(credentials.credentials, settings.jwt_secret, algorithms=["HS256"])
+    except JWTError:
+        return None
+    sub = payload.get("sub")
+    return sub if sub == settings.admin_username else None
+
+
 @router.get("/{resource}/{slug}", response_model=list[CommentItem])
 def list_comments(resource: str, slug: str):
     options = _comment_options()
@@ -92,23 +136,30 @@ def list_comments(resource: str, slug: str):
 
 
 @router.post("/{resource}/{slug}", response_model=CommentItem)
-def create_comment(resource: str, slug: str, payload: CommentCreate, visitor_user: dict = Depends(require_visitor_user)):
+def create_comment(
+    resource: str,
+    slug: str,
+    payload: CommentCreate,
+    request: Request,
+    admin_actor: str | None = Depends(_read_admin_or_none),
+):
     options = _comment_options()
-    if not _comments_enabled(options):
+    if not admin_actor and not _comments_enabled(options):
         raise HTTPException(status_code=403, detail="留言板暂未开放。")
     max_length = _max_comment_length(options)
     if len(payload.content.strip()) > max_length:
         raise HTTPException(status_code=400, detail=f"留言内容不能超过 {max_length} 个字符。")
     store = _store(resource, slug)
     comments = store.read()
-    provider = bleach.clean(str(visitor_user.get("provider") or ""), tags=[], strip=True)
-    provider_id = bleach.clean(str(visitor_user.get("id") or ""), tags=[], strip=True)
-    author = bleach.clean(str(visitor_user.get("name") or provider_id or "Visitor"), tags=[], strip=True)
+    identity = _comment_identity(request, admin_actor)
+    provider = bleach.clean(str(identity.get("provider") or ""), tags=[], strip=True)
+    provider_id = bleach.clean(str(identity.get("id") or ""), tags=[], strip=True)
+    author = bleach.clean(str(identity.get("name") or provider_id or "Visitor"), tags=[], strip=True)
     item = {
         "id": uuid4().hex,
         "author": author,
         "email": "",
-        "avatar": bleach.clean(str(visitor_user.get("avatar") or ""), tags=[], strip=True),
+        "avatar": bleach.clean(str(identity.get("avatar") or ""), tags=[], strip=True),
         "provider": provider,
         "providerId": provider_id,
         "githubLogin": provider_id if provider == "github" else "",

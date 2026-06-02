@@ -23,7 +23,7 @@ const player = usePlayerStore()
 const route = useRoute()
 const router = useRouter()
 const installRoute = computed(() => route.path === '/install')
-type ToolPanel = 'calculator' | 'search' | 'settings'
+type ToolPanel = 'calculator' | 'search' | 'settings' | 'update'
 const toolboxPanel = ref<ToolPanel | null>(null)
 const floatingMusicVisible = ref(localStorage.getItem('sr-floating-music-visible') !== 'off')
 const showFloatingPlayer = computed(() => !installRoute.value && !route.path.startsWith('/music') && floatingMusicVisible.value)
@@ -42,7 +42,7 @@ function resolveExternalUrl(action: string) {
 
 function handleFloatingAppAction(app: FloatingAppItem) {
   if (app.actionType === 'modal') {
-    if (['calculator', 'search', 'settings'].includes(app.action)) {
+    if (['calculator', 'search', 'settings', 'update'].includes(app.action)) {
       toolboxPanel.value = app.action as ToolPanel
     }
     return
@@ -80,9 +80,9 @@ function applyTheme() {
   const preferredScale = ui.fontScale || config.fontScale
   root.dataset.fontScale = preferredScale || 'medium'
   root.style.setProperty('--app-font-family', '"Consolas-with-Yahei", Consolas, "Microsoft YaHei", "微软雅黑", "Courier New", monospace')
-  const solidCard = solidColor(tokens?.bgCard || tokens?.cardBg, '#141416')
-  const solidElevated = solidColor(tokens?.bgCardElevated || tokens?.cardBg, '#202023')
-  const solidNav = solidColor(tokens?.navBg, '#08080a')
+  const solidCard = solidColor(tokens?.bgCard || tokens?.cardBg, '#191A1B')
+  const solidElevated = solidColor(tokens?.bgCardElevated || tokens?.cardBg, '#202123')
+  const solidNav = solidColor(tokens?.navBg, '#101112')
   const map: Record<string, string | undefined> = {
     '--bg-page': tokens?.bgPage || tokens?.pageBg,
     '--bg-card': solidCard,

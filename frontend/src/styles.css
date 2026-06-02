@@ -4,20 +4,20 @@
 
 :root {
   color-scheme: dark;
-  --bg-page: #050505;
-  --bg-card: #141416;
-  --bg-card-elevated: #202023;
+  --bg-page: #0d0e0f;
+  --bg-card: #191A1B;
+  --bg-card-elevated: #202123;
   --border-glass: rgba(255, 255, 255, 0.16);
   --accent: #ef4444;
   --accent-soft: rgba(239, 68, 68, 0.16);
-  --nav-bg: #08080a;
-  --home-panel-bg: #141416;
+  --nav-bg: #101112;
+  --home-panel-bg: #191A1B;
   --shadow-glow: rgba(239, 68, 68, 0.28);
-  --glass-bg: #141416;
-  --glass-bg-strong: #202023;
+  --glass-bg: #191A1B;
+  --glass-bg-strong: #202123;
   --glass-border: rgba(255, 255, 255, 0.16);
   --glass-line: rgba(255, 255, 255, 0.12);
-  --surface-elevated: #111827;
+  --surface-elevated: #202123;
   --text-primary: rgba(247, 251, 255, 0.96);
   --text-secondary: rgba(247, 251, 255, 0.74);
   --text-muted: rgba(247, 251, 255, 0.52);
@@ -32,7 +32,7 @@
   --status-warning: rgba(253, 224, 71, 0.88);
   --status-info: rgba(103, 232, 249, 0.88);
   --motion-ease: cubic-bezier(.2, .8, .2, 1);
-  --toolbox-panel-rgb: 0 0 0;
+  --toolbox-panel-rgb: 25 26 27;
   --opacity-toolbox-settings-panel: 1;
   --opacity-toolbox-search-panel: 1;
   --opacity-toolbox-calculator-panel: 1;

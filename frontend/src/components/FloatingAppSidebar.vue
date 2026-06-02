@@ -31,7 +31,8 @@ function iconPath(icon: FloatingAppIcon) {
     music: 'M9 18V5l11-2v13M9 18a3 3 0 1 1-2-2.8A3 3 0 0 1 9 18Zm11-2a3 3 0 1 1-2-2.8A3 3 0 0 1 20 16Z',
     search: 'M11 5a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm9 15-4.2-4.2',
     calculator: 'M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm2 4h8M8 12h.1M12 12h.1M16 12h.1M8 16h.1M12 16h.1M16 16h.1',
-    article: 'M6 4h9l3 3v13H6V4Zm8 0v4h4M9 11h6M9 15h6M9 18h4'
+    article: 'M6 4h9l3 3v13H6V4Zm8 0v4h4M9 11h6M9 15h6M9 18h4',
+    update: 'M20 6v5h-5M4 18v-5h5M18.6 9a7 7 0 0 0-11.2-2.2L4 10m16 4-3.4 3.2A7 7 0 0 1 5.4 15'
   }
   return paths[icon]
 }
@@ -168,7 +169,7 @@ onMounted(() => {
   place-items: center;
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 999px;
-  background: rgba(3, 3, 3, .86);
+  background: rgba(25, 26, 27, .92);
   color: #fecaca;
   box-shadow: 0 18px 48px rgba(0, 0, 0, .38), 0 0 0 1px rgba(244, 0, 2, .12) inset;
 }
@@ -194,7 +195,7 @@ onMounted(() => {
   gap: 1rem;
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 1.6rem;
-  background: rgba(3, 3, 3, .92);
+  background: rgba(25, 26, 27, .94);
   padding: 1rem;
   color: white;
   box-shadow: 0 26px 80px rgba(0, 0, 0, .54), 0 0 0 1px rgba(244, 0, 2, .09) inset;
@@ -223,9 +224,9 @@ onMounted(() => {
   width: 2.3rem;
   height: 2.3rem;
   place-items: center;
-  border-radius: .9rem;
-  border: 1px solid rgba(255, 255, 255, .12);
-  color: rgba(255, 255, 255, .68);
+  border-radius: 999px;
+  background: white;
+  color: black;
 }
 .app-sidebar-grid {
   display: grid;
@@ -257,7 +258,7 @@ onMounted(() => {
   place-items: center;
   border-radius: 1.25rem;
   border: 1px solid rgba(255, 255, 255, .12);
-  background: rgba(255, 255, 255, .075);
+  background: #202123;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
 }
 .app-sidebar-icon svg {
@@ -279,8 +280,8 @@ onMounted(() => {
 }
 .app-sidebar-account-trigger {
   width: 100%;
-  border-radius: 1.1rem;
-  background: rgba(255, 255, 255, .06);
+  border-radius: 999px;
+  background: #202123;
   padding: .65rem;
   text-align: left;
 }
@@ -320,7 +321,7 @@ onMounted(() => {
   gap: .55rem;
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 1.25rem;
-  background: rgba(5, 5, 5, .96);
+  background: rgba(25, 26, 27, .98);
   padding: .85rem;
   box-shadow: 0 18px 48px rgba(0, 0, 0, .46);
 }
@@ -338,25 +339,25 @@ onMounted(() => {
 .app-account-form input {
   min-width: 0;
   border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: .85rem;
-  background: rgba(255, 255, 255, .075);
+  border-radius: 999px;
+  background: #202123;
   padding: .62rem .75rem;
   color: white;
   outline: none;
 }
 .app-account-primary,
 .app-account-ghost {
-  border-radius: .85rem;
+  border-radius: 999px;
   padding: .65rem .8rem;
   font-weight: 900;
 }
 .app-account-primary {
-  background: #fecaca;
-  color: #450a0a;
+  background: black;
+  color: white;
 }
 .app-account-admin {
-  background: #dcfce7;
-  color: #052e16;
+  background: #86efac;
+  color: black;
 }
 .app-account-primary:disabled {
   cursor: not-allowed;
@@ -364,8 +365,8 @@ onMounted(() => {
   color: rgba(255, 255, 255, .35);
 }
 .app-account-ghost {
-  border: 1px solid rgba(255, 255, 255, .12);
-  color: rgba(255, 255, 255, .62);
+  background: white;
+  color: black;
 }
 .app-account-note,
 .app-account-error {

@@ -81,10 +81,9 @@ function applyColor(color = colorValue.value) {
 .front-md-toolbar > button {
   min-width: 2.1rem;
   min-height: 2.1rem;
-  border: 1px solid rgba(255, 255, 255, .13);
-  border-radius: .62rem;
-  background: rgba(255, 255, 255, .07);
-  color: rgba(255, 255, 255, .76);
+  border-radius: 999px;
+  background: white;
+  color: black;
   font-size: .8rem;
   font-weight: 900;
 }
@@ -102,7 +101,7 @@ function applyColor(color = colorValue.value) {
   gap: .6rem;
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 1rem;
-  background: #050505;
+  background: #191A1B;
   padding: .8rem;
   box-shadow: 0 18px 48px rgba(0, 0, 0, .5);
 }
@@ -119,8 +118,8 @@ function applyColor(color = colorValue.value) {
 .front-md-color-inputs input[type='text'] {
   min-width: 0;
   border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: .65rem;
-  background: rgba(255, 255, 255, .07);
+  border-radius: 999px;
+  background: #202123;
   padding: .45rem .55rem;
   color: white;
 }
@@ -141,9 +140,10 @@ function applyColor(color = colorValue.value) {
   gap: .45rem;
 }
 .front-md-color-actions button {
-  border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: .65rem;
+  border-radius: 999px;
+  background: white;
   padding: .4rem .65rem;
-  color: rgba(255, 255, 255, .75);
+  color: black;
+  font-weight: 900;
 }
 </style>

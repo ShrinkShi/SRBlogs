@@ -5,12 +5,17 @@ import os
 import socket
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Query
 
+from app.config import get_settings
+from app.services.json_service import JsonStore
+
 router = APIRouter(prefix="/github", tags=["github"])
+FETCH_TIMEOUT_SECONDS = 4
+CACHE_TTL_SECONDS = 6 * 60 * 60
 
 
 def _compact_number(value: int) -> str:
@@ -40,9 +45,49 @@ def _error_payload(code: str, message: str, debug_logs: list[str]) -> dict[str, 
     }
 
 
+def _cache_store(username: str) -> JsonStore:
+    safe = "".join(char for char in username.lower() if char.isalnum() or char in {"-", "_"}) or "default"
+    return JsonStore(get_settings().data_path, f"cache/github-summary-{safe}.json", {})
+
+
+def _cached_payload(username: str, debug_logs: list[str], *, allow_stale: bool = False) -> dict[str, Any] | None:
+    cached = _cache_store(username).read()
+    if not isinstance(cached, dict):
+        return None
+    payload = cached.get("payload")
+    cached_at = str(cached.get("cachedAt") or "")
+    if not isinstance(payload, dict) or payload.get("ok") is not True:
+        return None
+    try:
+        age = datetime.now(timezone.utc).timestamp() - datetime.fromisoformat(cached_at).timestamp()
+    except ValueError:
+        age = CACHE_TTL_SECONDS + 1
+    if not allow_stale and age > CACHE_TTL_SECONDS:
+        debug_logs.append(f"GitHub cache expired: age={int(age)}s")
+        return None
+    next_payload = dict(payload)
+    next_logs = list(next_payload.get("debugLogs") or [])
+    next_logs.extend(debug_logs)
+    next_logs.append(f"GitHub summary served from {'stale ' if age > CACHE_TTL_SECONDS else ''}cache.")
+    next_payload["debugLogs"] = next_logs
+    next_payload["fromCache"] = True
+    next_payload["errorCode"] = ""
+    next_payload["errorMessage"] = ""
+    return next_payload
+
+
+def _write_cache(username: str, payload: dict[str, Any]) -> None:
+    cache_payload = dict(payload)
+    cache_payload["debugLogs"] = []
+    _cache_store(username).write({
+        "cachedAt": datetime.now(timezone.utc).isoformat(),
+        "payload": cache_payload,
+    })
+
+
 def _fetch_json(url: str, debug_logs: list[str]) -> Any:
     debug_logs.append(f"GitHub API URL: {url}")
-    with urllib.request.urlopen(_request(url), timeout=6) as response:
+    with urllib.request.urlopen(_request(url), timeout=FETCH_TIMEOUT_SECONDS) as response:
         debug_logs.append(f"GitHub HTTP status: {getattr(response, 'status', 200)}")
         return json.loads(response.read().decode("utf-8"))
 
@@ -89,11 +134,26 @@ def github_summary(username: str = Query("ShrinkShi", min_length=1, max_length=8
 
     try:
         user = _fetch_json(f"https://api.github.com/users/{safe_username}", debug_logs)
+    except Exception as exc:
+        code, message = _classify_error(exc, debug_logs)
+        cached = _cached_payload(safe_username, debug_logs, allow_stale=True)
+        if cached:
+            return cached
+        return _error_payload(code, message, debug_logs)
+
+    try:
         repos = _fetch_json(f"https://api.github.com/users/{safe_username}/repos?per_page=100&sort=updated", debug_logs)
+    except Exception as exc:
+        code, message = _classify_error(exc, debug_logs)
+        debug_logs.append(f"GitHub repos fallback: {code} {message}")
+        repos = []
+
+    try:
         events = _fetch_json(f"https://api.github.com/users/{safe_username}/events/public?per_page=100", debug_logs)
     except Exception as exc:
         code, message = _classify_error(exc, debug_logs)
-        return _error_payload(code, message, debug_logs)
+        debug_logs.append(f"GitHub events fallback: {code} {message}")
+        events = []
 
     repo_list = repos if isinstance(repos, list) else []
     event_list = events if isinstance(events, list) else []
@@ -117,7 +177,7 @@ def github_summary(username: str = Query("ShrinkShi", min_length=1, max_length=8
             buckets[len(buckets) - 1 - days_ago] += 1
 
     login = str(user.get("login") or safe_username) if isinstance(user, dict) else safe_username
-    return {
+    payload = {
         "ok": True,
         "username": login,
         "stats": [
@@ -132,3 +192,5 @@ def github_summary(username: str = Query("ShrinkShi", min_length=1, max_length=8
         "errorMessage": "",
         "debugLogs": debug_logs,
     }
+    _write_cache(safe_username, payload)
+    return payload

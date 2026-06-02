@@ -375,7 +375,7 @@ def _fetch_latest_release(repo: str, debug_logs: list[str]) -> dict[str, Any]:
     debug_logs.append(f"GitHub repo: {target_repo}")
     debug_logs.append(f"GitHub API URL: {url}")
     try:
-        with urllib.request.urlopen(_github_request(url), timeout=10) as response:
+        with urllib.request.urlopen(_github_request(url), timeout=6) as response:
             debug_logs.append(f"GitHub HTTP status: {getattr(response, 'status', 200)}")
             payload = json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
@@ -555,7 +555,16 @@ def _make_status(state: dict[str, Any], debug_logs: list[str] | None = None, pre
 
 
 def _refresh_latest_release(state: dict[str, Any], debug_logs: list[str]) -> dict[str, Any]:
+    previous_latest = state.get("latest") or {}
     latest = _fetch_latest_release(get_settings().srblogs_update_repo, debug_logs)
+    if latest.get("error") and previous_latest.get("tag"):
+        debug_logs.append("GitHub release check failed; keeping last successful release metadata.")
+        latest = {
+            **previous_latest,
+            "error": latest.get("error") or "",
+            "errorType": latest.get("errorType") or "",
+            "errorCode": latest.get("errorCode") or "",
+        }
     state["latest"] = latest
     state["lastCheckedAt"] = datetime.now().isoformat(timespec="seconds")
     _store().write(state)

@@ -50,6 +50,22 @@ const qqConfigured = computed(() => {
 const githubReady = computed(() => githubEnabled.value !== false && githubConfigured.value === true)
 const qqReady = computed(() => qqEnabled.value !== false && qqConfigured.value === true)
 const showLoginHint = computed(() => !session.isAdmin && !visitor.value.user)
+const adminAvatar = computed(() => settings.value?.avatar || settings.value?.avatarUrl || '')
+const activeCommenter = computed(() => {
+  if (session.isAdmin) {
+    return { name: '管理员', avatar: adminAvatar.value, label: '管理员' }
+  }
+  if (visitor.value.user) {
+    const user = visitor.value.user
+    return {
+      name: user.name || user.id,
+      avatar: user.avatar || '',
+      label: `${providerLabel(user.provider)} · ${user.name || user.id}`
+    }
+  }
+  return null
+})
+const canComment = computed(() => Boolean(activeCommenter.value))
 
 async function load() {
   loading.value = true
@@ -84,11 +100,11 @@ function loginWith(provider: 'github' | 'qq') {
 async function submit() {
   error.value = ''
   success.value = ''
-  if (!boardEnabled.value) {
+  if (!session.isAdmin && !boardEnabled.value) {
     error.value = '留言板已关闭。'
     return
   }
-  if (!visitor.value.user) {
+  if (!canComment.value) {
     error.value = '请先登录后再留言。'
     return
   }
@@ -139,6 +155,7 @@ async function deleteComment(item: CommentItem) {
 }
 
 function providerLabel(provider?: string) {
+  if (provider === 'admin') return '管理员'
   if (provider === 'qq') return 'QQ'
   if (provider === 'github') return 'GitHub'
   return '访客'
@@ -201,21 +218,21 @@ watch(() => `${props.resource}/${props.slug}`, load)
       <p v-if="!comments.length" class="rounded-[24px] border border-white/10 bg-white/[0.045] p-4 text-white/50">暂无留言。</p>
     </div>
 
-    <div v-if="!boardEnabled" class="mt-5 rounded-[24px] border border-white/10 bg-white/[0.05] p-4 text-white/58">留言板已关闭。</div>
+    <div v-if="!boardEnabled && !session.isAdmin" class="mt-5 rounded-[24px] border border-white/10 bg-white/[0.05] p-4 text-white/58">留言板已关闭。</div>
     <section v-else class="mt-5 rounded-[28px] border border-white/10 bg-white/[0.045] p-4">
       <div class="grid gap-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-start">
         <div class="grid justify-items-center gap-2">
-          <img v-if="visitor.user?.avatar" :src="visitor.user.avatar" :alt="visitor.user.name || visitor.user.id" class="h-14 w-14 rounded-full object-cover ring-2 ring-cyan-200/25" loading="lazy" />
+          <img v-if="activeCommenter?.avatar" :src="activeCommenter.avatar" :alt="activeCommenter.name" class="h-14 w-14 rounded-full object-cover ring-2 ring-cyan-200/25" loading="lazy" />
           <div v-else class="grid h-14 w-14 place-items-center rounded-full bg-white/[0.08] text-lg font-black text-white/55">Hi</div>
-          <span class="max-w-[7rem] truncate text-xs text-white/45">{{ visitor.user ? `${providerLabel(visitor.user.provider)} · ${visitor.user.name || visitor.user.id}` : '访客' }}</span>
+          <span class="max-w-[7rem] truncate text-xs text-white/45">{{ activeCommenter?.label || '访客' }}</span>
         </div>
 
-        <form v-if="visitor.user" class="min-w-0" @submit.prevent="submit">
+        <form v-if="canComment" class="min-w-0" @submit.prevent="submit">
           <textarea
             v-model="form.content"
             :maxlength="maxLength"
             rows="4"
-            class="w-full resize-none rounded-[22px] border border-white/10 bg-black/15 px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-cyan-300/60"
+            class="w-full resize-none rounded-[22px] border border-white/10 bg-white/[0.07] px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-emerald-300/60"
             placeholder="写下你的留言..."
           ></textarea>
           <div class="mt-2 flex flex-wrap items-center gap-3 text-xs">
@@ -225,9 +242,8 @@ watch(() => `${props.resource}/${props.slug}`, load)
           </div>
         </form>
 
-        <div v-else class="min-w-0 rounded-[22px] border border-dashed border-white/12 bg-black/10 px-4 py-5 text-sm leading-7 text-white/55">
-          <p v-if="session.isAdmin">当前为管理员身份，留言登录入口已隐藏。</p>
-          <p v-else-if="githubReady || qqReady">请选择已启用的平台登录后留言。</p>
+        <div v-else class="min-w-0 rounded-[22px] border border-dashed border-white/12 bg-white/[0.05] px-4 py-5 text-sm leading-7 text-white/55">
+          <p v-if="githubReady || qqReady">请选择已启用的平台登录后留言。</p>
           <div v-else class="grid gap-2">
             <p v-if="githubEnabled !== false">站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。</p>
             <p v-if="qqEnabled !== false">站点暂未开启 QQ 留言，请稍后再试或联系站点管理员。</p>
@@ -236,12 +252,12 @@ watch(() => `${props.resource}/${props.slug}`, load)
         </div>
 
         <div class="grid gap-2">
-          <template v-if="!visitor.user && !session.isAdmin">
+          <template v-if="!canComment">
             <button
               type="button"
               :disabled="!githubReady"
-              class="rounded-2xl px-5 py-3 font-bold transition"
-              :class="githubReady ? 'bg-cyan-300 text-slate-950 hover:scale-[1.02]' : 'border border-white/10 text-white/40'"
+              class="rounded-full px-5 py-3 font-bold transition"
+              :class="githubReady ? 'bg-black text-white hover:scale-[1.02]' : 'bg-white/10 text-white/40'"
               @click="githubReady && loginWith('github')"
             >
               使用 GitHub 登录后留言
@@ -249,15 +265,15 @@ watch(() => `${props.resource}/${props.slug}`, load)
             <button
               type="button"
               :disabled="!qqReady"
-              class="rounded-2xl px-5 py-3 font-bold transition"
-              :class="qqReady ? 'bg-emerald-300 text-slate-950 hover:scale-[1.02]' : 'border border-white/10 text-white/40'"
+              class="rounded-full px-5 py-3 font-bold transition"
+              :class="qqReady ? 'bg-emerald-300 text-black hover:scale-[1.02]' : 'bg-white/10 text-white/40'"
               @click="qqReady && loginWith('qq')"
             >
               使用 QQ 登录后留言
             </button>
           </template>
           <template v-else>
-            <button type="button" :disabled="submitting" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50" @click="submit">
+            <button type="button" :disabled="submitting" class="rounded-full bg-emerald-300 px-6 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-50" @click="submit">
               {{ submitting ? '发布中...' : '发布留言' }}
             </button>
           </template>

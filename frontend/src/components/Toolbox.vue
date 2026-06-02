@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import DiscoveryResultCard from './DiscoveryResultCard.vue'
+import FrontUpdatePanel from './FrontUpdatePanel.vue'
 import FrontendAdminSettings from './FrontendAdminSettings.vue'
 import StateBlock from './StateBlock.vue'
 import { contentApi } from '@/api/content'
@@ -9,7 +10,7 @@ import { usePlayerStore } from '@/stores/player'
 import { useSessionStore } from '@/stores/session'
 import type { DiscoveryType, SearchResponse, SiteSettings, TagItem } from '@/types'
 
-type ToolPanel = 'calculator' | 'search' | 'settings'
+type ToolPanel = 'calculator' | 'search' | 'settings' | 'update'
 type Token = number | string
 
 const props = defineProps<{ settings?: SiteSettings | null; activePanel?: ToolPanel | null }>()
@@ -74,7 +75,12 @@ const bgCount = computed(() => {
 })
 const siteBgSlideshowEnabled = computed(() => props.settings?.themeConfig?.backgroundSlideshowEnabled !== false)
 const themeLabel = (theme: string) => theme === 'shrink-red-glass' ? 'Shrink 红白黑玻璃主题' : theme
-const modalTitle = computed(() => activePanel.value === 'search' ? '全局搜索' : activePanel.value === 'settings' ? '设置' : '')
+const modalTitle = computed(() => {
+  if (activePanel.value === 'search') return '全局搜索'
+  if (activePanel.value === 'settings') return '设置'
+  if (activePanel.value === 'update') return '版本更新'
+  return ''
+})
 
 function notifySettingsSaved() {
   emit('settingsSaved')
@@ -238,7 +244,7 @@ onBeforeUnmount(() => {
           <p class="text-xs font-bold uppercase tracking-[.22em] text-cyan-100/45">calculator</p>
           <h2 class="text-xl font-black">计算器</h2>
         </div>
-        <button type="button" data-clickable="true" class="rounded-full border border-white/12 px-3 py-1.5 text-sm text-white/70 hover:bg-white/10" @click="closePanel">关闭</button>
+        <button type="button" data-clickable="true" class="rounded-full bg-white px-4 py-1.5 text-sm font-black text-black" @click="closePanel">关闭</button>
       </header>
       <div class="rounded-[22px] border border-white/12 bg-white/[0.09] p-3">
         <p class="min-h-6 break-all text-base text-white/80">{{ calculatorExpr || '0' }}</p>
@@ -255,7 +261,7 @@ onBeforeUnmount(() => {
     </section>
 
     <div
-      v-if="activePanel === 'search' || activePanel === 'settings'"
+      v-if="activePanel === 'search' || activePanel === 'settings' || activePanel === 'update'"
       data-toolbox-modal
       class="toolbox-modal-overlay fixed inset-0 z-[90] grid place-items-center p-4"
       :class="'toolbox-night'"
@@ -269,7 +275,7 @@ onBeforeUnmount(() => {
             <p class="text-xs font-bold uppercase tracking-[.28em] text-cyan-100/45">toolbox</p>
             <h2 class="text-2xl font-black">{{ modalTitle }}</h2>
           </div>
-          <button type="button" data-clickable="true" class="rounded-full border border-white/12 px-3 py-2 text-sm text-white/70 hover:bg-white/10" @click="closePanel">关闭</button>
+          <button type="button" data-clickable="true" class="rounded-full bg-white px-4 py-2 text-sm font-black text-black" @click="closePanel">关闭</button>
         </header>
 
         <div class="max-h-[calc(88vh-5.5rem)] overflow-y-auto p-5">
@@ -297,6 +303,11 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div v-else class="rounded-[24px] border border-white/12 bg-white/[0.09] p-5 text-center text-white/64">没有匹配内容。</div>
+          </div>
+
+          <FrontUpdatePanel v-else-if="activePanel === 'update' && session.isAdmin" />
+          <div v-else-if="activePanel === 'update'" class="rounded-[24px] border border-white/12 bg-white/[0.06] p-6 text-center text-white/64">
+            请先使用管理员账号登录后再检查或执行更新。
           </div>
 
           <FrontendAdminSettings v-else-if="session.isAdmin" @saved="notifySettingsSaved" />
@@ -382,7 +393,7 @@ onBeforeUnmount(() => {
   transition: transform .2s var(--motion-ease), background .2s var(--motion-ease), color .2s var(--motion-ease);
 }
 .toolbox-menu {
-  background: var(--ct-toolbox-menu-bg, rgb(0 0 0)) !important;
+  background: var(--ct-toolbox-menu-bg, #191A1B) !important;
   color: var(--ct-toolbox-menu-text, rgba(255,255,255,.78));
   border-color: var(--ct-toolbox-menu-border, rgba(255,255,255,.15));
   transform-origin: bottom left;
@@ -390,7 +401,7 @@ onBeforeUnmount(() => {
   -webkit-backdrop-filter: none !important;
 }
 .toolbox-fab {
-  background: var(--ct-toolbox-fab-bg, rgb(0 0 0)) !important;
+  background: var(--ct-toolbox-fab-bg, #191A1B) !important;
   color: var(--ct-toolbox-fab-text, rgb(207 250 254));
   border-color: var(--ct-toolbox-fab-border, rgba(103,232,249,.25));
   transform: scale(var(--ct-toolbox-fab-size, 1));
@@ -407,43 +418,43 @@ onBeforeUnmount(() => {
 }
 .toolbox-key {
   min-height: 2.55rem;
-  border-radius: .95rem;
-  border: 1px solid rgb(55 65 81);
-  background: rgb(31 41 55);
-  color: rgb(248 250 252);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .14);
+  background: white;
+  color: black;
   font-weight: 900;
   transition: transform .18s var(--motion-ease), background .18s var(--motion-ease);
 }
 .toolbox-key:hover {
   transform: scale(1.025);
-  background: rgb(55 65 81);
+  background: rgba(255, 255, 255, .88);
 }
 .toolbox-key-main {
-  background: linear-gradient(135deg, #67e8f9, #c084fc);
-  color: #06111f;
+  background: #86efac;
+  color: black;
 }
 .toolbox-setting {
   display: grid;
   gap: .55rem;
   border-radius: 1.25rem;
-  border: 1px solid rgb(55 65 81);
-  background: rgb(31 41 55);
+  border: 1px solid rgba(255, 255, 255, .12);
+  background: #202123;
   padding: 1rem;
   color: rgb(248 250 252);
   font-size: .9rem;
 }
 .toolbox-calculator-panel {
-  background: var(--ct-toolbox-calculator-panel-bg, rgb(0 0 0)) !important;
+  background: var(--ct-toolbox-calculator-panel-bg, #191A1B) !important;
   color: var(--ct-toolbox-calculator-panel-text, currentColor);
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 .toolbox-modal-panel-settings {
-  background: var(--ct-toolbox-settings-panel-bg, rgb(0 0 0)) !important;
+  background: var(--ct-toolbox-settings-panel-bg, #191A1B) !important;
   color: var(--ct-toolbox-settings-panel-text, currentColor);
 }
 .toolbox-modal-panel-search {
-  background: var(--ct-toolbox-search-panel-bg, rgb(0 0 0)) !important;
+  background: var(--ct-toolbox-search-panel-bg, #191A1B) !important;
   color: var(--ct-toolbox-search-panel-text, currentColor);
 }
 .toolbox-modal-panel,
@@ -511,7 +522,7 @@ onBeforeUnmount(() => {
   color: rgb(17, 24, 39);
 }
 :global(:root[data-color-mode='night']) .toolbox-setting select option {
-  background: rgb(0, 0, 0);
+  background: #191A1B;
   color: rgb(248, 250, 252);
 }
 :global(:root[data-color-mode='day']) .toolbox-modal-panel button:not(.toolbox-key) {
@@ -525,7 +536,7 @@ onBeforeUnmount(() => {
   min-width: 0;
   border-radius: .9rem;
   border: 1px solid rgb(55 65 81);
-  background: rgb(0 0 0);
+  background: #191A1B;
   padding: .55rem .7rem;
   color: white;
 }
@@ -549,7 +560,7 @@ onBeforeUnmount(() => {
 .toolbox-night.toolbox-modal-panel,
 .toolbox-night.toolbox-calculator-panel {
   color: rgb(248, 250, 252) !important;
-  background: rgb(0 0 0) !important;
+  background: #191A1B !important;
   border-color: rgba(255, 255, 255, .14) !important;
 }
 
@@ -560,7 +571,7 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-menu {
-  background: rgba(3, 3, 3, .92) !important;
+  background: rgba(25, 26, 27, .94) !important;
   border-color: rgba(255, 255, 255, .18) !important;
   color: rgb(248, 250, 252) !important;
   box-shadow: 0 22px 60px rgba(0, 0, 0, .46), 0 0 0 1px rgba(244, 0, 2, .10) inset !important;
@@ -591,7 +602,7 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-fab {
-  background: rgba(3, 3, 3, .92) !important;
+  background: rgba(25, 26, 27, .94) !important;
   border-color: rgba(244, 0, 2, .34) !important;
   color: #fb7185 !important;
   box-shadow: 0 18px 48px rgba(0, 0, 0, .42), 0 0 26px rgba(244, 0, 2, .14) !important;
@@ -616,7 +627,7 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-setting {
-  background: rgb(8, 8, 8) !important;
+  background: #202123 !important;
   border-color: rgba(255, 255, 255, .12) !important;
   color: rgb(248, 250, 252) !important;
 }
@@ -628,7 +639,7 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-setting :where(select, input[type='range'], textarea) {
-  background-color: rgb(0, 0, 0) !important;
+  background-color: #191A1B !important;
   border-color: rgba(255, 255, 255, .16) !important;
   color: rgb(248, 250, 252) !important;
 }
@@ -639,7 +650,7 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-setting select option {
-  background: rgb(0, 0, 0) !important;
+  background: #191A1B !important;
   color: rgb(248, 250, 252) !important;
 }
 </style>
