@@ -5,6 +5,7 @@ import BackgroundEffects from '@/components/BackgroundEffects.vue'
 import ClickEffect from '@/components/ClickEffect.vue'
 import Toast from '@/components/Toast.vue'
 import Toolbox from '@/components/Toolbox.vue'
+import FloatingMusicPlayer from '@/components/FloatingMusicPlayer.vue'
 import DanmakuBackground from '@/components/DanmakuBackground.vue'
 import Sakura from '@/components/Sakura.vue'
 import Fireflies from '@/components/Fireflies.vue'
@@ -19,6 +20,7 @@ const ui = useUiStore()
 const player = usePlayerStore()
 const route = useRoute()
 const installRoute = computed(() => route.path === '/install')
+const showFloatingPlayer = computed(() => !installRoute.value && !route.path.startsWith('/music'))
 
 function solidColor(value: string | undefined, fallback: string) {
   if (!value) return fallback
@@ -113,6 +115,7 @@ watch([settings, () => ui.fontScale], () => {
   <div class="relative z-10 min-h-screen">
     <AppNav v-if="!installRoute" />
     <Toolbox v-if="!installRoute" :settings="settings" />
+    <FloatingMusicPlayer v-if="showFloatingPlayer" />
     <main :class="installRoute ? 'min-h-screen' : 'site-page-container pb-28 pt-32 md:pt-36'">
       <RouterView v-slot="{ Component }">
         <Transition name="fade-slide" mode="out-in">

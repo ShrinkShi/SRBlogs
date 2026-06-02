@@ -20,6 +20,7 @@ const auth = useAuthStore()
 const ui = useUiStore()
 const route = useRoute()
 const updateStatus = ref<UpdateStatus | null>(null)
+const backendVersion = ref('')
 const updateLoading = ref(false)
 const updateActionLoading = ref(false)
 const updateError = ref('')
@@ -56,8 +57,9 @@ const groups: NavGroup[] = [
 const activePath = computed(() => route.path)
 const latestTag = computed(() => updateStatus.value?.latestVersion || updateStatus.value?.latest?.tag || '')
 const currentVersion = computed(() => {
-  const version = updateStatus.value?.currentVersion || updateStatus.value?.current?.version || ''
+  const version = updateStatus.value?.currentVersion || updateStatus.value?.current?.version || backendVersion.value || ''
   if (!version) return updateError.value ? '后端未返回' : 'unknown'
+  if (version === 'unknown' && backendVersion.value) return backendVersion.value.startsWith('v') ? backendVersion.value : `v${backendVersion.value}`
   return version === 'unknown' || version.startsWith('v') ? version : `v${version}`
 })
 const latestVersionLabel = computed(() => {
@@ -187,12 +189,34 @@ async function loadUpdateStatus() {
     if (updateStatus.value.task) {
       updateTask.value = updateStatus.value.task
     }
+    if (updateStatus.value.currentVersion && updateStatus.value.currentVersion !== 'unknown') {
+      backendVersion.value = updateStatus.value.currentVersion
+    }
   } catch (exc) {
     updateError.value = exc instanceof Error ? exc.message : '版本状态加载失败'
     localDebugLogs.value = [`前端请求 /api/admin/update/status 失败: ${updateError.value}`]
+    await loadBackendVersion()
     ui.error('版本状态加载失败')
   } finally {
     updateLoading.value = false
+  }
+}
+
+async function loadBackendVersion() {
+  try {
+    const result = await adminApi.version()
+    backendVersion.value = result.version || backendVersion.value
+    if (result.version) {
+      localDebugLogs.value = [
+        ...localDebugLogs.value,
+        `已从 /api/version 读取当前版本: ${result.version}`
+      ]
+    }
+  } catch (exc) {
+    localDebugLogs.value = [
+      ...localDebugLogs.value,
+      `前端请求 /api/version 失败: ${exc instanceof Error ? exc.message : 'unknown error'}`
+    ]
   }
 }
 
@@ -328,7 +352,10 @@ function refreshAdminPage() {
   window.location.reload()
 }
 
-onMounted(loadUpdateStatus)
+onMounted(() => {
+  void loadBackendVersion()
+  void loadUpdateStatus()
+})
 onBeforeUnmount(stopUpdatePolling)
 </script>
 

@@ -340,12 +340,16 @@ def _is_newer(latest: str, current: str) -> bool:
 
 
 def _github_request(url: str) -> urllib.request.Request:
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "SRBlogs-Update-Checker",
+    }
+    token = os.getenv("SRBLOGS_GITHUB_TOKEN") or os.getenv("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
     return urllib.request.Request(
         url,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "SRBlogs-Update-Checker",
-        },
+        headers=headers,
     )
 
 

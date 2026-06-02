@@ -153,53 +153,32 @@ function startRoleTyping() {
   scheduleTyping(120)
 }
 
-function compactNumber(value: number) {
-  if (value >= 1000) return value.toLocaleString('en-US')
-  return String(value)
+function githubUsername() {
+  const candidates = [
+    config.value.contact.githubUrl,
+    config.value.contact.github,
+    config.value.about.codeProfile.github
+  ].filter(Boolean)
+  for (const value of candidates) {
+    const text = String(value).trim().replace(/\/$/, '')
+    const match = text.match(/github\.com\/([^/?#]+)/i)
+    if (match?.[1]) return match[1]
+    if (/^[A-Za-z0-9-]+$/.test(text)) return text
+  }
+  return 'ShrinkShi'
 }
 
 async function fetchGithubSummary() {
   githubLoading.value = true
   githubError.value = ''
   try {
-    const username = 'ShrinkShi'
-    const [userResponse, reposResponse, eventsResponse] = await Promise.all([
-      fetch(`https://api.github.com/users/${username}`),
-      fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated`),
-      fetch(`https://api.github.com/users/${username}/events/public?per_page=100`)
-    ])
-
-    if (!userResponse.ok || !reposResponse.ok || !eventsResponse.ok) {
-      throw new Error('GitHub public API unavailable')
+    const result = await contentApi.githubSummary(githubUsername())
+    if (!result.ok) {
+      throw new Error(result.errorMessage || 'GitHub 数据加载失败')
     }
-
-    const user = await userResponse.json()
-    const repos = await reposResponse.json()
-    const events = await eventsResponse.json()
-    const repoList = Array.isArray(repos) ? repos : []
-    const eventList = Array.isArray(events) ? events : []
-    const stars = repoList.reduce((sum: number, repo: { stargazers_count?: number }) => sum + (repo.stargazers_count || 0), 0)
-    const forks = repoList.reduce((sum: number, repo: { forks_count?: number }) => sum + (repo.forks_count || 0), 0)
-
-    githubStats.value = [
-      { icon: 'folder', value: compactNumber(Number(user.public_repos || repoList.length || 0)), label: '公开仓库' },
-      { icon: 'star', value: compactNumber(stars), label: 'Stars' },
-      { icon: 'git-branch', value: compactNumber(Number(user.followers || 0)), label: 'Followers' },
-      { icon: 'fork', value: compactNumber(forks), label: 'Forks' }
-    ]
-
-    const buckets = Array.from({ length: 154 }, () => 0)
-    const now = Date.now()
-    for (const event of eventList) {
-      const createdAt = Date.parse(event.created_at)
-      if (Number.isNaN(createdAt)) continue
-      const daysAgo = Math.floor((now - createdAt) / 86_400_000)
-      if (daysAgo >= 0 && daysAgo < buckets.length) {
-        buckets[buckets.length - 1 - daysAgo] += 1
-      }
-    }
-    githubHeatmapCells.value = buckets.map((count) => Math.min(5, count))
-    githubContributionText.value = `${user.login || username} · ${eventList.length} recent public events`
+    githubStats.value = result.stats || []
+    githubHeatmapCells.value = result.heatmapCells || []
+    githubContributionText.value = result.contributionText || ''
   } catch (exc) {
     githubError.value = exc instanceof Error ? exc.message : 'GitHub 数据加载失败'
   } finally {
@@ -364,7 +343,7 @@ onBeforeUnmount(() => {
           <div class="heatmap-grid">
             <i v-for="(level, index) in displayHeatmapCells" :key="index" :data-level="level"></i>
           </div>
-          <p v-if="githubError" class="github-fallback">GitHub 公共数据暂时读取失败，已显示后台配置兜底数据。</p>
+          <p v-if="githubError" class="github-fallback">GitHub 公共数据暂时读取失败：{{ githubError }}。已显示后台配置兜底数据。</p>
           <div class="heatmap-legend">
             <span>Less</span>
             <i v-for="level in [0, 1, 2, 3, 4]" :key="level" :data-level="level"></i>

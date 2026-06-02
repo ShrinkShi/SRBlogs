@@ -12,6 +12,10 @@
       "title": "云端杂谈",
       "subtitle": "长一点的念头，短一点的文章。"
     },
+    "moments": {
+      "title": "说说",
+      "subtitle": "短动态、图片和生活片段。"
+    },
     "photos": {
       "title": "图片",
       "subtitle": "相册记录从后端 JSON 动态读取，点击封面可查看组内照片。"

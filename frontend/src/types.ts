@@ -236,6 +236,17 @@ export interface AboutPageConfig {
   }
 }
 
+export interface GithubSummary {
+  ok: boolean
+  username?: string
+  stats: AboutPageConfig['github']['stats']
+  heatmapCells: number[]
+  contributionText: string
+  errorCode?: string
+  errorMessage?: string
+  debugLogs?: string[]
+}
+
 export interface SiteSettings {
   siteTitle?: string
   subtitle?: string

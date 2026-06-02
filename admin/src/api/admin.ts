@@ -1,6 +1,7 @@
 import { http } from './http'
 import type { AuditLogResponse, BackupItem, CommentIndexItem, CommentItem, ContentItem, Stats } from '@/types'
 type InstallStatus = { installed: boolean; needsInstall: boolean; missingItems: string[] }
+type VersionInfo = { app: string; version: string }
 
 export type UpdateTask = {
   taskId: string
@@ -84,6 +85,10 @@ export type UpdateStatus = {
 export const adminApi = {
   installStatus: async () => {
     const { data } = await http.get<InstallStatus>('/install/status')
+    return data
+  },
+  version: async () => {
+    const { data } = await http.get<VersionInfo>('/version')
     return data
   },
   login: async (username: string, password: string) => {
