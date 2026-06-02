@@ -7,16 +7,21 @@ import { themes, useUiStore } from '@/stores/ui'
 import { usePlayerStore } from '@/stores/player'
 import type { DiscoveryType, SearchResponse, SiteSettings, TagItem } from '@/types'
 
-const props = defineProps<{ settings?: SiteSettings | null }>()
-
 type ToolPanel = 'calculator' | 'search' | 'settings'
 type Token = number | string
+
+const props = defineProps<{ settings?: SiteSettings | null; activePanel?: ToolPanel | null }>()
+const emit = defineEmits<{
+  'update:activePanel': [panel: ToolPanel | null]
+}>()
 
 const ui = useUiStore()
 const player = usePlayerStore()
 
-const menuOpen = ref(false)
-const activePanel = ref<ToolPanel | null>(null)
+const activePanel = computed<ToolPanel | null>({
+  get: () => props.activePanel ?? null,
+  set: (panel) => emit('update:activePanel', panel)
+})
 const calculatorExpr = ref('')
 const calculatorResult = ref('')
 const calculatorError = ref('')
@@ -68,7 +73,6 @@ const themeLabel = (theme: string) => theme === 'shrink-red-glass' ? 'Shrink 红
 const modalTitle = computed(() => activePanel.value === 'search' ? '全局搜索' : activePanel.value === 'settings' ? '游客设置' : '')
 
 function closeAll() {
-  menuOpen.value = false
   activePanel.value = null
 }
 
@@ -76,21 +80,8 @@ function closePanel() {
   activePanel.value = null
 }
 
-function openPanel(panel: ToolPanel) {
-  activePanel.value = panel
-  menuOpen.value = false
-  if (panel === 'search' && !tags.value.length) loadTags()
-}
-
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') closeAll()
-}
-
-function onDocumentClick(event: MouseEvent) {
-  const target = event.target as Element | null
-  if (!target?.closest('[data-toolbox-root]') && !target?.closest('[data-toolbox-modal]')) {
-    menuOpen.value = false
-  }
 }
 
 function appendCalc(value: string) {
@@ -209,45 +200,22 @@ async function runSearch() {
 }
 
 watch(activePanel, (panel) => {
-  if (panel === 'search' && !searchResult.value.items.length) runSearch()
+  if (panel === 'search') {
+    if (!tags.value.length) loadTags()
+    if (!searchResult.value.items.length) runSearch()
+  }
 })
 
 onMounted(() => {
   document.addEventListener('keydown', onKeydown)
-  document.addEventListener('click', onDocumentClick)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
-  document.removeEventListener('click', onDocumentClick)
 })
 </script>
 
 <template>
-  <div data-toolbox-root class="fixed bottom-5 left-5 z-40 toolbox-night">
-    <div
-      v-if="menuOpen"
-      class="toolbox-menu mb-3 grid min-w-40 gap-2 rounded-[26px] border p-3 text-sm shadow-2xl"
-    >
-      <button type="button" data-clickable="true" class="toolbox-menu-item" @click="openPanel('calculator')">计算器</button>
-      <button type="button" data-clickable="true" class="toolbox-menu-item" @click="openPanel('search')">全局搜索</button>
-      <button type="button" data-clickable="true" class="toolbox-menu-item" @click="openPanel('settings')">设置</button>
-    </div>
-    <button
-      type="button"
-      data-clickable="true"
-      class="toolbox-fab grid h-14 w-14 place-items-center rounded-full border shadow-[0_18px_48px_rgba(0,0,0,.20)] transition hover:scale-105"
-      :aria-expanded="menuOpen"
-      aria-label="打开工具箱"
-      @click.stop="menuOpen = !menuOpen"
-    >
-      <svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="m14.7 6.3 3 3" />
-        <path d="M18.4 2.6a4.2 4.2 0 0 0-5.2 5.2L3 18l3 3L16.2 10.8a4.2 4.2 0 0 0 5.2-5.2l-2.7 2.7-3-3Z" />
-      </svg>
-    </button>
-  </div>
-
   <Teleport to="body">
     <section
       v-if="activePanel === 'calculator'"

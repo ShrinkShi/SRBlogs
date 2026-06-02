@@ -5,22 +5,53 @@ import BackgroundEffects from '@/components/BackgroundEffects.vue'
 import ClickEffect from '@/components/ClickEffect.vue'
 import Toast from '@/components/Toast.vue'
 import Toolbox from '@/components/Toolbox.vue'
+import FloatingAppWheel from '@/components/FloatingAppWheel.vue'
 import FloatingMusicPlayer from '@/components/FloatingMusicPlayer.vue'
 import DanmakuBackground from '@/components/DanmakuBackground.vue'
 import Sakura from '@/components/Sakura.vue'
 import Fireflies from '@/components/Fireflies.vue'
 import { contentApi } from '@/api/content'
+import type { FloatingAppItem } from '@/config/floatingApps'
 import type { MusicItem, SiteSettings } from '@/types'
 import { useUiStore } from '@/stores/ui'
 import { usePlayerStore } from '@/stores/player'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const settings = ref<SiteSettings | null>(null)
 const ui = useUiStore()
 const player = usePlayerStore()
 const route = useRoute()
+const router = useRouter()
 const installRoute = computed(() => route.path === '/install')
-const showFloatingPlayer = computed(() => !installRoute.value && !route.path.startsWith('/music'))
+type ToolPanel = 'calculator' | 'search' | 'settings'
+const toolboxPanel = ref<ToolPanel | null>(null)
+const floatingMusicVisible = ref(localStorage.getItem('sr-floating-music-visible') !== 'off')
+const showFloatingPlayer = computed(() => !installRoute.value && !route.path.startsWith('/music') && floatingMusicVisible.value)
+
+function setFloatingMusicVisible(visible: boolean) {
+  floatingMusicVisible.value = visible
+  localStorage.setItem('sr-floating-music-visible', visible ? 'on' : 'off')
+}
+
+function handleFloatingAppAction(app: FloatingAppItem) {
+  if (app.actionType === 'modal') {
+    if (['calculator', 'search', 'settings'].includes(app.action)) {
+      toolboxPanel.value = app.action as ToolPanel
+    }
+    return
+  }
+  if (app.actionType === 'route') {
+    router.push(app.action)
+    return
+  }
+  if (app.actionType === 'external') {
+    window.open(app.action, '_blank', 'noopener,noreferrer')
+    return
+  }
+  if (app.actionType === 'toggle' && app.action === 'floatingMusicPlayer') {
+    setFloatingMusicVisible(!floatingMusicVisible.value)
+  }
+}
 
 function solidColor(value: string | undefined, fallback: string) {
   if (!value) return fallback
@@ -114,7 +145,8 @@ watch([settings, () => ui.fontScale], () => {
   <ClickEffect v-if="!installRoute" />
   <div class="relative z-10 min-h-screen">
     <AppNav v-if="!installRoute" />
-    <Toolbox v-if="!installRoute" :settings="settings" />
+    <Toolbox v-if="!installRoute" v-model:active-panel="toolboxPanel" :settings="settings" />
+    <FloatingAppWheel v-if="!installRoute" @action="handleFloatingAppAction" />
     <FloatingMusicPlayer v-if="showFloatingPlayer" />
     <main :class="installRoute ? 'min-h-screen' : 'site-page-container pb-28 pt-32 md:pt-36'">
       <RouterView v-slot="{ Component }">
