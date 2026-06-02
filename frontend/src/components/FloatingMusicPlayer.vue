@@ -228,8 +228,7 @@ onBeforeUnmount(() => {
 <template>
   <aside class="floating-music-player" :class="{ 'floating-music-player-dragging': dragging }" :style="floatingStyle" aria-label="全局音乐播放器">
     <div class="floating-music-drag-head" @pointerdown="startDrag">
-      <span class="floating-music-kicker">正在播放</span>
-      <span class="floating-music-drag-hint">拖动调整位置</span>
+      <span class="floating-music-drag-lines" aria-hidden="true"></span>
     </div>
 
     <div class="floating-music-meta">

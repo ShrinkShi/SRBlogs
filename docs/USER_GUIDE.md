@@ -260,7 +260,7 @@ Music uses `music/global` as the first-stage message target. Photowall album dia
 - GitHub 已完整配置时，前台显示“使用 GitHub 登录后留言”按钮。
 - QQ 未配置时，只影响 QQ 登录入口，不会影响 GitHub。
 - 未配置的平台会显示访客友好提示：“站点暂未开启 GitHub/QQ 留言，请稍后再试或联系站点管理员。”
-- 登录成功后，留言板会显示当前平台、头像、昵称、留言输入框和退出登录按钮。
+- 登录成功后，留言板会显示当前平台、头像、昵称和留言输入框；退出登录统一在左侧账户面板操作。
 - 后台只用于配置 GitHub/QQ OAuth，不提供访客登录入口。
 - Secret 留空保存会保留旧值，后台不回显 Secret 明文，前台也不会获得 Secret。
 
@@ -270,7 +270,7 @@ Music uses `music/global` as the first-stage message target. Photowall album dia
 - GitHub 已配置时，访客会看到“使用 GitHub 登录后留言”按钮。
 - QQ 未配置时，只会影响 QQ 登录入口，不会影响 GitHub 留言。
 - 某个平台未配置时，前台只显示访客友好提示：“站点暂未开启 GitHub/QQ 留言，请稍后再试或联系站点管理员。”
-- 登录成功后，留言板会显示当前登录平台、头像、昵称、留言输入框和退出登录按钮。
+- 登录成功后，留言板会显示当前登录平台、头像、昵称和留言输入框；退出登录统一在左侧账户面板操作。
 - 后台只用于配置 GitHub/QQ OAuth，不提供访客登录入口。
 - OAuth Secret 不会在后台回显，也不会进入前台构建产物。
 ## 2026-05-03 工具箱与后台导航使用说明

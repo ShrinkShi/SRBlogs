@@ -11,9 +11,20 @@ export const http = axios.create({
   withCredentials: true
 })
 
+http.interceptors.request.use((config) => {
+  const token = localStorage.getItem('srblogs-token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
+  return config
+})
+
 http.interceptors.response.use(
   (response) => response,
   (error) => {
+    const requestUrl = String(error?.config?.url || '')
+    const adminRequest = requestUrl.includes('/admin') || requestUrl.includes('/auth/admin/me') || requestUrl.includes('/upload') || requestUrl.includes('/chat')
+    if (error?.response?.status === 401 && adminRequest && localStorage.getItem('srblogs-token')) {
+      localStorage.removeItem('srblogs-token')
+    }
     const message = error?.response?.data?.message || error?.response?.data?.detail || error?.message || 'Request failed'
     return Promise.reject(new Error(message))
   }

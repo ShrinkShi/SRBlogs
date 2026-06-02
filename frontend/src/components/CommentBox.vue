@@ -3,13 +3,19 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { contentApi, type CommentResource, type VisitorUser } from '@/api/content'
 import GlassCard from './GlassCard.vue'
 import type { CommentItem, SiteSettings } from '@/types'
+import { useSessionStore } from '@/stores/session'
+import { useUiStore } from '@/stores/ui'
 
-const props = defineProps<{ resource: CommentResource; slug: string }>()
+const props = withDefaults(defineProps<{ resource: CommentResource; slug: string; frameless?: boolean }>(), { frameless: false })
+const session = useSessionStore()
+const ui = useUiStore()
 
 const comments = ref<CommentItem[]>([])
 const settings = ref<SiteSettings | null>(null)
 const loading = ref(false)
 const submitting = ref(false)
+const deletingCommentId = ref('')
+const confirmDeleteId = ref('')
 const error = ref('')
 const success = ref('')
 const form = reactive({ content: '' })
@@ -43,6 +49,7 @@ const qqConfigured = computed(() => {
 })
 const githubReady = computed(() => githubEnabled.value !== false && githubConfigured.value === true)
 const qqReady = computed(() => qqEnabled.value !== false && qqConfigured.value === true)
+const showLoginHint = computed(() => !session.isAdmin && !visitor.value.user)
 
 async function load() {
   loading.value = true
@@ -72,16 +79,6 @@ function loginWith(provider: 'github' | 'qq') {
   const apiBase = rawBase.endsWith('/api') ? rawBase : `${rawBase}/api`
   const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`
   window.location.href = `${apiBase}/auth/${provider}/login?returnTo=${encodeURIComponent(returnTo)}`
-}
-
-async function logoutVisitor() {
-  error.value = ''
-  try {
-    await contentApi.visitorLogout()
-    visitor.value = await contentApi.visitorMe()
-  } catch (exc) {
-    error.value = exc instanceof Error ? exc.message : '退出登录失败'
-  }
 }
 
 async function submit() {
@@ -116,6 +113,31 @@ async function submit() {
   }
 }
 
+async function deleteComment(item: CommentItem) {
+  if (!session.isAdmin || deletingCommentId.value) return
+  if (confirmDeleteId.value !== item.id) {
+    confirmDeleteId.value = item.id
+    ui.showToast('再次点击删除以确认', 'info')
+    window.setTimeout(() => {
+      if (confirmDeleteId.value === item.id) confirmDeleteId.value = ''
+    }, 3200)
+    return
+  }
+  deletingCommentId.value = item.id
+  error.value = ''
+  try {
+    await contentApi.deleteComment(props.resource, props.slug, item.id)
+    comments.value = comments.value.filter((comment) => comment.id !== item.id)
+    confirmDeleteId.value = ''
+    ui.showToast('已删除', 'success')
+  } catch (exc) {
+    error.value = exc instanceof Error ? exc.message : '删除失败，请重试'
+    ui.showToast('删除失败，请重试', 'error')
+  } finally {
+    deletingCommentId.value = ''
+  }
+}
+
 function providerLabel(provider?: string) {
   if (provider === 'qq') return 'QQ'
   if (provider === 'github') return 'GitHub'
@@ -132,12 +154,12 @@ watch(() => `${props.resource}/${props.slug}`, load)
 </script>
 
 <template>
-  <GlassCard class="comment-board mt-8">
+  <component :is="props.frameless ? 'section' : GlassCard" class="comment-board" :class="props.frameless ? 'comment-board-frameless' : 'mt-8'">
+    <div class="comment-section-divider" aria-hidden="true"></div>
     <div class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <p class="text-xs font-bold tracking-[.28em] text-cyan-100/45">留言</p>
         <h3 class="mt-1 text-2xl font-black text-white">留言板</h3>
-        <p class="mt-2 text-sm text-white/52">登录后留言，站点只读取公开头像和昵称。</p>
+        <p v-if="showLoginHint" class="mt-2 text-sm text-white/52">登录后留言，站点只读取公开头像和昵称。</p>
       </div>
       <span class="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs text-white/50">{{ comments.length }} 条留言</span>
     </div>
@@ -161,7 +183,18 @@ watch(() => `${props.resource}/${props.slug}`, load)
               <span class="text-xs text-white/38">{{ providerLabel(item.provider) }}</span>
             </div>
           </div>
-          <span class="shrink-0 text-white/45">{{ item.created_at }}</span>
+          <div class="flex shrink-0 items-center gap-3">
+            <span class="text-white/45">{{ item.created_at }}</span>
+            <button
+              v-if="session.isAdmin"
+              type="button"
+              class="comment-delete-link"
+              :disabled="deletingCommentId === item.id"
+              @click="deleteComment(item)"
+            >
+              {{ deletingCommentId === item.id ? '删除中' : confirmDeleteId === item.id ? '确认删除' : '删除' }}
+            </button>
+          </div>
         </div>
         <p class="mt-3 whitespace-pre-wrap break-words leading-7 text-white/70">{{ item.content }}</p>
       </article>
@@ -193,7 +226,8 @@ watch(() => `${props.resource}/${props.slug}`, load)
         </form>
 
         <div v-else class="min-w-0 rounded-[22px] border border-dashed border-white/12 bg-black/10 px-4 py-5 text-sm leading-7 text-white/55">
-          <p v-if="githubReady || qqReady">请选择已启用的平台登录后留言。</p>
+          <p v-if="session.isAdmin">当前为管理员身份，留言登录入口已隐藏。</p>
+          <p v-else-if="githubReady || qqReady">请选择已启用的平台登录后留言。</p>
           <div v-else class="grid gap-2">
             <p v-if="githubEnabled !== false">站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。</p>
             <p v-if="qqEnabled !== false">站点暂未开启 QQ 留言，请稍后再试或联系站点管理员。</p>
@@ -202,7 +236,7 @@ watch(() => `${props.resource}/${props.slug}`, load)
         </div>
 
         <div class="grid gap-2">
-          <template v-if="!visitor.user">
+          <template v-if="!visitor.user && !session.isAdmin">
             <button
               type="button"
               :disabled="!githubReady"
@@ -226,10 +260,37 @@ watch(() => `${props.resource}/${props.slug}`, load)
             <button type="button" :disabled="submitting" class="rounded-2xl bg-cyan-300 px-5 py-3 font-bold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50" @click="submit">
               {{ submitting ? '发布中...' : '发布留言' }}
             </button>
-            <button type="button" class="rounded-2xl border border-white/10 px-5 py-2 text-sm text-white/52 hover:text-white" @click="logoutVisitor">退出登录</button>
           </template>
         </div>
       </div>
     </section>
-  </GlassCard>
+  </component>
 </template>
+
+<style scoped>
+.comment-board-frameless {
+  display: block;
+}
+.comment-section-divider {
+  height: 1px;
+  margin: 0 0 1.6rem;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .18), transparent);
+}
+.comment-delete-link {
+  border: 0;
+  background: transparent;
+  color: rgba(252, 165, 165, .82);
+  font-size: .78rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: .25em;
+  transition: color .18s ease, opacity .18s ease;
+}
+.comment-delete-link:hover {
+  color: #fecaca;
+}
+.comment-delete-link:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+</style>

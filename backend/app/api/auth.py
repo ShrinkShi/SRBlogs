@@ -5,7 +5,7 @@ import json
 import re
 
 import httpx
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt
 
@@ -13,7 +13,7 @@ from app.config import get_settings
 from app.models.schemas import LoginRequest, TokenResponse
 from app.services.audit_service import write_audit
 from app.services.admin_credentials import verify_admin_password
-from app.services.auth_service import create_access_token
+from app.services.auth_service import create_access_token, require_admin
 from app.services.json_service import JsonStore
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -49,6 +49,11 @@ def login(payload: LoginRequest, request: Request):
         ip=request.client.host if request.client else "",
     )
     return TokenResponse(access_token=create_access_token(payload.username))
+
+
+@router.get("/admin/me")
+def admin_me(actor: str = Depends(require_admin)):
+    return {"username": actor, "role": "admin"}
 
 
 def _settings_data() -> dict:

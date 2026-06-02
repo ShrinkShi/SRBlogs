@@ -5,7 +5,7 @@ import BackgroundEffects from '@/components/BackgroundEffects.vue'
 import ClickEffect from '@/components/ClickEffect.vue'
 import Toast from '@/components/Toast.vue'
 import Toolbox from '@/components/Toolbox.vue'
-import FloatingAppWheel from '@/components/FloatingAppWheel.vue'
+import FloatingAppSidebar from '@/components/FloatingAppSidebar.vue'
 import FloatingMusicPlayer from '@/components/FloatingMusicPlayer.vue'
 import DanmakuBackground from '@/components/DanmakuBackground.vue'
 import Sakura from '@/components/Sakura.vue'
@@ -33,6 +33,13 @@ function setFloatingMusicVisible(visible: boolean) {
   localStorage.setItem('sr-floating-music-visible', visible ? 'on' : 'off')
 }
 
+function resolveExternalUrl(action: string) {
+  if (action.startsWith('/admin') && ['5173', '5175'].includes(window.location.port)) {
+    return `${window.location.protocol}//${window.location.hostname || '127.0.0.1'}:5174${action}`
+  }
+  return action
+}
+
 function handleFloatingAppAction(app: FloatingAppItem) {
   if (app.actionType === 'modal') {
     if (['calculator', 'search', 'settings'].includes(app.action)) {
@@ -45,7 +52,7 @@ function handleFloatingAppAction(app: FloatingAppItem) {
     return
   }
   if (app.actionType === 'external') {
-    window.open(app.action, '_blank', 'noopener,noreferrer')
+    window.open(resolveExternalUrl(app.action), '_blank', 'noopener,noreferrer')
     return
   }
   if (app.actionType === 'toggle' && app.action === 'floatingMusicPlayer') {
@@ -125,11 +132,19 @@ function applyTheme() {
   // low-code overrides.
 }
 
-onMounted(async () => {
-  try { settings.value = await contentApi.publicSettings<SiteSettings>() } catch { settings.value = null }
+async function reloadSettings() {
+  try {
+    settings.value = await contentApi.publicSettings<SiteSettings>()
+  } catch {
+    settings.value = null
+  }
   ui.applyInteraction(settings.value?.interaction)
-  try { player.setTracks(await contentApi.json<MusicItem[]>('/music')) } catch { player.setTracks([]) }
   applyTheme()
+}
+
+onMounted(async () => {
+  await reloadSettings()
+  try { player.setTracks(await contentApi.json<MusicItem[]>('/music')) } catch { player.setTracks([]) }
 })
 watch([settings, () => ui.fontScale], () => {
   ui.applyInteraction(settings.value?.interaction)
@@ -145,8 +160,8 @@ watch([settings, () => ui.fontScale], () => {
   <ClickEffect v-if="!installRoute" />
   <div class="relative z-10 min-h-screen">
     <AppNav v-if="!installRoute" />
-    <Toolbox v-if="!installRoute" v-model:active-panel="toolboxPanel" :settings="settings" />
-    <FloatingAppWheel v-if="!installRoute" @action="handleFloatingAppAction" />
+    <Toolbox v-if="!installRoute" v-model:active-panel="toolboxPanel" :settings="settings" @settings-saved="reloadSettings" />
+    <FloatingAppSidebar v-if="!installRoute" @action="handleFloatingAppAction" />
     <FloatingMusicPlayer v-if="showFloatingPlayer" />
     <main :class="installRoute ? 'min-h-screen' : 'site-page-container pb-28 pt-32 md:pt-36'">
       <RouterView v-slot="{ Component }">

@@ -3,6 +3,7 @@ import type { AboutPageConfig, ArchiveResponse, CommentItem, ContentItem, Discov
 
 export type CommentResource = 'posts' | 'moments' | 'chatters' | 'music' | 'photos'
 export type VisitorUser = { provider: 'github' | 'qq'; id: string; login?: string; name?: string; avatar?: string; html_url?: string }
+export type AdminUser = { username: string; role: 'admin' }
 export type InstallStatus = { installed: boolean; needsInstall: boolean; missingItems: string[] }
 export type InstallPayload = {
   siteTitle: string
@@ -19,8 +20,8 @@ export const contentApi = {
     const { data } = await http.get<ContentItem[]>(`/${section}`)
     return data
   },
-  detail: async (section: 'posts' | 'moments' | 'chatters', slug: string) => {
-    const { data } = await http.get<ContentItem>(`/${section}/${slug}`)
+  detail: async (section: 'posts' | 'moments' | 'chatters', slug: string, includeDrafts = false) => {
+    const { data } = await http.get<ContentItem>(`/${section}/${slug}`, includeDrafts ? { params: { include_drafts: true } } : undefined)
     return data
   },
   json: async <T>(path: string) => {
@@ -69,6 +70,20 @@ export const contentApi = {
     const { data } = await http.post<CommentItem>(`/comments/${resource}/${slug}`, payload)
     return data
   },
+  deleteComment: async (resource: CommentResource, slug: string, commentId: string) => {
+    const { data } = await http.delete(`/comments/${resource}/${slug}/${commentId}`)
+    return data
+  },
+  deleteContent: async (section: 'posts' | 'moments' | 'chatters', slug: string) => {
+    const { data } = await http.delete(`/${section}/${slug}`)
+    return data
+  },
+  saveContent: async (section: 'posts' | 'moments' | 'chatters', payload: ContentItem, oldSlug?: string) => {
+    const method = oldSlug ? http.put : http.post
+    const url = oldSlug ? `/${section}/${oldSlug}` : `/${section}`
+    const { data } = await method<ContentItem>(url, payload)
+    return data
+  },
   githubMe: async () => {
     const { data } = await http.get<{ configured: boolean; user: null | { login: string; name?: string; avatar?: string; html_url?: string } }>('/auth/github/me')
     return data
@@ -83,6 +98,30 @@ export const contentApi = {
   },
   visitorLogout: async () => {
     const { data } = await http.post<{ ok: boolean }>('/auth/visitor/logout')
+    return data
+  },
+  adminLogin: async (username: string, password: string) => {
+    const { data } = await http.post<{ access_token: string; token_type?: string }>('/auth/login', { username, password })
+    return data
+  },
+  adminMe: async () => {
+    const { data } = await http.get<AdminUser>('/auth/admin/me')
+    return data
+  },
+  adminJson: async <T>(path: string) => {
+    const { data } = await http.get<T>(path)
+    return data
+  },
+  adminPutJson: async <T = unknown>(path: string, dataValue: unknown) => {
+    const { data } = await http.put<T>(path, { data: dataValue })
+    return data
+  },
+  upload: async (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    const { data } = await http.post<{ url: string; filename: string; size: number }>('/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     return data
   },
   search: async (params: { q?: string; type?: DiscoveryType; tag?: string; limit?: number; offset?: number }) => {

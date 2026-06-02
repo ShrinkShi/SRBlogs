@@ -1,6 +1,11 @@
 export type FloatingAppActionType = 'modal' | 'route' | 'external' | 'toggle' | 'custom'
 
-export type FloatingAppIcon = 'settings' | 'music' | 'search' | 'calculator' | 'article'
+export type FloatingAppIcon =
+  | 'settings'
+  | 'music'
+  | 'search'
+  | 'calculator'
+  | 'article'
 
 export type FloatingAppItem = {
   id: string
@@ -9,6 +14,7 @@ export type FloatingAppItem = {
   actionType: FloatingAppActionType
   action: string
   enabled?: boolean
+  adminOnly?: boolean
   order?: number
   tooltip?: string
 }

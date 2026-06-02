@@ -6,16 +6,19 @@ import SearchBar from '@/components/SearchBar.vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import StateBlock from '@/components/StateBlock.vue'
+import FrontContentEditorModal from '@/components/FrontContentEditorModal.vue'
 import { contentApi } from '@/api/content'
 import type { ContentItem, PageConfig } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { formatDate } from '@/utils/date'
 import { detectImageTone, type ImageTone } from '@/utils/imageTone'
+import { useSessionStore } from '@/stores/session'
 
 type SectionKey = 'posts' | 'chatters'
 
 const route = useRoute()
 const router = useRouter()
+const session = useSessionStore()
 const items = ref<ContentItem[]>([])
 const keyword = ref('')
 const activeTag = ref('全部')
@@ -23,6 +26,7 @@ const displayMode = ref<'grid' | 'link'>('grid')
 const section = ref<SectionKey>(route.query.section === 'chatters' ? 'chatters' : 'posts')
 const loading = ref(true)
 const error = ref('')
+const createOpen = ref(false)
 const pageConfig = ref<PageConfig | null>(null)
 const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop'
 const toneMap = reactive<Record<string, ImageTone>>({})
@@ -42,6 +46,7 @@ const sectionConfig = computed(() => section.value === 'chatters'
       base: '/posts',
       empty: '暂无公开文章。'
     })
+const createLabel = computed(() => section.value === 'chatters' ? '新增杂谈' : '新增文章')
 
 useSeo({
   title: () => sectionConfig.value.title,
@@ -146,6 +151,13 @@ onMounted(() => {
       </div>
     </div>
 
+    <div v-if="session.isAdmin" class="flex justify-end">
+      <button type="button" class="frontend-admin-create-btn" @click="createOpen = true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        {{ createLabel }}
+      </button>
+    </div>
+
     <div>
       <StateBlock v-if="loading" :message="`${sectionConfig.title}加载中...`" />
       <StateBlock v-else-if="error" :title="`${sectionConfig.title}加载失败`" :message="error" @retry="load" />
@@ -181,5 +193,6 @@ onMounted(() => {
         <GlassCard v-if="!filtered.length"><p class="text-center text-white/55">{{ sectionConfig.empty }}</p></GlassCard>
       </div>
     </div>
+    <FrontContentEditorModal v-model="createOpen" :title="createLabel" :section="section" @saved="load" />
   </section>
 </template>

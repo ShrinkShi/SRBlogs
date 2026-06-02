@@ -1,10 +1,16 @@
 {
   "ignoredTag": "",
-  "lastCheckedAt": "2026-06-02T15:45:53",
+  "lastCheckedAt": "2026-06-02T19:28:07",
   "latest": {
-    "error": "GitHub API 限流，请稍后再试。",
-    "errorType": "github_rate_limited",
-    "errorCode": "github_rate_limited"
+    "tag": "v1.2.2",
+    "name": "SRBlogs v1.2.2 · WebUI Update Progress & Permission Fix",
+    "url": "https://github.com/ShrinkShi/SRBlogs/releases/tag/v1.2.2",
+    "publishedAt": "2026-05-24T04:18:16Z",
+    "body": "# SRBlogs v1.2.2\r\n\r\n本版本主要修复 WebUI 一键更新在 Linux 服务器上的任务状态与进度反馈问题。\r\n\r\n## 修复内容\r\n\r\n- 修复 WebUI 一键更新失败后仍显示 running 的问题\r\n- 增加更新前 sudo 权限预检\r\n- 未配置免密码 sudo 时，明确提示权限不足\r\n- 增加 stale running task 自动识别与修正\r\n- 更新失败时记录 exitCode、错误原因和结束时间\r\n- 增加更新进度与最近日志查询能力\r\n- 版本更新弹窗支持显示当前步骤、进度和日志\r\n- doctor 增加 WebUI 更新权限与任务状态检查\r\n\r\n## 验证重点\r\n\r\n本版本计划通过手动部署安装，用于验证 v1.2.1 的生产环境设置同步修复。\r\n\r\nv1.2.2 新增的 WebUI 更新进度显示，将在下一次 WebUI 在线更新时继续验证。\r\n\r\n---\r\n\r\n**Full Changelog:** v1.2.1 → v1.2.2",
+    "zipballUrl": "https://api.github.com/repos/ShrinkShi/SRBlogs/zipball/v1.2.2",
+    "error": "",
+    "errorType": "",
+    "errorCode": ""
   },
   "run": {
     "status": "idle",

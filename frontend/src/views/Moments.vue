@@ -2,14 +2,18 @@
 import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
+import FrontContentEditorModal from '@/components/FrontContentEditorModal.vue'
 import { contentApi } from '@/api/content'
 import type { ContentItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { formatDate } from '@/utils/date'
+import { useSessionStore } from '@/stores/session'
 
+const session = useSessionStore()
 const items = ref<ContentItem[]>([])
 const loading = ref(true)
 const error = ref('')
+const createOpen = ref(false)
 
 useSeo({ title: '说说', description: 'SRBlogs 的短动态、图片和生活片段。', path: '/moments' })
 
@@ -60,6 +64,13 @@ onMounted(load)
       <h1 class="text-4xl font-black text-white">说说</h1>
     </GlassCard>
 
+    <div v-if="session.isAdmin" class="flex justify-end">
+      <button type="button" class="frontend-admin-create-btn" @click="createOpen = true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        新增说说
+      </button>
+    </div>
+
     <GlassCard v-if="loading"><p class="text-white/60">说说加载中...</p></GlassCard>
     <GlassCard v-else-if="error">
       <p class="text-red-200/85">{{ error }}</p>
@@ -103,5 +114,6 @@ onMounted(load)
         </div>
       </article>
     </div>
+    <FrontContentEditorModal v-model="createOpen" title="新增说说" section="moments" @saved="load" />
   </section>
 </template>

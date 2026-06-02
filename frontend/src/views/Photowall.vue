@@ -3,20 +3,24 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import CommentBox from '@/components/CommentBox.vue'
+import FrontPhotoEditorModal from '@/components/FrontPhotoEditorModal.vue'
 import { contentApi } from '@/api/content'
 import type { PageConfig, PhotoAlbum, PhotoItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { detectImageTone, type ImageTone } from '@/utils/imageTone'
+import { useSessionStore } from '@/stores/session'
 
 type AlbumView = PhotoAlbum & { slug: string }
 
 const rawPhotos = ref<Array<PhotoItem | PhotoAlbum>>([])
+const session = useSessionStore()
 const activeAlbum = ref<AlbumView | null>(null)
 const active = ref<PhotoItem | null>(null)
 const viewMode = ref<'grid' | 'link'>('grid')
 const searchQ = ref('')
 const loading = ref(false)
 const error = ref('')
+const createOpen = ref(false)
 const pageConfig = ref<PageConfig | null>(null)
 const toneMap = reactive<Record<string, ImageTone>>({})
 const title = computed(() => pageConfig.value?.pageText?.photos?.title || '相册')
@@ -109,6 +113,13 @@ onMounted(load)
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'grid' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'grid'">矩阵网格</button>
         <button type="button" class="rounded-full px-4 py-2 text-sm font-bold transition" :class="viewMode === 'link' ? 'bg-cyan-300 text-slate-950' : 'text-white/58 hover:text-white'" @click="viewMode = 'link'">中枢链路</button>
       </div>
+    </div>
+
+    <div v-if="session.isAdmin" class="flex justify-end">
+      <button type="button" class="frontend-admin-create-btn" @click="createOpen = true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        新增照片
+      </button>
     </div>
 
     <div>
@@ -211,8 +222,9 @@ onMounted(load)
           </button>
         </div>
         <p class="text-center text-white/70">{{ active?.title }}</p>
-        <CommentBox v-if="activeAlbum" resource="photos" :slug="activeAlbum.slug" />
+        <CommentBox v-if="activeAlbum" resource="photos" :slug="activeAlbum.slug" frameless />
       </div>
     </div>
+    <FrontPhotoEditorModal v-model="createOpen" @saved="load" />
   </section>
 </template>

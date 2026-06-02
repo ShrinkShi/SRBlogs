@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import DiscoveryResultCard from './DiscoveryResultCard.vue'
+import FrontendAdminSettings from './FrontendAdminSettings.vue'
 import StateBlock from './StateBlock.vue'
 import { contentApi } from '@/api/content'
 import { themes, useUiStore } from '@/stores/ui'
 import { usePlayerStore } from '@/stores/player'
+import { useSessionStore } from '@/stores/session'
 import type { DiscoveryType, SearchResponse, SiteSettings, TagItem } from '@/types'
 
 type ToolPanel = 'calculator' | 'search' | 'settings'
@@ -13,10 +15,12 @@ type Token = number | string
 const props = defineProps<{ settings?: SiteSettings | null; activePanel?: ToolPanel | null }>()
 const emit = defineEmits<{
   'update:activePanel': [panel: ToolPanel | null]
+  settingsSaved: []
 }>()
 
 const ui = useUiStore()
 const player = usePlayerStore()
+const session = useSessionStore()
 
 const activePanel = computed<ToolPanel | null>({
   get: () => props.activePanel ?? null,
@@ -70,7 +74,11 @@ const bgCount = computed(() => {
 })
 const siteBgSlideshowEnabled = computed(() => props.settings?.themeConfig?.backgroundSlideshowEnabled !== false)
 const themeLabel = (theme: string) => theme === 'shrink-red-glass' ? 'Shrink 红白黑玻璃主题' : theme
-const modalTitle = computed(() => activePanel.value === 'search' ? '全局搜索' : activePanel.value === 'settings' ? '游客设置' : '')
+const modalTitle = computed(() => activePanel.value === 'search' ? '全局搜索' : activePanel.value === 'settings' ? '设置' : '')
+
+function notifySettingsSaved() {
+  emit('settingsSaved')
+}
 
 function closeAll() {
   activePanel.value = null
@@ -291,6 +299,8 @@ onBeforeUnmount(() => {
             <div v-else class="rounded-[24px] border border-white/12 bg-white/[0.09] p-5 text-center text-white/64">没有匹配内容。</div>
           </div>
 
+          <FrontendAdminSettings v-else-if="session.isAdmin" @saved="notifySettingsSaved" />
+
           <div v-else class="grid gap-5 md:grid-cols-2">
             <label class="toolbox-setting">
               <span>主题</span>
@@ -372,7 +382,7 @@ onBeforeUnmount(() => {
   transition: transform .2s var(--motion-ease), background .2s var(--motion-ease), color .2s var(--motion-ease);
 }
 .toolbox-menu {
-  background: var(--ct-toolbox-menu-bg, rgb(15 23 42)) !important;
+  background: var(--ct-toolbox-menu-bg, rgb(0 0 0)) !important;
   color: var(--ct-toolbox-menu-text, rgba(255,255,255,.78));
   border-color: var(--ct-toolbox-menu-border, rgba(255,255,255,.15));
   transform-origin: bottom left;
@@ -380,7 +390,7 @@ onBeforeUnmount(() => {
   -webkit-backdrop-filter: none !important;
 }
 .toolbox-fab {
-  background: var(--ct-toolbox-fab-bg, rgb(15 23 42)) !important;
+  background: var(--ct-toolbox-fab-bg, rgb(0 0 0)) !important;
   color: var(--ct-toolbox-fab-text, rgb(207 250 254));
   border-color: var(--ct-toolbox-fab-border, rgba(103,232,249,.25));
   transform: scale(var(--ct-toolbox-fab-size, 1));
@@ -423,17 +433,17 @@ onBeforeUnmount(() => {
   font-size: .9rem;
 }
 .toolbox-calculator-panel {
-  background: var(--ct-toolbox-calculator-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) !important;
+  background: var(--ct-toolbox-calculator-panel-bg, rgb(0 0 0)) !important;
   color: var(--ct-toolbox-calculator-panel-text, currentColor);
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 .toolbox-modal-panel-settings {
-  background: var(--ct-toolbox-settings-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) !important;
+  background: var(--ct-toolbox-settings-panel-bg, rgb(0 0 0)) !important;
   color: var(--ct-toolbox-settings-panel-text, currentColor);
 }
 .toolbox-modal-panel-search {
-  background: var(--ct-toolbox-search-panel-bg, rgb(var(--toolbox-panel-rgb, 12 16 32))) !important;
+  background: var(--ct-toolbox-search-panel-bg, rgb(0 0 0)) !important;
   color: var(--ct-toolbox-search-panel-text, currentColor);
 }
 .toolbox-modal-panel,
@@ -442,10 +452,10 @@ onBeforeUnmount(() => {
   -webkit-backdrop-filter: none !important;
 }
 .toolbox-modal-overlay {
-  background: rgb(15 23 42 / .44);
+  background: rgb(0 0 0 / .62);
 }
 :global(:root[data-color-mode='day']) .toolbox-modal-overlay {
-  background: rgb(15 23 42 / .18);
+  background: rgb(0 0 0 / .62);
 }
 :global(:root[data-color-mode='day']) .toolbox-modal-panel,
 :global(:root[data-color-mode='day']) .toolbox-calculator-panel {
@@ -501,7 +511,7 @@ onBeforeUnmount(() => {
   color: rgb(17, 24, 39);
 }
 :global(:root[data-color-mode='night']) .toolbox-setting select option {
-  background: rgb(15, 23, 42);
+  background: rgb(0, 0, 0);
   color: rgb(248, 250, 252);
 }
 :global(:root[data-color-mode='day']) .toolbox-modal-panel button:not(.toolbox-key) {
@@ -515,7 +525,7 @@ onBeforeUnmount(() => {
   min-width: 0;
   border-radius: .9rem;
   border: 1px solid rgb(55 65 81);
-  background: rgb(15 23 42);
+  background: rgb(0 0 0);
   padding: .55rem .7rem;
   color: white;
 }
@@ -539,7 +549,7 @@ onBeforeUnmount(() => {
 .toolbox-night.toolbox-modal-panel,
 .toolbox-night.toolbox-calculator-panel {
   color: rgb(248, 250, 252) !important;
-  background: rgb(15 23 42) !important;
+  background: rgb(0 0 0) !important;
   border-color: rgba(255, 255, 255, .14) !important;
 }
 
@@ -606,7 +616,7 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-setting {
-  background: rgb(3, 3, 3) !important;
+  background: rgb(8, 8, 8) !important;
   border-color: rgba(255, 255, 255, .12) !important;
   color: rgb(248, 250, 252) !important;
 }
@@ -618,7 +628,7 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-setting :where(select, input[type='range'], textarea) {
-  background-color: rgb(15, 23, 42) !important;
+  background-color: rgb(0, 0, 0) !important;
   border-color: rgba(255, 255, 255, .16) !important;
   color: rgb(248, 250, 252) !important;
 }
@@ -629,7 +639,7 @@ onBeforeUnmount(() => {
 }
 
 .toolbox-night .toolbox-setting select option {
-  background: rgb(15, 23, 42) !important;
+  background: rgb(0, 0, 0) !important;
   color: rgb(248, 250, 252) !important;
 }
 </style>

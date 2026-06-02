@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import { adminApi } from '@/api/admin'
 import AdminConfirmDialog from '@/components/AdminConfirmDialog.vue'
 import CommentManageModal from '@/components/CommentManageModal.vue'
@@ -27,6 +28,7 @@ const props = defineProps<{
   commentTypeLabel?: string
 }>()
 
+const route = useRoute()
 const ui = useUiStore()
 const confirmDialog = useConfirmDialog()
 const items = ref<Record<string, unknown>[]>([])
@@ -419,7 +421,10 @@ async function uploadGallery(field: StructuredField, files: FileList | null) {
   }
 }
 
-onMounted(load)
+onMounted(async () => {
+  await load()
+  if (route.query.create === '1') openCreate()
+})
 </script>
 
 <template>

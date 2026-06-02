@@ -4,7 +4,7 @@ import { RouterLink } from 'vue-router'
 import { contentApi } from '@/api/content'
 import { useSeo } from '@/composables/useSeo'
 import { useUiStore } from '@/stores/ui'
-import type { AboutPageConfig } from '@/types'
+import type { AboutPageConfig, SiteSettings } from '@/types'
 
 const ui = useUiStore()
 
@@ -76,6 +76,7 @@ const defaultConfig: AboutPageConfig = {
 }
 
 const config = ref<AboutPageConfig>(defaultConfig)
+const siteSettings = ref<SiteSettings | null>(null)
 const loading = ref(true)
 const error = ref('')
 const sending = ref(false)
@@ -109,6 +110,9 @@ const displayHeatmapCells = computed(() =>
   githubHeatmapCells.value.length ? githubHeatmapCells.value : fallbackHeatmapCells.value
 )
 const displayGithubContributionText = computed(() => githubContributionText.value || config.value.github.contributionText)
+const footerAuthor = computed(() => siteSettings.value?.author || siteSettings.value?.authorName || config.value.hero.name || config.value.about.codeProfile.name)
+const footerTitle = computed(() => siteSettings.value?.siteTitle || siteSettings.value?.title || 'SRBlogs')
+const footerIcp = computed(() => siteSettings.value?.icp || siteSettings.value?.beian || '京ICP备2026028577')
 
 function formatAvailabilityStatus(value: string) {
   const normalized = (value || 'Available for opportunities').trim().toLowerCase()
@@ -257,6 +261,7 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
+  contentApi.publicSettings<SiteSettings>().then((settings) => { siteSettings.value = settings }).catch(() => {})
   void fetchGithubSummary()
 })
 
@@ -387,6 +392,12 @@ onBeforeUnmount(() => {
         </form>
       </div>
     </section>
+
+    <footer class="home-site-footer">
+      <div class="home-site-footer-line" aria-hidden="true"></div>
+      <p>© {{ new Date().getFullYear() }} {{ footerAuthor }} · {{ footerTitle }}</p>
+      <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">{{ footerIcp }}</a>
+    </footer>
   </main>
 </template>
 
@@ -1071,6 +1082,35 @@ i[data-level="5"] { background: var(--accent); }
   margin-top: 1rem;
   color: var(--accent);
   font-weight: 800;
+}
+
+.home-site-footer {
+  display: grid;
+  justify-items: center;
+  gap: .5rem;
+  width: min(100%, 1100px);
+  margin: 1rem auto 0;
+  padding: 1.6rem 1rem 0;
+  color: color-mix(in srgb, var(--text-primary) 58%, transparent);
+  font-size: .86rem;
+  text-align: center;
+}
+
+.home-site-footer-line {
+  width: min(100%, 680px);
+  height: 1px;
+  margin-bottom: .65rem;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text-primary) 20%, transparent), transparent);
+}
+
+.home-site-footer a {
+  color: color-mix(in srgb, var(--text-primary) 62%, transparent);
+  text-decoration: none;
+  transition: color .18s ease;
+}
+
+.home-site-footer a:hover {
+  color: var(--accent);
 }
 
 @media (max-width: 900px) {

@@ -539,7 +539,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="home-status-cell home-icp-cell">
-          <a class="block text-sm font-black" href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">
+          <a class="block text-sm font-black" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">
             {{ icpRecord }}
           </a>
         </div>
