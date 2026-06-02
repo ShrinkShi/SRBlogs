@@ -53,10 +53,20 @@ class JsonWrite(BaseModel):
     data: Any
 
 
+class CommentAttachment(BaseModel):
+    url: str
+    filename: str = ""
+    originalName: str = ""
+    size: int = 0
+    kind: str = "file"
+
+
 class CommentCreate(BaseModel):
     author: str = Field(default="", max_length=40)
     email: Optional[str] = Field(default="", max_length=120)
-    content: str = Field(min_length=1, max_length=1000)
+    content: str = Field(min_length=1, max_length=5000)
+    parentId: str = Field(default="", max_length=80)
+    attachments: list[CommentAttachment] = Field(default_factory=list, max_length=5)
 
     @field_validator("content")
     @classmethod
@@ -89,6 +99,9 @@ class CommentItem(BaseModel):
     githubLogin: str = ""
     provider: str = ""
     providerId: str = ""
+    parentId: str = ""
+    replyTo: dict[str, str] = Field(default_factory=dict)
+    attachments: list[CommentAttachment] = Field(default_factory=list)
 
 
 class CommentIndexItem(BaseModel):

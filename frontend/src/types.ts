@@ -184,6 +184,17 @@ export interface CommentItem {
   githubLogin?: string
   provider?: 'github' | 'qq' | 'admin' | ''
   providerId?: string
+  parentId?: string
+  replyTo?: { id?: string; author?: string; content?: string }
+  attachments?: CommentAttachment[]
+}
+
+export interface CommentAttachment {
+  url: string
+  filename?: string
+  originalName?: string
+  size?: number
+  kind?: 'image' | 'file' | string
 }
 
 export interface AboutPageConfig {

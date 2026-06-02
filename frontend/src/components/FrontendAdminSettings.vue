@@ -321,90 +321,89 @@ onMounted(load)
 
 <template>
   <section class="front-admin-settings">
-    <div class="front-admin-settings-head">
-      <span></span>
-      <button type="button" :disabled="loading" @click="load">{{ loading ? '加载中...' : '刷新' }}</button>
-    </div>
-
     <p v-if="error" class="front-admin-error">{{ error }}</p>
     <p v-if="loading" class="front-admin-loading">设置加载中...</p>
 
     <template v-else>
-      <nav class="front-admin-tabs" aria-label="管理员设置分类">
-        <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          type="button"
-          :class="{ active: activeTab === tab.key }"
-          @click="activeTab = tab.key"
-        >
-          {{ tab.label }}
-        </button>
-      </nav>
+      <div class="front-admin-layout">
+        <nav class="front-admin-tabs" aria-label="设置分类">
+          <button
+            v-for="tab in tabs"
+            :key="tab.key"
+            type="button"
+            :class="{ active: activeTab === tab.key }"
+            @click="activeTab = tab.key"
+          >
+            {{ tab.label }}
+          </button>
+        </nav>
 
-      <div v-if="activeTab === 'site'" class="front-admin-form">
-        <label><span>站点标题</span><input v-model="form.site.title" /></label>
-        <label><span>副标题</span><input v-model="form.site.subtitle" /></label>
-        <label><span>站点描述</span><textarea v-model="form.site.description"></textarea></label>
-        <label><span>备案号</span><input v-model="form.site.icp" /></label>
-      </div>
-
-      <div v-else-if="activeTab === 'profile'" class="front-admin-form">
-        <label><span>名称</span><input v-model="form.profile.name" /></label>
-        <label>
-          <span>头像</span>
-          <div class="front-admin-inline">
-            <input v-model="form.profile.avatar" placeholder="头像 URL 或上传后的地址" />
-            <input type="file" accept="image/*" @change="avatarFile = (($event.target as HTMLInputElement).files?.[0] || null)" />
-            <button type="button" :disabled="!avatarFile" @click="uploadAvatar">上传</button>
+        <div class="front-admin-content">
+          <div v-if="activeTab === 'site'" class="front-admin-form">
+            <label><span>站点标题</span><input v-model="form.site.title" /></label>
+            <label><span>副标题</span><input v-model="form.site.subtitle" /></label>
+            <label><span>站点描述</span><textarea v-model="form.site.description"></textarea></label>
+            <label><span>备案号</span><input v-model="form.site.icp" /></label>
           </div>
-        </label>
-        <label><span>GitHub 链接</span><input v-model="form.profile.github" /></label>
-        <label><span>简介</span><textarea v-model="form.profile.intro"></textarea></label>
-        <label><span>Email</span><input v-model="form.profile.email" /></label>
-        <label><span>QQ</span><input v-model="form.profile.qq" /></label>
-        <label><span>微信</span><input v-model="form.profile.wechat" /></label>
-      </div>
 
-      <div v-else-if="activeTab === 'theme'" class="front-admin-form">
-        <label class="front-admin-switch"><span>启用点击音效</span><input v-model="form.theme.clickSoundEnabled" type="checkbox" /></label>
-        <label class="front-admin-switch"><span>启用点击特效</span><input v-model="form.theme.clickEffectEnabled" type="checkbox" /></label>
-        <label><span>点击音量</span><input v-model.number="form.theme.clickSoundVolume" min="0" max="1" step="0.01" type="number" /></label>
-        <label>
-          <span>点击音效 URL</span>
-          <div class="front-admin-inline">
-            <input v-model="form.theme.clickSoundUrl" />
-            <input type="file" accept="audio/*" @change="soundFile = (($event.target as HTMLInputElement).files?.[0] || null)" />
-            <button type="button" :disabled="!soundFile" @click="uploadClickSound">上传</button>
+          <div v-else-if="activeTab === 'profile'" class="front-admin-form">
+            <label><span>名称</span><input v-model="form.profile.name" /></label>
+            <label>
+              <span>头像</span>
+              <div class="front-admin-inline">
+                <input v-model="form.profile.avatar" placeholder="头像 URL 或上传后的地址" />
+                <input type="file" accept="image/*" @change="avatarFile = (($event.target as HTMLInputElement).files?.[0] || null)" />
+                <button type="button" :disabled="!avatarFile" @click="uploadAvatar">上传</button>
+              </div>
+            </label>
+            <label><span>GitHub 链接</span><input v-model="form.profile.github" /></label>
+            <label><span>简介</span><textarea v-model="form.profile.intro"></textarea></label>
+            <label><span>Email</span><input v-model="form.profile.email" /></label>
+            <label><span>QQ</span><input v-model="form.profile.qq" /></label>
+            <label><span>微信</span><input v-model="form.profile.wechat" /></label>
           </div>
-        </label>
-        <label><span>夜间壁纸 URL（每行一个）</span><textarea v-model="form.theme.nightWallpapers"></textarea></label>
-        <label><span>默认壁纸序号</span><input v-model.number="form.theme.nightActiveIndex" min="0" type="number" /></label>
-        <label class="front-admin-switch"><span>背景轮播</span><input v-model="form.theme.nightSlideshowEnabled" type="checkbox" /></label>
-        <label><span>轮播间隔（秒）</span><input v-model.number="form.theme.nightSlideshowInterval" min="3" max="60" step="0.5" type="number" /></label>
-        <label>
-          <span>轮播效果</span>
-          <select v-model="form.theme.nightSlideshowEffect">
-            <option value="fade">淡入淡出</option>
-            <option value="soft-blur">柔焦切换</option>
-            <option value="none">无动画</option>
-          </select>
-        </label>
-      </div>
 
-      <div v-else class="front-admin-form">
-        <label class="front-admin-switch"><span>启用评论</span><input v-model="form.comments.enabled" type="checkbox" /></label>
-        <label><span>留言最大长度</span><input v-model.number="form.comments.maxLength" min="1" type="number" /></label>
-        <label class="front-admin-switch"><span>启用 GitHub 登录</span><input v-model="form.comments.githubLoginEnabled" type="checkbox" /></label>
-        <label><span>GitHub Client ID</span><input v-model="form.comments.githubClientId" /></label>
-        <label><span>新的 GitHub OAuth Secret</span><input v-model="form.comments.githubSecret" type="password" :placeholder="form.comments.githubSecretConfigured ? '已配置，留空保持旧值' : '未配置'" /></label>
-        <label class="front-admin-switch"><span>启用 QQ 登录</span><input v-model="form.comments.qqLoginEnabled" type="checkbox" /></label>
-        <label><span>QQ App ID</span><input v-model="form.comments.qqAppId" /></label>
-        <label><span>新的 QQ App Secret</span><input v-model="form.comments.qqSecret" type="password" :placeholder="form.comments.qqSecretConfigured ? '已配置，留空保持旧值' : '未配置'" /></label>
-      </div>
+          <div v-else-if="activeTab === 'theme'" class="front-admin-form">
+            <label class="front-admin-switch"><span>启用点击音效</span><input v-model="form.theme.clickSoundEnabled" type="checkbox" /></label>
+            <label class="front-admin-switch"><span>启用点击特效</span><input v-model="form.theme.clickEffectEnabled" type="checkbox" /></label>
+            <label><span>点击音量</span><input v-model.number="form.theme.clickSoundVolume" min="0" max="1" step="0.01" type="number" /></label>
+            <label>
+              <span>点击音效 URL</span>
+              <div class="front-admin-inline">
+                <input v-model="form.theme.clickSoundUrl" />
+                <input type="file" accept="audio/*" @change="soundFile = (($event.target as HTMLInputElement).files?.[0] || null)" />
+                <button type="button" :disabled="!soundFile" @click="uploadClickSound">上传</button>
+              </div>
+            </label>
+            <label><span>夜间壁纸 URL（每行一个）</span><textarea v-model="form.theme.nightWallpapers"></textarea></label>
+            <label><span>默认壁纸序号</span><input v-model.number="form.theme.nightActiveIndex" min="0" type="number" /></label>
+            <label class="front-admin-switch"><span>背景轮播</span><input v-model="form.theme.nightSlideshowEnabled" type="checkbox" /></label>
+            <label><span>轮播间隔（秒）</span><input v-model.number="form.theme.nightSlideshowInterval" min="3" max="60" step="0.5" type="number" /></label>
+            <label>
+              <span>轮播效果</span>
+              <select v-model="form.theme.nightSlideshowEffect">
+                <option value="fade">淡入淡出</option>
+                <option value="soft-blur">柔焦切换</option>
+                <option value="none">无动画</option>
+              </select>
+            </label>
+          </div>
 
-      <div class="front-admin-actions">
-        <button type="button" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存设置' }}</button>
+          <div v-else class="front-admin-form">
+            <label class="front-admin-switch"><span>启用评论</span><input v-model="form.comments.enabled" type="checkbox" /></label>
+            <label><span>留言最大长度</span><input v-model.number="form.comments.maxLength" min="1" type="number" /></label>
+            <label class="front-admin-switch"><span>启用 GitHub 登录</span><input v-model="form.comments.githubLoginEnabled" type="checkbox" /></label>
+            <label><span>GitHub Client ID</span><input v-model="form.comments.githubClientId" /></label>
+            <label><span>新的 GitHub OAuth Secret</span><input v-model="form.comments.githubSecret" type="password" :placeholder="form.comments.githubSecretConfigured ? '已配置，留空保持旧值' : '未配置'" /></label>
+            <label class="front-admin-switch"><span>启用 QQ 登录</span><input v-model="form.comments.qqLoginEnabled" type="checkbox" /></label>
+            <label><span>QQ App ID</span><input v-model="form.comments.qqAppId" /></label>
+            <label><span>新的 QQ App Secret</span><input v-model="form.comments.qqSecret" type="password" :placeholder="form.comments.qqSecretConfigured ? '已配置，留空保持旧值' : '未配置'" /></label>
+          </div>
+
+          <div class="front-admin-actions">
+            <button type="button" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存设置' }}</button>
+          </div>
+        </div>
       </div>
     </template>
   </section>
@@ -415,48 +414,43 @@ onMounted(load)
   display: grid;
   gap: 1rem;
 }
-.front-admin-settings-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-.front-admin-settings-head p {
-  color: rgba(255, 255, 255, .42);
-  font-size: .72rem;
-  font-weight: 900;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-}
-.front-admin-settings-head h3 {
-  margin-top: .25rem;
-  font-size: 1.3rem;
-  font-weight: 900;
-}
 .front-admin-settings button {
-  border-radius: .9rem;
-  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 999px;
+  background: white;
   padding: .6rem .85rem;
-  color: rgba(255, 255, 255, .76);
+  color: black;
+  font-weight: 900;
 }
 .front-admin-settings button:disabled {
   cursor: not-allowed;
   opacity: .45;
 }
+.front-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(9rem, .22fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
 .front-admin-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .4rem;
-  border-bottom: 1px solid rgba(255, 255, 255, .1);
-  padding-bottom: .6rem;
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: .35rem;
+  border-right: 1px solid rgba(255, 255, 255, .1);
+  padding-right: .85rem;
 }
 .front-admin-tabs button {
   border: 0;
   background: transparent;
+  color: rgba(255, 255, 255, .56);
+  text-align: left;
 }
 .front-admin-tabs button.active {
-  color: #fecaca;
-  box-shadow: inset 0 -2px 0 #f87171;
+  background: rgba(255, 255, 255, .08);
+  color: white;
+}
+.front-admin-content {
+  min-width: 0;
 }
 .front-admin-form {
   display: grid;
@@ -501,9 +495,30 @@ onMounted(load)
   align-items: center;
 }
 .front-admin-switch input {
-  width: 1.1rem;
-  height: 1.1rem;
-  accent-color: #f87171;
+  width: 3.2rem;
+  height: 1.7rem;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .16);
+  padding: .18rem;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+.front-admin-switch input::before {
+  content: "";
+  display: block;
+  width: 1.34rem;
+  height: 1.34rem;
+  border-radius: 999px;
+  background: white;
+  transition: transform .18s ease;
+}
+.front-admin-switch input:checked {
+  background: #4f8cff;
+}
+.front-admin-switch input:checked::before {
+  transform: translateX(1.5rem);
 }
 .front-admin-actions {
   display: flex;
@@ -534,6 +549,17 @@ onMounted(load)
   color: rgba(255, 255, 255, .58);
 }
 @media (max-width: 720px) {
+  .front-admin-layout {
+    grid-template-columns: 1fr;
+  }
+  .front-admin-tabs {
+    position: static;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, .1);
+    padding-right: 0;
+    padding-bottom: .8rem;
+  }
   .front-admin-inline {
     grid-template-columns: minmax(0, 1fr);
   }

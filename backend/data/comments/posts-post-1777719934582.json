@@ -1,0 +1,24 @@
+[
+  {
+    "id": "a08795ef9b8442de9171c819c4befda7",
+    "author": "管理员",
+    "email": "",
+    "avatar": "http://127.0.0.1:8000/uploads/d702e73239ce489ebdb495851d07da42.jpg",
+    "provider": "admin",
+    "providerId": "shrink",
+    "githubLogin": "",
+    "content": "测试",
+    "created_at": "2026-06-02 21:20"
+  },
+  {
+    "id": "99d3f1df2b84465586fac05f6e5e605b",
+    "author": "管理员",
+    "email": "",
+    "avatar": "http://127.0.0.1:8000/uploads/d702e73239ce489ebdb495851d07da42.jpg",
+    "provider": "admin",
+    "providerId": "shrink",
+    "githubLogin": "",
+    "content": "测试2楼",
+    "created_at": "2026-06-02 21:20"
+  }
+]

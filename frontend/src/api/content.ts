@@ -1,5 +1,5 @@
 import { http } from './http'
-import type { AboutPageConfig, ArchiveResponse, CommentItem, ContentItem, DiscoveryType, GithubSummary, SearchResponse, TagItem } from '@/types'
+import type { AboutPageConfig, ArchiveResponse, CommentAttachment, CommentItem, ContentItem, DiscoveryType, GithubSummary, SearchResponse, TagItem } from '@/types'
 
 export type CommentResource = 'posts' | 'moments' | 'chatters' | 'music' | 'photos'
 export type VisitorUser = { provider: 'github' | 'qq'; id: string; login?: string; name?: string; avatar?: string; html_url?: string }
@@ -121,8 +121,16 @@ export const contentApi = {
     const { data } = await http.get<CommentItem[]>(`/comments/${resource}/${slug}`)
     return data
   },
-  createComment: async (resource: CommentResource, slug: string, payload: { author?: string; email?: string; content: string }) => {
+  createComment: async (resource: CommentResource, slug: string, payload: { author?: string; email?: string; content: string; parentId?: string; attachments?: CommentAttachment[] }) => {
     const { data } = await http.post<CommentItem>(`/comments/${resource}/${slug}`, payload)
+    return data
+  },
+  uploadCommentAttachment: async (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    const { data } = await http.post<CommentAttachment & { size: number }>('/comments/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
     return data
   },
   deleteComment: async (resource: CommentResource, slug: string, commentId: string) => {

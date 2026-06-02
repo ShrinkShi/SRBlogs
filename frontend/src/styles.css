@@ -394,6 +394,41 @@ body::before {
   color: #fff !important;
 }
 
+.sr-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  border-radius: 999px;
+  padding: .68rem 1.05rem;
+  font-weight: 900;
+  line-height: 1.1;
+  transition: transform .18s var(--motion-ease), opacity .18s var(--motion-ease), background .18s var(--motion-ease);
+}
+.sr-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.sr-button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+.sr-button-regular {
+  background: white;
+  color: black;
+}
+.sr-button-green {
+  background: #86efac;
+  color: black;
+}
+.sr-button-red {
+  background: #ef4444;
+  color: white;
+}
+.sr-button-black {
+  background: black;
+  color: white;
+}
+
 .glass {
   position: relative;
   background: var(--bg-card-elevated);

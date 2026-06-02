@@ -67,10 +67,18 @@
 
 ## 按钮规范
 
-- 主保存按钮：浅绿色背景，深绿色文字。
-- 删除按钮：红色文字或下划线文字，不使用实心背景。
-- 图标按钮：圆形、轻边框、透明底。
+- 常规按钮：`.sr-button sr-button-regular`，白色填充、黑色文字、胶囊圆角。
+- 重点按钮：`.sr-button-green`（绿色填充黑字）、`.sr-button-red`（红色填充白字）、`.sr-button-black`（黑色填充白字）。
+- 纯文字操作：使用 `frontend/src/components/ui/SrTextButton.vue`，无边框、无背景、无下划线，适合编辑、删除、复制、回复等轻操作。
+- 图标按钮：圆形、透明底；只有确实需要强调时才加轻边框。
 - 管理员新增按钮统一使用 `.frontend-admin-create-btn`。
+
+纯文字按钮示例：
+
+```vue
+<SrTextButton>编辑</SrTextButton>
+<SrTextButton tone="danger">删除</SrTextButton>
+```
 
 ## 登录与权限
 

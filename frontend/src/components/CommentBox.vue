@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { contentApi, type CommentResource, type VisitorUser } from '@/api/content'
 import GlassCard from './GlassCard.vue'
-import type { CommentItem, SiteSettings } from '@/types'
+import SrTextButton from './ui/SrTextButton.vue'
+import type { CommentAttachment, CommentItem, SiteSettings } from '@/types'
 import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
 
@@ -19,6 +20,13 @@ const confirmDeleteId = ref('')
 const error = ref('')
 const success = ref('')
 const form = reactive({ content: '' })
+const attachments = ref<CommentAttachment[]>([])
+const replyTarget = ref<CommentItem | null>(null)
+const attachmentMenuOpen = ref(false)
+const uploadingAttachment = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+const imageInput = ref<HTMLInputElement | null>(null)
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const visitor = ref<{ configured: { github: boolean; qq: boolean }; user: VisitorUser | null }>({
   configured: { github: false, qq: false },
   user: null
@@ -66,6 +74,7 @@ const activeCommenter = computed(() => {
   return null
 })
 const canComment = computed(() => Boolean(activeCommenter.value))
+const canSubmit = computed(() => canComment.value && Boolean(form.content.trim()))
 
 async function load() {
   loading.value = true
@@ -118,14 +127,73 @@ async function submit() {
   }
   submitting.value = true
   try {
-    const item = await contentApi.createComment(props.resource, props.slug, { content: form.content })
+    const item = await contentApi.createComment(props.resource, props.slug, {
+      content: form.content,
+      parentId: replyTarget.value?.id || '',
+      attachments: attachments.value
+    })
     comments.value.push(item)
     form.content = ''
+    attachments.value = []
+    replyTarget.value = null
     success.value = '留言已发布。'
+    resizeComposer()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '留言提交失败'
   } finally {
     submitting.value = false
+  }
+}
+
+function resizeComposer() {
+  nextTick(() => {
+    const el = textareaRef.value
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(180, Math.max(42, el.scrollHeight))}px`
+  })
+}
+
+function startReply(item: CommentItem) {
+  replyTarget.value = item
+  textareaRef.value?.focus()
+}
+
+function cancelReply() {
+  replyTarget.value = null
+}
+
+async function copyComment(item: CommentItem) {
+  try {
+    await navigator.clipboard.writeText(item.content)
+    ui.showToast('留言内容已复制', 'success')
+  } catch {
+    ui.showToast('复制失败', 'error')
+  }
+}
+
+function removeAttachment(index: number) {
+  attachments.value.splice(index, 1)
+}
+
+async function uploadAttachment(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  ;(event.target as HTMLInputElement).value = ''
+  attachmentMenuOpen.value = false
+  if (!file) return
+  if (file.size > 2 * 1024 * 1024) {
+    ui.showToast('附件不能超过 2MB', 'error')
+    return
+  }
+  uploadingAttachment.value = true
+  try {
+    const data = await contentApi.uploadCommentAttachment(file)
+    attachments.value.push(data)
+    ui.showToast('附件已上传', 'success')
+  } catch (exc) {
+    ui.showToast(exc instanceof Error ? exc.message : '附件上传失败', 'error')
+  } finally {
+    uploadingAttachment.value = false
   }
 }
 
@@ -166,8 +234,17 @@ function displayName(item: CommentItem) {
   return item.author || '访客'
 }
 
+function replySummary(item: CommentItem) {
+  return item.replyTo?.content || ''
+}
+
+function attachmentName(item: CommentAttachment) {
+  return item.originalName || item.filename || '附件'
+}
+
 onMounted(load)
 watch(() => `${props.resource}/${props.slug}`, load)
+watch(() => form.content, resizeComposer)
 </script>
 
 <template>
@@ -189,7 +266,7 @@ watch(() => `${props.resource}/${props.slug}`, load)
 
     <div v-else class="mt-5 grid gap-3">
       <article v-for="item in comments" :key="item.id" class="rounded-[24px] border border-white/10 bg-white/[0.055] p-4">
-        <div class="flex items-center justify-between gap-3 text-sm">
+        <div class="flex items-start justify-between gap-3 text-sm">
           <div class="flex min-w-0 items-center gap-3">
             <img v-if="item.avatar" :src="item.avatar" :alt="item.author" class="h-9 w-9 rounded-full object-cover" loading="lazy" />
             <div v-else class="grid h-9 w-9 place-items-center rounded-full bg-cyan-200/15 text-xs font-black text-cyan-100">
@@ -200,83 +277,115 @@ watch(() => `${props.resource}/${props.slug}`, load)
               <span class="text-xs text-white/38">{{ providerLabel(item.provider) }}</span>
             </div>
           </div>
-          <div class="flex shrink-0 items-center gap-3">
+          <div class="comment-item-actions">
             <span class="text-white/45">{{ item.created_at }}</span>
-            <button
+            <SrTextButton @click="copyComment(item)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8h10v12H8z" /><path d="M6 16H5a1 1 0 0 1-1-1V5h10v1" /></svg>
+              复制
+            </SrTextButton>
+            <SrTextButton v-if="canComment" @click="startReply(item)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 10 4 15l5 5" /><path d="M4 15h9a7 7 0 0 0 7-7V5" /></svg>
+              回复
+            </SrTextButton>
+            <SrTextButton
               v-if="session.isAdmin"
-              type="button"
-              class="comment-delete-link"
+              tone="danger"
               :disabled="deletingCommentId === item.id"
               @click="deleteComment(item)"
             >
               {{ deletingCommentId === item.id ? '删除中' : confirmDeleteId === item.id ? '确认删除' : '删除' }}
-            </button>
+            </SrTextButton>
           </div>
         </div>
-        <p class="mt-3 whitespace-pre-wrap break-words leading-7 text-white/70">{{ item.content }}</p>
+        <div v-if="item.replyTo?.id" class="comment-reply-card">
+          <b>回复 @{{ item.replyTo.author || '访客' }}</b>
+          <span>{{ replySummary(item) || '原留言暂无摘要' }}</span>
+        </div>
+        <p class="comment-content" :class="{ 'comment-content-locked': !session.isAdmin }">{{ item.content }}</p>
+        <div v-if="item.attachments?.length" class="comment-attachments">
+          <a
+            v-for="attachment in item.attachments"
+            :key="attachment.url"
+            :href="attachment.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="comment-attachment"
+          >
+            <img v-if="attachment.kind === 'image'" :src="attachment.url" :alt="attachmentName(attachment)" loading="lazy" />
+            <span v-else>📎</span>
+            <b>{{ attachmentName(attachment) }}</b>
+          </a>
+        </div>
       </article>
       <p v-if="!comments.length" class="rounded-[24px] border border-white/10 bg-white/[0.045] p-4 text-white/50">暂无留言。</p>
     </div>
 
     <div v-if="!boardEnabled && !session.isAdmin" class="mt-5 rounded-[24px] border border-white/10 bg-white/[0.05] p-4 text-white/58">留言板已关闭。</div>
-    <section v-else class="mt-5 rounded-[28px] border border-white/10 bg-white/[0.045] p-4">
-      <div class="grid gap-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-start">
-        <div class="grid justify-items-center gap-2">
-          <img v-if="activeCommenter?.avatar" :src="activeCommenter.avatar" :alt="activeCommenter.name" class="h-14 w-14 rounded-full object-cover ring-2 ring-cyan-200/25" loading="lazy" />
-          <div v-else class="grid h-14 w-14 place-items-center rounded-full bg-white/[0.08] text-lg font-black text-white/55">Hi</div>
-          <span class="max-w-[7rem] truncate text-xs text-white/45">{{ activeCommenter?.label || '访客' }}</span>
+    <section v-else class="comment-composer-section">
+      <form v-if="canComment" class="comment-composer" @submit.prevent="submit">
+        <div v-if="replyTarget" class="comment-replying">
+          <span>回复 @{{ displayName(replyTarget) }}：{{ replyTarget.content.slice(0, 60) }}</span>
+          <SrTextButton @click="cancelReply">取消</SrTextButton>
         </div>
-
-        <form v-if="canComment" class="min-w-0" @submit.prevent="submit">
+        <div class="comment-input-shell">
+          <button type="button" class="comment-plus-btn" aria-label="添加附件" @click="attachmentMenuOpen = !attachmentMenuOpen">+</button>
+          <div v-if="attachmentMenuOpen" class="comment-attach-menu">
+            <button type="button" @click="imageInput?.click()">上传图片</button>
+            <button type="button" @click="fileInput?.click()">上传文件</button>
+            <small>单个附件不超过 2MB</small>
+          </div>
+          <input ref="imageInput" type="file" accept="image/*" class="hidden" @change="uploadAttachment" />
+          <input ref="fileInput" type="file" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" class="hidden" @change="uploadAttachment" />
           <textarea
+            ref="textareaRef"
             v-model="form.content"
             :maxlength="maxLength"
-            rows="4"
-            class="w-full resize-none rounded-[22px] border border-white/10 bg-white/[0.07] px-4 py-3 text-white outline-none transition placeholder:text-white/35 focus:border-emerald-300/60"
+            rows="1"
+            class="comment-textarea"
             placeholder="写下你的留言..."
+            @input="resizeComposer"
           ></textarea>
-          <div class="mt-2 flex flex-wrap items-center gap-3 text-xs">
-            <span class="text-white/38">{{ form.content.length }} / {{ maxLength }}</span>
-            <span v-if="success" class="text-emerald-200/85" role="status">{{ success }}</span>
-            <span v-if="error" class="text-red-200/85" role="alert">{{ error }}</span>
-          </div>
-        </form>
+          <button type="submit" class="comment-submit-round" :disabled="submitting || uploadingAttachment || !canSubmit" aria-label="发布留言">
+            {{ submitting ? '…' : '↵' }}
+          </button>
+        </div>
+        <div v-if="attachments.length" class="comment-attachment-drafts">
+          <span v-for="(attachment, index) in attachments" :key="attachment.url">
+            {{ attachmentName(attachment) }}
+            <button type="button" @click="removeAttachment(index)">移除</button>
+          </span>
+        </div>
+        <div class="comment-composer-meta">
+          <span>{{ form.content.length }} / {{ maxLength }}</span>
+          <span v-if="success" class="comment-success" role="status">{{ success }}</span>
+          <span v-if="error" class="comment-error" role="alert">{{ error }}</span>
+        </div>
+      </form>
 
-        <div v-else class="min-w-0 rounded-[22px] border border-dashed border-white/12 bg-white/[0.05] px-4 py-5 text-sm leading-7 text-white/55">
+      <div v-else class="comment-login-panel">
           <p v-if="githubReady || qqReady">请选择已启用的平台登录后留言。</p>
           <div v-else class="grid gap-2">
             <p v-if="githubEnabled !== false">站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。</p>
             <p v-if="qqEnabled !== false">站点暂未开启 QQ 留言，请稍后再试或联系站点管理员。</p>
           </div>
           <p v-if="error" class="mt-2 text-red-200/85" role="alert">{{ error }}</p>
-        </div>
-
-        <div class="grid gap-2">
-          <template v-if="!canComment">
-            <button
-              type="button"
-              :disabled="!githubReady"
-              class="rounded-full px-5 py-3 font-bold transition"
-              :class="githubReady ? 'bg-black text-white hover:scale-[1.02]' : 'bg-white/10 text-white/40'"
-              @click="githubReady && loginWith('github')"
-            >
-              使用 GitHub 登录后留言
-            </button>
-            <button
-              type="button"
-              :disabled="!qqReady"
-              class="rounded-full px-5 py-3 font-bold transition"
-              :class="qqReady ? 'bg-emerald-300 text-black hover:scale-[1.02]' : 'bg-white/10 text-white/40'"
-              @click="qqReady && loginWith('qq')"
-            >
-              使用 QQ 登录后留言
-            </button>
-          </template>
-          <template v-else>
-            <button type="button" :disabled="submitting" class="rounded-full bg-emerald-300 px-6 py-3 font-bold text-black disabled:cursor-not-allowed disabled:opacity-50" @click="submit">
-              {{ submitting ? '发布中...' : '发布留言' }}
-            </button>
-          </template>
+        <div class="comment-login-actions">
+          <button
+            type="button"
+            :disabled="!githubReady"
+            :class="githubReady ? 'comment-auth-btn comment-auth-black' : 'comment-auth-btn comment-auth-disabled'"
+            @click="githubReady && loginWith('github')"
+          >
+            使用 GitHub 登录后留言
+          </button>
+          <button
+            type="button"
+            :disabled="!qqReady"
+            :class="qqReady ? 'comment-auth-btn comment-auth-green' : 'comment-auth-btn comment-auth-disabled'"
+            @click="qqReady && loginWith('qq')"
+          >
+            使用 QQ 登录后留言
+          </button>
         </div>
       </div>
     </section>
@@ -292,21 +401,240 @@ watch(() => `${props.resource}/${props.slug}`, load)
   margin: 0 0 1.6rem;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .18), transparent);
 }
-.comment-delete-link {
+.comment-item-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .75rem;
+}
+.comment-item-actions svg {
+  width: .9rem;
+  height: .9rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.comment-reply-card {
+  display: grid;
+  gap: .2rem;
+  margin: .85rem 0 0 3rem;
+  border-left: 2px solid rgba(255, 255, 255, .18);
+  padding-left: .75rem;
+  color: rgba(255, 255, 255, .48);
+  font-size: .82rem;
+}
+.comment-reply-card b {
+  color: rgba(255, 255, 255, .68);
+}
+.comment-content {
+  margin-top: .8rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.75;
+  color: rgba(255, 255, 255, .72);
+}
+.comment-content-locked {
+  user-select: none;
+}
+.comment-attachments,
+.comment-attachment-drafts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  margin-top: .75rem;
+}
+.comment-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  max-width: 15rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .07);
+  padding: .35rem .65rem;
+  color: rgba(255, 255, 255, .7);
+  font-size: .78rem;
+}
+.comment-attachment img {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  object-fit: cover;
+}
+.comment-attachment b,
+.comment-attachment-drafts span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comment-composer-section {
+  margin-top: 1.25rem;
+}
+.comment-composer {
+  display: grid;
+  gap: .65rem;
+}
+.comment-replying {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  color: rgba(255, 255, 255, .52);
+  font-size: .82rem;
+}
+.comment-replying span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comment-input-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: end;
+  gap: .55rem;
+  border-radius: 1.35rem;
+  background: #333335;
+  padding: .55rem;
+}
+.comment-textarea {
+  min-height: 42px;
+  max-height: 180px;
+  resize: none;
   border: 0;
   background: transparent;
-  color: rgba(252, 165, 165, .82);
-  font-size: .78rem;
-  font-weight: 800;
-  text-decoration: underline;
-  text-underline-offset: .25em;
-  transition: color .18s ease, opacity .18s ease;
+  padding: .58rem 2.8rem .58rem .35rem;
+  color: white;
+  line-height: 1.55;
+  outline: none;
 }
-.comment-delete-link:hover {
+.comment-textarea::placeholder {
+  color: rgba(255, 255, 255, .36);
+}
+.comment-plus-btn {
+  position: relative;
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  align-self: end;
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 999px;
+  background: #333335;
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+.comment-submit-round {
+  position: absolute;
+  right: .65rem;
+  bottom: .65rem;
+  display: grid;
+  width: 2.15rem;
+  height: 2.15rem;
+  place-items: center;
+  border-radius: 999px;
+  background: white;
+  color: black;
+  font-size: 1.1rem;
+  font-weight: 900;
+}
+.comment-submit-round:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+.comment-attach-menu {
+  position: absolute;
+  left: .55rem;
+  bottom: calc(100% + .45rem);
+  z-index: 3;
+  display: grid;
+  min-width: 9.5rem;
+  gap: .35rem;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 1rem;
+  background: #191A1B;
+  padding: .55rem;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .44);
+}
+.comment-attach-menu button {
+  border-radius: 999px;
+  background: white;
+  padding: .45rem .7rem;
+  color: black;
+  font-weight: 900;
+  text-align: left;
+}
+.comment-attach-menu small {
+  color: rgba(255, 255, 255, .42);
+}
+.comment-attachment-drafts span {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  max-width: 16rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  padding: .35rem .6rem;
+  color: rgba(255, 255, 255, .64);
+  font-size: .76rem;
+}
+.comment-attachment-drafts button {
   color: #fecaca;
+  font-weight: 900;
 }
-.comment-delete-link:disabled {
-  cursor: wait;
-  opacity: .55;
+.comment-composer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  color: rgba(255, 255, 255, .38);
+  font-size: .78rem;
+}
+.comment-success {
+  color: rgba(187, 247, 208, .86);
+}
+.comment-error {
+  color: rgba(254, 202, 202, .9);
+}
+.comment-login-panel {
+  display: grid;
+  gap: .85rem;
+  color: rgba(255, 255, 255, .56);
+  font-size: .9rem;
+  line-height: 1.75;
+}
+.comment-login-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+}
+.comment-auth-btn {
+  border-radius: 999px;
+  padding: .7rem 1rem;
+  font-weight: 900;
+}
+.comment-auth-black {
+  background: black;
+  color: white;
+}
+.comment-auth-green {
+  background: #86efac;
+  color: black;
+}
+.comment-auth-disabled {
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, .1);
+  color: rgba(255, 255, 255, .4);
+}
+@media (max-width: 720px) {
+  .comment-item-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .comment-reply-card {
+    margin-left: 0;
+  }
 }
 </style>

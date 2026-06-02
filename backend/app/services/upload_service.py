@@ -22,6 +22,19 @@ ALLOWED_EXTENSIONS = {
     ".lrc",
     ".txt",
 }
+COMMENT_UPLOAD_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".txt", ".md", ".pdf"}
+COMMENT_UPLOAD_MIME_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/svg+xml",
+    "text/plain",
+    "text/markdown",
+    "application/pdf",
+    "application/octet-stream",
+}
+COMMENT_UPLOAD_MAX_SIZE = 2 * 1024 * 1024
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".ogg", ".m4a"}
@@ -83,4 +96,31 @@ async def save_upload(file: UploadFile) -> dict:
         "filename": name,
         "url": f"{settings.public_base_url.rstrip('/')}/uploads/{name}",
         "size": len(content),
+    }
+
+
+async def save_comment_upload(file: UploadFile) -> dict:
+    settings = get_settings()
+    ext = Path(file.filename or "").suffix.lower()
+    if ext not in COMMENT_UPLOAD_EXTENSIONS:
+        raise UploadTypeError("Comment uploads only allow images, .txt, .md, and .pdf files.")
+    if file.content_type not in COMMENT_UPLOAD_MIME_TYPES and not (file.content_type or "").startswith("image/"):
+        raise UploadTypeError("Unsupported comment upload MIME type.")
+    content = await file.read()
+    if len(content) > COMMENT_UPLOAD_MAX_SIZE:
+        raise UploadTooLargeError("Comment upload exceeds the 2 MB upload limit.")
+    if settings.upload_driver == "oss":
+        raise NotImplementedError("OSS upload is reserved for a server-side SDK integration.")
+    upload_dir = settings.data_path / "uploads"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    name = f"{uuid4().hex}{ext}"
+    target = upload_dir / name
+    target.write_bytes(content)
+    kind = "image" if ext in IMAGE_EXTENSIONS or (file.content_type or "").startswith("image/") else "file"
+    return {
+        "filename": name,
+        "originalName": file.filename or name,
+        "url": f"{settings.public_base_url.rstrip('/')}/uploads/{name}",
+        "size": len(content),
+        "kind": kind,
     }

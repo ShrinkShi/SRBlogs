@@ -3,7 +3,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import bleach
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.security import HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 
@@ -15,6 +15,7 @@ from app.services.auth_service import require_admin, security
 from app.services.content_service import MarkdownStore
 from app.services.file_store import FileStoreError, resolve_data_path, safe_read_json, validate_slug
 from app.services.json_service import JsonStore
+from app.services.upload_service import UploadTooLargeError, UploadTypeError, save_comment_upload
 
 router = APIRouter(prefix="/comments", tags=["comments"])
 admin_router = APIRouter(prefix="/admin/comments", tags=["comments"], dependencies=[Depends(require_admin)])
@@ -84,6 +85,9 @@ def _public_comment(comment: dict, options: dict) -> dict:
     item = dict(comment)
     email = str(item.get("email") or "")
     item["email"] = _mask_email(email) if options.get("showEmail") is True else ""
+    item.setdefault("parentId", "")
+    item.setdefault("replyTo", {})
+    item.setdefault("attachments", [])
     return item
 
 
@@ -129,10 +133,68 @@ def _read_admin_or_none(credentials: HTTPAuthorizationCredentials | None = Depen
     return sub if sub == settings.admin_username else None
 
 
+def _reply_snapshot(comments: list[dict], parent_id: str) -> dict[str, str]:
+    if not parent_id:
+        return {}
+    for comment in comments:
+        if str(comment.get("id") or "") == parent_id:
+            content = bleach.clean(str(comment.get("content") or ""), tags=[], strip=True)
+            return {
+                "id": parent_id,
+                "author": bleach.clean(str(comment.get("author") or "访客"), tags=[], strip=True),
+                "content": content[:120],
+            }
+    raise HTTPException(status_code=404, detail="被回复的留言不存在。")
+
+
+def _clean_attachments(attachments: list) -> list[dict]:
+    result: list[dict] = []
+    for attachment in attachments[:5]:
+        item = attachment.model_dump() if hasattr(attachment, "model_dump") else dict(attachment)
+        result.append({
+            "url": bleach.clean(str(item.get("url") or ""), tags=[], strip=True),
+            "filename": bleach.clean(str(item.get("filename") or ""), tags=[], strip=True),
+            "originalName": bleach.clean(str(item.get("originalName") or ""), tags=[], strip=True),
+            "size": int(item.get("size") or 0),
+            "kind": bleach.clean(str(item.get("kind") or "file"), tags=[], strip=True),
+        })
+    return [item for item in result if item["url"]]
+
+
 @router.get("/{resource}/{slug}", response_model=list[CommentItem])
 def list_comments(resource: str, slug: str):
     options = _comment_options()
     return [_public_comment(item, options) for item in _store(resource, slug).read()]
+
+
+@router.post("/upload")
+async def upload_comment_file(
+    request: Request,
+    file: UploadFile = File(...),
+    admin_actor: str | None = Depends(_read_admin_or_none),
+):
+    options = _comment_options()
+    if not admin_actor and not _comments_enabled(options):
+        raise HTTPException(status_code=403, detail="留言板暂未开放。")
+    identity = _comment_identity(request, admin_actor)
+    try:
+        result = await save_comment_upload(file)
+        write_audit(
+            actor=str(identity.get("name") or identity.get("id") or "visitor"),
+            action="comment.upload",
+            resource="comments",
+            target=result.get("filename", file.filename or ""),
+            result="success",
+            message="Comment attachment uploaded",
+            detail={"size": result.get("size"), "kind": result.get("kind")},
+        )
+        return result
+    except NotImplementedError as exc:
+        raise HTTPException(status_code=501, detail=str(exc)) from exc
+    except UploadTooLargeError as exc:
+        raise HTTPException(status_code=413, detail=str(exc)) from exc
+    except UploadTypeError as exc:
+        raise HTTPException(status_code=415, detail=str(exc)) from exc
 
 
 @router.post("/{resource}/{slug}", response_model=CommentItem)
@@ -152,6 +214,7 @@ def create_comment(
     store = _store(resource, slug)
     comments = store.read()
     identity = _comment_identity(request, admin_actor)
+    parent_id = bleach.clean(str(payload.parentId or ""), tags=[], strip=True)
     provider = bleach.clean(str(identity.get("provider") or ""), tags=[], strip=True)
     provider_id = bleach.clean(str(identity.get("id") or ""), tags=[], strip=True)
     author = bleach.clean(str(identity.get("name") or provider_id or "Visitor"), tags=[], strip=True)
@@ -163,6 +226,9 @@ def create_comment(
         "provider": provider,
         "providerId": provider_id,
         "githubLogin": provider_id if provider == "github" else "",
+        "parentId": parent_id,
+        "replyTo": _reply_snapshot(comments, parent_id),
+        "attachments": _clean_attachments(payload.attachments),
         "content": bleach.clean(payload.content, tags=[], strip=True),
         "created_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }

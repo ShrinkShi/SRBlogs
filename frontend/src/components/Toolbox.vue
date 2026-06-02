@@ -545,9 +545,30 @@ onBeforeUnmount(() => {
   align-items: center;
 }
 .toolbox-switch input {
-  width: 1.15rem;
-  height: 1.15rem;
-  accent-color: var(--accent);
+  width: 3.2rem;
+  height: 1.7rem;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .16);
+  padding: .18rem;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+.toolbox-switch input::before {
+  content: "";
+  display: block;
+  width: 1.34rem;
+  height: 1.34rem;
+  border-radius: 999px;
+  background: white;
+  transition: transform .18s ease;
+}
+.toolbox-switch input:checked {
+  background: #4f8cff;
+}
+.toolbox-switch input:checked::before {
+  transform: translateX(1.5rem);
 }
 
 .toolbox-day.toolbox-modal-panel,

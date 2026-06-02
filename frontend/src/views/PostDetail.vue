@@ -7,6 +7,7 @@ import GlassCard from '@/components/GlassCard.vue'
 import CommentBox from '@/components/CommentBox.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import FrontContentEditorModal from '@/components/FrontContentEditorModal.vue'
+import SrTextButton from '@/components/ui/SrTextButton.vue'
 import type { ContentItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { useSessionStore } from '@/stores/session'
@@ -137,10 +138,10 @@ async function deleteCurrentContent() {
         <div class="detail-body"><MarkdownRenderer :content="item.content" /></div>
         <div class="detail-action-row">
           <template v-if="session.isAdmin">
-            <button type="button" class="detail-admin-link" @click="openAdminEditor">编辑</button>
-            <button type="button" class="detail-admin-link detail-admin-danger" :disabled="deleting" @click="deleteCurrentContent">
+            <SrTextButton @click="openAdminEditor">编辑</SrTextButton>
+            <SrTextButton tone="danger" :disabled="deleting" @click="deleteCurrentContent">
               {{ deleting ? '删除中' : deleteArmed ? '确认删除' : '删除' }}
-            </button>
+            </SrTextButton>
           </template>
           <button type="button" class="detail-icon-button" aria-label="复制链接" title="复制链接" @click="copyLink">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.2 1.2" /><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2a5 5 0 0 0 7.1 7.1l1.2-1.2" /></svg>
@@ -183,15 +184,13 @@ async function deleteCurrentContent() {
   width: 2.6rem;
   height: 2.6rem;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, .12);
+  border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, .055);
+  background: transparent;
   color: rgba(255, 255, 255, .72);
   transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
 }
 .detail-icon-button:hover {
-  border-color: rgba(103, 232, 249, .42);
-  background: rgba(103, 232, 249, .12);
   color: white;
   transform: translateY(-1px);
 }
@@ -203,26 +202,6 @@ async function deleteCurrentContent() {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-.detail-admin-link {
-  border: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, .62);
-  font-size: .9rem;
-  font-weight: 800;
-  text-decoration: underline;
-  text-underline-offset: .28em;
-  transition: color .18s ease;
-}
-.detail-admin-link:hover {
-  color: white;
-}
-.detail-admin-danger {
-  color: rgba(252, 165, 165, .86);
-}
-.detail-admin-danger:disabled {
-  cursor: wait;
-  opacity: .58;
 }
 .detail-comments {
   margin-top: 2.4rem;
