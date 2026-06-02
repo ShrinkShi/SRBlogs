@@ -1494,6 +1494,25 @@ body::before {
   fill: currentColor;
 }
 
+.play-mode-button img {
+  width: 1.28rem;
+  height: 1.28rem;
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,.16));
+  pointer-events: none;
+}
+
+.music-player-panel .play-mode-button img {
+  width: 1.38rem;
+  height: 1.38rem;
+}
+
+.floating-music-player .play-mode-button img {
+  width: 1.08rem;
+  height: 1.08rem;
+}
+
 .icon-button-main {
   width: 3.45rem;
   height: 3.45rem;
@@ -1953,10 +1972,32 @@ body::before {
   backdrop-filter: blur(18px);
 }
 
+.floating-music-player-dragging {
+  cursor: grabbing;
+  user-select: none;
+  box-shadow: 0 28px 72px rgba(0,0,0,.42), 0 0 0 1px rgba(248,113,113,.18);
+}
+
+.floating-music-drag-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .8rem;
+  cursor: grab;
+  touch-action: none;
+}
+
+.floating-music-player-dragging .floating-music-drag-head {
+  cursor: grabbing;
+}
+
 .floating-music-meta {
   min-width: 0;
   display: grid;
-  gap: .15rem;
+  justify-items: center;
+  gap: .18rem;
+  padding: .1rem .6rem .2rem;
+  text-align: center;
 }
 
 .floating-music-kicker {
@@ -1967,9 +2008,16 @@ body::before {
   color: rgba(255,255,255,.4);
 }
 
+.floating-music-drag-hint {
+  font-size: .68rem;
+  font-weight: 800;
+  color: rgba(255,255,255,.28);
+}
+
 .floating-music-meta strong,
 .floating-music-meta small {
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1984,6 +2032,36 @@ body::before {
 .floating-music-meta small {
   color: rgba(255,255,255,.55);
   font-size: .78rem;
+}
+
+.floating-music-lyric {
+  min-height: 1.45rem;
+  max-width: 100%;
+  margin-top: .28rem;
+  color: rgba(255,255,255,.78);
+  font-size: .82rem;
+  font-weight: 900;
+  line-height: 1.45;
+  white-space: nowrap;
+}
+
+.floating-music-lyric-text {
+  display: inline-block;
+  max-width: 19rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+.floating-music-lyric-cursor {
+  display: inline-block;
+  width: .08em;
+  height: 1.05em;
+  margin-left: .18em;
+  border-radius: 999px;
+  background: rgba(255,255,255,.82);
+  vertical-align: -.12em;
+  animation: lyric-cursor-blink 1s steps(2, start) infinite;
 }
 
 .floating-music-progress {

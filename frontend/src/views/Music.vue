@@ -4,6 +4,7 @@ import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import CommentBox from '@/components/CommentBox.vue'
 import PlayerVolumeControl from '@/components/PlayerVolumeControl.vue'
+import PlayModeButton from '@/components/PlayModeButton.vue'
 import { contentApi } from '@/api/content'
 import type { MusicItem, PageConfig } from '@/types'
 import { useSeo } from '@/composables/useSeo'
@@ -241,11 +242,7 @@ onMounted(load)
             <input class="progress-slider" type="range" min="0" :max="player.duration || 0" step="0.1" :value="player.currentTime" aria-label="播放进度" :style="{ '--progress': progressPercent }" @input="seekFromEvent" />
           </div>
           <div class="flex items-center justify-center gap-2 whitespace-nowrap">
-            <button type="button" class="icon-button" :aria-label="playModeLabel" :title="playModeLabel" @click="player.cyclePlayMode()">
-              <svg v-if="player.playMode === 'sequence'" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h12l-3-3 1.4-1.4L20.8 9l-6.4 6.4L13 14l3-3H4V7zm0 10h16v2H4v-2z" /></svg>
-              <svg v-else-if="player.playMode === 'shuffle'" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5h-2V6.4l-4.8 4.8-1.4-1.4L17.6 5H16V3zM4 7h3.5l3.2 3.2-1.4 1.4L6.7 9H4V7zm10.2 5.8 4.8 4.8V16h2v5h-5v-2h1.6l-4.8-4.8 1.4-1.4zM4 17h2.7l10.1-10.1 1.4 1.4L7.5 19H4v-2z" /></svg>
-              <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h8.6l-2.3-2.3L14.7 3 20 8.3l-5.3 5.3-1.4-1.7 2.3-2.3H7a3 3 0 0 0 0 6h1v2H7A5 5 0 0 1 7 7zm10 10h-4v-2h4a3 3 0 0 0 0-6h-1V7h1a5 5 0 0 1 0 10z" /></svg>
-            </button>
+            <PlayModeButton :mode="player.playMode" :label="playModeLabel" @click="player.cyclePlayMode()" />
             <PlayerVolumeControl />
             <button type="button" class="icon-button" aria-label="previous track" @click="player.prev()">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 6h2v12H7zM18 6v12l-8.5-6z" /></svg>
