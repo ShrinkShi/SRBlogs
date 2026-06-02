@@ -3,6 +3,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
 import CommentBox from '@/components/CommentBox.vue'
+import FrontJsonItemEditorModal from '@/components/FrontJsonItemEditorModal.vue'
 import PlayerVolumeControl from '@/components/PlayerVolumeControl.vue'
 import PlayModeButton from '@/components/PlayModeButton.vue'
 import { contentApi } from '@/api/content'
@@ -10,6 +11,7 @@ import type { MusicItem, PageConfig } from '@/types'
 import { useSeo } from '@/composables/useSeo'
 import { usePlayerStore } from '@/stores/player'
 import { useUiStore } from '@/stores/ui'
+import { useSessionStore } from '@/stores/session'
 
 type LyricEntry = { time: number; text: string }
 type LyricLine = { key: string; text: string; active: boolean }
@@ -23,6 +25,11 @@ const lyricText = ref('')
 const activeLyricNode = ref<HTMLElement | null>(null)
 const player = usePlayerStore()
 const ui = useUiStore()
+const session = useSessionStore()
+const editorOpen = ref(false)
+const editingTrack = ref<MusicItem | null>(null)
+const editingIndex = ref(-1)
+const deleteArmed = ref('')
 
 const pageTitle = computed(() => pageConfig.value?.pageText?.music?.title || '音乐歌单')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.music?.subtitle || '左侧控制播放，右侧查看歌词和歌单。')
@@ -148,6 +155,42 @@ function selectTrack(index: number, autoplay = true) {
   if (autoplay && !player.playing) player.play()
 }
 
+function trackKey(item: MusicItem) {
+  return player.songKey(item) || item.url || item.title
+}
+
+function rawTrackIndex(item: MusicItem) {
+  const key = trackKey(item)
+  return tracks.value.findIndex((track) => trackKey(track) === key)
+}
+
+function openTrackEditor(item: MusicItem | null = null) {
+  editingTrack.value = item
+  editingIndex.value = item ? rawTrackIndex(item) : -1
+  editorOpen.value = true
+}
+
+async function deleteTrack(item: MusicItem) {
+  const key = trackKey(item)
+  if (deleteArmed.value !== key) {
+    deleteArmed.value = key
+    ui.showToast('再次点击删除以确认', 'info')
+    window.setTimeout(() => {
+      if (deleteArmed.value === key) deleteArmed.value = ''
+    }, 3000)
+    return
+  }
+  try {
+    const next = tracks.value.filter((track) => trackKey(track) !== key)
+    await contentApi.adminPutJson('/music', next)
+    ui.showToast('歌曲已删除', 'success')
+    deleteArmed.value = ''
+    await load()
+  } catch (exc) {
+    ui.showToast(exc instanceof Error ? exc.message : '删除失败', 'error')
+  }
+}
+
 async function toggleLike() {
   const id = currentSongId.value
   if (!id) {
@@ -212,6 +255,13 @@ onMounted(load)
         <h1 class="text-4xl font-black text-white">{{ pageTitle }}</h1>
       </div>
     </GlassCard>
+
+    <div v-if="session.isAdmin" class="flex justify-end">
+      <button type="button" class="frontend-admin-create-btn" @click="openTrackEditor()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        新增歌曲
+      </button>
+    </div>
 
     <GlassCard v-if="loading">
       <p class="text-center text-white/60">歌单加载中...</p>
@@ -282,29 +332,70 @@ onMounted(load)
         </div>
 
         <div v-else class="music-tab-content mt-5 grid max-h-[32rem] gap-3 overflow-auto rounded-[24px] p-3">
-          <button
+          <article
             v-for="(item, index) in sortedTracks"
             :key="`${item.id || item.url}-${item.title}`"
-            type="button"
             class="music-playlist-item flex min-w-0 items-center gap-4 rounded-[24px] p-3 text-left transition hover:scale-[1.015]"
             :class="player.current === index ? 'music-playlist-item-active' : ''"
-            @click="selectTrack(index)"
           >
-            <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/10">
-              <SafeImage v-if="item.cover" :src="item.cover" :alt="item.title" img-class="h-full w-full object-cover" />
-              <span v-else class="text-white/50">Music</span>
+            <button type="button" class="music-playlist-pick" @click="selectTrack(index)">
+              <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/10">
+                <SafeImage v-if="item.cover" :src="item.cover" :alt="item.title" img-class="h-full w-full object-cover" />
+                <span v-else class="text-white/50">Music</span>
+              </div>
+              <div class="min-w-0">
+                <h3 class="truncate text-lg font-black text-white">{{ item.title }}</h3>
+                <p class="truncate text-sm text-white/55">{{ item.artist }}</p>
+                <p class="mt-1 truncate text-xs text-white/38">{{ item.id || item.url || '未配置 ID 或 URL' }}</p>
+                <p class="mt-1 text-xs text-rose-100/70">喜欢 {{ item.likes || 0 }}</p>
+              </div>
+            </button>
+            <div v-if="session.isAdmin" class="music-admin-actions">
+              <button type="button" @click="openTrackEditor(item)">编辑</button>
+              <button type="button" class="danger" @click="deleteTrack(item)">{{ deleteArmed === trackKey(item) ? '确认删除' : '删除' }}</button>
             </div>
-            <div class="min-w-0">
-              <h3 class="truncate text-lg font-black text-white">{{ item.title }}</h3>
-              <p class="truncate text-sm text-white/55">{{ item.artist }}</p>
-              <p class="mt-1 truncate text-xs text-white/38">{{ item.id || item.url || '未配置 ID 或 URL' }}</p>
-              <p class="mt-1 text-xs text-rose-100/70">喜欢 {{ item.likes || 0 }}</p>
-            </div>
-          </button>
+          </article>
         </div>
       </GlassCard>
     </div>
 
     <CommentBox class="music-page-comments" resource="music" slug="global" />
+    <FrontJsonItemEditorModal v-model="editorOpen" kind="music" :item="editingTrack" :index="editingIndex" @saved="load" />
   </section>
 </template>
+
+<style scoped>
+.music-playlist-pick {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 1rem;
+  text-align: left;
+}
+.music-admin-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: .65rem;
+}
+.music-admin-actions button {
+  color: rgba(255, 255, 255, .68);
+  font-weight: 900;
+}
+.music-admin-actions button:hover {
+  color: white;
+}
+.music-admin-actions .danger {
+  color: #fecaca;
+}
+@media (max-width: 640px) {
+  .music-playlist-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .music-admin-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+</style>

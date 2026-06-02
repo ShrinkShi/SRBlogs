@@ -2,13 +2,22 @@
 import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
+import FrontJsonItemEditorModal from '@/components/FrontJsonItemEditorModal.vue'
 import { contentApi } from '@/api/content'
 import type { PageConfig, ProjectItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
+import { useSessionStore } from '@/stores/session'
+import { useUiStore } from '@/stores/ui'
 
 const projects = ref<ProjectItem[]>([])
+const session = useSessionStore()
+const ui = useUiStore()
 const loading = ref(false)
 const error = ref('')
+const editorOpen = ref(false)
+const editingIndex = ref(-1)
+const editingProject = ref<ProjectItem | null>(null)
+const deleteArmed = ref('')
 const pageConfig = ref<PageConfig | null>(null)
 const pageTitle = computed(() => pageConfig.value?.pageText?.projects?.title || '项目陈列柜')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.projects?.subtitle || '项目数据来自后端 JSON，可在后台表单化维护。')
@@ -32,6 +41,33 @@ async function load() {
 }
 
 onMounted(load)
+
+function openProjectEditor(item: ProjectItem | null = null, index = -1) {
+  editingProject.value = item
+  editingIndex.value = index
+  editorOpen.value = true
+}
+
+async function deleteProject(item: ProjectItem, index: number) {
+  const key = item.name || String(index)
+  if (deleteArmed.value !== key) {
+    deleteArmed.value = key
+    ui.showToast('再次点击删除以确认', 'info')
+    window.setTimeout(() => {
+      if (deleteArmed.value === key) deleteArmed.value = ''
+    }, 3000)
+    return
+  }
+  try {
+    const next = projects.value.filter((_, itemIndex) => itemIndex !== index)
+    await contentApi.adminPutJson('/projects', next)
+    ui.showToast('项目已删除', 'success')
+    deleteArmed.value = ''
+    await load()
+  } catch (exc) {
+    ui.showToast(exc instanceof Error ? exc.message : '删除失败', 'error')
+  }
+}
 </script>
 
 <template>
@@ -39,6 +75,13 @@ onMounted(load)
     <GlassCard class="page-title-block text-center">
       <h1 class="text-4xl font-black text-white">{{ pageTitle }}</h1>
     </GlassCard>
+
+    <div v-if="session.isAdmin" class="flex justify-end">
+      <button type="button" class="frontend-admin-create-btn" @click="openProjectEditor()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        新增项目
+      </button>
+    </div>
 
     <div>
       <GlassCard v-if="loading">
@@ -53,7 +96,7 @@ onMounted(load)
       </GlassCard>
 
       <div v-else class="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <GlassCard v-for="item in projects" :key="item.name" hover>
+        <GlassCard v-for="(item, index) in projects" :key="item.name" hover>
         <div v-if="item.cover" class="mb-4 h-36 overflow-hidden rounded-[24px] bg-white/10">
           <SafeImage :src="item.cover" :alt="item.name" img-class="h-full w-full object-cover" />
         </div>
@@ -69,8 +112,32 @@ onMounted(load)
           <a v-if="item.url" :href="item.url" target="_blank" rel="noopener noreferrer" class="rounded-2xl bg-white/10 px-4 py-2 text-sm text-white/70 hover:bg-white/[0.15]">查看项目</a>
           <a v-if="item.repo" :href="item.repo" target="_blank" rel="noopener noreferrer" class="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/60 hover:bg-white/[0.08]">代码仓库</a>
         </div>
+        <div v-if="session.isAdmin" class="front-json-card-actions">
+          <button type="button" @click="openProjectEditor(item, index)">编辑</button>
+          <button type="button" class="danger" @click="deleteProject(item, index)">{{ deleteArmed === (item.name || String(index)) ? '确认删除' : '删除' }}</button>
+        </div>
         </GlassCard>
       </div>
     </div>
+    <FrontJsonItemEditorModal v-model="editorOpen" kind="project" :item="editingProject" :index="editingIndex" @saved="load" />
   </section>
 </template>
+
+<style scoped>
+.front-json-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  margin-top: 1rem;
+}
+.front-json-card-actions button {
+  color: rgba(255, 255, 255, .68);
+  font-weight: 900;
+}
+.front-json-card-actions button:hover {
+  color: white;
+}
+.front-json-card-actions .danger {
+  color: #fecaca;
+}
+</style>

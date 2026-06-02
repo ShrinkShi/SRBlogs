@@ -24,6 +24,9 @@ const error = ref('')
 const deleting = ref(false)
 const deleteArmed = ref(false)
 const editorOpen = ref(false)
+const liked = ref(false)
+const likeCount = ref(0)
+const liking = ref(false)
 const slug = computed(() => String(route.params.slug))
 const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1200&auto=format&fit=crop'
 const coverUrl = computed(() => item.value?.meta.cover || fallbackCover)
@@ -41,8 +44,12 @@ async function load(){
   loading.value = true
   error.value = ''
   item.value = null
+  liked.value = false
+  likeCount.value = 0
   try {
     item.value = await contentApi.detail(props.section, slug.value)
+    likeCount.value = Number(item.value.meta.like_count || 0)
+    await loadLikeStatus()
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '内容不存在或加载失败'
   } finally {
@@ -51,6 +58,18 @@ async function load(){
 }
 onMounted(load)
 watch(() => route.params.slug, load)
+
+async function loadLikeStatus() {
+  if (!item.value) return
+  try {
+    const data = await contentApi.contentLikeStatus(props.section, slug.value)
+    liked.value = data.liked
+    likeCount.value = Number(data.like_count || 0)
+    item.value.meta.like_count = likeCount.value
+  } catch {
+    likeCount.value = Number(item.value.meta.like_count || 0)
+  }
+}
 
 function goBack() {
   if (window.history.length > 1) {
@@ -79,6 +98,23 @@ async function copyLink() {
     ui.showToast('链接已复制', 'success')
   } catch {
     ui.showToast('复制失败，请手动复制地址栏链接', 'error')
+  }
+}
+
+async function toggleLike() {
+  if (liking.value) return
+  liking.value = true
+  try {
+    const data = await contentApi.toggleContentLike(props.section, slug.value)
+    liked.value = data.liked
+    likeCount.value = Number(data.like_count || 0)
+    if (item.value) item.value.meta.like_count = likeCount.value
+    ui.showToast(data.liked ? '已点赞' : '已取消点赞', 'success')
+  } catch (exc) {
+    const message = exc instanceof Error ? exc.message : '点赞失败'
+    ui.showToast(message.includes('登录') ? '请先登录后点赞' : message, 'error')
+  } finally {
+    liking.value = false
   }
 }
 
@@ -137,6 +173,18 @@ async function deleteCurrentContent() {
         </div>
         <div class="detail-body"><MarkdownRenderer :content="item.content" /></div>
         <div class="detail-action-row">
+          <button
+            type="button"
+            class="detail-icon-button detail-like-button"
+            :class="{ active: liked }"
+            :aria-pressed="liked"
+            :disabled="liking"
+            :title="liked ? '取消点赞' : '点赞'"
+            @click="toggleLike"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.3 5.3 0 0 0-7.5 0L12 5.9l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 20.8l8.8-8.7a5.3 5.3 0 0 0 0-7.5Z" /></svg>
+            <span>{{ likeCount }}</span>
+          </button>
           <template v-if="session.isAdmin">
             <SrTextButton @click="openAdminEditor">编辑</SrTextButton>
             <SrTextButton tone="danger" :disabled="deleting" @click="deleteCurrentContent">
@@ -190,6 +238,24 @@ async function deleteCurrentContent() {
   color: rgba(255, 255, 255, .72);
   transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
 }
+.detail-like-button {
+  display: inline-flex;
+  width: auto;
+  min-width: 2.6rem;
+  gap: .35rem;
+  padding: 0 .5rem;
+}
+.detail-like-button.active {
+  color: #fecaca;
+}
+.detail-like-button:disabled {
+  cursor: wait;
+  opacity: .58;
+}
+.detail-like-button svg {
+  fill: currentColor;
+  stroke: currentColor;
+}
 .detail-icon-button:hover {
   color: white;
   transform: translateY(-1px);
@@ -202,6 +268,10 @@ async function deleteCurrentContent() {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+.detail-like-button svg {
+  fill: currentColor;
+  stroke: currentColor;
 }
 .detail-comments {
   margin-top: 2.4rem;

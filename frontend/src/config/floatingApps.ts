@@ -6,7 +6,6 @@ export type FloatingAppIcon =
   | 'search'
   | 'calculator'
   | 'article'
-  | 'update'
 
 export type FloatingAppItem = {
   id: string
@@ -56,16 +55,6 @@ export const floatingApps: FloatingAppItem[] = [
     action: 'calculator',
     order: 40,
     tooltip: '打开轻量计算器'
-  },
-  {
-    id: 'updates',
-    name: '版本更新',
-    icon: 'update',
-    actionType: 'modal',
-    action: 'update',
-    adminOnly: true,
-    order: 45,
-    tooltip: '检测并执行站点更新'
   },
   {
     id: 'posts',

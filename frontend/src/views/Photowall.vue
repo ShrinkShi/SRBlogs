@@ -10,7 +10,7 @@ import { useSeo } from '@/composables/useSeo'
 import { detectImageTone, type ImageTone } from '@/utils/imageTone'
 import { useSessionStore } from '@/stores/session'
 
-type AlbumView = PhotoAlbum & { slug: string }
+type AlbumView = PhotoAlbum & { slug: string; sourceIndex: number }
 
 const rawPhotos = ref<Array<PhotoItem | PhotoAlbum>>([])
 const session = useSessionStore()
@@ -21,6 +21,8 @@ const searchQ = ref('')
 const loading = ref(false)
 const error = ref('')
 const createOpen = ref(false)
+const editOpen = ref(false)
+const editingAlbum = ref<AlbumView | null>(null)
 const pageConfig = ref<PageConfig | null>(null)
 const toneMap = reactive<Record<string, ImageTone>>({})
 const title = computed(() => pageConfig.value?.pageText?.photos?.title || '相册')
@@ -43,6 +45,7 @@ function normalizeAlbum(item: PhotoItem | PhotoAlbum, index: number): AlbumView 
       ...item,
       title: item.title || `相册 ${index + 1}`,
       slug: slugify(item.title || item.cover || `album-${index + 1}`, `album-${index + 1}`),
+      sourceIndex: index,
       cover: item.cover || photos[0]?.url || '',
       photos
     }
@@ -51,6 +54,7 @@ function normalizeAlbum(item: PhotoItem | PhotoAlbum, index: number): AlbumView 
   return {
     title: photo.title || `相册 ${index + 1}`,
     slug: slugify(photo.title || photo.url || `album-${index + 1}`, `album-${index + 1}`),
+    sourceIndex: index,
     description: photo.description,
     cover: photo.url,
     date: photo.date,
@@ -89,6 +93,17 @@ async function load() {
   } finally {
     loading.value = false
   }
+}
+
+function openAlbumEditor(album: AlbumView) {
+  editingAlbum.value = album
+  editOpen.value = true
+}
+
+async function afterAlbumSaved() {
+  activeAlbum.value = null
+  active.value = null
+  await load()
 }
 
 onMounted(load)
@@ -138,9 +153,12 @@ onMounted(load)
       </GlassCard>
 
       <div v-else-if="viewMode === 'grid'" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-      <button
+      <div
         v-for="album in filteredAlbums"
         :key="album.title + album.cover"
+        class="relative"
+      >
+      <button
         type="button"
         class="photo-card-theme glass glass-hover block w-full overflow-hidden rounded-[30px] text-left"
         :class="toneMap[album.slug] === 'light' ? 'image-tone-light' : 'image-tone-dark'"
@@ -160,15 +178,20 @@ onMounted(load)
           </div>
         </div>
       </button>
+      <button v-if="session.isAdmin" type="button" class="photo-admin-edit" @click="openAlbumEditor(album)">编辑</button>
+      </div>
       </div>
 
       <div v-else class="article-link-mode">
-      <button
+      <div
         v-for="(album, index) in filteredAlbums"
         :key="album.title + album.cover"
+        class="relative"
+        :class="index % 2 === 0 ? 'article-link-left' : 'article-link-right'"
+      >
+      <button
         type="button"
         class="article-link-node text-left"
-        :class="index % 2 === 0 ? 'article-link-left' : 'article-link-right'"
         :aria-label="`打开相册：${album.title}`"
         @click="activeAlbum = album; active = album.photos[0] || null"
       >
@@ -192,6 +215,8 @@ onMounted(load)
           </article>
         </GlassCard>
       </button>
+      <button v-if="session.isAdmin" type="button" class="photo-admin-edit photo-admin-edit-link" @click="openAlbumEditor(album)">编辑</button>
+      </div>
       </div>
     </div>
     <div
@@ -212,7 +237,10 @@ onMounted(load)
           关闭
         </button>
         <div class="pr-16">
-          <h2 class="text-2xl font-black text-white">{{ activeAlbum.title }}</h2>
+          <div class="flex flex-wrap items-center gap-3">
+            <h2 class="text-2xl font-black text-white">{{ activeAlbum.title }}</h2>
+            <button v-if="session.isAdmin" type="button" class="frontend-admin-inline-btn" @click="openAlbumEditor(activeAlbum)">编辑照片组</button>
+          </div>
           <p class="mt-1 text-sm text-white/50">{{ activeAlbum.description }}</p>
         </div>
         <SafeImage v-if="active" :src="active.url" :alt="active.title || activeAlbum.title" img-class="mx-auto max-h-[60vh] max-w-full rounded-3xl border border-white/15 object-contain" />
@@ -226,5 +254,34 @@ onMounted(load)
       </div>
     </div>
     <FrontPhotoEditorModal v-model="createOpen" @saved="load" />
+    <FrontPhotoEditorModal v-model="editOpen" :album="editingAlbum" :index="editingAlbum?.sourceIndex ?? -1" @saved="afterAlbumSaved" />
   </section>
 </template>
+
+<style scoped>
+.frontend-admin-inline-btn {
+  border-radius: 999px;
+  background: white;
+  padding: .45rem .75rem;
+  color: black;
+  font-size: .82rem;
+  font-weight: 900;
+}
+.photo-admin-edit {
+  position: absolute;
+  right: .85rem;
+  top: .85rem;
+  z-index: 2;
+  border-radius: 999px;
+  background: white;
+  padding: .45rem .75rem;
+  color: black;
+  font-size: .82rem;
+  font-weight: 900;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .26);
+}
+.photo-admin-edit-link {
+  right: 1rem;
+  top: 1rem;
+}
+</style>

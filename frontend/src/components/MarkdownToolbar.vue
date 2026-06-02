@@ -7,11 +7,35 @@ import {
   type MarkdownToolbarCommand,
   type MarkdownToolbarCommandType
 } from '@/utils/markdownTools'
+import boldIcon from '../../../assets/bold.png'
+import codeIcon from '../../../assets/code.png'
+import colorIcon from '../../../assets/fontcolor.png'
+import imageIcon from '../../../assets/picture.png'
+import inlineCodeIcon from '../../../assets/Inlinecode.png'
+import italicIcon from '../../../assets/italic.png'
+import linkIcon from '../../../assets/link.png'
+import orderedListIcon from '../../../assets/serialnumber.png'
+import quoteIcon from '../../../assets/quote.png'
+import strikeIcon from '../../../assets/strikethrough.png'
+import tableIcon from '../../../assets/table.png'
 
 const props = withDefaults(defineProps<{ disabled?: boolean }>(), { disabled: false })
 const emit = defineEmits<{ command: [command: MarkdownToolbarCommand] }>()
 const colorOpen = ref(false)
 const colorValue = ref('#fb7185')
+const toolbarIcons: Record<MarkdownToolbarCommandType, string> = {
+  bold: boldIcon,
+  italic: italicIcon,
+  strike: strikeIcon,
+  'ordered-list': orderedListIcon,
+  quote: quoteIcon,
+  'inline-code': inlineCodeIcon,
+  'code-block': codeIcon,
+  table: tableIcon,
+  link: linkIcon,
+  image: imageIcon,
+  color: colorIcon
+}
 
 function run(type: MarkdownToolbarCommandType) {
   if (props.disabled) return
@@ -44,7 +68,8 @@ function applyColor(color = colorValue.value) {
       @mousedown.prevent
       @click="run(tool.type)"
     >
-      {{ tool.label }}
+      <img :src="toolbarIcons[tool.type]" alt="" />
+      <span class="sr-only">{{ tool.title }}</span>
     </button>
     <div v-if="colorOpen" class="front-md-color-popover">
       <p>字体颜色</p>
@@ -79,17 +104,31 @@ function applyColor(color = colorValue.value) {
   min-width: 0;
 }
 .front-md-toolbar > button {
-  min-width: 2.1rem;
-  min-height: 2.1rem;
+  display: inline-grid;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  place-items: center;
+  border: 0;
   border-radius: 999px;
-  background: white;
-  color: black;
+  background: transparent;
+  color: white;
   font-size: .8rem;
   font-weight: 900;
+  transition: background .18s ease, opacity .18s ease, transform .18s ease;
+}
+.front-md-toolbar > button img {
+  width: 1.2rem;
+  height: 1.2rem;
+  object-fit: contain;
+  filter: invert(1);
+  opacity: .78;
 }
 .front-md-toolbar > button:hover:not(:disabled) {
-  border-color: rgba(248, 113, 113, .46);
-  color: #fecaca;
+  background: rgba(255, 255, 255, .08);
+  transform: translateY(-1px);
+}
+.front-md-toolbar > button:hover:not(:disabled) img {
+  opacity: 1;
 }
 .front-md-color-popover {
   position: absolute;

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import DiscoveryResultCard from './DiscoveryResultCard.vue'
-import FrontUpdatePanel from './FrontUpdatePanel.vue'
 import FrontendAdminSettings from './FrontendAdminSettings.vue'
 import StateBlock from './StateBlock.vue'
 import { contentApi } from '@/api/content'
@@ -10,7 +9,7 @@ import { usePlayerStore } from '@/stores/player'
 import { useSessionStore } from '@/stores/session'
 import type { DiscoveryType, SearchResponse, SiteSettings, TagItem } from '@/types'
 
-type ToolPanel = 'calculator' | 'search' | 'settings' | 'update'
+type ToolPanel = 'calculator' | 'search' | 'settings'
 type Token = number | string
 
 const props = defineProps<{ settings?: SiteSettings | null; activePanel?: ToolPanel | null }>()
@@ -78,7 +77,6 @@ const themeLabel = (theme: string) => theme === 'shrink-red-glass' ? 'Shrink 红
 const modalTitle = computed(() => {
   if (activePanel.value === 'search') return '全局搜索'
   if (activePanel.value === 'settings') return '设置'
-  if (activePanel.value === 'update') return '版本更新'
   return ''
 })
 
@@ -261,7 +259,7 @@ onBeforeUnmount(() => {
     </section>
 
     <div
-      v-if="activePanel === 'search' || activePanel === 'settings' || activePanel === 'update'"
+      v-if="activePanel === 'search' || activePanel === 'settings'"
       data-toolbox-modal
       class="toolbox-modal-overlay fixed inset-0 z-[90] grid place-items-center p-4"
       :class="'toolbox-night'"
@@ -303,11 +301,6 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div v-else class="rounded-[24px] border border-white/12 bg-white/[0.09] p-5 text-center text-white/64">没有匹配内容。</div>
-          </div>
-
-          <FrontUpdatePanel v-else-if="activePanel === 'update' && session.isAdmin" />
-          <div v-else-if="activePanel === 'update'" class="rounded-[24px] border border-white/12 bg-white/[0.06] p-6 text-center text-white/64">
-            请先使用管理员账号登录后再检查或执行更新。
           </div>
 
           <FrontendAdminSettings v-else-if="session.isAdmin" @saved="notifySettingsSaved" />

@@ -2,13 +2,22 @@
 import { computed, onMounted, ref } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import SafeImage from '@/components/SafeImage.vue'
+import FrontJsonItemEditorModal from '@/components/FrontJsonItemEditorModal.vue'
 import { contentApi } from '@/api/content'
 import type { FriendItem, PageConfig } from '@/types'
 import { useSeo } from '@/composables/useSeo'
+import { useSessionStore } from '@/stores/session'
+import { useUiStore } from '@/stores/ui'
 
 const friends = ref<FriendItem[]>([])
+const session = useSessionStore()
+const ui = useUiStore()
 const loading = ref(false)
 const error = ref('')
+const editorOpen = ref(false)
+const editingIndex = ref(-1)
+const editingFriend = ref<FriendItem | null>(null)
+const deleteArmed = ref('')
 const pageConfig = ref<PageConfig | null>(null)
 const pageTitle = computed(() => pageConfig.value?.pageText?.friends?.title || '星际友链')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.friends?.subtitle || '朋友站点、项目站点和个人链接会从后端 JSON 动态读取。')
@@ -32,6 +41,32 @@ async function load() {
 }
 
 onMounted(load)
+
+function openFriendEditor(item: FriendItem | null = null, index = -1) {
+  editingFriend.value = item
+  editingIndex.value = index
+  editorOpen.value = true
+}
+
+async function deleteFriend(item: FriendItem, index: number) {
+  const key = item.url || item.name || String(index)
+  if (deleteArmed.value !== key) {
+    deleteArmed.value = key
+    ui.showToast('再次点击删除以确认', 'info')
+    window.setTimeout(() => {
+      if (deleteArmed.value === key) deleteArmed.value = ''
+    }, 3000)
+    return
+  }
+  try {
+    await contentApi.adminPutJson('/friends', friends.value.filter((_, itemIndex) => itemIndex !== index))
+    ui.showToast('友链已删除', 'success')
+    deleteArmed.value = ''
+    await load()
+  } catch (exc) {
+    ui.showToast(exc instanceof Error ? exc.message : '删除失败', 'error')
+  }
+}
 </script>
 
 <template>
@@ -39,6 +74,13 @@ onMounted(load)
     <GlassCard class="page-title-block text-center">
       <h1 class="text-4xl font-black text-white">{{ pageTitle }}</h1>
     </GlassCard>
+
+    <div v-if="session.isAdmin" class="flex justify-end">
+      <button type="button" class="frontend-admin-create-btn" @click="openFriendEditor()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        新增友链
+      </button>
+    </div>
 
     <div>
       <GlassCard v-if="loading">
@@ -53,7 +95,7 @@ onMounted(load)
       </GlassCard>
 
       <div v-else class="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <GlassCard v-for="item in friends" :key="item.url" hover>
+        <GlassCard v-for="(item, index) in friends" :key="item.url" hover>
         <a :href="item.url" target="_blank" rel="noopener noreferrer" class="block min-w-0">
           <div class="flex min-w-0 items-center gap-4">
             <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[24px] border border-white/12 bg-white/10">
@@ -70,8 +112,32 @@ onMounted(load)
             <span v-for="tag in item.tags" :key="tag" class="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">#{{ tag }}</span>
           </div>
         </a>
+        <div v-if="session.isAdmin" class="front-json-card-actions">
+          <button type="button" @click="openFriendEditor(item, index)">编辑</button>
+          <button type="button" class="danger" @click="deleteFriend(item, index)">{{ deleteArmed === (item.url || item.name || String(index)) ? '确认删除' : '删除' }}</button>
+        </div>
         </GlassCard>
       </div>
     </div>
+    <FrontJsonItemEditorModal v-model="editorOpen" kind="friend" :item="editingFriend" :index="editingIndex" @saved="load" />
   </section>
 </template>
+
+<style scoped>
+.front-json-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  margin-top: 1rem;
+}
+.front-json-card-actions button {
+  color: rgba(255, 255, 255, .68);
+  font-weight: 900;
+}
+.front-json-card-actions button:hover {
+  color: white;
+}
+.front-json-card-actions .danger {
+  color: #fecaca;
+}
+</style>

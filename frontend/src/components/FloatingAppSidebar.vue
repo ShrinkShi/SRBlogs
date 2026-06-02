@@ -3,6 +3,10 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { floatingApps, type FloatingAppIcon, type FloatingAppItem } from '@/config/floatingApps'
 import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
+import calculatorIcon from '../../../assets/appicon/计算器.png'
+import musicIcon from '../../../assets/appicon/音乐播放器.png'
+import searchIcon from '../../../assets/appicon/全局搜索.png'
+import settingsIcon from '../../../assets/appicon/设置.png'
 
 const emit = defineEmits<{ action: [app: FloatingAppItem] }>()
 const session = useSessionStore()
@@ -24,6 +28,16 @@ const accountInitials = computed(() => session.displayName.slice(0, 2).toUpperCa
 const hasVisitorLogin = computed(() => Boolean(session.visitor.user))
 const canUseVisitorLogin = computed(() => !session.isAdmin && !hasVisitorLogin.value)
 const canUseAdminLogin = computed(() => !session.isAdmin && !hasVisitorLogin.value)
+const iconImages: Partial<Record<FloatingAppIcon, string>> = {
+  settings: settingsIcon,
+  music: musicIcon,
+  search: searchIcon,
+  calculator: calculatorIcon
+}
+
+function iconImage(icon: FloatingAppIcon) {
+  return iconImages[icon] || ''
+}
 
 function iconPath(icon: FloatingAppIcon) {
   const paths: Record<FloatingAppIcon, string> = {
@@ -31,8 +45,7 @@ function iconPath(icon: FloatingAppIcon) {
     music: 'M9 18V5l11-2v13M9 18a3 3 0 1 1-2-2.8A3 3 0 0 1 9 18Zm11-2a3 3 0 1 1-2-2.8A3 3 0 0 1 20 16Z',
     search: 'M11 5a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm9 15-4.2-4.2',
     calculator: 'M6 3h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm2 4h8M8 12h.1M12 12h.1M16 12h.1M8 16h.1M12 16h.1M16 16h.1',
-    article: 'M6 4h9l3 3v13H6V4Zm8 0v4h4M9 11h6M9 15h6M9 18h4',
-    update: 'M20 6v5h-5M4 18v-5h5M18.6 9a7 7 0 0 0-11.2-2.2L4 10m16 4-3.4 3.2A7 7 0 0 1 5.4 15'
+    article: 'M6 4h9l3 3v13H6V4Zm8 0v4h4M9 11h6M9 15h6M9 18h4'
   }
   return paths[icon]
 }
@@ -111,7 +124,8 @@ onMounted(() => {
           @click="trigger(app)"
         >
           <span class="app-sidebar-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="iconPath(app.icon)" /></svg>
+            <img v-if="iconImage(app.icon)" :src="iconImage(app.icon)" alt="" />
+            <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path :d="iconPath(app.icon)" /></svg>
           </span>
           <span>{{ app.name }}</span>
         </button>
@@ -253,17 +267,22 @@ onMounted(() => {
 }
 .app-sidebar-icon {
   display: grid;
-  width: 3.75rem;
-  height: 3.75rem;
+  width: 4.55rem;
+  height: 4.55rem;
   place-items: center;
   border-radius: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, .12);
-  background: #202123;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 .app-sidebar-icon svg {
-  width: 1.65rem;
-  height: 1.65rem;
+  width: 2.15rem;
+  height: 2.15rem;
+}
+.app-sidebar-icon img {
+  width: 3.45rem;
+  height: 3.45rem;
+  object-fit: contain;
 }
 .app-sidebar-item > span:last-child {
   max-width: 100%;
@@ -411,8 +430,8 @@ onMounted(() => {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .app-sidebar-icon {
-    width: 3.3rem;
-    height: 3.3rem;
+    width: 4rem;
+    height: 4rem;
   }
 }
 </style>

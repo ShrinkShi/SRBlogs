@@ -4,6 +4,7 @@ import type { AboutPageConfig, ArchiveResponse, CommentAttachment, CommentItem, 
 export type CommentResource = 'posts' | 'moments' | 'chatters' | 'music' | 'photos'
 export type VisitorUser = { provider: 'github' | 'qq'; id: string; login?: string; name?: string; avatar?: string; html_url?: string }
 export type AdminUser = { username: string; role: 'admin' }
+export type ContentLikeStatus = { liked: boolean; like_count: number }
 export type InstallStatus = { installed: boolean; needsInstall: boolean; missingItems: string[] }
 export type UpdateTask = {
   taskId: string
@@ -145,6 +146,14 @@ export const contentApi = {
     const method = oldSlug ? http.put : http.post
     const url = oldSlug ? `/${section}/${oldSlug}` : `/${section}`
     const { data } = await method<ContentItem>(url, payload)
+    return data
+  },
+  contentLikeStatus: async (section: 'posts' | 'moments' | 'chatters', slug: string) => {
+    const { data } = await http.get<ContentLikeStatus>(`/${section}/${slug}/likes`)
+    return data
+  },
+  toggleContentLike: async (section: 'posts' | 'moments' | 'chatters', slug: string) => {
+    const { data } = await http.post<ContentLikeStatus>(`/${section}/${slug}/likes`)
     return data
   },
   githubMe: async () => {

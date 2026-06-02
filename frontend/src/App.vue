@@ -23,7 +23,7 @@ const player = usePlayerStore()
 const route = useRoute()
 const router = useRouter()
 const installRoute = computed(() => route.path === '/install')
-type ToolPanel = 'calculator' | 'search' | 'settings' | 'update'
+type ToolPanel = 'calculator' | 'search' | 'settings'
 const toolboxPanel = ref<ToolPanel | null>(null)
 const floatingMusicVisible = ref(localStorage.getItem('sr-floating-music-visible') !== 'off')
 const showFloatingPlayer = computed(() => !installRoute.value && !route.path.startsWith('/music') && floatingMusicVisible.value)
@@ -42,7 +42,7 @@ function resolveExternalUrl(action: string) {
 
 function handleFloatingAppAction(app: FloatingAppItem) {
   if (app.actionType === 'modal') {
-    if (['calculator', 'search', 'settings', 'update'].includes(app.action)) {
+    if (['calculator', 'search', 'settings'].includes(app.action)) {
       toolboxPanel.value = app.action as ToolPanel
     }
     return

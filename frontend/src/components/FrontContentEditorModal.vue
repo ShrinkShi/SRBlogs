@@ -6,6 +6,7 @@ import MarkdownToolbar from '@/components/MarkdownToolbar.vue'
 import { useUiStore } from '@/stores/ui'
 import { buildMarkdownInsertion, type MarkdownToolbarCommand } from '@/utils/markdownTools'
 import type { ContentItem } from '@/types'
+import linkIcon from '../../../assets/link.png'
 
 type Section = 'posts' | 'chatters' | 'moments'
 
@@ -238,12 +239,11 @@ watch(() => props.modelValue, (open) => {
               </label>
               <section class="front-editor-markdown">
                 <div class="front-editor-toolbar-row">
-                  <div class="front-editor-tabs">
+                  <div class="front-editor-tabs front-editor-switch" role="tablist" aria-label="Markdown 模式">
                     <button type="button" :class="{ active: mode === 'write' }" @click="mode = 'write'">编写</button>
                     <button type="button" :class="{ active: mode === 'preview' }" @click="mode = 'preview'">预览</button>
                   </div>
                   <MarkdownToolbar :disabled="mode === 'preview' || uploading" @command="runToolbar" />
-                  <button type="button" class="front-editor-small-btn" :disabled="uploading" @click="imageInput?.click()">插入图片</button>
                   <input ref="imageInput" type="file" accept="image/*" class="hidden" @change="uploadInlineImage" />
                 </div>
                 <textarea v-if="mode === 'write'" ref="textareaRef" v-model="content" spellcheck="false"></textarea>
@@ -254,7 +254,7 @@ watch(() => props.modelValue, (open) => {
             <aside class="front-editor-side">
               <section class="front-editor-group">
                 <h3>{{ isMoment ? '内容类型' : '文章类型' }}</h3>
-                <div v-if="!isMoment" class="front-editor-radio">
+                <div v-if="!isMoment" class="front-editor-radio front-editor-switch" aria-label="文章类型">
                   <button type="button" :class="{ active: currentSection === 'posts' }" @click="currentSection = 'posts'">正经</button>
                   <button type="button" :class="{ active: currentSection === 'chatters' }" @click="currentSection = 'chatters'">杂谈</button>
                 </div>
@@ -269,7 +269,9 @@ watch(() => props.modelValue, (open) => {
                 <h3>封面</h3>
                 <div class="front-editor-cover-row">
                   <input v-model="meta.cover" placeholder="封面 URL" />
-                  <button type="button" :disabled="uploading" @click="coverInput?.click()">上传</button>
+                  <button type="button" class="front-editor-cover-upload" :disabled="uploading" aria-label="上传封面" title="上传封面" @click="coverInput?.click()">
+                    <img :src="linkIcon" alt="" />
+                  </button>
                   <input ref="coverInput" type="file" accept="image/*" class="hidden" @change="uploadCover" />
                 </div>
               </section>
@@ -281,7 +283,11 @@ watch(() => props.modelValue, (open) => {
           </div>
 
           <footer class="front-editor-footer">
-            <label><input v-model="meta.draft" type="checkbox" /> 存为草稿</label>
+            <label class="front-editor-draft-switch">
+              <input v-model="meta.draft" type="checkbox" />
+              <span aria-hidden="true"></span>
+              <b>存为草稿</b>
+            </label>
             <p v-if="error" role="alert">{{ error }}</p>
             <div>
               <button type="button" class="front-editor-cancel" @click="close">取消</button>
@@ -416,11 +422,18 @@ watch(() => props.modelValue, (open) => {
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 999px;
 }
+.front-editor-switch {
+  background: #202123;
+  padding: .16rem;
+}
 .front-editor-tabs button,
 .front-editor-radio button {
-  padding: .55rem .75rem;
+  min-height: 2.35rem;
+  border-radius: 999px;
+  padding: .5rem .85rem;
   color: rgba(255, 255, 255, .65);
   font-weight: 900;
+  transition: background .18s ease, color .18s ease;
 }
 .front-editor-tabs button.active,
 .front-editor-radio button.active {
@@ -450,10 +463,35 @@ watch(() => props.modelValue, (open) => {
   border-radius: 999px;
 }
 .front-editor-cover-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: .5rem;
+  position: relative;
+  display: block;
   margin-top: .5rem;
+}
+.front-editor-cover-row input {
+  width: 100%;
+  padding-right: 3.1rem;
+}
+.front-editor-cover-row .front-editor-cover-upload {
+  display: grid;
+  position: absolute;
+  right: .25rem;
+  top: 50%;
+  width: 2.35rem;
+  min-width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: white;
+}
+.front-editor-cover-upload img {
+  width: 1.28rem;
+  height: 1.28rem;
+  object-fit: contain;
+  filter: invert(1);
+  opacity: .82;
 }
 .front-editor-advanced {
   border-top: 1px solid rgba(255, 255, 255, .1);
@@ -477,9 +515,56 @@ watch(() => props.modelValue, (open) => {
   gap: .45rem;
   font-weight: 900;
 }
+.front-editor-draft-switch {
+  cursor: pointer;
+  user-select: none;
+}
+.front-editor-draft-switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+.front-editor-draft-switch span {
+  position: relative;
+  display: inline-block;
+  width: 3.35rem;
+  height: 1.72rem;
+  border-radius: 999px;
+  background: #333335;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1);
+  transition: background .18s ease;
+}
+.front-editor-draft-switch span::after {
+  content: '';
+  position: absolute;
+  top: .2rem;
+  left: .22rem;
+  width: 1.32rem;
+  height: 1.32rem;
+  border-radius: 999px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .28);
+  transition: transform .18s ease;
+}
+.front-editor-draft-switch input:checked + span {
+  background: #5b7cfa;
+}
+.front-editor-draft-switch input:checked + span::after {
+  transform: translateX(1.57rem);
+}
+.front-editor-draft-switch b {
+  color: rgba(255, 255, 255, .78);
+}
 .front-editor-footer > div {
   display: flex;
   gap: .65rem;
+}
+.front-editor-cancel,
+.front-editor-save {
+  width: 6.25rem;
+  text-align: center;
 }
 .front-editor-save {
   border-radius: 999px;

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { contentApi } from '@/api/content'
+import FrontUpdatePanel from './FrontUpdatePanel.vue'
 import { useUiStore } from '@/stores/ui'
 
 type AnyRecord = Record<string, any>
-type SettingsTab = 'site' | 'profile' | 'theme' | 'comments'
+type SettingsTab = 'site' | 'profile' | 'theme' | 'comments' | 'update'
 
 const emit = defineEmits<{ saved: [] }>()
 const ui = useUiStore()
@@ -18,12 +19,24 @@ const pageConfig = ref<AnyRecord>({})
 const avatarFile = ref<File | null>(null)
 const soundFile = ref<File | null>(null)
 
-const tabs: Array<{ key: SettingsTab; label: string }> = [
-  { key: 'site', label: '站点信息' },
-  { key: 'profile', label: '我的信息' },
-  { key: 'theme', label: '主题外观' },
-  { key: 'comments', label: '评论设置' }
+const tabs: Array<{ key: SettingsTab; label: string; icon: string }> = [
+  { key: 'site', label: '站点信息', icon: 'site' },
+  { key: 'profile', label: '我的信息', icon: 'profile' },
+  { key: 'theme', label: '主题外观', icon: 'theme' },
+  { key: 'comments', label: '评论设置', icon: 'comments' },
+  { key: 'update', label: '版本更新', icon: 'update' }
 ]
+
+function tabIconPath(icon: string) {
+  const paths: Record<string, string> = {
+    site: 'M4 10.5 12 4l8 6.5V20H5V10.5Zm5 9.5v-6h6v6',
+    profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0',
+    theme: 'M12 3a9 9 0 0 0 0 18c1.2 0 1.6-.8 1-1.6-.4-.6-.2-1.4.7-1.4H16a5 5 0 0 0 5-5 10 10 0 0 0-9-10ZM7.5 11h.1M9.5 7.5h.1M14 7.5h.1M16.5 11h.1',
+    comments: 'M4 5h16v11H8l-4 4V5Zm5 5h6M9 13h4',
+    update: 'M20 6v5h-5M4 18v-5h5M18.6 9a7 7 0 0 0-11.2-2.2L4 10m16 4-3.4 3.2A7 7 0 0 1 5.4 15'
+  }
+  return paths[icon] || paths.site
+}
 
 const form = ref({
   site: { title: '', subtitle: '', description: '', icp: '' },
@@ -334,7 +347,8 @@ onMounted(load)
             :class="{ active: activeTab === tab.key }"
             @click="activeTab = tab.key"
           >
-            {{ tab.label }}
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="tabIconPath(tab.icon)" /></svg>
+            <span>{{ tab.label }}</span>
           </button>
         </nav>
 
@@ -389,7 +403,7 @@ onMounted(load)
             </label>
           </div>
 
-          <div v-else class="front-admin-form">
+          <div v-else-if="activeTab === 'comments'" class="front-admin-form">
             <label class="front-admin-switch"><span>启用评论</span><input v-model="form.comments.enabled" type="checkbox" /></label>
             <label><span>留言最大长度</span><input v-model.number="form.comments.maxLength" min="1" type="number" /></label>
             <label class="front-admin-switch"><span>启用 GitHub 登录</span><input v-model="form.comments.githubLoginEnabled" type="checkbox" /></label>
@@ -400,7 +414,9 @@ onMounted(load)
             <label><span>新的 QQ App Secret</span><input v-model="form.comments.qqSecret" type="password" :placeholder="form.comments.qqSecretConfigured ? '已配置，留空保持旧值' : '未配置'" /></label>
           </div>
 
-          <div class="front-admin-actions">
+          <FrontUpdatePanel v-else />
+
+          <div v-if="activeTab !== 'update'" class="front-admin-actions">
             <button type="button" :disabled="saving" @click="save">{{ saving ? '保存中...' : '保存设置' }}</button>
           </div>
         </div>
@@ -440,10 +456,23 @@ onMounted(load)
   padding-right: .85rem;
 }
 .front-admin-tabs button {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
   border: 0;
   background: transparent;
   color: rgba(255, 255, 255, .56);
   text-align: left;
+}
+.front-admin-tabs svg {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .front-admin-tabs button.active {
   background: rgba(255, 255, 255, .08);

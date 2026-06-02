@@ -27,6 +27,7 @@ const uploadingAttachment = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const imageInput = ref<HTMLInputElement | null>(null)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
+const emojiList = ['😀', '😂', '🥹', '👍', '❤️', '🔥', '🎉', '🤝']
 const visitor = ref<{ configured: { github: boolean; qq: boolean }; user: VisitorUser | null }>({
   configured: { github: false, qq: false },
   user: null
@@ -197,6 +198,21 @@ async function uploadAttachment(event: Event) {
   }
 }
 
+async function insertEmoji(emoji: string) {
+  const el = textareaRef.value
+  if (!el) {
+    form.content += emoji
+    return
+  }
+  const start = el.selectionStart
+  const end = el.selectionEnd
+  form.content = `${form.content.slice(0, start)}${emoji}${form.content.slice(end)}`
+  await nextTick()
+  el.focus()
+  el.setSelectionRange(start + emoji.length, start + emoji.length)
+  resizeComposer()
+}
+
 async function deleteComment(item: CommentItem) {
   if (!session.isAdmin || deletingCommentId.value) return
   if (confirmDeleteId.value !== item.id) {
@@ -330,9 +346,11 @@ watch(() => form.content, resizeComposer)
         <div class="comment-input-shell">
           <button type="button" class="comment-plus-btn" aria-label="添加附件" @click="attachmentMenuOpen = !attachmentMenuOpen">+</button>
           <div v-if="attachmentMenuOpen" class="comment-attach-menu">
-            <button type="button" @click="imageInput?.click()">上传图片</button>
-            <button type="button" @click="fileInput?.click()">上传文件</button>
-            <small>单个附件不超过 2MB</small>
+            <button type="button" class="comment-attach-option" data-tip="选择本地图片" @click="imageInput?.click()">上传图片</button>
+            <button type="button" class="comment-attach-option" data-tip="选择本地文件" @click="fileInput?.click()">上传文件</button>
+            <div class="comment-emoji-grid" aria-label="插入表情">
+              <button v-for="emoji in emojiList" :key="emoji" type="button" @click="insertEmoji(emoji)">{{ emoji }}</button>
+            </div>
           </div>
           <input ref="imageInput" type="file" accept="image/*" class="hidden" @change="uploadAttachment" />
           <input ref="fileInput" type="file" accept=".txt,.md,.pdf,text/plain,text/markdown,application/pdf" class="hidden" @change="uploadAttachment" />
@@ -520,12 +538,21 @@ watch(() => form.content, resizeComposer)
   height: 2.35rem;
   place-items: center;
   align-self: end;
-  border: 1px solid rgba(255, 255, 255, .13);
+  border: 0;
   border-radius: 999px;
   background: #333335;
   color: white;
   font-size: 1.25rem;
   font-weight: 900;
+  transition: background .18s ease, transform .18s ease;
+}
+.comment-plus-btn:hover,
+.comment-plus-btn:focus-visible {
+  background: #3d3d40;
+}
+.comment-plus-btn:active {
+  transform: scale(.96);
+  background: #454548;
 }
 .comment-submit-round {
   position: absolute;
@@ -551,7 +578,7 @@ watch(() => form.content, resizeComposer)
   bottom: calc(100% + .45rem);
   z-index: 3;
   display: grid;
-  min-width: 9.5rem;
+  min-width: 10.5rem;
   gap: .35rem;
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 1rem;
@@ -559,16 +586,55 @@ watch(() => form.content, resizeComposer)
   padding: .55rem;
   box-shadow: 0 18px 42px rgba(0, 0, 0, .44);
 }
-.comment-attach-menu button {
+.comment-attach-option {
+  position: relative;
   border-radius: 999px;
-  background: white;
+  background: #333335;
   padding: .45rem .7rem;
-  color: black;
+  color: rgba(255, 255, 255, .78);
   font-weight: 900;
   text-align: left;
+  transition: background .18s ease, color .18s ease;
 }
-.comment-attach-menu small {
-  color: rgba(255, 255, 255, .42);
+.comment-attach-option:hover {
+  background: #424245;
+  color: white;
+}
+.comment-attach-option:hover::after,
+.comment-attach-option:focus-visible::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + .5rem);
+  top: 50%;
+  z-index: 4;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .94);
+  padding: .32rem .55rem;
+  color: black;
+  font-size: .72rem;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .28);
+}
+.comment-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .32rem;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  margin-top: .2rem;
+  padding-top: .45rem;
+}
+.comment-emoji-grid button {
+  display: grid;
+  min-height: 2rem;
+  place-items: center;
+  border-radius: .75rem;
+  background: #333335;
+  transition: background .18s ease, transform .18s ease;
+}
+.comment-emoji-grid button:hover {
+  background: #424245;
+  transform: translateY(-1px);
 }
 .comment-attachment-drafts span {
   display: inline-flex;

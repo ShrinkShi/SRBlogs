@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { contentApi } from '@/api/content'
 import { useUiStore } from '@/stores/ui'
 import type { PhotoAlbum } from '@/types'
 
-const props = defineProps<{ modelValue: boolean }>()
+const props = withDefaults(defineProps<{ modelValue: boolean; album?: PhotoAlbum | null; index?: number }>(), {
+  album: null,
+  index: -1
+})
 const emit = defineEmits<{ 'update:modelValue': [value: boolean]; saved: [] }>()
 const ui = useUiStore()
 const loading = ref(false)
@@ -20,18 +23,20 @@ const form = reactive({
   cover: '',
   photosText: ''
 })
+const photoUrls = computed(() => form.photosText.split(/\r?\n/).map((url) => url.trim()).filter(Boolean))
+const modalTitle = computed(() => props.index >= 0 ? '编辑照片组' : '新增照片')
 
 function today() {
   return new Date().toISOString().slice(0, 10)
 }
 
 function reset() {
-  form.title = ''
-  form.description = ''
-  form.date = today()
-  form.tagsText = ''
-  form.cover = ''
-  form.photosText = ''
+  form.title = props.album?.title || ''
+  form.description = props.album?.description || ''
+  form.date = props.album?.date || today()
+  form.tagsText = (props.album?.tags || []).join(', ')
+  form.cover = props.album?.cover || ''
+  form.photosText = (props.album?.photos || []).map((photo) => photo.url).filter(Boolean).join('\n')
   error.value = ''
 }
 
@@ -89,8 +94,11 @@ async function save() {
       tags: form.tagsText.split(',').map((tag) => tag.trim()).filter(Boolean),
       photos
     }
-    await contentApi.adminPutJson('/photos', [payload, ...list])
-    ui.showToast('照片已新增', 'success')
+    const next = [...list]
+    if (props.index >= 0 && props.index < next.length) next[props.index] = payload
+    else next.unshift(payload)
+    await contentApi.adminPutJson('/photos', next)
+    ui.showToast(props.index >= 0 ? '照片组已保存' : '照片已新增', 'success')
     emit('saved')
     close()
   } catch (exc) {
@@ -98,6 +106,12 @@ async function save() {
   } finally {
     saving.value = false
   }
+}
+
+function removePhoto(index: number) {
+  const next = photoUrls.value.filter((_, itemIndex) => itemIndex !== index)
+  form.photosText = next.join('\n')
+  if (form.cover && !next.includes(form.cover)) form.cover = next[0] || ''
 }
 
 watch(() => props.modelValue, (open) => {
@@ -111,7 +125,7 @@ watch(() => props.modelValue, (open) => {
       <div v-if="modelValue" class="front-photo-backdrop" role="dialog" aria-modal="true" @click.self="close" @keydown.esc.window="close">
         <section class="front-photo-shell">
           <header class="front-photo-head">
-            <strong>新增照片</strong>
+            <strong>{{ modalTitle }}</strong>
             <button type="button" aria-label="关闭新增照片弹窗" @click="close">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
             </button>
@@ -123,6 +137,12 @@ watch(() => props.modelValue, (open) => {
             <label><span>标签</span><input v-model="form.tagsText" placeholder="生活, 截图, 旅行" /></label>
             <label><span>封面 URL</span><input v-model="form.cover" placeholder="留空则使用第一张图片" /></label>
             <label><span>图片 URL（每行一个）</span><textarea v-model="form.photosText" rows="7"></textarea></label>
+            <div v-if="photoUrls.length" class="front-photo-list">
+              <span v-for="(url, index) in photoUrls" :key="url + index">
+                {{ url }}
+                <button type="button" @click="removePhoto(index)">删除</button>
+              </span>
+            </div>
             <div class="front-photo-upload">
               <button type="button" :disabled="uploading" @click="imageInput?.click()">{{ uploading ? '上传中...' : '上传图片' }}</button>
               <input ref="imageInput" type="file" accept="image/*" multiple class="hidden" @change="uploadImages" />
@@ -226,6 +246,27 @@ watch(() => props.modelValue, (open) => {
 .front-photo-upload {
   display: flex;
   justify-content: flex-end;
+}
+.front-photo-list {
+  display: grid;
+  gap: .45rem;
+}
+.front-photo-list span {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  border-radius: .85rem;
+  background: rgba(255, 255, 255, .06);
+  padding: .5rem .65rem;
+  color: rgba(255, 255, 255, .6);
+  font-size: .78rem;
+}
+.front-photo-list button {
+  flex: 0 0 auto;
+  color: #fecaca;
+  font-weight: 900;
 }
 .front-photo-save {
   border-radius: 999px;
