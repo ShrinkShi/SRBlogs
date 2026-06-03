@@ -6,6 +6,7 @@ import FrontJsonItemEditorModal from '@/components/FrontJsonItemEditorModal.vue'
 import { contentApi } from '@/api/content'
 import type { PageConfig, ProjectItem } from '@/types'
 import { useSeo } from '@/composables/useSeo'
+import { tagStyle } from '@/utils/tagStyles'
 import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
 
@@ -21,6 +22,7 @@ const deleteArmed = ref('')
 const pageConfig = ref<PageConfig | null>(null)
 const pageTitle = computed(() => pageConfig.value?.pageText?.projects?.title || '项目陈列柜')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.projects?.subtitle || '项目数据来自后端 JSON，可在后台表单化维护。')
+const fallbackCover = 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=1000&auto=format&fit=crop'
 useSeo({ title: () => pageTitle.value, description: () => pageSubtitle.value, path: '/projects' })
 
 async function load() {
@@ -96,26 +98,31 @@ async function deleteProject(item: ProjectItem, index: number) {
       </GlassCard>
 
       <div v-else class="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <GlassCard v-for="(item, index) in projects" :key="item.name" hover>
-        <div v-if="item.cover" class="mb-4 h-36 overflow-hidden rounded-[24px] bg-white/10">
-          <SafeImage :src="item.cover" :alt="item.name" img-class="h-full w-full object-cover" />
-        </div>
-        <div class="flex min-w-0 items-start justify-between gap-3">
-          <h2 class="min-w-0 break-words text-2xl font-black text-white">{{ item.name }}</h2>
-          <span v-if="item.status" class="shrink-0 rounded-full bg-emerald-300/[0.12] px-2 py-1 text-xs text-emerald-100">{{ item.status }}</span>
-        </div>
-        <p class="mt-3 break-words leading-7 text-white/58">{{ item.description }}</p>
-        <div v-if="item.tags?.length" class="mt-4 flex flex-wrap gap-2">
-          <span v-for="tag in item.tags" :key="tag" class="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">{{ tag }}</span>
-        </div>
-        <div class="mt-5 flex flex-wrap gap-2">
-          <a v-if="item.url" :href="item.url" target="_blank" rel="noopener noreferrer" class="rounded-2xl bg-white/10 px-4 py-2 text-sm text-white/70 hover:bg-white/[0.15]">查看项目</a>
-          <a v-if="item.repo" :href="item.repo" target="_blank" rel="noopener noreferrer" class="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/60 hover:bg-white/[0.08]">代码仓库</a>
-        </div>
-        <div v-if="session.isAdmin" class="front-json-card-actions">
-          <button type="button" @click="openProjectEditor(item, index)">编辑</button>
-          <button type="button" class="danger" @click="deleteProject(item, index)">{{ deleteArmed === (item.name || String(index)) ? '确认删除' : '删除' }}</button>
-        </div>
+        <GlassCard v-for="(item, index) in projects" :key="item.name" hover class="project-card h-full overflow-hidden !p-0">
+          <article class="flex h-full min-w-0 flex-col">
+            <div class="project-card-cover">
+              <SafeImage :src="item.cover" :fallback="fallbackCover" :alt="item.name" img-class="h-full w-full object-cover opacity-90 transition duration-300 hover:scale-[1.035]" />
+              <div class="image-contrast-overlay absolute inset-0"></div>
+            </div>
+            <div class="project-card-body">
+              <div class="flex min-w-0 items-start justify-between gap-3">
+                <h2 class="min-w-0 break-words text-2xl font-black text-white">{{ item.name }}</h2>
+                <span v-if="item.status" class="shrink-0 rounded-full bg-emerald-300/[0.12] px-2 py-1 text-xs text-emerald-100">{{ item.status }}</span>
+              </div>
+              <p class="mt-3 line-clamp-3 break-words leading-7 text-white/58">{{ item.description }}</p>
+              <div v-if="item.tags?.length" class="mt-auto flex flex-wrap gap-2 pt-4">
+                <span v-for="tag in item.tags" :key="tag" class="rounded-full border px-3 py-1 text-xs font-bold" :style="tagStyle(tag)">{{ tag }}</span>
+              </div>
+              <div class="mt-5 flex flex-wrap gap-2">
+                <a v-if="item.url" :href="item.url" target="_blank" rel="noopener noreferrer" class="rounded-2xl bg-white/10 px-4 py-2 text-sm text-white/70 hover:bg-white/[0.15]">查看项目</a>
+                <a v-if="item.repo" :href="item.repo" target="_blank" rel="noopener noreferrer" class="rounded-2xl border border-white/10 px-4 py-2 text-sm text-white/60 hover:bg-white/[0.08]">代码仓库</a>
+              </div>
+              <div v-if="session.isAdmin" class="front-json-card-actions">
+                <button type="button" @click="openProjectEditor(item, index)">编辑</button>
+                <button type="button" class="danger" @click="deleteProject(item, index)">{{ deleteArmed === (item.name || String(index)) ? '确认删除' : '删除' }}</button>
+              </div>
+            </div>
+          </article>
         </GlassCard>
       </div>
     </div>
@@ -124,6 +131,19 @@ async function deleteProject(item: ProjectItem, index: number) {
 </template>
 
 <style scoped>
+.project-card-cover {
+  position: relative;
+  height: 15rem;
+  overflow: hidden;
+  background: rgba(15, 23, 42, .72);
+}
+.project-card-body {
+  display: flex;
+  min-height: 17rem;
+  flex: 1 1 auto;
+  flex-direction: column;
+  padding: 1.25rem;
+}
 .front-json-card-actions {
   display: flex;
   justify-content: flex-end;

@@ -18,6 +18,7 @@ class ContentMeta(BaseModel):
     title: str = "Untitled"
     date: str = ""
     tags: list[str] = Field(default_factory=list)
+    tagColors: dict[str, str] = Field(default_factory=dict)
     draft: bool = False
     cover: str = ""
     summary: str = ""

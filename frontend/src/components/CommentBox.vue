@@ -306,8 +306,8 @@ watch(() => form.content, resizeComposer)
 
     <p v-if="loading" class="mt-4 text-white/50" role="status" aria-live="polite">留言加载中...</p>
 
-    <div v-else class="mt-5 grid gap-3">
-      <article v-for="item in comments" :key="item.id" class="rounded-[24px] border border-white/10 bg-white/[0.055] p-4">
+    <div v-else class="comment-list">
+      <article v-for="item in comments" :key="item.id" class="comment-item">
         <div class="flex items-start justify-between gap-3 text-sm">
           <div class="flex min-w-0 items-center gap-3">
             <img v-if="item.avatar" :src="item.avatar" :alt="item.author" class="h-9 w-9 rounded-full object-cover" loading="lazy" />
@@ -359,7 +359,7 @@ watch(() => form.content, resizeComposer)
           </a>
         </div>
       </article>
-      <p v-if="!comments.length" class="rounded-[24px] border border-white/10 bg-white/[0.045] p-4 text-white/50">暂无留言。</p>
+      <p v-if="!comments.length" class="comment-empty">暂无留言。</p>
     </div>
 
     <div v-if="!boardEnabled && !session.isAdmin" class="mt-5 rounded-[24px] border border-white/10 bg-white/[0.05] p-4 text-white/58">留言板已关闭。</div>
@@ -444,6 +444,23 @@ watch(() => form.content, resizeComposer)
   height: 1px;
   margin: 0 0 1.6rem;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .18), transparent);
+}
+.comment-list {
+  display: grid;
+  margin-top: 1.25rem;
+}
+.comment-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .11);
+}
+.comment-item:first-child {
+  border-top: 1px solid rgba(255, 255, 255, .11);
+}
+.comment-empty {
+  border-top: 1px solid rgba(255, 255, 255, .11);
+  border-bottom: 1px solid rgba(255, 255, 255, .11);
+  padding: 1rem 0;
+  color: rgba(255, 255, 255, .5);
 }
 .comment-item-actions {
   display: flex;

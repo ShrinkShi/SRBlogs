@@ -2,6 +2,7 @@ export interface ContentMeta {
   title: string
   date: string
   tags: string[]
+  tagColors?: Record<string, string>
   draft: boolean
   cover?: string
   summary?: string

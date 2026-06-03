@@ -5,6 +5,7 @@ import GlassCard from './GlassCard.vue'
 import SafeImage from './SafeImage.vue'
 import { formatDate } from '@/utils/date'
 import { detectImageTone, type ImageTone } from '@/utils/imageTone'
+import { tagStyle } from '@/utils/tagStyles'
 
 const props = withDefaults(defineProps<{ items: ContentItem[]; base: string; emptyText?: string }>(), {
   emptyText: '没有匹配内容。'
@@ -37,12 +38,18 @@ watch(() => props.items, (items) => {
           <div class="post-card-content flex min-h-[16rem] flex-1 flex-col gap-3 p-5">
             <div class="flex items-center justify-between gap-3 text-xs text-white/45">
               <span>{{ formatDate(item.meta.date) }}</span>
-              <span>{{ item.content.length }} chars</span>
+              <span class="inline-flex items-center gap-1" title="浏览">
+                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                {{ Number(item.meta.view_count || 0) }}
+              </span>
             </div>
             <h2 class="line-clamp-2 text-xl font-black text-white">{{ item.meta.title }}</h2>
             <p class="line-clamp-3 text-sm leading-7 text-white/58">{{ item.meta.summary || item.content.slice(0, 120) }}</p>
             <div class="content-card-tags mt-auto flex flex-wrap gap-2 pt-3">
-              <span v-for="tag in item.meta.tags" :key="tag" class="content-tag rounded-full border px-3 py-1 text-xs"># {{ tag }}</span>
+              <span v-for="tag in item.meta.tags" :key="tag" class="content-tag rounded-full border px-3 py-1 text-xs" :style="tagStyle(tag, item.meta.tagColors)"># {{ tag }}</span>
             </div>
           </div>
         </article>

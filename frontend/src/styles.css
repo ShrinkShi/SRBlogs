@@ -979,15 +979,15 @@ body::before {
 }
 
 .content-tag {
-  border-color: color-mix(in srgb, var(--accent) 28%, var(--border-glass)) !important;
-  background: transparent !important;
-  color: var(--text-secondary) !important;
-  text-shadow: none !important;
+  border-color: color-mix(in srgb, var(--accent) 28%, var(--border-glass));
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text-primary);
+  text-shadow: none;
+  font-weight: 800;
 }
 
 .content-tag:hover {
-  color: var(--text-primary) !important;
-  border-color: color-mix(in srgb, var(--accent) 48%, var(--border-glass)) !important;
+  filter: brightness(1.08);
 }
 
 :root[data-color-mode='day'] .post-card-content,
@@ -1007,8 +1007,7 @@ body::before {
 
 :root[data-color-mode='day'] .post-card-content .content-tag,
 :root[data-color-mode='day'] .photo-card-content .content-tag {
-  color: var(--text-secondary) !important;
-  background: transparent !important;
+  color: var(--text-primary);
 }
 
 .home-media-carousel {

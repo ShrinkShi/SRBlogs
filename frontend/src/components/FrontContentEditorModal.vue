@@ -5,6 +5,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer.vue'
 import MarkdownToolbar from '@/components/MarkdownToolbar.vue'
 import { useUiStore } from '@/stores/ui'
 import { buildMarkdownInsertion, type MarkdownToolbarCommand } from '@/utils/markdownTools'
+import { normalizeTagColor, tagStyle, type TagColorMap } from '@/utils/tagStyles'
 import type { ContentItem } from '@/types'
 import linkIcon from '../../../assets/link.png'
 
@@ -42,10 +43,12 @@ const meta = reactive({
   cover: '',
   summary: '',
   location: '',
-  imagesText: ''
+  imagesText: '',
+  tagColors: {} as TagColorMap
 })
 
 const isMoment = computed(() => currentSection.value === 'moments')
+const editableTags = computed(() => meta.tagsText.split(',').map((tag) => tag.trim()).filter(Boolean))
 const modalTitle = computed(() => props.slug ? props.title || '编辑内容' : isMoment.value ? '新增说说' : currentSection.value === 'chatters' ? '新增杂谈' : '新增文章')
 const dateInput = computed({
   get: () => {
@@ -80,6 +83,7 @@ function resetForm() {
   meta.summary = ''
   meta.location = ''
   meta.imagesText = ''
+  meta.tagColors = {}
   error.value = ''
   mode.value = 'write'
 }
@@ -100,11 +104,16 @@ async function load() {
     meta.summary = item.meta.summary || ''
     meta.location = item.meta.location || ''
     meta.imagesText = Array.isArray(item.meta.images) ? item.meta.images.join('\n') : ''
+    meta.tagColors = { ...(item.meta.tagColors || {}) }
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '内容加载失败'
   } finally {
     loading.value = false
   }
+}
+
+function setTagColor(tag: string, color: string) {
+  meta.tagColors = { ...meta.tagColors, [tag]: normalizeTagColor(color, '#334155') }
 }
 
 function close() {
@@ -194,7 +203,11 @@ async function save() {
       meta: {
         title: meta.title.trim(),
         date: meta.date || defaultDate(),
-        tags: meta.tagsText.split(',').map((tag) => tag.trim()).filter(Boolean),
+        tags: editableTags.value,
+        tagColors: editableTags.value.reduce((colors, tag) => {
+          colors[tag] = normalizeTagColor(meta.tagColors[tag], '#334155')
+          return colors
+        }, {} as TagColorMap),
         draft: meta.draft,
         cover: meta.cover.trim(),
         summary: meta.summary.trim(),
@@ -262,6 +275,17 @@ watch(() => props.modelValue, (open) => {
               </section>
               <label class="front-editor-field"><span>日期</span><input v-model="dateInput" type="datetime-local" /></label>
               <label class="front-editor-field"><span>标签</span><input v-model="meta.tagsText" placeholder="Vue, Blog" /></label>
+              <div v-if="editableTags.length" class="front-editor-tag-colors" aria-label="标签颜色">
+                <label v-for="tag in editableTags" :key="tag">
+                  <span :style="tagStyle(tag, meta.tagColors)"># {{ tag }}</span>
+                  <input
+                    type="color"
+                    :value="normalizeTagColor(meta.tagColors[tag], '#334155')"
+                    :aria-label="`${tag} 标签颜色`"
+                    @input="setTagColor(tag, ($event.target as HTMLInputElement).value)"
+                  />
+                </label>
+              </div>
               <label class="front-editor-field"><span>简介</span><textarea v-model="meta.summary" rows="4"></textarea></label>
               <label v-if="isMoment" class="front-editor-field"><span>定位</span><input v-model="meta.location" /></label>
               <label v-if="isMoment" class="front-editor-field"><span>图片 URL（每行一个）</span><textarea v-model="meta.imagesText" rows="4"></textarea></label>
@@ -320,6 +344,7 @@ watch(() => props.modelValue, (open) => {
   border-radius: 1.35rem;
   background: #191A1B;
   color: white;
+  font-size: .75rem;
   box-shadow: 0 28px 90px rgba(0, 0, 0, .62);
 }
 .front-editor-head,
@@ -329,7 +354,7 @@ watch(() => props.modelValue, (open) => {
   justify-content: space-between;
   gap: 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, .1);
-  padding: .85rem 1rem;
+  padding: .64rem .75rem;
 }
 .front-editor-footer {
   border-top: 1px solid rgba(255, 255, 255, .1);
@@ -347,8 +372,8 @@ watch(() => props.modelValue, (open) => {
 }
 .front-editor-head button {
   display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 1.7rem;
+  height: 1.7rem;
   place-items: center;
   border-radius: 999px;
   padding: 0;
@@ -364,9 +389,9 @@ watch(() => props.modelValue, (open) => {
 .front-editor-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, .36fr);
-  gap: 1.3rem;
+  gap: .98rem;
   overflow: auto;
-  padding: 1rem;
+  padding: .75rem;
 }
 .front-editor-main,
 .front-editor-side {
@@ -375,16 +400,16 @@ watch(() => props.modelValue, (open) => {
 .front-editor-side {
   display: grid;
   align-content: start;
-  gap: .95rem;
+  gap: .72rem;
 }
 .front-editor-field {
   display: grid;
-  gap: .45rem;
+  gap: .34rem;
 }
 .front-editor-field span,
 .front-editor-group h3 {
   color: rgba(255, 255, 255, .78);
-  font-size: .9rem;
+  font-size: .675rem;
   font-weight: 900;
 }
 .front-editor-field input,
@@ -392,29 +417,29 @@ watch(() => props.modelValue, (open) => {
 .front-editor-cover-row input {
   min-width: 0;
   border: 1px solid rgba(255, 255, 255, .13);
-  border-radius: .9rem;
+  border-radius: .68rem;
   background: #202123;
-  padding: .75rem .85rem;
+  padding: .56rem .64rem;
   color: white;
   outline: none;
 }
 .front-editor-title-input {
-  font-size: clamp(1.25rem, 2.4vw, 2rem);
+  font-size: clamp(.86rem, 1.2vw, 1rem);
   font-weight: 900;
 }
 .front-editor-markdown {
-  margin-top: 1rem;
+  margin-top: .75rem;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .12);
-  border-radius: 1.1rem;
+  border-radius: .85rem;
 }
 .front-editor-toolbar-row {
   display: flex;
   align-items: center;
-  gap: .55rem;
+  gap: .4rem;
   flex-wrap: wrap;
   border-bottom: 1px solid rgba(255, 255, 255, .1);
-  padding: .65rem;
+  padding: .48rem;
 }
 .front-editor-tabs {
   display: inline-flex;
@@ -428,9 +453,9 @@ watch(() => props.modelValue, (open) => {
 }
 .front-editor-tabs button,
 .front-editor-radio button {
-  min-height: 2.35rem;
+  min-height: 1.75rem;
   border-radius: 999px;
-  padding: .5rem .85rem;
+  padding: .38rem .64rem;
   color: rgba(255, 255, 255, .65);
   font-weight: 900;
   transition: background .18s ease, color .18s ease;
@@ -447,18 +472,18 @@ watch(() => props.modelValue, (open) => {
   resize: vertical;
   border: 0;
   background: transparent;
-  padding: 1rem;
+  padding: .75rem;
   color: rgba(255, 255, 255, .86);
   outline: none;
 }
 .front-editor-preview {
   min-height: min(52vh, 580px);
-  padding: 1rem;
+  padding: .75rem;
 }
 .front-editor-radio {
   display: inline-flex;
   overflow: hidden;
-  margin-top: .5rem;
+  margin-top: .38rem;
   border: 1px solid rgba(255, 255, 255, .12);
   border-radius: 999px;
 }
@@ -476,9 +501,9 @@ watch(() => props.modelValue, (open) => {
   position: absolute;
   right: .25rem;
   top: 50%;
-  width: 2.35rem;
-  min-width: 2.35rem;
-  height: 2.35rem;
+  width: 1.76rem;
+  min-width: 1.76rem;
+  height: 1.76rem;
   place-items: center;
   transform: translateY(-50%);
   border: 0;
@@ -487,15 +512,21 @@ watch(() => props.modelValue, (open) => {
   color: white;
 }
 .front-editor-cover-upload img {
-  width: 1.28rem;
-  height: 1.28rem;
+  width: .96rem;
+  height: .96rem;
   object-fit: contain;
   filter: invert(1);
   opacity: .82;
+  transition: filter .18s ease, opacity .18s ease, transform .18s ease;
+}
+.front-editor-cover-upload:hover img {
+  filter: invert(44%) sepia(72%) saturate(1052%) hue-rotate(318deg) brightness(107%) contrast(96%);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 .front-editor-advanced {
   border-top: 1px solid rgba(255, 255, 255, .1);
-  padding-top: .9rem;
+  padding-top: .68rem;
 }
 .front-editor-advanced summary {
   cursor: pointer;
@@ -515,6 +546,31 @@ watch(() => props.modelValue, (open) => {
   gap: .45rem;
   font-weight: 900;
 }
+.front-editor-tag-colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+}
+.front-editor-tag-colors label {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+}
+.front-editor-tag-colors span {
+  border: 1px solid;
+  border-radius: 999px;
+  padding: .25rem .5rem;
+  font-size: .68rem;
+  font-weight: 900;
+}
+.front-editor-tag-colors input {
+  width: 1.55rem;
+  height: 1.55rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  padding: 0;
+}
 .front-editor-draft-switch {
   cursor: pointer;
   user-select: none;
@@ -529,8 +585,8 @@ watch(() => props.modelValue, (open) => {
 .front-editor-draft-switch span {
   position: relative;
   display: inline-block;
-  width: 3.35rem;
-  height: 1.72rem;
+  width: 2.52rem;
+  height: 1.3rem;
   border-radius: 999px;
   background: #333335;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1);
@@ -539,10 +595,10 @@ watch(() => props.modelValue, (open) => {
 .front-editor-draft-switch span::after {
   content: '';
   position: absolute;
-  top: .2rem;
-  left: .22rem;
-  width: 1.32rem;
-  height: 1.32rem;
+  top: .15rem;
+  left: .17rem;
+  width: .98rem;
+  height: .98rem;
   border-radius: 999px;
   background: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, .28);
@@ -552,7 +608,7 @@ watch(() => props.modelValue, (open) => {
   background: #5b7cfa;
 }
 .front-editor-draft-switch input:checked + span::after {
-  transform: translateX(1.57rem);
+  transform: translateX(1.18rem);
 }
 .front-editor-draft-switch b {
   color: rgba(255, 255, 255, .78);
@@ -563,13 +619,13 @@ watch(() => props.modelValue, (open) => {
 }
 .front-editor-cancel,
 .front-editor-save {
-  width: 6.25rem;
+  width: 4.7rem;
   text-align: center;
 }
 .front-editor-save {
   border-radius: 999px;
   background: #86efac;
-  padding: .62rem 1.1rem;
+  padding: .47rem .85rem;
   color: black;
   font-weight: 900;
 }

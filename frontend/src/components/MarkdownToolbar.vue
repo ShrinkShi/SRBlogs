@@ -100,13 +100,13 @@ function applyColor(color = colorValue.value) {
   position: relative;
   display: flex;
   flex-wrap: wrap;
-  gap: .35rem;
+  gap: .26rem;
   min-width: 0;
 }
 .front-md-toolbar > button {
   display: inline-grid;
-  min-width: 2.25rem;
-  min-height: 2.25rem;
+  min-width: 1.68rem;
+  min-height: 1.68rem;
   place-items: center;
   border: 0;
   border-radius: 999px;
@@ -117,18 +117,20 @@ function applyColor(color = colorValue.value) {
   transition: background .18s ease, opacity .18s ease, transform .18s ease;
 }
 .front-md-toolbar > button img {
-  width: 1.2rem;
-  height: 1.2rem;
+  width: .9rem;
+  height: .9rem;
   object-fit: contain;
   filter: invert(1);
-  opacity: .78;
+  opacity: .9;
+  transition: filter .18s ease, opacity .18s ease, transform .18s ease;
 }
 .front-md-toolbar > button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, .08);
-  transform: translateY(-1px);
+  background: transparent;
 }
 .front-md-toolbar > button:hover:not(:disabled) img {
+  filter: invert(44%) sepia(72%) saturate(1052%) hue-rotate(318deg) brightness(107%) contrast(96%);
   opacity: 1;
+  transform: translateY(-1px);
 }
 .front-md-color-popover {
   position: absolute;
