@@ -2,6 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { contentApi } from '@/api/content'
 import { useUiStore } from '@/stores/ui'
+import { normalizeTagColor, tagStyle, type TagColorMap } from '@/utils/tagStyles'
 import type { PhotoAlbum } from '@/types'
 
 const props = withDefaults(defineProps<{ modelValue: boolean; album?: PhotoAlbum | null; index?: number }>(), {
@@ -12,18 +13,16 @@ const emit = defineEmits<{ 'update:modelValue': [value: boolean]; saved: [] }>()
 const ui = useUiStore()
 const loading = ref(false)
 const saving = ref(false)
-const uploading = ref(false)
 const error = ref('')
-const imageInput = ref<HTMLInputElement | null>(null)
 const form = reactive({
   title: '',
   description: '',
   date: '',
   tagsText: '',
   cover: '',
-  photosText: ''
+  tagColors: {} as TagColorMap
 })
-const photoUrls = computed(() => form.photosText.split(/\r?\n/).map((url) => url.trim()).filter(Boolean))
+const editableTags = computed(() => form.tagsText.split(',').map((tag) => tag.trim()).filter(Boolean))
 const modalTitle = computed(() => props.index >= 0 ? '编辑照片组' : '新增照片')
 
 function today() {
@@ -36,7 +35,7 @@ function reset() {
   form.date = props.album?.date || today()
   form.tagsText = (props.album?.tags || []).join(', ')
   form.cover = props.album?.cover || ''
-  form.photosText = (props.album?.photos || []).map((photo) => photo.url).filter(Boolean).join('\n')
+  form.tagColors = { ...(props.album?.tagColors || {}) }
   error.value = ''
 }
 
@@ -48,27 +47,8 @@ function close() {
   emit('update:modelValue', false)
 }
 
-async function uploadImages(event: Event) {
-  const files = Array.from((event.target as HTMLInputElement).files || [])
-  ;(event.target as HTMLInputElement).value = ''
-  if (!files.length) return
-  uploading.value = true
-  try {
-    const uploaded = []
-    for (const file of files.slice(0, 50)) {
-      const data = await contentApi.upload(file)
-      uploaded.push(data.url)
-    }
-    const current = form.photosText.split(/\r?\n/).map((url) => url.trim()).filter(Boolean)
-    const next = [...current, ...uploaded]
-    form.photosText = next.join('\n')
-    if (!form.cover && uploaded[0]) form.cover = uploaded[0]
-    ui.showToast('图片已上传', 'success')
-  } catch {
-    ui.showToast('图片上传失败', 'error')
-  } finally {
-    uploading.value = false
-  }
+function setTagColor(tag: string, color: string) {
+  form.tagColors = { ...form.tagColors, [tag]: normalizeTagColor(color, '#334155') }
 }
 
 async function save() {
@@ -77,28 +57,27 @@ async function save() {
     error.value = '相册标题不能为空。'
     return
   }
-  const urls = form.photosText.split(/\r?\n/).map((url) => url.trim()).filter(Boolean).slice(0, 50)
-  if (!urls.length && !form.cover.trim()) {
-    error.value = '请至少上传或填写一张图片。'
-    return
-  }
   saving.value = true
   try {
     const list = normalizeList(await contentApi.json<unknown>('/photos'))
-    const photos = urls.map((url, index) => ({ url, title: `${form.title.trim()} ${index + 1}` }))
+    const previous = props.album?.photos || []
     const payload: PhotoAlbum = {
       title: form.title.trim(),
       description: form.description.trim(),
-      cover: form.cover.trim() || photos[0]?.url || '',
+      cover: form.cover.trim() || previous[0]?.url || '',
       date: form.date || today(),
-      tags: form.tagsText.split(',').map((tag) => tag.trim()).filter(Boolean),
-      photos
+      tags: editableTags.value,
+      tagColors: editableTags.value.reduce((colors, tag) => {
+        colors[tag] = normalizeTagColor(form.tagColors[tag], '#334155')
+        return colors
+      }, {} as TagColorMap),
+      photos: previous
     }
     const next = [...list]
     if (props.index >= 0 && props.index < next.length) next[props.index] = payload
     else next.unshift(payload)
     await contentApi.adminPutJson('/photos', next)
-    ui.showToast(props.index >= 0 ? '照片组已保存' : '照片已新增', 'success')
+    ui.showToast(props.index >= 0 ? '照片组已保存' : '照片组已新增', 'success')
     emit('saved')
     close()
   } catch (exc) {
@@ -106,12 +85,6 @@ async function save() {
   } finally {
     saving.value = false
   }
-}
-
-function removePhoto(index: number) {
-  const next = photoUrls.value.filter((_, itemIndex) => itemIndex !== index)
-  form.photosText = next.join('\n')
-  if (form.cover && !next.includes(form.cover)) form.cover = next[0] || ''
 }
 
 watch(() => props.modelValue, (open) => {
@@ -135,23 +108,23 @@ watch(() => props.modelValue, (open) => {
             <label><span>相册描述</span><textarea v-model="form.description" rows="4"></textarea></label>
             <label><span>日期</span><input v-model="form.date" type="date" /></label>
             <label><span>标签</span><input v-model="form.tagsText" placeholder="生活, 截图, 旅行" /></label>
+            <div v-if="editableTags.length" class="front-photo-tag-colors" aria-label="标签颜色">
+              <label v-for="tag in editableTags" :key="tag">
+                <span :style="tagStyle(tag, form.tagColors)"># {{ tag }}</span>
+                <input
+                  type="color"
+                  :value="normalizeTagColor(form.tagColors[tag], '#334155')"
+                  :aria-label="`${tag} 标签颜色`"
+                  @input="setTagColor(tag, ($event.target as HTMLInputElement).value)"
+                />
+              </label>
+            </div>
             <label><span>封面 URL</span><input v-model="form.cover" placeholder="留空则使用第一张图片" /></label>
-            <label><span>图片 URL（每行一个）</span><textarea v-model="form.photosText" rows="7"></textarea></label>
-            <div v-if="photoUrls.length" class="front-photo-list">
-              <span v-for="(url, index) in photoUrls" :key="url + index">
-                {{ url }}
-                <button type="button" @click="removePhoto(index)">删除</button>
-              </span>
-            </div>
-            <div class="front-photo-upload">
-              <button type="button" :disabled="uploading" @click="imageInput?.click()">{{ uploading ? '上传中...' : '上传图片' }}</button>
-              <input ref="imageInput" type="file" accept="image/*" multiple class="hidden" @change="uploadImages" />
-            </div>
             <p v-if="error" class="front-photo-error" role="alert">{{ error }}</p>
           </div>
           <footer class="front-photo-footer">
             <button type="button" class="front-photo-cancel" @click="close">取消</button>
-            <button type="button" class="front-photo-save" :disabled="loading || saving || uploading" @click="save">{{ saving ? '保存中...' : '保存照片' }}</button>
+            <button type="button" class="front-photo-save" :disabled="loading || saving" @click="save">{{ saving ? '保存中...' : '保存照片' }}</button>
           </footer>
         </section>
       </div>
@@ -179,15 +152,16 @@ watch(() => props.modelValue, (open) => {
   border-radius: 1.35rem;
   background: #191A1B;
   color: white;
+  font-size: .75rem;
 }
 .front-photo-head,
 .front-photo-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: .8rem;
+  gap: .6rem;
   border-bottom: 1px solid rgba(255, 255, 255, .1);
-  padding: .85rem 1rem;
+  padding: .64rem .75rem;
 }
 .front-photo-footer {
   justify-content: flex-end;
@@ -195,25 +169,24 @@ watch(() => props.modelValue, (open) => {
   border-bottom: 0;
 }
 .front-photo-head button,
-.front-photo-cancel,
-.front-photo-upload button {
+.front-photo-cancel {
   border-radius: 999px;
   background: white;
-  padding: .55rem .75rem;
+  padding: .42rem .58rem;
   color: black;
   font-weight: 900;
 }
 .front-photo-head button {
   display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 1.7rem;
+  height: 1.7rem;
   place-items: center;
   border-radius: 999px;
   padding: 0;
 }
 .front-photo-head svg {
-  width: 1rem;
-  height: 1rem;
+  width: .75rem;
+  height: .75rem;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -221,13 +194,13 @@ watch(() => props.modelValue, (open) => {
 }
 .front-photo-body {
   display: grid;
-  gap: .8rem;
+  gap: .6rem;
   overflow-y: auto;
-  padding: 1rem;
+  padding: .75rem;
 }
 .front-photo-body label {
   display: grid;
-  gap: .42rem;
+  gap: .32rem;
 }
 .front-photo-body label span {
   color: rgba(255, 255, 255, .72);
@@ -237,41 +210,41 @@ watch(() => props.modelValue, (open) => {
 .front-photo-body textarea {
   min-width: 0;
   border: 1px solid rgba(255, 255, 255, .13);
-  border-radius: .9rem;
+  border-radius: .68rem;
   background: #202123;
-  padding: .72rem .82rem;
+  padding: .54rem .62rem;
   color: white;
   outline: none;
 }
-.front-photo-upload {
+.front-photo-tag-colors {
   display: flex;
-  justify-content: flex-end;
-}
-.front-photo-list {
-  display: grid;
+  flex-wrap: wrap;
   gap: .45rem;
 }
-.front-photo-list span {
-  display: flex;
-  min-width: 0;
+.front-photo-tag-colors label {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: .75rem;
-  border-radius: .85rem;
-  background: rgba(255, 255, 255, .06);
-  padding: .5rem .65rem;
-  color: rgba(255, 255, 255, .6);
-  font-size: .78rem;
+  gap: .35rem;
 }
-.front-photo-list button {
-  flex: 0 0 auto;
-  color: #fecaca;
+.front-photo-tag-colors span {
+  border: 1px solid;
+  border-radius: 999px;
+  padding: .25rem .5rem;
+  font-size: .68rem;
   font-weight: 900;
+}
+.front-photo-tag-colors input {
+  width: 1.55rem;
+  height: 1.55rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  padding: 0;
 }
 .front-photo-save {
   border-radius: 999px;
   background: #86efac;
-  padding: .62rem 1.1rem;
+  padding: .47rem .85rem;
   color: black;
   font-weight: 900;
 }

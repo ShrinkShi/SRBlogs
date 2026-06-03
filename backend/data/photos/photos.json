@@ -1,8 +1,22 @@
 [
   {
-    "url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1000&auto=format&fit=crop",
     "title": "远山",
-    "description": "照片墙示例图。"
+    "description": "照片墙示例图。",
+    "cover": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1000&auto=format&fit=crop",
+    "tags": [],
+    "tagColors": {},
+    "photos": [
+      {
+        "url": "http://127.0.0.1:8000/uploads/d34bf0eb50ad40808a2c7a3074457d00.png",
+        "title": "fontcolor",
+        "date": "2026-06-03"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1000&auto=format&fit=crop",
+        "title": "远山",
+        "description": "照片墙示例图。"
+      }
+    ]
   },
   {
     "url": "https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=1000&auto=format&fit=crop",

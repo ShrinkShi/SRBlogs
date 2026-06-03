@@ -172,6 +172,7 @@ export interface PhotoAlbum {
   cover?: string
   date?: string
   tags?: string[]
+  tagColors?: Record<string, string>
   photos: PhotoItem[]
 }
 
