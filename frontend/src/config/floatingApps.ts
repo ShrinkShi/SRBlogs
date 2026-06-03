@@ -5,7 +5,6 @@ export type FloatingAppIcon =
   | 'music'
   | 'search'
   | 'calculator'
-  | 'article'
 
 export type FloatingAppItem = {
   id: string
@@ -55,14 +54,5 @@ export const floatingApps: FloatingAppItem[] = [
     action: 'calculator',
     order: 40,
     tooltip: '打开轻量计算器'
-  },
-  {
-    id: 'posts',
-    name: '文章',
-    icon: 'article',
-    actionType: 'route',
-    action: '/posts',
-    order: 50,
-    tooltip: '进入文章归档'
   }
 ]

@@ -28,8 +28,8 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const imageInput = ref<HTMLInputElement | null>(null)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const emojiList = ['😀', '😂', '🥹', '👍', '❤️', '🔥', '🎉', '🤝']
-const visitor = ref<{ configured: { github: boolean; qq: boolean }; user: VisitorUser | null }>({
-  configured: { github: false, qq: false },
+const visitor = ref<{ configured: { github: boolean; qq: boolean; email?: boolean }; user: VisitorUser | null }>({
+  configured: { github: false, qq: false, email: true },
   user: null
 })
 const showDebug = false
@@ -59,10 +59,35 @@ const qqConfigured = computed(() => {
 const githubReady = computed(() => githubEnabled.value !== false && githubConfigured.value === true)
 const qqReady = computed(() => qqEnabled.value !== false && qqConfigured.value === true)
 const showLoginHint = computed(() => !session.isAdmin && !visitor.value.user)
-const adminAvatar = computed(() => settings.value?.avatar || settings.value?.avatarUrl || '')
+const adminAvatar = computed(() => {
+  const root = (settings.value || {}) as Record<string, unknown>
+  const profile = (root.profile || {}) as Record<string, unknown>
+  const candidates = [root.avatar, root.avatarUrl, root.authorAvatar, root.ownerAvatar, profile.avatar]
+  for (const value of candidates) {
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return ''
+})
+const adminName = computed(() => {
+  const root = (settings.value || {}) as Record<string, unknown>
+  const profile = (root.profile || {}) as Record<string, unknown>
+  const about = (root.about || {}) as Record<string, unknown>
+  const candidates = [
+    root.author,
+    root.authorName,
+    profile.name,
+    about.name,
+    root.ownerName,
+    root.siteOwner
+  ]
+  for (const value of candidates) {
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return '站点拥有者'
+})
 const activeCommenter = computed(() => {
   if (session.isAdmin) {
-    return { name: '管理员', avatar: adminAvatar.value, label: '管理员' }
+    return { name: adminName.value, avatar: adminAvatar.value, label: '管理员' }
   }
   if (visitor.value.user) {
     const user = visitor.value.user
@@ -241,6 +266,7 @@ async function deleteComment(item: CommentItem) {
 function providerLabel(provider?: string) {
   if (provider === 'admin') return '管理员'
   if (provider === 'qq') return 'QQ'
+  if (provider === 'email') return '邮箱'
   if (provider === 'github') return 'GitHub'
   return '访客'
 }

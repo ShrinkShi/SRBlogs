@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { contentApi, type AdminUser, type VisitorUser } from '@/api/content'
 
-type VisitorState = { configured: { github: boolean; qq: boolean }; user: VisitorUser | null }
+type VisitorState = { configured: { github: boolean; qq: boolean; email?: boolean }; user: VisitorUser | null }
 
 function apiBase() {
   const envBase = String(import.meta.env.VITE_API_BASE_URL || '').trim()
@@ -25,7 +25,7 @@ export const useSessionStore = defineStore('session', {
   getters: {
     isAdmin: (state) => Boolean(state.adminToken && state.admin),
     displayName: (state) => {
-      if (state.adminToken && state.admin) return `管理员 · ${state.admin.username}`
+      if (state.adminToken && state.admin) return state.admin.username
       if (state.visitor.user) return state.visitor.user.name || state.visitor.user.login || state.visitor.user.id
       return '游客'
     },
@@ -33,6 +33,7 @@ export const useSessionStore = defineStore('session', {
       if (state.adminToken && state.admin) return '管理员登录'
       if (state.visitor.user?.provider === 'github') return 'GitHub 登录'
       if (state.visitor.user?.provider === 'qq') return 'QQ 登录'
+      if (state.visitor.user?.provider === 'email') return '邮箱登录'
       return '游客登录'
     },
     avatar: (state) => state.visitor.user?.avatar || ''
@@ -42,7 +43,7 @@ export const useSessionStore = defineStore('session', {
       try {
         this.visitor = await contentApi.visitorMe()
       } catch {
-        this.visitor = { configured: { github: false, qq: false }, user: null }
+        this.visitor = { configured: { github: false, qq: false, email: true }, user: null }
       }
     },
     async refreshAdmin() {
@@ -67,11 +68,19 @@ export const useSessionStore = defineStore('session', {
       }
     },
     async loginAdmin(username: string, password: string) {
-      if (this.visitor.user) throw new Error('请先退出当前 GitHub / QQ 登录。')
+      if (this.visitor.user) throw new Error('请先退出当前登录账号。')
       const data = await contentApi.adminLogin(username, password)
       this.adminToken = data.access_token
       localStorage.setItem('srblogs-token', this.adminToken)
       await this.refreshAdmin()
+    },
+    async loginEmail(email: string, password: string, mode: 'login' | 'register') {
+      if (this.adminToken) throw new Error('请先退出管理员账号。')
+      const data = mode === 'register'
+        ? await contentApi.emailRegister({ email, password })
+        : await contentApi.emailLogin({ email, password })
+      this.visitor.user = data.user
+      this.visitor.configured = { ...this.visitor.configured, email: true }
     },
     logoutAdmin() {
       this.adminToken = ''

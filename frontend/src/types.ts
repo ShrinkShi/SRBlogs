@@ -182,7 +182,7 @@ export interface CommentItem {
   created_at: string
   avatar?: string
   githubLogin?: string
-  provider?: 'github' | 'qq' | 'admin' | ''
+  provider?: 'github' | 'qq' | 'email' | 'admin' | ''
   providerId?: string
   parentId?: string
   replyTo?: { id?: string; author?: string; content?: string }

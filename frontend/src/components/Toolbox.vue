@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import DiscoveryResultCard from './DiscoveryResultCard.vue'
 import FrontendAdminSettings from './FrontendAdminSettings.vue'
 import StateBlock from './StateBlock.vue'
@@ -29,6 +29,9 @@ const activePanel = computed<ToolPanel | null>({
 const calculatorExpr = ref('')
 const calculatorResult = ref('')
 const calculatorError = ref('')
+const calculatorPos = reactive({ x: 20, y: 96 })
+const calculatorDrag = reactive({ active: false, startX: 0, startY: 0, originX: 0, originY: 0 })
+const calculatorPositionReady = ref(false)
 
 const searchQ = ref('')
 const searchType = ref<DiscoveryType>('all')
@@ -96,8 +99,62 @@ function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') closeAll()
 }
 
+const calculatorDisplay = computed(() => calculatorResult.value || calculatorExpr.value || '0')
+const calculatorHistory = computed(() => calculatorResult.value ? calculatorExpr.value : '')
+const calculatorStyle = computed(() => ({
+  left: `${calculatorPos.x}px`,
+  top: `${calculatorPos.y}px`
+}))
+const memoryKeys = ['MC', 'MR', 'M+', 'M−', 'MS', 'M⌄']
+
+function clampCalculatorPosition() {
+  const width = Math.min(390, window.innerWidth - 24)
+  const height = Math.min(650, window.innerHeight - 24)
+  calculatorPos.x = Math.max(12, Math.min(calculatorPos.x, window.innerWidth - width - 12))
+  calculatorPos.y = Math.max(12, Math.min(calculatorPos.y, window.innerHeight - height - 12))
+}
+
+function ensureCalculatorPosition() {
+  if (calculatorPositionReady.value) return
+  calculatorPos.x = Math.max(12, Math.min(28, window.innerWidth - 390))
+  calculatorPos.y = Math.max(12, Math.min(88, window.innerHeight - 650))
+  calculatorPositionReady.value = true
+  clampCalculatorPosition()
+}
+
+function onCalculatorDrag(event: PointerEvent) {
+  if (!calculatorDrag.active) return
+  calculatorPos.x = calculatorDrag.originX + event.clientX - calculatorDrag.startX
+  calculatorPos.y = calculatorDrag.originY + event.clientY - calculatorDrag.startY
+  clampCalculatorPosition()
+}
+
+function stopCalculatorDrag() {
+  calculatorDrag.active = false
+  document.removeEventListener('pointermove', onCalculatorDrag)
+  document.removeEventListener('pointerup', stopCalculatorDrag)
+}
+
+function startCalculatorDrag(event: PointerEvent) {
+  if ((event.target as HTMLElement).closest('[data-clickable="true"]')) return
+  calculatorDrag.active = true
+  calculatorDrag.startX = event.clientX
+  calculatorDrag.startY = event.clientY
+  calculatorDrag.originX = calculatorPos.x
+  calculatorDrag.originY = calculatorPos.y
+  document.addEventListener('pointermove', onCalculatorDrag)
+  document.addEventListener('pointerup', stopCalculatorDrag, { once: true })
+}
+
 function appendCalc(value: string) {
-  calculatorExpr.value += value
+  const normalized: Record<string, string> = { '×': '*', '÷': '/', '−': '-' }
+  const next = normalized[value] || value
+  if (calculatorResult.value) {
+    calculatorExpr.value = '+-*/'.includes(next) ? `${calculatorResult.value}${next}` : next
+  } else {
+    calculatorExpr.value += next
+  }
+  calculatorResult.value = ''
   calculatorError.value = ''
 }
 
@@ -106,6 +163,12 @@ function backspaceCalc() {
 }
 
 function clearCalc() {
+  calculatorExpr.value = ''
+  calculatorResult.value = ''
+  calculatorError.value = ''
+}
+
+function clearEntryCalc() {
   calculatorExpr.value = ''
   calculatorResult.value = ''
   calculatorError.value = ''
@@ -186,6 +249,67 @@ function calculate() {
   }
 }
 
+function currentCalcNumber() {
+  const source = calculatorResult.value || calculatorExpr.value || '0'
+  const value = Number(source)
+  if (Number.isFinite(value)) return value
+  return Number(evaluateExpression(source))
+}
+
+function setCalcNumber(value: number) {
+  if (!Number.isFinite(value)) throw new Error('结果无效')
+  calculatorExpr.value = Number(value.toFixed(10)).toString()
+  calculatorResult.value = ''
+  calculatorError.value = ''
+}
+
+function applyUnaryCalc(type: 'percent' | 'inverse' | 'square' | 'sqrt' | 'sign') {
+  try {
+    const value = currentCalcNumber()
+    if (type === 'percent') setCalcNumber(value / 100)
+    if (type === 'inverse') {
+      if (value === 0) throw new Error('除数不能为 0')
+      setCalcNumber(1 / value)
+    }
+    if (type === 'square') setCalcNumber(value * value)
+    if (type === 'sqrt') {
+      if (value < 0) throw new Error('负数不能开平方')
+      setCalcNumber(Math.sqrt(value))
+    }
+    if (type === 'sign') setCalcNumber(-value)
+  } catch (exc) {
+    calculatorError.value = exc instanceof Error ? exc.message : '计算失败'
+    calculatorResult.value = ''
+  }
+}
+
+const calculatorKeys: { label: string; action: () => void; className?: string }[] = [
+  { label: '%', action: () => applyUnaryCalc('percent'), className: 'toolbox-key-function' },
+  { label: 'CE', action: clearEntryCalc, className: 'toolbox-key-function' },
+  { label: 'C', action: clearCalc, className: 'toolbox-key-function' },
+  { label: '⌫', action: backspaceCalc, className: 'toolbox-key-function' },
+  { label: '1/x', action: () => applyUnaryCalc('inverse'), className: 'toolbox-key-function' },
+  { label: 'x²', action: () => applyUnaryCalc('square'), className: 'toolbox-key-function' },
+  { label: '²√x', action: () => applyUnaryCalc('sqrt'), className: 'toolbox-key-function' },
+  { label: '÷', action: () => appendCalc('÷'), className: 'toolbox-key-operator' },
+  { label: '7', action: () => appendCalc('7') },
+  { label: '8', action: () => appendCalc('8') },
+  { label: '9', action: () => appendCalc('9') },
+  { label: '×', action: () => appendCalc('×'), className: 'toolbox-key-operator' },
+  { label: '4', action: () => appendCalc('4') },
+  { label: '5', action: () => appendCalc('5') },
+  { label: '6', action: () => appendCalc('6') },
+  { label: '−', action: () => appendCalc('−'), className: 'toolbox-key-operator' },
+  { label: '1', action: () => appendCalc('1') },
+  { label: '2', action: () => appendCalc('2') },
+  { label: '3', action: () => appendCalc('3') },
+  { label: '+', action: () => appendCalc('+'), className: 'toolbox-key-operator' },
+  { label: '+/−', action: () => applyUnaryCalc('sign') },
+  { label: '0', action: () => appendCalc('0') },
+  { label: '.', action: () => appendCalc('.') },
+  { label: '=', action: calculate, className: 'toolbox-key-main' }
+]
+
 async function loadTags() {
   try {
     tags.value = await contentApi.tags()
@@ -212,6 +336,7 @@ async function runSearch() {
 }
 
 watch(activePanel, (panel) => {
+  if (panel === 'calculator') ensureCalculatorPosition()
   if (panel === 'search') {
     if (!tags.value.length) loadTags()
     if (!searchResult.value.items.length) runSearch()
@@ -224,6 +349,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
+  stopCalculatorDrag()
 })
 </script>
 
@@ -232,29 +358,49 @@ onBeforeUnmount(() => {
     <section
       v-if="activePanel === 'calculator'"
       data-toolbox-modal
-      class="toolbox-calculator-panel fixed bottom-24 left-5 z-[92] grid w-[min(22rem,calc(100vw-2rem))] gap-3 rounded-[28px] border p-4 shadow-2xl toolbox-night"
+      class="toolbox-calculator-panel toolbox-night"
+      :style="calculatorStyle"
       role="dialog"
       aria-label="计算器"
       @click.stop
     >
-      <header class="flex items-center justify-between gap-3">
-        <div>
-          <p class="text-xs font-bold uppercase tracking-[.22em] text-cyan-100/45">calculator</p>
-          <h2 class="text-xl font-black">计算器</h2>
+      <header class="toolbox-calculator-titlebar" @pointerdown="startCalculatorDrag">
+        <div class="toolbox-calculator-title">
+          <span class="toolbox-calculator-appicon">▦</span>
+          <span>计算器</span>
         </div>
-        <button type="button" data-clickable="true" class="rounded-full bg-white px-4 py-1.5 text-sm font-black text-black" @click="closePanel">关闭</button>
+        <div class="toolbox-calculator-window-actions" aria-hidden="true">
+          <span>−</span>
+          <span>□</span>
+        </div>
+        <button type="button" data-clickable="true" class="toolbox-calculator-close" aria-label="关闭计算器" @click="closePanel">×</button>
       </header>
-      <div class="rounded-[22px] border border-white/12 bg-white/[0.09] p-3">
-        <p class="min-h-6 break-all text-base text-white/80">{{ calculatorExpr || '0' }}</p>
-        <p class="mt-1 min-h-8 text-2xl font-black text-cyan-100">{{ calculatorResult }}</p>
-        <p v-if="calculatorError" class="mt-2 text-sm text-red-200">{{ calculatorError }}</p>
+      <div class="toolbox-calculator-mode-row">
+        <button type="button" data-clickable="true" aria-label="打开菜单">☰</button>
+        <strong>标准</strong>
+        <span>▱</span>
+        <button type="button" data-clickable="true" aria-label="历史记录">↺</button>
       </div>
-      <div class="grid grid-cols-4 gap-2">
-        <button v-for="key in ['7','8','9','/','4','5','6','*','1','2','3','-','0','.','(',')']" :key="key" type="button" data-clickable="true" class="toolbox-key" @click="appendCalc(key)">{{ key }}</button>
-        <button type="button" data-clickable="true" class="toolbox-key" @click="backspaceCalc">退格</button>
-        <button type="button" data-clickable="true" class="toolbox-key" @click="appendCalc('+')">+</button>
-        <button type="button" data-clickable="true" class="toolbox-key" @click="clearCalc">清空</button>
-        <button type="button" data-clickable="true" class="toolbox-key toolbox-key-main" @click="calculate">=</button>
+      <div class="toolbox-calculator-display">
+        <p v-if="calculatorHistory">{{ calculatorHistory }}</p>
+        <strong>{{ calculatorDisplay }}</strong>
+        <small v-if="calculatorError">{{ calculatorError }}</small>
+      </div>
+      <div class="toolbox-calculator-memory">
+        <button v-for="key in memoryKeys" :key="key" type="button" data-clickable="true" disabled>{{ key }}</button>
+      </div>
+      <div class="toolbox-calculator-grid">
+        <button
+          v-for="key in calculatorKeys"
+          :key="key.label"
+          type="button"
+          data-clickable="true"
+          class="toolbox-key"
+          :class="key.className"
+          @click="key.action"
+        >
+          {{ key.label }}
+        </button>
       </div>
     </section>
 
@@ -409,22 +555,162 @@ onBeforeUnmount(() => {
   color: white;
   transform: scale(1.02);
 }
-.toolbox-key {
+.toolbox-calculator-panel {
+  position: fixed;
+  z-index: 92;
+  display: grid;
+  width: min(24.5rem, calc(100vw - 1.5rem));
+  gap: .35rem;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: .35rem;
+  background: #202020 !important;
+  color: white;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .58);
+  user-select: none;
+}
+.toolbox-calculator-titlebar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: .55rem;
   min-height: 2.55rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, .14);
-  background: white;
-  color: black;
-  font-weight: 900;
-  transition: transform .18s var(--motion-ease), background .18s var(--motion-ease);
+  padding: .25rem .5rem .25rem .8rem;
+  cursor: grab;
+}
+.toolbox-calculator-titlebar:active {
+  cursor: grabbing;
+}
+.toolbox-calculator-title,
+.toolbox-calculator-window-actions {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+}
+.toolbox-calculator-title {
+  min-width: 0;
+  font-size: .86rem;
+  font-weight: 600;
+}
+.toolbox-calculator-appicon {
+  color: #7dd3fc;
+}
+.toolbox-calculator-window-actions {
+  color: rgba(255, 255, 255, .52);
+  font-size: 1rem;
+}
+.toolbox-calculator-close {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border-radius: .25rem;
+  color: rgba(255, 255, 255, .78);
+  font-size: 1.25rem;
+}
+.toolbox-calculator-close:hover {
+  background: #c42b1c;
+  color: white;
+}
+.toolbox-calculator-mode-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: .9rem;
+  padding: .45rem .9rem .1rem;
+  color: white;
+}
+.toolbox-calculator-mode-row button {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border-radius: .35rem;
+  color: rgba(255, 255, 255, .82);
+}
+.toolbox-calculator-mode-row button:hover {
+  background: rgba(255, 255, 255, .08);
+}
+.toolbox-calculator-mode-row strong {
+  font-size: 1.55rem;
+  font-weight: 500;
+}
+.toolbox-calculator-mode-row span {
+  color: rgba(255, 255, 255, .72);
+  font-size: 1.35rem;
+}
+.toolbox-calculator-display {
+  display: grid;
+  justify-items: end;
+  min-height: 8.2rem;
+  align-content: end;
+  gap: .35rem;
+  padding: .75rem 1rem 1rem;
+}
+.toolbox-calculator-display p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: rgba(255, 255, 255, .54);
+  font-size: .9rem;
+}
+.toolbox-calculator-display strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: white;
+  font-size: 3.2rem;
+  font-weight: 500;
+  line-height: 1.08;
+}
+.toolbox-calculator-display small {
+  color: #fca5a5;
+}
+.toolbox-calculator-memory {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: .1rem;
+  padding: 0 .2rem;
+}
+.toolbox-calculator-memory button {
+  min-height: 2.15rem;
+  border-radius: .25rem;
+  color: rgba(255, 255, 255, .82);
+  font-size: .78rem;
+}
+.toolbox-calculator-memory button:disabled {
+  color: rgba(255, 255, 255, .32);
+}
+.toolbox-calculator-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: .18rem;
+  padding: 0 .18rem .18rem;
+}
+.toolbox-key {
+  min-height: 4.25rem;
+  border-radius: .28rem;
+  border: 0;
+  background: #3a3a3a;
+  color: white;
+  font-size: 1.35rem;
+  font-weight: 400;
+  transition: background .12s ease, transform .12s ease;
 }
 .toolbox-key:hover {
-  transform: scale(1.025);
-  background: rgba(255, 255, 255, .88);
+  background: #454545;
+}
+.toolbox-key:active {
+  transform: scale(.985);
+  background: #4b4b4b;
+}
+.toolbox-key-function,
+.toolbox-key-operator {
+  background: #323232;
 }
 .toolbox-key-main {
-  background: #86efac;
+  background: #d8d8d8;
   color: black;
+}
+.toolbox-key-main:hover {
+  background: #f1f1f1;
 }
 .toolbox-setting {
   display: grid;
@@ -437,8 +723,6 @@ onBeforeUnmount(() => {
   font-size: .9rem;
 }
 .toolbox-calculator-panel {
-  background: var(--ct-toolbox-calculator-panel-bg, #191A1B) !important;
-  color: var(--ct-toolbox-calculator-panel-text, currentColor);
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -571,11 +855,16 @@ onBeforeUnmount(() => {
   border-color: rgba(15, 23, 42, .12) !important;
 }
 
-.toolbox-night.toolbox-modal-panel,
-.toolbox-night.toolbox-calculator-panel {
+.toolbox-night.toolbox-modal-panel {
   color: rgb(248, 250, 252) !important;
   background: #191A1B !important;
   border-color: rgba(255, 255, 255, .14) !important;
+}
+
+.toolbox-night.toolbox-calculator-panel {
+  color: rgb(248, 250, 252) !important;
+  background: #202020 !important;
+  border-color: rgba(255, 255, 255, .12) !important;
 }
 
 .toolbox-day .toolbox-menu {

@@ -2,7 +2,7 @@ import { http } from './http'
 import type { AboutPageConfig, ArchiveResponse, CommentAttachment, CommentItem, ContentItem, DiscoveryType, GithubSummary, SearchResponse, TagItem } from '@/types'
 
 export type CommentResource = 'posts' | 'moments' | 'chatters' | 'music' | 'photos'
-export type VisitorUser = { provider: 'github' | 'qq'; id: string; login?: string; name?: string; avatar?: string; html_url?: string }
+export type VisitorUser = { provider: 'github' | 'qq' | 'email'; id: string; login?: string; name?: string; avatar?: string; html_url?: string }
 export type AdminUser = { username: string; role: 'admin' }
 export type ContentLikeStatus = { liked: boolean; like_count: number }
 export type InstallStatus = { installed: boolean; needsInstall: boolean; missingItems: string[] }
@@ -165,11 +165,19 @@ export const contentApi = {
     return data
   },
   visitorMe: async () => {
-    const { data } = await http.get<{ configured: { github: boolean; qq: boolean }; user: null | VisitorUser }>('/auth/visitor/me')
+    const { data } = await http.get<{ configured: { github: boolean; qq: boolean; email?: boolean }; user: null | VisitorUser }>('/auth/visitor/me')
     return data
   },
   visitorLogout: async () => {
     const { data } = await http.post<{ ok: boolean }>('/auth/visitor/logout')
+    return data
+  },
+  emailRegister: async (payload: { email: string; password: string; name?: string }) => {
+    const { data } = await http.post<{ ok: boolean; user: VisitorUser }>('/auth/email/register', payload)
+    return data
+  },
+  emailLogin: async (payload: { email: string; password: string }) => {
+    const { data } = await http.post<{ ok: boolean; user: VisitorUser }>('/auth/email/login', payload)
     return data
   },
   adminLogin: async (username: string, password: string) => {

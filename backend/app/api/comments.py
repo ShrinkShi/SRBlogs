@@ -95,11 +95,14 @@ def _admin_avatar() -> str:
     data = JsonStore(get_settings().data_path, "settings.json", {}).read()
     if not isinstance(data, dict):
         return ""
+    profile = data.get("profile") if isinstance(data.get("profile"), dict) else {}
     candidates = [
         data.get("avatar"),
         data.get("avatarUrl"),
         data.get("adminAvatar"),
         data.get("authorAvatar"),
+        data.get("ownerAvatar"),
+        profile.get("avatar"),
     ]
     for value in candidates:
         if value:
@@ -107,12 +110,34 @@ def _admin_avatar() -> str:
     return ""
 
 
+def _admin_name() -> str:
+    data = JsonStore(get_settings().data_path, "settings.json", {}).read()
+    if not isinstance(data, dict):
+        return "站点拥有者"
+    profile = data.get("profile") if isinstance(data.get("profile"), dict) else {}
+    about = data.get("about") if isinstance(data.get("about"), dict) else {}
+    candidates = [
+        data.get("author"),
+        data.get("authorName"),
+        profile.get("name"),
+        about.get("name"),
+        data.get("ownerName"),
+        data.get("siteOwner"),
+    ]
+    for value in candidates:
+        if value:
+            cleaned = bleach.clean(str(value), tags=[], strip=True).strip()
+            if cleaned:
+                return cleaned
+    return "站点拥有者"
+
+
 def _comment_identity(request: Request, admin_actor: str | None) -> dict:
     if admin_actor:
         return {
             "provider": "admin",
             "id": admin_actor,
-            "name": "管理员",
+            "name": _admin_name(),
             "avatar": _admin_avatar(),
         }
     visitor_user = read_visitor_user(request)

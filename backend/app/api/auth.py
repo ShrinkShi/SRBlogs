@@ -1,8 +1,11 @@
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 from urllib.parse import parse_qs, urlencode, urlparse
+import hashlib
+import hmac
 import json
 import re
+import secrets
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -23,6 +26,7 @@ GITHUB_STATE_COOKIE = "srblogs_github_state"
 GITHUB_RETURN_COOKIE = "srblogs_github_return"
 QQ_STATE_COOKIE = "srblogs_qq_state"
 QQ_RETURN_COOKIE = "srblogs_qq_return"
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -87,6 +91,48 @@ def _github_configured() -> bool:
 def _qq_configured() -> bool:
     app_id, app_secret = _qq_oauth_config()
     return bool(app_id and app_secret)
+
+
+def _email_accounts_store() -> JsonStore:
+    return JsonStore(get_settings().data_path, "visitor_accounts.json", {})
+
+
+def _normalize_email(email: str) -> str:
+    value = str(email or "").strip().lower()
+    if not EMAIL_RE.match(value):
+        raise HTTPException(status_code=400, detail="邮箱格式不正确。")
+    return value
+
+
+def _hash_password(password: str, salt: str) -> str:
+    digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 180_000)
+    return digest.hex()
+
+
+def _verify_email_password(password: str, account: dict) -> bool:
+    salt = str(account.get("salt") or "")
+    password_hash = str(account.get("passwordHash") or "")
+    if not salt or not password_hash:
+        return False
+    candidate = _hash_password(password, salt)
+    return hmac.compare_digest(candidate, password_hash)
+
+
+def _email_public_user(email: str, account: dict) -> dict:
+    name = str(account.get("name") or email.split("@", 1)[0])
+    return {
+        "provider": "email",
+        "id": email,
+        "login": "",
+        "name": name,
+        "avatar": str(account.get("avatar") or ""),
+        "html_url": "",
+    }
+
+
+def _set_visitor_cookie(response: Response, user: dict) -> None:
+    secure = get_settings().app_env == "production"
+    response.set_cookie(VISITOR_COOKIE, _encode_visitor_user(user), httponly=True, samesite="lax", secure=secure, max_age=7 * 86400)
 
 
 def _frontend_url(request: Request) -> str:
@@ -191,6 +237,7 @@ def visitor_me(request: Request):
         "configured": {
             "github": _github_configured(),
             "qq": _qq_configured(),
+            "email": True,
         },
         "user": read_visitor_user(request),
     }
@@ -270,6 +317,52 @@ def visitor_logout(response: Response):
     response.delete_cookie(VISITOR_COOKIE)
     response.delete_cookie(GITHUB_COOKIE)
     return {"ok": True}
+
+
+@router.post("/email/register")
+def email_register(payload: dict, response: Response):
+    email = _normalize_email(str(payload.get("email") or ""))
+    password = str(payload.get("password") or "")
+    name = str(payload.get("name") or "").strip() or email.split("@", 1)[0]
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="密码至少需要 8 位。")
+    store = _email_accounts_store()
+    accounts = store.read()
+    if not isinstance(accounts, dict):
+        accounts = {}
+    if email in accounts:
+        raise HTTPException(status_code=409, detail="该邮箱已注册，请直接登录。")
+    salt = secrets.token_hex(16)
+    account = {
+        "email": email,
+        "name": name[:40],
+        "avatar": "",
+        "salt": salt,
+        "passwordHash": _hash_password(password, salt),
+        "createdAt": datetime.now(timezone.utc).isoformat(),
+        "updatedAt": datetime.now(timezone.utc).isoformat(),
+    }
+    accounts[email] = account
+    store.write(accounts)
+    user = _email_public_user(email, account)
+    _set_visitor_cookie(response, user)
+    return {"ok": True, "user": user}
+
+
+@router.post("/email/login")
+def email_login(payload: dict, response: Response):
+    email = _normalize_email(str(payload.get("email") or ""))
+    password = str(payload.get("password") or "")
+    accounts = _email_accounts_store().read()
+    account = accounts.get(email) if isinstance(accounts, dict) else None
+    if not isinstance(account, dict) or not _verify_email_password(password, account):
+        raise HTTPException(status_code=401, detail="邮箱或密码错误。")
+    account["lastLoginAt"] = datetime.now(timezone.utc).isoformat()
+    accounts[email] = account
+    _email_accounts_store().write(accounts)
+    user = _email_public_user(email, account)
+    _set_visitor_cookie(response, user)
+    return {"ok": True, "user": user}
 
 
 @router.get("/qq/login")

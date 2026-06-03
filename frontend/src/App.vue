@@ -161,7 +161,7 @@ watch([settings, () => ui.fontScale], () => {
   <div class="relative z-10 min-h-screen">
     <AppNav v-if="!installRoute" />
     <Toolbox v-if="!installRoute" v-model:active-panel="toolboxPanel" :settings="settings" @settings-saved="reloadSettings" />
-    <FloatingAppSidebar v-if="!installRoute" @action="handleFloatingAppAction" />
+    <FloatingAppSidebar v-if="!installRoute" :settings="settings" @action="handleFloatingAppAction" />
     <FloatingMusicPlayer v-if="showFloatingPlayer" />
     <main :class="installRoute ? 'min-h-screen' : 'site-page-container pb-28 pt-32 md:pt-36'">
       <RouterView v-slot="{ Component }">
