@@ -515,12 +515,10 @@ watch(() => props.modelValue, (open) => {
   width: .96rem;
   height: .96rem;
   object-fit: contain;
-  filter: invert(1);
   opacity: .82;
-  transition: filter .18s ease, opacity .18s ease, transform .18s ease;
+  transition: opacity .18s ease, transform .18s ease;
 }
 .front-editor-cover-upload:hover img {
-  filter: invert(44%) sepia(72%) saturate(1052%) hue-rotate(318deg) brightness(107%) contrast(96%);
   opacity: 1;
   transform: translateY(-1px);
 }

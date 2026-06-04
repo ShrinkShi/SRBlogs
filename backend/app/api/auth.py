@@ -154,6 +154,14 @@ def _frontend_url(request: Request) -> str:
     return fallback
 
 
+def _oauth_callback_url(request: Request, route_name: str) -> str:
+    callback = request.url_for(route_name)
+    public_base = get_settings().public_base_url.strip().rstrip("/")
+    if not public_base:
+        return str(callback)
+    return f"{public_base}{callback.path}"
+
+
 def _encode_visitor_user(user: dict) -> str:
     settings = get_settings()
     payload = {
@@ -250,7 +258,7 @@ def github_login(request: Request):
     if not _github_configured():
         raise HTTPException(status_code=503, detail="站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。")
     state = uuid4().hex
-    callback = str(request.url_for("github_callback"))
+    callback = _oauth_callback_url(request, "github_callback")
     url = (
         "https://github.com/login/oauth/authorize"
         f"?client_id={client_id}"
@@ -275,7 +283,7 @@ async def github_callback(request: Request, code: str = "", state: str = ""):
         raise HTTPException(status_code=503, detail="站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。")
     if not state or not expected_state or state != expected_state:
         raise HTTPException(status_code=400, detail="Invalid GitHub OAuth state")
-    callback = str(request.url_for("github_callback"))
+    callback = _oauth_callback_url(request, "github_callback")
     async with httpx.AsyncClient(timeout=15) as client:
         token_resp = await client.post(
             "https://github.com/login/oauth/access_token",
@@ -372,7 +380,7 @@ def qq_login(request: Request):
     if not _qq_configured():
         raise HTTPException(status_code=503, detail="站点暂未开启 QQ 留言，请稍后再试或联系站点管理员。")
     state = uuid4().hex
-    callback = str(request.url_for("qq_callback"))
+    callback = _oauth_callback_url(request, "qq_callback")
     params = urlencode({
         "response_type": "code",
         "client_id": app_id,
@@ -397,7 +405,7 @@ async def qq_callback(request: Request, code: str = "", state: str = ""):
         raise HTTPException(status_code=503, detail="站点暂未开启 QQ 留言，请稍后再试或联系站点管理员。")
     if not state or not expected_state or state != expected_state:
         raise HTTPException(status_code=400, detail="Invalid QQ OAuth state")
-    callback = str(request.url_for("qq_callback"))
+    callback = _oauth_callback_url(request, "qq_callback")
     async with httpx.AsyncClient(timeout=15) as client:
         token_resp = await client.get(
             "https://graph.qq.com/oauth2.0/token",

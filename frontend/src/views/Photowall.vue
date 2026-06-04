@@ -30,7 +30,21 @@ const error = ref('')
 const albumPhotoInput = ref<HTMLInputElement | null>(null)
 const uploadingAlbumPhoto = ref(false)
 const dragReadyIndex = ref<number | null>(null)
-const draggingPhotoIndex = ref<number | null>(null)
+const dragPhotos = ref<PhotoItem[] | null>(null)
+const draggedPhotoUrl = ref('')
+const dragState = reactive({
+  active: false,
+  fromIndex: -1,
+  currentIndex: -1,
+  pointerId: 0,
+  startX: 0,
+  startY: 0,
+  x: 0,
+  y: 0,
+  moved: false,
+  lastSwapAt: 0
+})
+const suppressPhotoClick = ref(false)
 let photoLongPressTimer: number | undefined
 const createOpen = ref(false)
 const editOpen = ref(false)
@@ -40,6 +54,12 @@ const toneMap = reactive<Record<string, ImageTone>>({})
 const title = computed(() => pageConfig.value?.pageText?.photos?.title || '相册')
 const subtitle = computed(() => pageConfig.value?.pageText?.photos?.subtitle || '相册记录从后端 JSON 动态读取，点击封面可查看组内照片。')
 useSeo({ title: () => title.value, description: () => subtitle.value, path: '/photowall' })
+const visiblePhotos = computed(() => dragPhotos.value || activeAlbum.value?.photos || [])
+const draggedPhoto = computed(() => visiblePhotos.value.find((photo) => photo.url === draggedPhotoUrl.value) || null)
+const dragGhostStyle = computed(() => ({
+  left: `${dragState.x}px`,
+  top: `${dragState.y}px`
+}))
 
 function slugify(value: string, fallback: string) {
   const slug = value
@@ -114,21 +134,34 @@ function openAlbumEditor(album: AlbumView) {
   editOpen.value = true
 }
 
+function openAlbum(album: AlbumView) {
+  activeAlbum.value = album
+  active.value = album.photos[0] || null
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function closeAlbum() {
+  activeAlbum.value = null
+  active.value = null
+  resetPhotoDrag()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
 async function afterAlbumSaved() {
   activeAlbum.value = null
   active.value = null
   await load()
 }
 
-function toAlbumPayload(album: AlbumView): PhotoAlbum {
+function toAlbumPayload(album: AlbumView, photos = album.photos): PhotoAlbum {
   return {
     title: album.title,
     description: album.description,
-    cover: album.cover,
+    cover: photos[0]?.url || '',
     date: album.date,
     tags: album.tags || [],
     tagColors: album.tagColors || {},
-    photos: album.photos.map((photo) => ({ ...photo }))
+    photos: photos.map((photo) => ({ ...photo }))
   }
 }
 
@@ -146,16 +179,12 @@ function refreshActiveAlbum(sourceIndex: number, preferredUrl = '') {
 
 async function persistAlbumPhotos(album: AlbumView, photos: PhotoItem[], preferredUrl = '') {
   if (album.sourceIndex < 0 || album.sourceIndex >= rawPhotos.value.length) return
-  const payload = toAlbumPayload(album)
-  payload.photos = photos.map((photo) => ({ ...photo }))
-  if (!payload.photos.some((photo) => photo.url === payload.cover)) {
-    payload.cover = payload.photos[0]?.url || ''
-  }
+  const payload = toAlbumPayload(album, photos)
   const next = [...rawPhotos.value]
   next[album.sourceIndex] = payload
-  await contentApi.adminPutJson('/photos', next)
   rawPhotos.value = next
   refreshActiveAlbum(album.sourceIndex, preferredUrl)
+  await contentApi.adminPutJson('/photos', next)
 }
 
 async function uploadAlbumPhotos(event: Event) {
@@ -186,8 +215,9 @@ async function uploadAlbumPhotos(event: Event) {
 
 async function deleteAlbumPhoto(index: number) {
   if (!activeAlbum.value || index < 0) return
-  const removed = activeAlbum.value.photos[index]
-  const nextPhotos = activeAlbum.value.photos.filter((_, photoIndex) => photoIndex !== index)
+  const photos = visiblePhotos.value
+  const removed = photos[index]
+  const nextPhotos = photos.filter((_, photoIndex) => photoIndex !== index)
   const preferredUrl = active.value?.url === removed?.url
     ? nextPhotos[Math.max(0, index - 1)]?.url || nextPhotos[0]?.url || ''
     : active.value?.url || ''
@@ -199,64 +229,135 @@ async function deleteAlbumPhoto(index: number) {
   }
 }
 
-function armPhotoDrag(index: number) {
+function selectPhoto(photo: PhotoItem) {
+  if (suppressPhotoClick.value) {
+    suppressPhotoClick.value = false
+    return
+  }
+  active.value = photo
+}
+
+function armPhotoDrag(index: number, event: PointerEvent) {
   if (!session.isAdmin) return
+  if (event.pointerType === 'mouse' && event.button !== 0) return
   window.clearTimeout(photoLongPressTimer)
+  dragState.startX = event.clientX
+  dragState.startY = event.clientY
+  dragState.x = event.clientX
+  dragState.y = event.clientY
+  dragState.pointerId = event.pointerId
   photoLongPressTimer = window.setTimeout(() => {
+    const source = activeAlbum.value?.photos[index]
+    if (!source) return
     dragReadyIndex.value = index
-  }, 320)
+    dragPhotos.value = [...(activeAlbum.value?.photos || [])]
+    draggedPhotoUrl.value = source.url
+    dragState.active = true
+    dragState.fromIndex = index
+    dragState.currentIndex = index
+    dragState.moved = false
+    window.addEventListener('pointermove', movePhotoDrag)
+    window.addEventListener('pointerup', finishPhotoDrag)
+    window.addEventListener('pointercancel', cancelPhotoDrag)
+  }, 220)
 }
 
 function disarmPhotoDrag() {
   window.clearTimeout(photoLongPressTimer)
-  if (draggingPhotoIndex.value === null) dragReadyIndex.value = null
+  if (!dragState.active) dragReadyIndex.value = null
 }
 
-function startPhotoDrag(index: number, event: DragEvent) {
-  if (!session.isAdmin || dragReadyIndex.value !== index) {
-    event.preventDefault()
-    return
-  }
-  draggingPhotoIndex.value = index
-  event.dataTransfer?.setData('text/plain', String(index))
-  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move'
+function photoIndexFromPoint(x: number, y: number) {
+  const target = document.elementFromPoint(x, y)
+  const node = target?.closest('[data-photo-index]')
+  if (!(node instanceof HTMLElement)) return -1
+  const value = Number(node.dataset.photoIndex)
+  return Number.isFinite(value) ? value : -1
 }
 
-async function dropPhoto(index: number, event: DragEvent) {
+function movePhotoDrag(event: PointerEvent) {
+  if (!dragState.active || event.pointerId !== dragState.pointerId || !dragPhotos.value) return
   event.preventDefault()
-  if (!activeAlbum.value || draggingPhotoIndex.value === null || draggingPhotoIndex.value === index) {
-    endPhotoDrag()
+  dragState.x = event.clientX
+  dragState.y = event.clientY
+  if (Math.abs(event.clientX - dragState.startX) > 4 || Math.abs(event.clientY - dragState.startY) > 4) {
+    dragState.moved = true
+  }
+  const overIndex = photoIndexFromPoint(event.clientX, event.clientY)
+  if (overIndex < 0 || overIndex === dragState.currentIndex || overIndex >= dragPhotos.value.length) return
+  const now = Date.now()
+  if (dragState.lastSwapAt && now - dragState.lastSwapAt < 500) return
+
+  const next = [...dragPhotos.value]
+  const [moved] = next.splice(dragState.currentIndex, 1)
+  next.splice(overIndex, 0, moved)
+  dragPhotos.value = next
+  dragState.currentIndex = overIndex
+  dragState.lastSwapAt = now
+}
+
+async function finishPhotoDrag(event?: PointerEvent) {
+  if (event && dragState.active && event.pointerId !== dragState.pointerId) return
+  window.clearTimeout(photoLongPressTimer)
+  cleanupPhotoDragListeners()
+  if (!dragState.active) {
+    resetPhotoDrag()
     return
   }
-  const from = draggingPhotoIndex.value
-  const nextPhotos = [...activeAlbum.value.photos]
-  const [moved] = nextPhotos.splice(from, 1)
-  nextPhotos.splice(index, 0, moved)
+  const album = activeAlbum.value
+  const nextPhotos = dragPhotos.value ? [...dragPhotos.value] : []
+  const changed = dragState.fromIndex !== dragState.currentIndex
+  const preferredUrl = active.value?.url || draggedPhotoUrl.value
+  resetPhotoDrag()
+  suppressPhotoClick.value = true
+  window.setTimeout(() => (suppressPhotoClick.value = false), 60)
+  if (!album || !changed) return
   try {
-    await persistAlbumPhotos(activeAlbum.value, nextPhotos, active.value?.url || moved.url)
+    await persistAlbumPhotos(album, nextPhotos, preferredUrl)
     ui.showToast('照片顺序已更新', 'success')
   } catch (exc) {
+    await load()
     ui.showToast(exc instanceof Error ? exc.message : '排序保存失败', 'error')
-  } finally {
-    endPhotoDrag()
   }
 }
 
-function endPhotoDrag() {
+function cancelPhotoDrag() {
   window.clearTimeout(photoLongPressTimer)
+  cleanupPhotoDragListeners()
+  resetPhotoDrag()
+}
+
+function cleanupPhotoDragListeners() {
+  window.removeEventListener('pointermove', movePhotoDrag)
+  window.removeEventListener('pointerup', finishPhotoDrag)
+  window.removeEventListener('pointercancel', cancelPhotoDrag)
+}
+
+function resetPhotoDrag() {
   dragReadyIndex.value = null
-  draggingPhotoIndex.value = null
+  dragPhotos.value = null
+  draggedPhotoUrl.value = ''
+  dragState.active = false
+  dragState.fromIndex = -1
+  dragState.currentIndex = -1
+  dragState.pointerId = 0
+  dragState.moved = false
+  dragState.lastSwapAt = 0
 }
 
 onMounted(load)
-onUnmounted(() => window.clearTimeout(photoLongPressTimer))
+onUnmounted(() => {
+  window.clearTimeout(photoLongPressTimer)
+  cleanupPhotoDragListeners()
+})
 </script>
 
 <template>
   <section class="page-layout-grid">
-    <GlassCard class="page-title-block text-center">
+    <GlassCard v-if="!activeAlbum" class="page-title-block text-center">
       <h1 class="text-4xl font-black text-white">{{ title }}</h1>
     </GlassCard>
+    <template v-if="!activeAlbum">
     <form class="page-local-search" role="search" @submit.prevent>
       <input v-model="searchQ" type="search" placeholder="搜索相册标题、描述或标签..." aria-label="相册页搜索" />
       <button type="submit" aria-label="搜索相册">
@@ -306,7 +407,7 @@ onUnmounted(() => window.clearTimeout(photoLongPressTimer))
         class="photo-card-theme glass glass-hover block w-full overflow-hidden rounded-[30px] text-left"
         :class="toneMap[album.slug] === 'light' ? 'image-tone-light' : 'image-tone-dark'"
         :aria-label="`打开相册：${album.title}`"
-        @click="activeAlbum = album; active = album.photos[0] || null"
+        @click="openAlbum(album)"
       >
         <SafeImage :src="album.cover || album.photos[0]?.url" :alt="album.title || 'album'" img-class="relative z-[1] aspect-[4/3] w-full object-cover transition duration-300 hover:scale-[1.035]" />
         <div class="photo-card-content relative z-[1] flex min-h-48 flex-col p-4">
@@ -325,18 +426,17 @@ onUnmounted(() => window.clearTimeout(photoLongPressTimer))
       </div>
       </div>
 
-      <div v-else class="article-link-mode">
+      <div v-else class="photo-link-mode">
       <div
-        v-for="(album, index) in filteredAlbums"
+        v-for="album in filteredAlbums"
         :key="album.title + album.cover"
         class="relative"
-        :class="index % 2 === 0 ? 'article-link-left' : 'article-link-right'"
       >
       <button
         type="button"
-        class="article-link-node text-left"
+        class="photo-link-node text-left"
         :aria-label="`打开相册：${album.title}`"
-        @click="activeAlbum = album; active = album.photos[0] || null"
+        @click="openAlbum(album)"
       >
         <GlassCard hover class="photo-card-theme h-full overflow-hidden !p-0" :class="toneMap[album.slug] === 'light' ? 'image-tone-light' : 'image-tone-dark'">
           <article class="flex h-full min-w-0 flex-col">
@@ -362,89 +462,74 @@ onUnmounted(() => window.clearTimeout(photoLongPressTimer))
       </div>
       </div>
     </div>
-    <div
-      v-if="activeAlbum"
-      class="fixed inset-0 z-50 grid place-items-center bg-black/75 p-4"
-      role="dialog"
-      aria-modal="true"
-      @click="activeAlbum = null; active = null"
-      @keydown.esc.window="activeAlbum = null; active = null"
-    >
-      <div class="relative grid max-h-[92vh] w-full max-w-6xl gap-4 overflow-auto rounded-[32px] border border-white/15 bg-slate-950/82 p-4" @click.stop>
-        <button
-          type="button"
-          class="absolute right-4 top-4 z-10 rounded-full border border-white/15 bg-black/45 px-3 py-2 text-sm text-white hover:bg-black/70"
-          aria-label="关闭相册预览"
-          @click="activeAlbum = null; active = null"
-        >
-          关闭
-        </button>
-        <div class="pr-16">
-          <div class="flex flex-wrap items-center gap-3">
-            <h2 class="text-2xl font-black text-white">{{ activeAlbum.title }}</h2>
-            <button v-if="session.isAdmin" type="button" class="frontend-admin-inline-btn" @click="openAlbumEditor(activeAlbum)">编辑</button>
-          </div>
-          <p class="mt-1 text-sm text-white/50">{{ activeAlbum.description }}</p>
+    </template>
+    <article v-else class="photo-detail-page">
+      <header class="photo-detail-head">
+        <button type="button" class="photo-detail-back" aria-label="返回相册列表" @click="closeAlbum">←</button>
+        <div>
+          <h1>{{ activeAlbum.title }}</h1>
+          <p v-if="activeAlbum.description">{{ activeAlbum.description }}</p>
         </div>
-        <div v-if="active" class="photo-active-frame">
-          <SafeImage :src="active.url" :alt="active.title || activeAlbum.title" img-class="mx-auto max-h-[60vh] max-w-full rounded-3xl border border-white/15 object-contain" />
+        <button v-if="session.isAdmin" type="button" class="frontend-admin-inline-btn" @click="openAlbumEditor(activeAlbum)">编辑</button>
+      </header>
+      <div v-if="active" class="photo-active-frame photo-detail-main-image">
+        <SafeImage :src="active.url" :alt="active.title || activeAlbum.title" img-class="mx-auto max-h-[68vh] max-w-full rounded-3xl border border-white/15 object-contain" />
+        <button
+          v-if="session.isAdmin"
+          type="button"
+          class="photo-delete-btn photo-delete-active"
+          aria-label="删除当前照片"
+          @click.stop="deleteAlbumPhoto(activeIndex)"
+        >
+          ×
+        </button>
+      </div>
+      <TransitionGroup name="photo-thumb" tag="div" class="photo-thumb-grid photo-detail-thumbs">
+        <div
+          v-for="(photo, index) in visiblePhotos"
+          :key="photo.url"
+          class="photo-thumb-wrap"
+          :data-photo-index="index"
+          :class="{
+            'photo-thumb-ready': dragReadyIndex === index,
+            'photo-thumb-dragging': dragState.active && draggedPhotoUrl === photo.url
+          }"
+          @pointerdown="armPhotoDrag(index, $event)"
+          @pointerup="disarmPhotoDrag"
+          @pointerleave="disarmPhotoDrag"
+        >
+          <button type="button" class="photo-thumb-button" :class="active?.url === photo.url ? 'ring-2 ring-cyan-300' : ''" @click="selectPhoto(photo)">
+            <SafeImage :src="photo.url" :alt="photo.title || 'photo'" img-class="aspect-square w-full object-cover" />
+          </button>
           <button
             v-if="session.isAdmin"
             type="button"
-            class="photo-delete-btn photo-delete-active"
-            aria-label="删除当前照片"
-            @click.stop="deleteAlbumPhoto(activeIndex)"
+            class="photo-delete-btn"
+            aria-label="删除照片"
+            @click.stop="deleteAlbumPhoto(index)"
           >
             ×
           </button>
         </div>
-        <div class="photo-thumb-grid">
-          <div
-            v-for="(photo, index) in activeAlbum.photos"
-            :key="photo.url"
-            class="photo-thumb-wrap"
-            :class="{
-              'photo-thumb-ready': dragReadyIndex === index,
-              'photo-thumb-dragging': draggingPhotoIndex === index
-            }"
-            :draggable="session.isAdmin"
-            @pointerdown="armPhotoDrag(index)"
-            @pointerup="disarmPhotoDrag"
-            @pointerleave="disarmPhotoDrag"
-            @dragstart="startPhotoDrag(index, $event)"
-            @dragover.prevent
-            @drop="dropPhoto(index, $event)"
-            @dragend="endPhotoDrag"
-          >
-            <button type="button" class="photo-thumb-button" :class="active?.url === photo.url ? 'ring-2 ring-cyan-300' : ''" @click="active = photo">
-              <SafeImage :src="photo.url" :alt="photo.title || 'photo'" img-class="aspect-square w-full object-cover" />
-            </button>
-            <button
-              v-if="session.isAdmin"
-              type="button"
-              class="photo-delete-btn"
-              aria-label="删除照片"
-              @click.stop="deleteAlbumPhoto(index)"
-            >
-              ×
-            </button>
-          </div>
-          <button
-            v-if="session.isAdmin"
-            type="button"
-            class="photo-add-tile"
-            :disabled="uploadingAlbumPhoto"
-            aria-label="添加照片"
-            @click="albumPhotoInput?.click()"
-          >
-            <span>{{ uploadingAlbumPhoto ? '...' : '+' }}</span>
-          </button>
-          <input ref="albumPhotoInput" class="sr-only" type="file" accept="image/*" multiple @change="uploadAlbumPhotos" />
-        </div>
-        <p class="text-center text-white/70">{{ active?.title }}</p>
-        <CommentBox v-if="activeAlbum" resource="photos" :slug="activeAlbum.slug" frameless />
+        <button
+          v-if="session.isAdmin"
+          key="photo-add"
+          type="button"
+          class="photo-add-tile"
+          :disabled="uploadingAlbumPhoto"
+          aria-label="添加照片"
+          @click="albumPhotoInput?.click()"
+        >
+          <span>{{ uploadingAlbumPhoto ? '...' : '+' }}</span>
+        </button>
+      </TransitionGroup>
+      <input ref="albumPhotoInput" class="sr-only" type="file" accept="image/*" multiple @change="uploadAlbumPhotos" />
+      <div v-if="dragState.active && draggedPhoto" class="photo-drag-ghost" :style="dragGhostStyle" aria-hidden="true">
+        <SafeImage :src="draggedPhoto.url" :alt="draggedPhoto.title || '拖动中的照片'" img-class="aspect-square w-full object-cover" />
       </div>
-    </div>
+      <p class="text-center text-white/70">{{ active?.title }}</p>
+      <CommentBox v-if="activeAlbum" class="photo-detail-comments" resource="photos" :slug="activeAlbum.slug" frameless />
+    </article>
     <FrontPhotoEditorModal v-model="createOpen" @saved="load" />
     <FrontPhotoEditorModal v-model="editOpen" :album="editingAlbum" :index="editingAlbum?.sourceIndex ?? -1" @saved="afterAlbumSaved" />
   </section>
@@ -476,6 +561,67 @@ onUnmounted(() => window.clearTimeout(photoLongPressTimer))
   right: 1rem;
   top: 1rem;
 }
+.photo-link-mode {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  gap: 1.25rem;
+  align-items: stretch;
+}
+.photo-link-node {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.photo-detail-page {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 1.25rem;
+  width: min(88rem, 100%);
+  margin: 0 auto;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 2rem;
+  background: #1A1A1C;
+  padding: clamp(1rem, 2vw, 1.75rem);
+}
+.photo-detail-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 1rem;
+}
+.photo-detail-head h1 {
+  color: white;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 900;
+  line-height: 1.05;
+}
+.photo-detail-head p {
+  margin-top: .45rem;
+  color: rgba(255, 255, 255, .56);
+}
+.photo-detail-back {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .07);
+  color: white;
+  font-size: 1.2rem;
+  transition: transform .18s ease, background .18s ease;
+}
+.photo-detail-back:hover {
+  transform: translateX(-2px);
+  background: rgba(255, 255, 255, .12);
+}
+.photo-detail-main-image {
+  margin-top: .25rem;
+}
+.photo-detail-thumbs {
+  max-width: min(58rem, 100%);
+  margin: 0 auto;
+}
 .photo-active-frame {
   position: relative;
   display: grid;
@@ -484,6 +630,7 @@ onUnmounted(() => window.clearTimeout(photoLongPressTimer))
   margin: 0 auto;
 }
 .photo-thumb-grid {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: .5rem;
@@ -492,7 +639,8 @@ onUnmounted(() => window.clearTimeout(photoLongPressTimer))
   position: relative;
   min-width: 0;
   cursor: grab;
-  touch-action: manipulation;
+  touch-action: none;
+  transition: opacity .18s ease, transform .22s cubic-bezier(.2, .8, .2, 1);
 }
 .photo-thumb-wrap:active {
   cursor: grabbing;
@@ -502,7 +650,8 @@ onUnmounted(() => window.clearTimeout(photoLongPressTimer))
   box-shadow: 0 0 0 2px rgba(255, 255, 255, .18);
 }
 .photo-thumb-dragging {
-  opacity: .58;
+  opacity: .2;
+  transform: scale(.92);
 }
 .photo-thumb-button {
   display: block;
@@ -511,6 +660,35 @@ onUnmounted(() => window.clearTimeout(photoLongPressTimer))
   border: 1px solid rgba(255, 255, 255, .1);
   border-radius: 1rem;
   background: rgba(255, 255, 255, .04);
+}
+.photo-thumb-move,
+.photo-thumb-enter-active,
+.photo-thumb-leave-active {
+  transition: transform .24s cubic-bezier(.2, .8, .2, 1), opacity .18s ease;
+}
+.photo-thumb-enter-from,
+.photo-thumb-leave-to {
+  opacity: 0;
+  transform: scale(.88);
+}
+.photo-thumb-leave-active {
+  position: absolute;
+}
+.photo-drag-ghost {
+  position: fixed;
+  z-index: 120;
+  width: clamp(5.4rem, 8vw, 7.5rem);
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(1.06);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .42);
+  border-radius: 1.05rem;
+  background: rgba(255, 255, 255, .08);
+  box-shadow: 0 24px 58px rgba(0, 0, 0, .5);
+}
+.photo-drag-ghost :deep(img) {
+  display: block;
+  border-radius: inherit;
 }
 .photo-add-tile {
   display: grid;
@@ -563,6 +741,21 @@ onUnmounted(() => window.clearTimeout(photoLongPressTimer))
   right: .75rem;
   top: .75rem;
 }
+.photo-detail-comments {
+  width: 100%;
+  margin-top: .75rem;
+  border-top: 1px solid rgba(255, 255, 255, .12);
+  padding-top: 1.4rem;
+}
+.photo-detail-comments :deep(.comment-section-divider) {
+  display: none;
+}
+.photo-detail-comments :deep(.comment-board) {
+  min-width: 0;
+}
+.photo-detail-comments :deep(.comment-input-shell) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
 @media (min-width: 640px) {
   .photo-thumb-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -571,6 +764,19 @@ onUnmounted(() => window.clearTimeout(photoLongPressTimer))
 @media (min-width: 768px) {
   .photo-thumb-grid {
     grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .photo-detail-page {
+    border-radius: 1.35rem;
+    padding: .85rem;
+  }
+  .photo-detail-head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .photo-detail-head .frontend-admin-inline-btn {
+    grid-column: 2;
+    justify-self: start;
   }
 }
 </style>

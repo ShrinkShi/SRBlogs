@@ -19,7 +19,6 @@ const form = reactive({
   description: '',
   date: '',
   tagsText: '',
-  cover: '',
   tagColors: {} as TagColorMap
 })
 const editableTags = computed(() => form.tagsText.split(',').map((tag) => tag.trim()).filter(Boolean))
@@ -34,7 +33,6 @@ function reset() {
   form.description = props.album?.description || ''
   form.date = props.album?.date || today()
   form.tagsText = (props.album?.tags || []).join(', ')
-  form.cover = props.album?.cover || ''
   form.tagColors = { ...(props.album?.tagColors || {}) }
   error.value = ''
 }
@@ -64,7 +62,7 @@ async function save() {
     const payload: PhotoAlbum = {
       title: form.title.trim(),
       description: form.description.trim(),
-      cover: form.cover.trim() || previous[0]?.url || '',
+      cover: previous[0]?.url || '',
       date: form.date || today(),
       tags: editableTags.value,
       tagColors: editableTags.value.reduce((colors, tag) => {
@@ -119,7 +117,6 @@ watch(() => props.modelValue, (open) => {
                 />
               </label>
             </div>
-            <label><span>封面 URL</span><input v-model="form.cover" placeholder="留空则使用第一张图片" /></label>
             <p v-if="error" class="front-photo-error" role="alert">{{ error }}</p>
           </div>
           <footer class="front-photo-footer">

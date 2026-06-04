@@ -1,5 +1,5 @@
 {
-  "cachedAt": "2026-06-03T03:32:57.246791+00:00",
+  "cachedAt": "2026-06-04T03:08:19.884681+00:00",
   "payload": {
     "ok": true,
     "username": "ShrinkShi",
@@ -150,7 +150,6 @@
       0,
       0,
       0,
-      1,
       4,
       2,
       1,
@@ -164,7 +163,7 @@
       0,
       0,
       5,
-      4,
+      5,
       0,
       3,
       2,
@@ -179,7 +178,8 @@
       0,
       1,
       0,
-      3
+      3,
+      1
     ],
     "contributionText": "ShrinkShi · 67 recent public events",
     "errorCode": "",

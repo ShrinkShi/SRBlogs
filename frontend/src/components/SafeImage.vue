@@ -26,8 +26,10 @@ watch(() => props.src, () => { failed.value = false })
     :src="currentSrc"
     :alt="alt"
     :loading="eager ? 'eager' : 'lazy'"
+    draggable="false"
     decoding="async"
     :class="imgClass"
     @error="failed = true"
+    @dragstart.prevent
   />
 </template>

@@ -120,15 +120,13 @@ function applyColor(color = colorValue.value) {
   width: .9rem;
   height: .9rem;
   object-fit: contain;
-  filter: invert(1);
   opacity: .9;
-  transition: filter .18s ease, opacity .18s ease, transform .18s ease;
+  transition: opacity .18s ease, transform .18s ease;
 }
 .front-md-toolbar > button:hover:not(:disabled) {
   background: transparent;
 }
 .front-md-toolbar > button:hover:not(:disabled) img {
-  filter: invert(44%) sepia(72%) saturate(1052%) hue-rotate(318deg) brightness(107%) contrast(96%);
   opacity: 1;
   transform: translateY(-1px);
 }

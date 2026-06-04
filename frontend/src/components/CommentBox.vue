@@ -7,7 +7,10 @@ import type { CommentAttachment, CommentItem, SiteSettings } from '@/types'
 import { useSessionStore } from '@/stores/session'
 import { useUiStore } from '@/stores/ui'
 
-const props = withDefaults(defineProps<{ resource: CommentResource; slug: string; frameless?: boolean }>(), { frameless: false })
+const props = withDefaults(defineProps<{ resource: CommentResource; slug: string; frameless?: boolean; compact?: boolean }>(), {
+  frameless: false,
+  compact: false
+})
 const session = useSessionStore()
 const ui = useUiStore()
 
@@ -35,29 +38,8 @@ const visitor = ref<{ configured: { github: boolean; qq: boolean; email?: boolea
 const showDebug = false
 
 const options = computed(() => settings.value?.comments || {})
-const providerOptions = computed(() => options.value.providers || {})
 const boardEnabled = computed(() => options.value.enabled !== false)
-const maxLength = computed(() => Number(options.value.maxLength || 1000))
-const githubEnabled = computed(() => providerOptions.value.github?.enabled ?? options.value.githubLoginEnabled ?? true)
-const qqEnabled = computed(() => providerOptions.value.qq?.enabled ?? options.value.qqLoginEnabled ?? true)
-const githubConfigured = computed(() => {
-  const github = providerOptions.value.github
-  if (typeof github?.configured === 'boolean') return github.configured
-  if (typeof github?.clientIdConfigured === 'boolean' || typeof github?.secretConfigured === 'boolean') {
-    return github?.clientIdConfigured === true && github?.secretConfigured === true
-  }
-  return options.value.githubLoginConfigured ?? visitor.value.configured.github
-})
-const qqConfigured = computed(() => {
-  const qq = providerOptions.value.qq
-  if (typeof qq?.configured === 'boolean') return qq.configured
-  if (typeof qq?.appIdConfigured === 'boolean' || typeof qq?.secretConfigured === 'boolean') {
-    return qq?.appIdConfigured === true && qq?.secretConfigured === true
-  }
-  return options.value.qqLoginConfigured ?? visitor.value.configured.qq
-})
-const githubReady = computed(() => githubEnabled.value !== false && githubConfigured.value === true)
-const qqReady = computed(() => qqEnabled.value !== false && qqConfigured.value === true)
+const maxLength = computed(() => 20000)
 const showLoginHint = computed(() => !session.isAdmin && !visitor.value.user)
 const adminAvatar = computed(() => {
   const root = (settings.value || {}) as Record<string, unknown>
@@ -119,17 +101,6 @@ async function load() {
   } finally {
     loading.value = false
   }
-}
-
-function loginWith(provider: 'github' | 'qq') {
-  const envBase = String(import.meta.env.VITE_API_BASE_URL || '').trim()
-  const localBackend = `${window.location.protocol}//${window.location.hostname || '127.0.0.1'}:8000/api`
-  const fallbackBase = ['5173', '5174', '5175'].includes(window.location.port) ? localBackend : '/api'
-  const selectedBase = envBase === '/api' && ['5173', '5174', '5175'].includes(window.location.port) ? localBackend : (envBase || fallbackBase)
-  const rawBase = selectedBase.replace(/\/$/, '')
-  const apiBase = rawBase.endsWith('/api') ? rawBase : `${rawBase}/api`
-  const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`
-  window.location.href = `${apiBase}/auth/${provider}/login?returnTo=${encodeURIComponent(returnTo)}`
 }
 
 async function submit() {
@@ -290,7 +261,11 @@ watch(() => form.content, resizeComposer)
 </script>
 
 <template>
-  <component :is="props.frameless ? 'section' : GlassCard" class="comment-board" :class="props.frameless ? 'comment-board-frameless' : 'mt-8'">
+  <component
+    :is="props.frameless ? 'section' : GlassCard"
+    class="comment-board"
+    :class="[props.frameless ? 'comment-board-frameless' : 'mt-8', props.compact ? 'comment-board-compact' : '']"
+  >
     <div class="comment-section-divider" aria-hidden="true"></div>
     <div class="flex flex-wrap items-end justify-between gap-3">
       <div>
@@ -399,39 +374,28 @@ watch(() => form.content, resizeComposer)
             <button type="button" @click="removeAttachment(index)">移除</button>
           </span>
         </div>
-        <div class="comment-composer-meta">
-          <span>{{ form.content.length }} / {{ maxLength }}</span>
+        <div v-if="success || error" class="comment-composer-meta">
           <span v-if="success" class="comment-success" role="status">{{ success }}</span>
           <span v-if="error" class="comment-error" role="alert">{{ error }}</span>
         </div>
       </form>
 
-      <div v-else class="comment-login-panel">
-          <p v-if="githubReady || qqReady">请选择已启用的平台登录后留言。</p>
-          <div v-else class="grid gap-2">
-            <p v-if="githubEnabled !== false">站点暂未开启 GitHub 留言，请稍后再试或联系站点管理员。</p>
-            <p v-if="qqEnabled !== false">站点暂未开启 QQ 留言，请稍后再试或联系站点管理员。</p>
-          </div>
-          <p v-if="error" class="mt-2 text-red-200/85" role="alert">{{ error }}</p>
-        <div class="comment-login-actions">
-          <button
-            type="button"
-            :disabled="!githubReady"
-            :class="githubReady ? 'comment-auth-btn comment-auth-black' : 'comment-auth-btn comment-auth-disabled'"
-            @click="githubReady && loginWith('github')"
-          >
-            使用 GitHub 登录后留言
-          </button>
-          <button
-            type="button"
-            :disabled="!qqReady"
-            :class="qqReady ? 'comment-auth-btn comment-auth-green' : 'comment-auth-btn comment-auth-disabled'"
-            @click="qqReady && loginWith('qq')"
-          >
-            使用 QQ 登录后留言
-          </button>
+      <form v-else class="comment-composer comment-composer-disabled" title="请登录后使用评论功能" @submit.prevent>
+        <div class="comment-input-shell comment-input-shell-disabled">
+          <button type="button" class="comment-plus-btn" disabled aria-label="添加附件">+</button>
+          <textarea
+            disabled
+            rows="1"
+            class="comment-textarea"
+            placeholder="写下你的留言..."
+            title="请登录后使用评论功能"
+          ></textarea>
+          <button type="submit" class="comment-submit-round" disabled aria-label="发布留言">↵</button>
         </div>
-      </div>
+        <div v-if="error" class="comment-composer-meta">
+          <span class="comment-error" role="alert">{{ error }}</span>
+        </div>
+      </form>
     </section>
   </component>
 </template>
@@ -439,6 +403,65 @@ watch(() => form.content, resizeComposer)
 <style scoped>
 .comment-board-frameless {
   display: block;
+}
+.comment-board-compact {
+  font-size: .78rem;
+}
+.comment-board-compact .comment-section-divider {
+  margin-bottom: .8rem;
+}
+.comment-board-compact h3 {
+  font-size: 1.15rem;
+}
+.comment-board-compact .comment-list {
+  margin-top: .7rem;
+}
+.comment-board-compact .comment-item {
+  padding: .62rem 0;
+}
+.comment-board-compact .comment-item img,
+.comment-board-compact .comment-item .grid.h-9 {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+.comment-board-compact .comment-item-actions {
+  gap: .45rem;
+  font-size: .72rem;
+}
+.comment-board-compact .comment-reply-card {
+  margin-top: .45rem;
+  margin-left: 2.25rem;
+  font-size: .72rem;
+}
+.comment-board-compact .comment-content {
+  margin-top: .48rem;
+  line-height: 1.55;
+}
+.comment-board-compact .comment-composer-section {
+  margin-top: .75rem;
+}
+.comment-board-compact .comment-input-shell {
+  gap: .35rem;
+  border-radius: 1.05rem;
+  padding: .38rem;
+}
+.comment-board-compact .comment-plus-btn {
+  width: 1.85rem;
+  height: 1.85rem;
+  font-size: 1rem;
+}
+.comment-board-compact .comment-textarea {
+  min-height: 34px;
+  max-height: 96px;
+  padding: .42rem 2.25rem .42rem .2rem;
+  font-size: .78rem;
+}
+.comment-board-compact .comment-submit-round {
+  right: .42rem;
+  bottom: .42rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: .92rem;
 }
 .comment-section-divider {
   height: 1px;
@@ -559,6 +582,13 @@ watch(() => form.content, resizeComposer)
   border-radius: 1.35rem;
   background: #333335;
   padding: .55rem;
+}
+.comment-composer-disabled .comment-input-shell {
+  cursor: not-allowed;
+  opacity: .76;
+}
+.comment-input-shell-disabled * {
+  cursor: not-allowed;
 }
 .comment-textarea {
   min-height: 42px;
@@ -706,36 +736,6 @@ watch(() => form.content, resizeComposer)
 }
 .comment-error {
   color: rgba(254, 202, 202, .9);
-}
-.comment-login-panel {
-  display: grid;
-  gap: .85rem;
-  color: rgba(255, 255, 255, .56);
-  font-size: .9rem;
-  line-height: 1.75;
-}
-.comment-login-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .65rem;
-}
-.comment-auth-btn {
-  border-radius: 999px;
-  padding: .7rem 1rem;
-  font-weight: 900;
-}
-.comment-auth-black {
-  background: black;
-  color: white;
-}
-.comment-auth-green {
-  background: #86efac;
-  color: black;
-}
-.comment-auth-disabled {
-  cursor: not-allowed;
-  background: rgba(255, 255, 255, .1);
-  color: rgba(255, 255, 255, .4);
 }
 @media (max-width: 720px) {
   .comment-item-actions {

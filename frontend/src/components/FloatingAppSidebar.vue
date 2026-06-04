@@ -19,7 +19,7 @@ const authMode = ref<'login' | 'register'>('login')
 const logoutConfirmOpen = ref(false)
 const loggingIn = ref(false)
 const accountError = ref('')
-const form = reactive({ username: 'admin', password: '', email: '', emailPassword: '' })
+const form = reactive({ account: '', password: '' })
 
 const apps = computed(() =>
   floatingApps
@@ -109,33 +109,30 @@ function providerLogin(provider: 'github' | 'qq') {
   window.location.href = `${apiBase()}/auth/${provider}/login?returnTo=${encodeURIComponent(returnTo)}`
 }
 
-async function submitAdmin() {
+async function submitAccount() {
   if (!canLogin.value) return
-  loggingIn.value = true
-  accountError.value = ''
-  try {
-    await session.loginAdmin(form.username.trim(), form.password)
-    form.password = ''
-    authOpen.value = false
-    ui.showToast('已登录', 'success')
-  } catch (exc) {
-    accountError.value = exc instanceof Error ? exc.message : '管理员登录失败'
-  } finally {
-    loggingIn.value = false
+  const account = form.account.trim()
+  if (!account || !form.password) {
+    accountError.value = '请输入账号和密码'
+    return
   }
-}
-
-async function submitEmail() {
-  if (!canLogin.value) return
+  if (authMode.value === 'register' && !account.includes('@')) {
+    accountError.value = '注册请使用邮箱地址，管理员账号不需要注册。'
+    return
+  }
   loggingIn.value = true
   accountError.value = ''
   try {
-    await session.loginEmail(form.email.trim(), form.emailPassword, authMode.value)
-    form.emailPassword = ''
+    if (account.includes('@')) {
+      await session.loginEmail(account, form.password, authMode.value)
+    } else {
+      await session.loginAdmin(account, form.password)
+    }
+    form.password = ''
     authOpen.value = false
     ui.showToast(authMode.value === 'register' ? '注册并登录成功' : '已登录', 'success')
   } catch (exc) {
-    accountError.value = exc instanceof Error ? exc.message : '邮箱登录失败'
+    accountError.value = exc instanceof Error ? exc.message : '登录失败'
   } finally {
     loggingIn.value = false
   }
@@ -251,13 +248,13 @@ onMounted(() => {
 
           <div class="app-auth-divider"><span>或</span></div>
 
-          <form class="app-auth-email" @submit.prevent="submitEmail">
-            <input v-model="form.email" type="email" autocomplete="email" placeholder="电子邮件地址" />
+          <form class="app-auth-account" @submit.prevent="submitAccount">
+            <input v-model="form.account" type="text" autocomplete="username" placeholder="账号或电子邮件地址" />
             <input
-              v-model="form.emailPassword"
+              v-model="form.password"
               type="password"
               :autocomplete="authMode === 'register' ? 'new-password' : 'current-password'"
-              placeholder="密码，至少 8 位"
+              placeholder="密码"
             />
             <button type="submit" :disabled="loggingIn || !canLogin">
               {{ loggingIn ? '处理中...' : (authMode === 'register' ? '注册并登录' : '继续') }}
@@ -267,13 +264,6 @@ onMounted(() => {
           <button type="button" class="app-auth-mode" @click="authMode = authMode === 'login' ? 'register' : 'login'">
             {{ authMode === 'login' ? '没有账号？使用邮箱注册' : '已有账号？返回登录' }}
           </button>
-
-          <form class="app-auth-admin" @submit.prevent="submitAdmin">
-            <p>管理员账号</p>
-            <input v-model="form.username" autocomplete="username" placeholder="管理员账号" :disabled="!canLogin" />
-            <input v-model="form.password" autocomplete="current-password" type="password" placeholder="管理员密码" :disabled="!canLogin" />
-            <button type="submit" :disabled="loggingIn || !canLogin">{{ loggingIn ? '登录中...' : '管理员登录' }}</button>
-          </form>
 
           <p v-if="accountError" class="app-auth-error">{{ accountError }}</p>
         </section>
@@ -534,24 +524,20 @@ onMounted(() => {
   line-height: 1.7;
 }
 .app-auth-providers,
-.app-auth-email,
-.app-auth-admin {
+.app-auth-account {
   display: grid;
   gap: .75rem;
 }
 .app-auth-providers button,
-.app-auth-email input,
-.app-auth-email button,
-.app-auth-admin input,
-.app-auth-admin button,
+.app-auth-account input,
+.app-auth-account button,
 .app-confirm-modal button {
   min-height: 3.1rem;
   border-radius: 999px;
   font-weight: 900;
 }
 .app-auth-providers button,
-.app-auth-admin input,
-.app-auth-email input {
+.app-auth-account input {
   border: 1px solid rgba(255, 255, 255, .16);
   background: #050505;
   color: white;
@@ -561,12 +547,11 @@ onMounted(() => {
   background: transparent;
 }
 .app-auth-providers button:disabled,
-.app-auth-admin button:disabled {
+.app-auth-account button:disabled {
   cursor: not-allowed;
   opacity: .42;
 }
-.app-auth-email button,
-.app-auth-admin button,
+.app-auth-account button,
 .app-confirm-cancel {
   background: white;
   color: black;
@@ -591,16 +576,6 @@ onMounted(() => {
   display: block;
   color: rgba(255, 255, 255, .72);
   font-weight: 800;
-}
-.app-auth-admin {
-  border-top: 1px solid rgba(255, 255, 255, .12);
-  padding-top: 1rem;
-}
-.app-auth-admin p {
-  color: rgba(255, 255, 255, .42);
-  font-size: .78rem;
-  font-weight: 900;
-  letter-spacing: .12em;
 }
 .app-auth-error {
   margin-top: .9rem;
