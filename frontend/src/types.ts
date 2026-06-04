@@ -48,6 +48,7 @@ export interface MusicItem {
   lyrics?: string
   lyricUrl?: string
   likes?: number
+  duration?: number
 }
 
 export interface ThemeTokens {

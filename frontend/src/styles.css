@@ -567,6 +567,7 @@ body::before {
   display: flex;
   min-height: inherit;
   flex-direction: column;
+  justify-content: flex-start;
 }
 
 .music-player-panel > .grid {
@@ -597,7 +598,7 @@ body::before {
   flex: 1 1 auto;
   min-height: 0;
   color: var(--text-secondary) !important;
-  background: var(--bg-card-elevated) !important;
+  background: transparent !important;
 }
 
 .music-lyrics-reader {
@@ -659,7 +660,7 @@ body::before {
 
 .music-lyrics-panel > div:nth-child(2) {
   color: var(--text-secondary) !important;
-  background: var(--bg-card-elevated) !important;
+  background: transparent !important;
 }
 
 .music-playlist-item {
@@ -672,7 +673,7 @@ body::before {
 }
 
 .music-playlist-item-active {
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 44%, transparent);
+  box-shadow: none;
 }
 
 .music-playlist-item :where(h1,h2,h3,b,strong) {
@@ -1813,10 +1814,10 @@ body::before {
   justify-content: center;
   gap: .25rem;
   max-width: 100%;
-  border: 1px solid var(--border-glass);
+  border: 0;
   border-radius: 999px;
-  background: var(--bg-card-elevated) !important;
-  padding: .25rem;
+  background: transparent !important;
+  padding: 0;
 }
 
 .page-layout-grid > .flex.justify-center button,

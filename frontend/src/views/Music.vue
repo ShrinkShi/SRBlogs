@@ -1,7 +1,6 @@
 ﻿<script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
-import SafeImage from '@/components/SafeImage.vue'
 import CommentBox from '@/components/CommentBox.vue'
 import FrontJsonItemEditorModal from '@/components/FrontJsonItemEditorModal.vue'
 import PlayerVolumeControl from '@/components/PlayerVolumeControl.vue'
@@ -29,7 +28,11 @@ const session = useSessionStore()
 const editorOpen = ref(false)
 const editingTrack = ref<MusicItem | null>(null)
 const editingIndex = ref(-1)
-const deleteArmed = ref('')
+const batchDeleteArmed = ref(false)
+const batchMode = ref(false)
+const selectedTrackKeys = ref<Set<string>>(new Set())
+const uploadInput = ref<HTMLInputElement | null>(null)
+const uploadingTrack = ref(false)
 
 const pageTitle = computed(() => pageConfig.value?.pageText?.music?.title || '音乐歌单')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.music?.subtitle || '左侧控制播放，右侧查看歌词和歌单。')
@@ -48,6 +51,7 @@ const currentSongId = computed(() => player.songKey(currentTrack.value))
 const likedCurrent = computed(() => currentSongId.value ? player.isLiked(currentSongId.value) : false)
 const currentLikes = computed(() => Math.max(0, Number(currentTrack.value?.likes || 0)))
 const playModeLabel = computed(() => player.playMode === 'sequence' ? '顺序播放' : player.playMode === 'shuffle' ? '随机播放' : '单曲循环')
+const selectedTracks = computed(() => sortedTracks.value.filter((item) => selectedTrackKeys.value.has(trackKey(item))))
 const lyricSource = computed(() => lyricText.value.trim() || currentTrack.value?.lyrics?.trim() || '')
 const lyricEntries = computed(() => parseLrc(lyricSource.value))
 const activeLyricIndex = computed(() => {
@@ -159,6 +163,17 @@ function trackKey(item: MusicItem) {
   return player.songKey(item) || item.url || item.title
 }
 
+function safeFileName(value: string) {
+  return value.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() || 'srblogs-music'
+}
+
+function trackDuration(item: MusicItem) {
+  const stored = Number((item as MusicItem & { duration?: number }).duration || 0)
+  if (stored > 0) return formatTime(stored)
+  if (trackKey(item) === currentSongId.value && player.duration) return formatTime(player.duration)
+  return '0:00'
+}
+
 function rawTrackIndex(item: MusicItem) {
   const key = trackKey(item)
   return tracks.value.findIndex((track) => trackKey(track) === key)
@@ -170,24 +185,96 @@ function openTrackEditor(item: MusicItem | null = null) {
   editorOpen.value = true
 }
 
-async function deleteTrack(item: MusicItem) {
+function isTrackSelected(item: MusicItem) {
+  return selectedTrackKeys.value.has(trackKey(item))
+}
+
+function toggleTrackSelection(item: MusicItem) {
   const key = trackKey(item)
-  if (deleteArmed.value !== key) {
-    deleteArmed.value = key
-    ui.showToast('再次点击删除以确认', 'info')
-    window.setTimeout(() => {
-      if (deleteArmed.value === key) deleteArmed.value = ''
-    }, 3000)
+  if (!key) return
+  const next = new Set(selectedTrackKeys.value)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  selectedTrackKeys.value = next
+}
+
+function toggleBatchMode() {
+  batchMode.value = !batchMode.value
+  batchDeleteArmed.value = false
+  if (!batchMode.value) selectedTrackKeys.value = new Set()
+}
+
+function downloadTrack(item: MusicItem) {
+  if (!item.url) {
+    ui.showToast(`《${item.title || '未命名'}》缺少音频 URL`, 'error')
+    return
+  }
+  const anchor = document.createElement('a')
+  anchor.href = item.url
+  anchor.download = safeFileName(`${item.title || '未命名'}-${item.artist || '未知歌手'}`)
+  anchor.target = '_blank'
+  anchor.rel = 'noopener'
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+}
+
+function downloadSelectedTracks() {
+  if (!selectedTracks.value.length) {
+    ui.showToast('请先在批量模式中选择歌曲', 'info')
+    return
+  }
+  selectedTracks.value.forEach(downloadTrack)
+}
+
+async function deleteSelectedTracks() {
+  if (!selectedTracks.value.length) {
+    ui.showToast('请先选择要删除的歌曲', 'info')
+    return
+  }
+  if (!batchDeleteArmed.value) {
+    batchDeleteArmed.value = true
+    ui.showToast('再次点击删除选中以确认', 'info')
+    window.setTimeout(() => { batchDeleteArmed.value = false }, 3000)
     return
   }
   try {
-    const next = tracks.value.filter((track) => trackKey(track) !== key)
-    await contentApi.adminPutJson('/music', next)
-    ui.showToast('歌曲已删除', 'success')
-    deleteArmed.value = ''
+    const keys = new Set(selectedTrackKeys.value)
+    await contentApi.adminPutJson('/music', tracks.value.filter((track) => !keys.has(trackKey(track))))
+    ui.showToast('已删除选中歌曲', 'success')
+    batchDeleteArmed.value = false
+    selectedTrackKeys.value = new Set()
     await load()
   } catch (exc) {
-    ui.showToast(exc instanceof Error ? exc.message : '删除失败', 'error')
+    ui.showToast(exc instanceof Error ? exc.message : '批量删除失败', 'error')
+  }
+}
+
+async function uploadTrackFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  uploadingTrack.value = true
+  try {
+    const result = await contentApi.upload(file)
+    const baseName = file.name.replace(/\.[^.]+$/, '').trim() || '未命名歌曲'
+    const nextItem: MusicItem = {
+      title: baseName,
+      artist: '未知歌手',
+      url: result.url,
+      id: `song-${Date.now()}`,
+      sort: tracks.value.length,
+      likes: 0
+    }
+    await contentApi.adminPutJson('/music', [nextItem, ...tracks.value])
+    ui.showToast('歌曲已上传', 'success')
+    activeTab.value = 'playlist'
+    await load()
+  } catch (exc) {
+    ui.showToast(exc instanceof Error ? exc.message : '歌曲上传失败', 'error')
+  } finally {
+    uploadingTrack.value = false
+    input.value = ''
   }
 }
 
@@ -226,6 +313,7 @@ async function load() {
     tracks.value = music
     pageConfig.value = config
     player.setTracks(music)
+    selectedTrackKeys.value = new Set([...selectedTrackKeys.value].filter((key) => music.some((item) => trackKey(item) === key)))
   } catch (exc) {
     error.value = exc instanceof Error ? exc.message : '歌单加载失败'
   } finally {
@@ -318,6 +406,15 @@ onMounted(load)
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'lyrics' ? 'bg-[var(--accent)] text-white' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'lyrics'">歌词</button>
           <button class="rounded-full px-4 py-2 text-sm font-bold transition" :class="activeTab === 'playlist' ? 'bg-[var(--accent)] text-white' : 'bg-white/[0.08] text-white/62 hover:bg-white/[0.12]'" @click="activeTab = 'playlist'">歌单</button>
         </div>
+        <div v-if="session.isAdmin && activeTab === 'playlist'" class="music-batch-toolbar">
+          <input ref="uploadInput" type="file" class="hidden" accept="audio/*,.mp3,.flac,.wav,.ogg,.m4a" @change="uploadTrackFile" />
+          <button type="button" :disabled="uploadingTrack" @click="uploadInput?.click()">{{ uploadingTrack ? '上传中' : '上传' }}</button>
+          <button type="button" :disabled="!selectedTracks.length" @click="downloadSelectedTracks">下载选中</button>
+          <button type="button" @click="toggleBatchMode">{{ batchMode ? '退出批量' : '批量操作' }}</button>
+          <button v-if="batchMode" type="button" class="danger" :disabled="!selectedTracks.length" @click="deleteSelectedTracks">
+            {{ batchDeleteArmed ? '确认删除' : '删除选中' }}
+          </button>
+        </div>
 
         <div v-if="activeTab === 'lyrics'" class="music-tab-content music-lyrics-reader mt-5 max-h-[32rem] overflow-auto rounded-[24px] p-5 text-center text-sm leading-8">
           <p
@@ -331,28 +428,36 @@ onMounted(load)
           </p>
         </div>
 
-        <div v-else class="music-tab-content mt-5 grid max-h-[32rem] gap-3 overflow-auto rounded-[24px] p-3">
+        <div v-else class="music-tab-content music-playlist-table mt-5 max-h-[32rem] overflow-auto rounded-[24px]">
+          <div class="music-playlist-head" :class="{ 'with-select': batchMode }">
+            <span v-if="batchMode"></span>
+            <span>#</span>
+            <span>歌名</span>
+            <span>歌手</span>
+            <span>喜欢</span>
+            <span>时长</span>
+          </div>
           <article
             v-for="(item, index) in sortedTracks"
             :key="`${item.id || item.url}-${item.title}`"
-            class="music-playlist-item flex min-w-0 items-center gap-4 rounded-[24px] p-3 text-left transition hover:scale-[1.015]"
-            :class="player.current === index ? 'music-playlist-item-active' : ''"
+            class="music-playlist-item"
+            :class="[
+              player.current === index ? 'music-playlist-item-active' : '',
+              batchMode ? 'music-playlist-item-batch' : ''
+            ]"
           >
-            <button type="button" class="music-playlist-pick" @click="selectTrack(index)">
-              <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl bg-white/10">
-                <SafeImage v-if="item.cover" :src="item.cover" :alt="item.title" img-class="h-full w-full object-cover" />
-                <span v-else class="text-white/50">Music</span>
-              </div>
-              <div class="min-w-0">
-                <h3 class="truncate text-lg font-black text-white">{{ item.title }}</h3>
-                <p class="truncate text-sm text-white/55">{{ item.artist }}</p>
-                <p class="mt-1 truncate text-xs text-white/38">{{ item.id || item.url || '未配置 ID 或 URL' }}</p>
-                <p class="mt-1 text-xs text-rose-100/70">喜欢 {{ item.likes || 0 }}</p>
-              </div>
+            <label v-if="batchMode" class="music-track-check" @click.stop>
+              <input type="checkbox" :checked="isTrackSelected(item)" @change="toggleTrackSelection(item)" />
+            </label>
+            <button type="button" class="music-playlist-pick" :class="{ 'with-select': batchMode }" @click="batchMode ? toggleTrackSelection(item) : selectTrack(index)">
+              <span class="music-track-index">{{ index + 1 }}</span>
+              <span class="music-track-title">{{ item.title || '未命名' }}</span>
+              <span class="music-track-artist">{{ item.artist || '未知歌手' }}</span>
+              <span class="music-track-like">{{ Number(item.likes || 0) }}</span>
+              <span class="music-track-duration">{{ trackDuration(item) }}</span>
             </button>
             <div v-if="session.isAdmin" class="music-admin-actions">
               <button type="button" @click="openTrackEditor(item)">编辑</button>
-              <button type="button" class="danger" @click="deleteTrack(item)">{{ deleteArmed === trackKey(item) ? '确认删除' : '删除' }}</button>
             </div>
           </article>
         </div>
@@ -365,18 +470,135 @@ onMounted(load)
 </template>
 
 <style scoped>
-.music-playlist-pick {
+.music-batch-toolbar {
   display: flex;
-  min-width: 0;
-  flex: 1 1 auto;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
+  justify-content: flex-end;
+  gap: .55rem;
+  margin-top: 1rem;
+}
+.music-batch-toolbar button {
+  border-radius: 999px;
+  background: white;
+  padding: .55rem .95rem;
+  color: black;
+  font-size: .86rem;
+  font-weight: 900;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.music-batch-toolbar button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.music-batch-toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: .42;
+}
+.music-batch-toolbar .danger {
+  background: #ef4444;
+  color: white;
+}
+.music-playlist-table {
+  display: grid;
+  align-content: start;
+  gap: 0;
+  padding: .35rem 0;
+}
+.music-playlist-head,
+.music-playlist-pick {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1.65fr) minmax(0, 1fr) 5rem 5rem;
+  min-width: 0;
+  width: 100%;
+  align-items: center;
+  gap: .85rem;
   text-align: left;
+}
+.music-playlist-head.with-select {
+  grid-template-columns: 2.25rem 3rem minmax(0, 1.65fr) minmax(0, 1fr) 5rem 5rem;
+}
+.music-playlist-head {
+  padding: .35rem .9rem .6rem;
+  color: rgba(255, 255, 255, .38);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.music-playlist-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: .35rem;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  padding: .72rem .9rem;
+  text-align: left;
+  transition: background .18s ease;
+}
+.music-playlist-item:last-child {
+  border-bottom: 0;
+}
+.music-playlist-item:hover {
+  background: rgba(255, 255, 255, .045) !important;
+}
+.music-playlist-item-active {
+  background: rgba(255, 255, 255, .06) !important;
+  box-shadow: none !important;
+}
+.music-playlist-item-batch {
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+}
+.music-track-check {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  width: 1.4rem;
+  height: 1.4rem;
+  place-items: center;
+  align-self: center;
+}
+.music-track-check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--accent);
+}
+.music-playlist-pick {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+.music-playlist-pick.with-select {
+  grid-column: 2;
+}
+.music-track-index,
+.music-track-like,
+.music-track-duration {
+  color: rgba(255, 255, 255, .46);
+  font-size: .82rem;
+  font-weight: 800;
+}
+.music-track-title,
+.music-track-artist {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.music-track-title {
+  color: white;
+  font-weight: 950;
+}
+.music-track-artist {
+  color: rgba(255, 255, 255, .58);
+  font-size: .9rem;
 }
 .music-admin-actions {
   display: flex;
-  flex: 0 0 auto;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
   gap: .65rem;
+  padding-top: .1rem;
 }
 .music-admin-actions button {
   color: rgba(255, 255, 255, .68);
@@ -389,9 +611,27 @@ onMounted(load)
   color: #fecaca;
 }
 @media (max-width: 640px) {
-  .music-playlist-item {
-    align-items: flex-start;
-    flex-direction: column;
+  .music-playlist-head {
+    display: none;
+  }
+  .music-playlist-pick,
+  .music-playlist-pick.with-select {
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    grid-template-areas:
+      "index title"
+      "index artist"
+      "index meta";
+    gap: .25rem .65rem;
+  }
+  .music-track-index { grid-area: index; }
+  .music-track-title { grid-area: title; }
+  .music-track-artist { grid-area: artist; }
+  .music-track-like {
+    grid-area: meta;
+  }
+  .music-track-duration {
+    grid-area: meta;
+    justify-self: end;
   }
   .music-admin-actions {
     width: 100%;
