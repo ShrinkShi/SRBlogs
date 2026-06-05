@@ -10,7 +10,7 @@ const ui = useUiStore()
 
 const defaultConfig: AboutPageConfig = {
   hero: {
-    status: 'Available for opportunities',
+    status: '',
     eyebrow: '你好，我是',
     name: 'Shrink',
     role: '全栈开发工程师',
@@ -82,42 +82,18 @@ const error = ref('')
 const sending = ref(false)
 const form = reactive({ name: '', email: '', message: '' })
 
-useSeo({ title: '首页 - SRBlogs', description: 'Shrink 的个人介绍、GitHub 活动与联系方式。', path: '/' })
+useSeo({ title: '首页 - SRBlogs', description: 'Shrink 的个人介绍与联系方式。', path: '/' })
 
 const roleWords = ['全栈开发工程师', '游戏开发者', 'MOD作者']
 const typedRole = ref(roleWords[0])
-const githubStats = ref<AboutPageConfig['github']['stats']>([])
-const githubHeatmapCells = ref<number[]>([])
-const githubContributionText = ref('')
-const githubLoading = ref(false)
-const githubError = ref('')
 let typingTimer: number | undefined
 let typingWordIndex = 0
 let typingCharIndex = 0
 let isDeleting = false
 
-type HighlightSegment = {
-  text: string
-  highlighted: boolean
-}
-
-const fallbackHeatmapCells = computed(() =>
-  Array.from({ length: 154 }, (_, index) => (index * 7 + Math.floor(index / 11) * 3) % 6)
-)
-
-const displayGithubStats = computed(() => (githubStats.value.length ? githubStats.value : config.value.github.stats))
-const displayHeatmapCells = computed(() =>
-  githubHeatmapCells.value.length ? githubHeatmapCells.value : fallbackHeatmapCells.value
-)
-const displayGithubContributionText = computed(() => githubContributionText.value || config.value.github.contributionText)
-const footerAuthor = computed(() => siteSettings.value?.author || siteSettings.value?.authorName || config.value.hero.name || config.value.about.codeProfile.name)
+const footerAuthor = computed(() => siteSettings.value?.author || siteSettings.value?.authorName || config.value.hero.name || 'Shrink')
 const footerTitle = computed(() => siteSettings.value?.siteTitle || siteSettings.value?.title || 'SRBlogs')
 const footerIcp = computed(() => siteSettings.value?.icp || siteSettings.value?.beian || '京ICP备2026028577')
-
-function formatAvailabilityStatus(value: string) {
-  const normalized = (value || 'Available for opportunities').trim().toLowerCase()
-  return normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : 'Available for opportunities'
-}
 
 function scheduleTyping(delay = 90) {
   window.clearTimeout(typingTimer)
@@ -157,75 +133,8 @@ function startRoleTyping() {
   scheduleTyping(120)
 }
 
-function githubUsername() {
-  const candidates = [
-    config.value.contact.githubUrl,
-    config.value.contact.github,
-    config.value.about.codeProfile.github
-  ].filter(Boolean)
-  for (const value of candidates) {
-    const text = String(value).trim().replace(/\/$/, '')
-    const match = text.match(/github\.com\/([^/?#]+)/i)
-    if (match?.[1]) return match[1]
-    if (/^[A-Za-z0-9-]+$/.test(text)) return text
-  }
-  return 'ShrinkShi'
-}
-
-async function fetchGithubSummary() {
-  githubLoading.value = true
-  githubError.value = ''
-  try {
-    const result = await contentApi.githubSummary(githubUsername())
-    if (!result.ok) {
-      throw new Error(result.errorMessage || 'GitHub 数据加载失败')
-    }
-    githubStats.value = result.stats || []
-    githubHeatmapCells.value = result.heatmapCells || []
-    githubContributionText.value = result.contributionText || ''
-  } catch (exc) {
-    githubError.value = exc instanceof Error ? exc.message : 'GitHub 数据加载失败'
-  } finally {
-    githubLoading.value = false
-  }
-}
-
 function scrollTo(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
-function escapeRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
-
-function highlightSegments(text: string): HighlightSegment[] {
-  const source = String(text || '')
-  const words = Array.from(new Set((config.value.about.highlightWords || [])
-    .map((word) => String(word || '').trim())
-    .filter(Boolean)))
-    .sort((a, b) => b.length - a.length)
-  if (!source || !words.length) return [{ text: source, highlighted: false }]
-
-  const pattern = new RegExp(words.map(escapeRegExp).join('|'), 'g')
-  const segments: HighlightSegment[] = []
-  let lastIndex = 0
-  for (const match of source.matchAll(pattern)) {
-    const index = match.index ?? 0
-    if (index > lastIndex) {
-      segments.push({ text: source.slice(lastIndex, index), highlighted: false })
-    }
-    segments.push({ text: match[0], highlighted: true })
-    lastIndex = index + match[0].length
-  }
-  if (lastIndex < source.length) {
-    segments.push({ text: source.slice(lastIndex), highlighted: false })
-  }
-  return segments.length ? segments : [{ text: source, highlighted: false }]
-}
-
-function statIcon(icon: string) {
-  const map: Record<string, string> = { folder: 'M3 7h6l2 2h10v10H3z', star: 'M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1L3.2 9.4l6.1-.9z', 'git-branch': 'M6 3v6m0 0a3 3 0 100-6 3 3 0 000 6zm12 12a3 3 0 100-6 3 3 0 000 6zM6 9v3a6 6 0 006 6h3', fork: 'M7 3v6m10-6v6M7 9a3 3 0 100-6 3 3 0 000 6zm10 0a3 3 0 100-6 3 3 0 000 6zm-5 3v4' }
-  return map[icon] || map.folder
 }
 
 async function copyText(label: string, text: string) {
@@ -262,7 +171,6 @@ onMounted(async () => {
     loading.value = false
   }
   contentApi.publicSettings<SiteSettings>().then((settings) => { siteSettings.value = settings }).catch(() => {})
-  void fetchGithubSummary()
 })
 
 onBeforeUnmount(() => {
@@ -275,7 +183,6 @@ onBeforeUnmount(() => {
     <section id="about-hero" class="about-section hero-section">
       <div class="about-shell hero-centered">
         <div class="hero-content">
-          <p class="status-pill hero-status"><span class="status-dot"></span>{{ formatAvailabilityStatus(config.hero.status) }}</p>
           <p class="eyebrow">{{ config.hero.eyebrow }}</p>
           <h1>{{ config.hero.name }}</h1>
           <h2 class="typed-role"><span>{{ typedRole }}</span><i aria-hidden="true"></i></h2>
@@ -284,75 +191,6 @@ onBeforeUnmount(() => {
           <div class="hero-actions">
             <RouterLink class="about-button primary" :to="config.hero.primaryButtonUrl">{{ config.hero.primaryButtonText }}</RouterLink>
             <button class="about-button secondary" type="button" @click="scrollTo('about-contact')">{{ config.hero.secondaryButtonText }}</button>
-          </div>
-        </div>
-      </div>
-      <button class="scroll-cue" type="button" @click="scrollTo('about-profile')">
-        向下滚动
-        <span></span>
-      </button>
-    </section>
-
-    <section id="about-profile" class="about-section">
-      <div class="about-shell two-column profile-layout">
-        <header class="about-section-header">
-          <p class="section-badge">{{ config.about.badge }}</p>
-          <h2>{{ config.about.title }}</h2>
-        </header>
-        <div class="section-copy profile-copy">
-          <div class="paragraphs">
-            <p v-for="(paragraph, index) in config.about.paragraphs" :key="index">
-              <span
-                v-for="(segment, segmentIndex) in highlightSegments(paragraph)"
-                :key="`${index}-${segmentIndex}`"
-                :class="{ 'about-accent': segment.highlighted }"
-              >{{ segment.text }}</span>
-            </p>
-          </div>
-        </div>
-        <aside class="code-card" aria-label="个人代码资料">
-          <div class="code-window-bar">
-            <div class="code-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-            <span class="code-filename">Shrink.json</span>
-          </div>
-          <pre><code><span class="code-var">{{ config.about.codeProfile.variableName }}</span> = {
-  name: <span class="code-string">"{{ config.about.codeProfile.name }}"</span>,
-  role: <span class="code-string">"{{ config.about.codeProfile.role }}"</span>,
-  location: <span class="code-string">"{{ config.about.codeProfile.location }}"</span>,
-  language: [<span class="code-string">"{{ config.about.codeProfile.languages.slice(0, 2).join('", "') }}"</span>,
-             <span class="code-string">"{{ config.about.codeProfile.languages.slice(2).join('", "') }}"</span>],
-  github: <span class="code-string">"{{ config.about.codeProfile.github }}"</span>
-};</code></pre>
-        </aside>
-      </div>
-    </section>
-
-    <section id="about-github" class="about-section">
-      <div class="about-shell github-shell">
-        <header class="about-section-header">
-          <p class="section-badge">{{ config.github.badge }}</p>
-          <h2>{{ config.github.titlePrefix }} <span>{{ config.github.titleAccent }}</span></h2>
-        </header>
-        <div class="github-stats">
-          <article v-for="stat in displayGithubStats" :key="stat.label" class="github-stat-card">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="statIcon(stat.icon)" /></svg>
-            <strong>{{ stat.value }}</strong>
-            <span>{{ stat.label }}</span>
-          </article>
-        </div>
-        <div class="heatmap-card">
-          <div class="heatmap-head">
-            <strong>{{ displayGithubContributionText }}</strong>
-            <span>{{ githubLoading ? '正在读取 GitHub 公共活动' : 'GitHub Public Activity' }}</span>
-          </div>
-          <div class="heatmap-grid">
-            <i v-for="(level, index) in displayHeatmapCells" :key="index" :data-level="level"></i>
-          </div>
-          <p v-if="githubError" class="github-fallback">GitHub 公共数据暂时读取失败：{{ githubError }}。已显示后台配置兜底数据。</p>
-          <div class="heatmap-legend">
-            <span>Less</span>
-            <i v-for="level in [0, 1, 2, 3, 4]" :key="level" :data-level="level"></i>
-            <span>More</span>
           </div>
         </div>
       </div>
@@ -677,67 +515,6 @@ h1 {
 .github-stat-card span,
 .skill-card p {
   color: var(--about-muted);
-}
-
-.scroll-cue {
-  position: absolute;
-  bottom: clamp(16rem, 26vh, 20rem);
-  left: 50%;
-  display: grid;
-  justify-items: center;
-  gap: 0.25rem;
-  transform: translateX(-50%);
-  color: var(--about-muted);
-  font-size: 0.85rem;
-}
-
-.scroll-cue span {
-  position: relative;
-  order: -1;
-  width: 24px;
-  height: 38px;
-  border-radius: 999px;
-  border: 2px solid color-mix(in srgb, var(--accent) 72%, transparent);
-  background: var(--bg-card-elevated);
-}
-
-.scroll-cue span::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 8px;
-  width: 3px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--accent);
-  transform: translateX(-50%);
-  animation: about-mouse-wheel 1.35s ease-in-out infinite;
-}
-
-.scroll-cue span::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -18px;
-  width: 1px;
-  height: 14px;
-  border-radius: 999px;
-  background: linear-gradient(var(--accent), transparent);
-  transform: translateX(-50%);
-}
-
-@keyframes about-mouse-wheel {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, 0);
-  }
-  35% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, 10px);
-  }
 }
 
 .about-section-header {

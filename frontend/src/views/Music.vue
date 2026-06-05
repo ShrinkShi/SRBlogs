@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import GlassCard from '@/components/GlassCard.vue'
 import CommentBox from '@/components/CommentBox.vue'
 import FrontJsonItemEditorModal from '@/components/FrontJsonItemEditorModal.vue'
@@ -13,7 +13,7 @@ import { useUiStore } from '@/stores/ui'
 import { useSessionStore } from '@/stores/session'
 
 type LyricEntry = { time: number; text: string }
-type LyricLine = { key: string; text: string; active: boolean }
+type LyricLine = { key: string; text: string; active: boolean; index: number; time?: number; seekable: boolean }
 
 const tracks = ref<MusicItem[]>([])
 const pageConfig = ref<PageConfig | null>(null)
@@ -22,6 +22,10 @@ const error = ref('')
 const activeTab = ref<'lyrics' | 'playlist'>('lyrics')
 const lyricText = ref('')
 const activeLyricNode = ref<HTMLElement | null>(null)
+const lyricScrollEl = ref<HTMLElement | null>(null)
+const lyricUserInteracting = ref(false)
+const lyricDragging = ref(false)
+const lyricClickMoved = ref(false)
 const player = usePlayerStore()
 const ui = useUiStore()
 const session = useSessionStore()
@@ -33,6 +37,13 @@ const batchMode = ref(false)
 const selectedTrackKeys = ref<Set<string>>(new Set())
 const uploadInput = ref<HTMLInputElement | null>(null)
 const uploadingTrack = ref(false)
+let lyricInteractionTimer: number | undefined
+let lyricLongPressTimer: number | undefined
+let lyricDragPointerId = 0
+let lyricDragStartY = 0
+let lyricDragStartScroll = 0
+let lyricPointerPressed = false
+const LYRIC_DRAG_LONG_PRESS_MS = 500
 
 const pageTitle = computed(() => pageConfig.value?.pageText?.music?.title || '音乐歌单')
 const pageSubtitle = computed(() => pageConfig.value?.pageText?.music?.subtitle || '左侧控制播放，右侧查看歌词和歌单。')
@@ -71,7 +82,10 @@ const lyricLines = computed<LyricLine[]>(() => {
     return entries.map((entry, index) => ({
       key: `${entry.time}-${index}`,
       text: entry.text,
-      active: index === activeLyricIndex.value
+      active: index === activeLyricIndex.value,
+      index,
+      time: entry.time,
+      seekable: true
     }))
   }
   const source = lyricSource.value
@@ -84,14 +98,16 @@ const lyricLines = computed<LyricLine[]>(() => {
       return lines.map((line, index) => ({
         key: `plain-${index}`,
         text: line,
-        active: false
+        active: false,
+        index,
+        seekable: false
       }))
     }
   }
   const fallback = currentTrack.value
     ? `${currentTrack.value.title} - ${currentTrack.value.artist} / ${player.playing ? '正在播放' : '等待播放'}`
     : '暂无歌词，播放时会显示当前歌曲信息。'
-  return [{ key: 'fallback', text: fallback, active: false }]
+  return [{ key: 'fallback', text: fallback, active: false, index: 0, seekable: false }]
 })
 
 function parseTimeTag(tag: string) {
@@ -127,13 +143,102 @@ function prefersReducedMotion() {
   return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 }
 
+function centerActiveLyric(behavior: ScrollBehavior = 'smooth') {
+  if (activeTab.value !== 'lyrics') return
+  const scroller = lyricScrollEl.value
+  const activeNode = activeLyricNode.value
+  if (!scroller || !activeNode) return
+  const top = activeNode.offsetTop - (scroller.clientHeight / 2) + (activeNode.clientHeight / 2)
+  scroller.scrollTo({
+    top: Math.max(0, top),
+    behavior: prefersReducedMotion() ? 'auto' : behavior
+  })
+}
+
+function scheduleLyricRecenter() {
+  window.clearTimeout(lyricInteractionTimer)
+  lyricInteractionTimer = window.setTimeout(() => {
+    lyricUserInteracting.value = false
+    centerActiveLyric('smooth')
+  }, 1000)
+}
+
+function markLyricInteraction() {
+  lyricUserInteracting.value = true
+  scheduleLyricRecenter()
+}
+
+function clearLyricLongPressTimer() {
+  window.clearTimeout(lyricLongPressTimer)
+  lyricLongPressTimer = undefined
+}
+
+function onLyricWheel() {
+  markLyricInteraction()
+}
+
+function onLyricPointerDown(event: PointerEvent) {
+  if (event.button !== 0 || !lyricScrollEl.value) return
+  clearLyricLongPressTimer()
+  lyricPointerPressed = true
+  lyricDragging.value = false
+  lyricClickMoved.value = false
+  lyricDragPointerId = event.pointerId
+  lyricDragStartY = event.clientY
+  lyricDragStartScroll = lyricScrollEl.value.scrollTop
+  const target = event.currentTarget as HTMLElement
+  target.setPointerCapture?.(event.pointerId)
+  lyricLongPressTimer = window.setTimeout(() => {
+    if (!lyricPointerPressed || lyricDragPointerId !== event.pointerId || !lyricScrollEl.value) return
+    lyricDragging.value = true
+    lyricClickMoved.value = true
+    lyricUserInteracting.value = true
+  }, LYRIC_DRAG_LONG_PRESS_MS)
+}
+
+function onLyricPointerMove(event: PointerEvent) {
+  if (!lyricPointerPressed || event.pointerId !== lyricDragPointerId || !lyricScrollEl.value) return
+  const delta = event.clientY - lyricDragStartY
+  if (!lyricDragging.value) {
+    if (Math.abs(delta) > 5) lyricClickMoved.value = true
+    return
+  }
+  lyricClickMoved.value = true
+  lyricScrollEl.value.scrollTop = lyricDragStartScroll - delta
+  event.preventDefault()
+  markLyricInteraction()
+}
+
+function endLyricPointer(event: PointerEvent) {
+  if (!lyricPointerPressed || event.pointerId !== lyricDragPointerId) return
+  const wasDragging = lyricDragging.value
+  clearLyricLongPressTimer()
+  lyricPointerPressed = false
+  lyricDragging.value = false
+  const target = event.currentTarget as HTMLElement
+  target.releasePointerCapture?.(event.pointerId)
+  lyricDragPointerId = 0
+  if (wasDragging) markLyricInteraction()
+}
+
+function seekToLyric(line: LyricLine) {
+  if (!line.seekable || typeof line.time !== 'number' || lyricClickMoved.value) return
+  player.ensureAudio()
+  player.syncAudio(false)
+  const targetTime = Math.max(0, line.time)
+  try {
+    if (player.audio) player.audio.currentTime = targetTime
+  } catch {
+    // Some browsers reject seeking before audio metadata is ready; keep UI state responsive.
+  }
+  player.currentTime = targetTime
+  centerActiveLyric('smooth')
+}
+
 watch([activeLyricIndex, activeTab], async () => {
   if (activeTab.value !== 'lyrics' || activeLyricIndex.value < 0) return
   await nextTick()
-  activeLyricNode.value?.scrollIntoView({
-    block: 'center',
-    behavior: prefersReducedMotion() ? 'auto' : 'smooth'
-  })
+  if (!lyricUserInteracting.value) centerActiveLyric('smooth')
 })
 
 function formatTime(value: number) {
@@ -334,6 +439,11 @@ watch(() => currentTrack.value?.lyricUrl, async (url) => {
 
 onMounted(load)
 
+onBeforeUnmount(() => {
+  window.clearTimeout(lyricInteractionTimer)
+  clearLyricLongPressTimer()
+})
+
 </script>
 
 <template>
@@ -416,16 +526,29 @@ onMounted(load)
           </button>
         </div>
 
-        <div v-if="activeTab === 'lyrics'" class="music-tab-content music-lyrics-reader mt-5 max-h-[32rem] overflow-auto rounded-[24px] p-5 text-center text-sm leading-8">
-          <p
+        <div
+          v-if="activeTab === 'lyrics'"
+          ref="lyricScrollEl"
+          class="music-tab-content music-lyrics-reader mt-5 max-h-[32rem] overflow-auto rounded-[24px] p-5 text-center text-sm leading-8"
+          :class="{ 'music-lyrics-reader-dragging': lyricDragging }"
+          @wheel="onLyricWheel"
+          @pointerdown="onLyricPointerDown"
+          @pointermove="onLyricPointerMove"
+          @pointerup="endLyricPointer"
+          @pointercancel="endLyricPointer"
+        >
+          <button
             v-for="line in lyricLines"
             :key="line.key"
+            type="button"
             :ref="line.active ? setActiveLyricNode : undefined"
             class="music-lyric-line"
             :class="{ 'music-lyric-line-active': line.active }"
+            :aria-disabled="!line.seekable"
+            @click="seekToLyric(line)"
           >
             {{ line.text }}
-          </p>
+          </button>
         </div>
 
         <div v-else class="music-tab-content music-playlist-table mt-5 max-h-[32rem] overflow-auto rounded-[24px]">

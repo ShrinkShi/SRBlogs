@@ -604,22 +604,62 @@ body::before {
 .music-lyrics-reader {
   display: grid;
   align-content: start;
-  gap: .35rem;
+  gap: .65rem;
+  padding-block: clamp(8rem, 26vh, 13rem) !important;
   scroll-behavior: smooth;
+  cursor: grab;
+  user-select: none;
+  touch-action: pan-y;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.music-lyrics-reader::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.music-lyrics-reader-dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+}
+
+.music-lyrics-reader-dragging .music-lyric-line {
+  cursor: grabbing;
 }
 
 .music-lyric-line {
+  display: block;
+  width: 100%;
+  appearance: none;
   margin: 0;
+  border: 0;
   border-radius: 999px;
-  padding: .18rem .7rem;
-  color: var(--text-muted) !important;
-  transition: color .22s var(--motion-ease), background .22s var(--motion-ease), transform .22s var(--motion-ease);
+  background: transparent;
+  padding: .32rem .7rem;
+  color: color-mix(in srgb, var(--text-primary) 42%, transparent) !important;
+  font: inherit;
+  line-height: 1.75;
+  text-align: center;
+  cursor: pointer;
+  transition: color .24s var(--motion-ease), transform .24s var(--motion-ease), font-size .24s var(--motion-ease), opacity .24s var(--motion-ease);
+}
+
+.music-lyric-line[aria-disabled='true'] {
+  cursor: grab;
+}
+
+.music-lyric-line:not([aria-disabled='true']):hover {
+  color: color-mix(in srgb, var(--text-primary) 68%, transparent) !important;
 }
 
 .music-lyric-line-active {
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  background: transparent !important;
   color: var(--text-primary) !important;
-  transform: scale(1.035);
+  font-size: 1.22em;
+  font-weight: 950;
+  transform: scale(1.08);
 }
 
 .home-typewriter-lyric {
