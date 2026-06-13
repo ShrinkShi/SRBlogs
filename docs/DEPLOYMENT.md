@@ -1,6 +1,6 @@
 # SRBlogs 部署指南
 
-SRBlogs 前台和后台使用 Vue 3 + Vite + TypeScript，后端使用 FastAPI。本指南聚焦 Alibaba Cloud Linux / CentOS / RHEL 系服务器，默认使用 `dnf` 或 `yum`。
+SRBlogs 前台和后台使用 Vue 3 + Vite + TypeScript，后端使用 FastAPI。本指南推荐使用在线安装器部署到 Ubuntu 22.04，并兼容 Alibaba Cloud Linux / CentOS / RHEL 系服务器。
 
 默认生产路径：
 
@@ -9,9 +9,31 @@ SRBlogs 前台和后台使用 Vue 3 + Vite + TypeScript，后端使用 FastAPI�
 - 后端服务：`srblogs-backend`
 - 后端监听：`127.0.0.1:8000`
 
-## 1. 首次安装
+## 1. 在线安装（推荐）
 
 推荐生产流程：
+
+```bash
+# 1. 进入中文 TUI 并完成安装
+curl -fsSL -o /tmp/srblogs-install.sh https://raw.githubusercontent.com/ShrinkShi/SRBlogs/main/deploy/install-online.sh && sudo bash /tmp/srblogs-install.sh
+
+# 2. 执行诊断
+sudo bash /opt/srblogs/deploy/doctor.sh
+```
+
+在线安装器优先使用 GitHub Releases latest，不会静默拉取 `main` 分支。TUI 会要求设置安装目录、配置目录、对外访问端口、后端内部端口、站点域名、管理员账号密码、是否安装受限 updater，以及是否尝试配置 UFW 放行端口。
+
+安装完成后会输出公网/内网前台地址、后台地址、API 地址、管理员账号密码、服务状态命令和日志命令。若使用云服务器，请同步在安全组中放行 TUI 中配置的 TCP 端口。
+
+安装日志位于 `/var/log/srblogs/install.TIMESTAMP.log`。日志会脱敏 `ADMIN_PASSWORD`、`JWT_SECRET`、Token、Secret 和 API Key。
+
+如已存在 `/opt/srblogs`，安装器会询问覆盖安装（自动备份）、备份后覆盖或退出；如已存在 `/etc/srblogs/backend.env`，会询问保留、备份重建或退出。覆盖前会自动备份到 `/opt/srblogs.backup.TIMESTAMP`。
+
+`deploy/setup.sh` 仅作为兼容入口保留，内部转调 `deploy/install.sh`。
+
+## 2. 手动安装（高级）
+
+手动安装适用于离线服务器、内网镜像或需要显式传入 zip/source 的场景。zip 包可以直接包含 `admin/ backend/ frontend/`，也可以多一层根目录，例如 `SRBlogs-main/admin`。
 
 ```bash
 # 1. 上传 zip 到服务器，例如 /opt/SRBlogs-main.zip
@@ -28,11 +50,7 @@ sudo systemctl restart srblogs-backend
 sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
-zip 包可以直接包含 `admin/ backend/ frontend/`，也可以多一层根目录，例如 `SRBlogs-main/admin`。
-
-`deploy/setup.sh` 仅作为兼容入口保留，内部转调 `deploy/install.sh`。
-
-## 2. install.sh 行为
+## 2.1 install.sh 行为
 
 `install.sh` 会执行：
 
@@ -62,9 +80,9 @@ sudo bash deploy/install.sh --app-dir /opt/srblogs --domain example.com
 
 swap 创建是保守策略：仅当当前无 swap 且 `/` 可用空间大于 4G 时，尝试创建 `/swapfile-srblogs`。swap 创建失败只输出 WARN，不中断安装。
 
-## 3. Web 初始化
+## 3. 手动安装后的 Web 初始化
 
-安装完成后访问：
+使用 `deploy/install.sh` 手动安装、或旧部署缺少 `.install.lock` 时，访问：
 
 ```text
 http://<your-server-ip>/install
@@ -82,7 +100,7 @@ sudo systemctl restart srblogs-backend
 sudo editor /etc/srblogs/backend.env
 ```
 
-生产环境不应继续使用旧的明文 `ADMIN_PASSWORD`；新安装和重置工具会写入 `ADMIN_PASSWORD_HASH`。`JWT_SECRET`、`PUBLIC_BASE_URL`、`CORS_ORIGINS` 和可选的 `SITE_START_TIME` 应与真实部署地址一致。
+在线安装器会按 TUI 输入写入兼容的 `ADMIN_PASSWORD` 完成初始化；长期运行建议使用 `scripts/reset_admin.py` 轮换为 `ADMIN_PASSWORD_HASH`。`JWT_SECRET`、`PUBLIC_BASE_URL`、`CORS_ORIGINS` 和可选的 `SITE_START_TIME` 应与真实部署地址一致。
 
 忘记后台密码时可重置管理员凭据：
 
@@ -100,7 +118,7 @@ sudo .venv/bin/python scripts/reset_install.py
 sudo systemctl restart srblogs-backend
 ```
 
-安装期 `backend.env` 允许 `srblogs` 服务用户写入，便于 Web 安装向导完成初始化。安装后应尽量收紧，例如 `root:srblogs 640` 或 `root:root 600`，以实际服务加载方式为准。
+在线安装器会直接写入生产配置并创建 `.install.lock`。手动 Web 安装期如临时允许 `srblogs` 服务用户写入 `backend.env`，安装后应尽量收紧，例如 `root:srblogs 640` 或 `root:root 600`，以实际服务加载方式为准。
 
 ## 4. 手动更新
 
@@ -197,8 +215,8 @@ Summary: PASS=12 WARN=2 FAIL=0
 
 ## 8. 生产检查
 
-- 已完成 `/install`，或已手动配置 `/etc/srblogs/backend.env`。
-- 管理员凭据已通过 `/install` 或 `scripts/reset_admin.py` 写入 `ADMIN_PASSWORD_HASH`。
+- 已完成在线安装器、`/install`，或已手动配置 `/etc/srblogs/backend.env`。
+- 管理员凭据已通过在线安装器、`/install` 或 `scripts/reset_admin.py` 写入。
 - `JWT_SECRET` 不是默认值。
 - `CORS_ORIGINS` 只包含可信来源。
 - 开发端口 `5173`、`5174` 未对外暴露。
@@ -213,5 +231,5 @@ Summary: PASS=12 WARN=2 FAIL=0
 发布部署脚本变更前运行：
 
 ```bash
-bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh deploy/install-updater.sh
+bash -n deploy/install-online.sh deploy/install.sh deploy/update.sh deploy/doctor.sh deploy/install-updater.sh
 ```

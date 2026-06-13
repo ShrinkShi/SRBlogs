@@ -1,6 +1,6 @@
 # SRBlogs Linux 部署资产
 
-本目录提供 SRBlogs 的 Linux 可重复部署脚本。主要支持 Alibaba Cloud Linux / CentOS / RHEL 系服务器，使用 `dnf` 或 `yum`。Ubuntu/Debian 暂不作为本版本主要验收目标。
+本目录提供 SRBlogs 的 Linux 可重复部署脚本。推荐生产环境使用在线安装器，优先支持 Ubuntu 22.04 的 `apt`，同时兼容 Alibaba Cloud Linux / CentOS / RHEL 系的 `dnf` / `yum`。
 
 默认路径：
 
@@ -11,7 +11,8 @@
 
 ## 文件说明
 
-- `install.sh`：全新服务器一键安装。
+- `install-online.sh`：在线安装入口，从 GitHub Releases 获取最新版本并进入中文 TUI。
+- `install.sh`：上传 zip / 本地源码 / 离线服务器的高级手动安装入口。
 - `update.sh`：带备份、staging、健康检查和回滚的手动更新。
 - `install-updater.sh`：安装 WebUI 受限 updater，不让 Web 后端以 root 运行。
 - `doctor.sh`：生产部署诊断。
@@ -22,9 +23,23 @@
 - `nginx.srblogs.conf`：Nginx 参考配置。
 - `healthcheck.sh`：HTTP 健康检查，优先检查 `/api/health`，兼容旧的 `/api/system/health`。
 
-## 首次安装
+## 在线安装（推荐）
 
-推荐先上传 release zip 到服务器。zip 可以直接包含 `admin/ backend/ frontend/`，也可以多一层目录，例如 `SRBlogs-main/admin`。
+在全新服务器上执行：
+
+```bash
+curl -fsSL -o /tmp/srblogs-install.sh https://raw.githubusercontent.com/ShrinkShi/SRBlogs/main/deploy/install-online.sh && sudo bash /tmp/srblogs-install.sh
+```
+
+在线安装器会进入中文 TUI，并询问安装目录、配置目录、对外访问端口、后端内部端口、站点域名、管理员账号密码、是否安装受限 updater 以及是否配置 UFW 放行端口。
+
+安装器只从 `ShrinkShi/SRBlogs` 的 GitHub Releases latest 下载版本；如果仓库没有 Release，会明确失败，不会静默拉取 `main` 分支。安装日志写入 `/var/log/srblogs/install.TIMESTAMP.log`，密码、JWT、Token、Secret 和 API Key 会脱敏。
+
+如已存在 `/opt/srblogs`，安装器会询问覆盖安装（自动备份）、备份后覆盖或退出；如已存在 `/etc/srblogs/backend.env`，会询问保留、备份重建或退出。覆盖安装前会自动备份。
+
+## 手动安装（高级）
+
+适用于离线服务器、内网镜像或需要显式传入 zip/source 的场景。推荐先上传 release zip 到服务器。zip 可以直接包含 `admin/ backend/ frontend/`，也可以多一层目录，例如 `SRBlogs-main/admin`。
 
 预览安装计划：
 
@@ -85,6 +100,8 @@ sudo bash /opt/srblogs/deploy/install-updater.sh
 
 ## 安全规则
 
+- `install-online.sh` 不以 root 运行 Web 后端，`srblogs-backend` 始终使用 `srblogs` 系统用户。
+- `install-online.sh` 只从 GitHub Releases 下载，不接收用户传入的任意下载 URL。
 - `install.sh` 默认不源码编译 Python；只有传入 `--compile-python` 才允许。
 - `install.sh` 默认不重写 `/etc/nginx/nginx.conf`；只有传入 `--force-nginx-main` 才允许。
 - 脚本只会把明确默认站点 `default.conf`、`welcome.conf` 改名为 `.disabled.TIMESTAMP`。
@@ -93,7 +110,7 @@ sudo bash /opt/srblogs/deploy/install-updater.sh
 - 默认只清理旧的 `/opt/srblogs.backup.*`，保留最近 3 个。
 - `/opt/srblogs.previous.*` 和 `/opt/srblogs.failed.*` 只有传入 `--cleanup` 才会清理。
 - 日志会隐藏 `ADMIN_PASSWORD`、`JWT_SECRET`、OAuth Secret、Token 和 API Key。
-- 旧部署中的明文 `ADMIN_PASSWORD` 仅保留兼容；新安装和 `backend/scripts/reset_admin.py` 会写入 `ADMIN_PASSWORD_HASH`。
+- 在线安装器会按 TUI 输入写入兼容的 `ADMIN_PASSWORD` 完成初始化；长期运行建议使用 `backend/scripts/reset_admin.py` 轮换为 `ADMIN_PASSWORD_HASH`。
 
 ## 日志与数据
 
@@ -141,5 +158,5 @@ sudo chmod -R u+rwX,g+rwX /opt/srblogs/backend/data
 发布脚本变更前运行：
 
 ```bash
-bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh deploy/install-updater.sh
+bash -n deploy/install-online.sh deploy/install.sh deploy/update.sh deploy/doctor.sh deploy/install-updater.sh
 ```

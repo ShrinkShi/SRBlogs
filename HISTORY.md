@@ -1,4 +1,12 @@
 # HISTORY
+## 2026-06-13 - Linux 在线安装入口与部署文档收口
+
+- 新增 `deploy/install-online.sh`，支持一行 `curl` 下载后进入中文 TUI，优先适配 Ubuntu 22.04 `apt`，并兼容 `dnf` / `yum`。
+- 在线安装器仅从 `ShrinkShi/SRBlogs` GitHub Releases latest 获取发布包，不静默拉取 `main`；安装前校验 `frontend`、`admin`、`backend` 目录结构。
+- 安装流程可配置安装目录、配置目录、对外端口、后端内部端口、站点域名、管理员账号密码、受限 updater 和 UFW 放行策略。
+- 安装器会写入 `/etc/srblogs/backend.env`、初始化 `backend/data/settings.json` 与 `.install.lock`，生成 Nginx 和 `srblogs-backend` systemd 配置，并确保后端以 `srblogs` 普通用户运行。
+- README、`deploy/README.md`、`docs/DEPLOYMENT.md` 将 Linux 推荐部署方式改为在线安装，手动 zip/source 安装保留为高级/离线方式。
+
 ## 2026-05-23 - v1.2.2 发布准备：更新闭环与原生弹窗清理
 
 - 项目版本统一到 `v1.2.2`，新增后端统一版本常量 `backend/app/version.py` 与根目录 `VERSION` 文件，后台侧边栏版本显示改为读取后端接口返回值。

@@ -23,7 +23,7 @@ README 当前未内置截图，避免继续展示旧版后台 UI。建议发布�
 - 前台首页：展示当前主题、内容卡片和运行时间。
 - 后台文章编辑：展示 v1.2.2 双栏编辑器、Markdown 工具栏和预览。
 - 后台内容管理：展示文章、图片、音乐的嵌入式评论管理入口。
-- Linux 安装向导：展示 `/install` 首次初始化流程。
+- Linux 在线安装：展示中文 TUI 与安装完成后的访问地址输出。
 
 ## 项目概述
 
@@ -175,11 +175,11 @@ Windows 推荐从仓库根目录运行：
 | `APP_ENV` | `development` | 否 | 运行环境标识 |
 | `DATA_DIR` | `backend/data` | 是 | Markdown、JSON、上传、备份和日志目录 |
 | `PUBLIC_BASE_URL` | `http://127.0.0.1:8000` | 生产必填 | RSS、Sitemap、Robots、OpenGraph 和上传 URL 的公开地址 |
-| `SITE_START_TIME` | 空 | 否 | 站点运行时间起点；首次安装向导未填写时由后端自动生成 |
-| `ADMIN_USERNAME` | `admin` | 安装后必填 | 后台管理员用户名；推荐由 `/install` 或 `reset_admin.py` 写入 |
+| `SITE_START_TIME` | 空 | 否 | 站点运行时间起点；在线安装器或安装向导未填写时由后端自动生成 |
+| `ADMIN_USERNAME` | `admin` | 安装后必填 | 后台管理员用户名；推荐由在线安装器、`/install` 或 `reset_admin.py` 写入 |
 | `ADMIN_PASSWORD_HASH` | 空 | 安装后必填 | 后台管理员密码哈希；新安装和重置脚本写入该字段 |
-| `ADMIN_PASSWORD` | 空 | 否 | 旧部署兼容字段，不建议继续使用；`doctor.sh` 会提示 WARN |
-| `JWT_SECRET` | `please-change-this-secret` | 生产必填 | JWT 签名密钥；安装向导自动生成，手动配置必须改为长随机值 |
+| `ADMIN_PASSWORD` | 空 | 否 | 在线安装器可写入该字段完成初始化；长期运行建议用 `reset_admin.py` 轮换为 `ADMIN_PASSWORD_HASH` |
+| `JWT_SECRET` | `please-change-this-secret` | 生产必填 | JWT 签名密钥；在线安装器或安装向导自动生成，手动配置必须改为长随机值 |
 | `JWT_EXPIRE_MINUTES` | `1440` | 否 | 管理端登录有效期 |
 | `CORS_ORIGINS` | 本地前后台地址 | 是 | 允许访问 API 的前端来源，生产不要使用 `*` |
 | `UPLOAD_DRIVER` | `local` | 否 | 当前实现为本地上传 |
@@ -220,13 +220,34 @@ sudo systemctl restart srblogs-backend
 
 查看日志：三个启动窗口分别输出后端、前台和管理端日志。访问地址见“访问地址”章节。
 
-### 方式二：Linux 一键部署
+### 方式二：Linux 在线安装（推荐）
 
-主要支持 Alibaba Cloud Linux / CentOS / RHEL 系服务器，使用 `dnf` 或 `yum`。推荐通过本地上传 zip 包部署，避免服务器直接 `git clone GitHub` 不稳定。
+推荐在 Ubuntu 22.04、Alibaba Cloud Linux、CentOS / RHEL 系服务器上使用在线安装器。Ubuntu 22.04 优先使用 `apt`，CentOS 系自动兼容 `dnf` / `yum`。
+
+一行命令进入中文 TUI：
+
+```bash
+curl -fsSL -o /tmp/srblogs-install.sh https://raw.githubusercontent.com/ShrinkShi/SRBlogs/main/deploy/install-online.sh && sudo bash /tmp/srblogs-install.sh
+```
+
+安装器会：
+
+- 从 `ShrinkShi/SRBlogs` GitHub Releases 获取 latest release；如果仓库未创建 Release，会明确失败，不会静默拉取 `main`。
+- 安装 nginx、curl、wget、unzip、rsync、Python、venv、pip、Node.js 20 LTS 等依赖。
+- 通过中文 TUI 设置安装目录、配置目录、对外端口、后端内部端口、域名、管理员账号密码、UFW 放行和受限 updater。
+- 写入 `/etc/srblogs/backend.env`，初始化 `backend/data/settings.json` 和 `.install.lock`。
+- 生成 Nginx 与 systemd 配置，后端以 `srblogs` 普通用户运行，不允许 root 跑 Web 后端。
+- 安装日志写入 `/var/log/srblogs/install.TIMESTAMP.log`，日志会脱敏密码、JWT、Token、Secret 和 API Key。
+
+安装完成后会输出公网/内网前台地址、后台地址、API 地址、管理员账号密码、服务状态命令和日志命令。若使用非 80 端口，请同时在云服务器安全组放行该 TCP 端口。
+
+如已存在 `/opt/srblogs`，安装器会询问覆盖安装（自动备份）、备份后覆盖或退出；如已存在 `/etc/srblogs/backend.env`，会询问保留、备份重建或退出。覆盖前会自动备份到 `/opt/srblogs.backup.TIMESTAMP`。
+
+`deploy/install.sh` 和 `deploy/setup.sh` 继续保留，作为上传 zip、本地源码或离线服务器的高级安装入口。
+
+#### 高级：上传 zip 手动安装
 
 zip 包可以直接包含 `admin/ backend/ frontend/`，也可以多一层目录，例如 `SRBlogs-main/admin`。
-
-#### 全新安装
 
 先预览将执行的系统修改：
 
@@ -249,20 +270,12 @@ sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip --compile-python
 sudo bash deploy/install.sh --force-nginx-main
 ```
 
-脚本完成后访问：
-
-```text
-http://服务器IP/install
-```
-
-安装向导会写入 `/etc/srblogs/backend.env`、初始化 `backend/data/settings.json`、创建 `backend/data/.install.lock`，并由后端生成 `JWT_SECRET`。完成后建议重启：
+手动安装完成后建议运行：
 
 ```bash
 sudo systemctl restart srblogs-backend
 sudo bash /opt/srblogs/deploy/doctor.sh
 ```
-
-`deploy/setup.sh` 仍保留为兼容入口，内部转调 `deploy/install.sh`。
 
 #### 一键更新
 
@@ -291,7 +304,7 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 - 只会把明确默认站点 `default.conf`、`welcome.conf` 改名为 `.disabled.TIMESTAMP`，不会删除未知 Nginx 配置。
 - 无 swap 且根分区可用空间大于 4G 时才尝试创建 `/swapfile-srblogs`；失败只警告不中断。
 - 日志会隐藏 `ADMIN_PASSWORD`、`JWT_SECRET`、OAuth Secret、Token 和 API Key。
-- 安装期允许 `srblogs` 写 `/etc/srblogs/backend.env`；安装完成后建议收紧为 `root:srblogs 640` 或 `root:root 600`。
+- 在线安装器会将 `/etc/srblogs/backend.env` 写为 `root:srblogs 640`；手动 Web 安装期如临时允许 `srblogs` 写入，完成后应收紧为 `root:srblogs 640` 或 `root:root 600`。
 
 #### 手动流程：逐步部署
 
@@ -403,13 +416,14 @@ sudo systemctl reload nginx
 | 重置管理员密码 | `cd backend; python scripts/reset_admin.py --username admin --env-file /etc/srblogs/backend.env` |
 | 重置安装状态 | `cd backend; python scripts/reset_install.py` |
 | 生产构建 | `bash deploy/build-all.sh` |
-| Linux 一键安装预览 | `sudo bash deploy/install.sh --dry-run --zip /opt/SRBlogs-main.zip` |
-| Linux 一键安装 | `sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip` |
+| Linux 在线安装 | `curl -fsSL -o /tmp/srblogs-install.sh https://raw.githubusercontent.com/ShrinkShi/SRBlogs/main/deploy/install-online.sh && sudo bash /tmp/srblogs-install.sh` |
+| Linux 手动安装预览 | `sudo bash deploy/install.sh --dry-run --zip /opt/SRBlogs-main.zip` |
+| Linux 手动安装 | `sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip` |
 | Linux 手动更新预览 | `sudo bash /opt/srblogs/deploy/update.sh --dry-run --zip /opt/SRBlogs-main.zip` |
 | Linux 手动更新 | `sudo bash /opt/srblogs/deploy/update.sh --zip /opt/SRBlogs-main.zip` |
 | 安装 WebUI 受限 updater | `sudo bash /opt/srblogs/deploy/install-updater.sh` |
 | Linux 部署诊断 | `sudo bash /opt/srblogs/deploy/doctor.sh` |
-| 部署脚本语法检查 | `bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh deploy/install-updater.sh` |
+| 部署脚本语法检查 | `bash -n deploy/install-online.sh deploy/install.sh deploy/update.sh deploy/doctor.sh deploy/install-updater.sh` |
 | 健康检查 | `PUBLIC_BASE_URL=https://example.com API_BASE_URL=http://127.0.0.1:8000 bash deploy/healthcheck.sh` |
 | 查看 systemd 服务 | `systemctl status srblogs-backend --no-pager` |
 | 查看 systemd 日志 | `sudo journalctl -u srblogs-backend -n 100 --no-pager` |
@@ -441,7 +455,7 @@ SRBlogs/
 │   ├── data/                 # Markdown、JSON、评论、上传和日志数据
 │   └── requirements.txt      # 后端依赖
 ├── docs/                     # API、部署、安全、QA、发布文档
-├── deploy/                   # Linux 一键部署/更新/诊断、Nginx、systemd、健康检查脚本
+├── deploy/                   # Linux 在线安装、手动部署/更新/诊断、Nginx、systemd、健康检查脚本
 ├── requirements.txt          # 根目录 Python 依赖入口，转发到 backend/requirements.txt
 ├── start-all.cmd             # Windows 一键启动
 ├── start-backend.cmd         # Windows 后端启动
@@ -490,15 +504,15 @@ SRBlogs/
 - `backend/data/uploads`、`backend/data/audit`、`backend/data/.manual_backups` 需要后端服务用户可读写。
 - Nginx 的 `client_max_body_size` 应与 `UPLOAD_MAX_SIZE` 保持一致或更大。
 - 不要直接暴露 `.env`、`.manual_backups`、`audit`、源代码目录、`node_modules` 或构建内部文件。
-- 首次部署后访问 `/install` 完成初始化；安装完成会创建 `backend/data/.install.lock`，重复访问安装 API 会被拒绝。
-- 生产推荐先上传 zip，再执行 `deploy/install.sh --zip`；手动更新时使用 `deploy/update.sh --zip`，不要直接覆盖 `/opt/srblogs`。WebUI 一键更新需先安装受限 updater。
+- 在线安装器会写入生产配置并创建 `backend/data/.install.lock`；手动安装或旧部署缺少锁文件时，访问 `/install` 完成初始化。
+- 生产推荐使用 `deploy/install-online.sh` 在线安装；离线或内网部署再使用 `deploy/install.sh --zip`。手动更新时使用 `deploy/update.sh --zip`，不要直接覆盖 `/opt/srblogs`。WebUI 一键更新需先安装受限 updater。
 - 如后台保存站点标题、主题外观后前台刷新仍不生效，运行 `sudo bash /opt/srblogs/deploy/doctor.sh`，检查 `settings.json`、`/api/settings/public` 内容和 Cache-Control 响应头。
 - 如更新失败且出现 `rollback attempted but healthcheck failed`，优先查看 `/var/log/srblogs/update.TIMESTAMP.log` 和 `sudo journalctl -u srblogs-backend -n 100 --no-pager`。
 - 更新脚本的健康检查以 `GET /api/health` 为准，返回示例为 `{"ok":true,"app":"SRBlogs API"}`；旧路径 `/api/system/health` 仅作为兼容兜底。
 
 ## 安全说明
 
-- 生产环境必须通过 `/install` 或 `/etc/srblogs/backend.env` 设置管理员账号；`JWT_SECRET` 由安装向导自动生成，手动配置时必须改为长随机值。
+- 生产环境必须通过在线安装器、`/install` 或 `/etc/srblogs/backend.env` 设置管理员账号；`JWT_SECRET` 由在线安装器或安装向导自动生成，手动配置时必须改为长随机值。
 - 管理员账号密码、JWT、OAuth Secret、SMTP 密码、AI Key、OSS Key 不得提交到 Git。
 - 上传接口需要管理员 JWT；后端会校验文件类型和大小。
 - 公开设置接口只应返回非敏感状态，例如 provider 是否已配置，不返回 Secret 明文。
@@ -507,7 +521,7 @@ SRBlogs/
 
 ## 已知问题
 
-- README 暂未包含 v1.2.2 截图，发布 GitHub Release 前建议补充前台、后台编辑器、评论弹窗和安装向导截图。
+- README 暂未包含 v1.2.2 截图，发布 GitHub Release 前建议补充前台、后台编辑器、评论弹窗和在线安装 TUI 截图。
 - 真实服务器、域名和 HTTPS 部署实操仍需按目标环境执行验收。
 - GitHub/QQ OAuth、SMTP、OSS、AI Provider 需要配置真实服务后再进行联调。
 - 仓库当前没有自动化单元测试套件，主要依赖构建、后端语法检查、健康检查和手动 QA。
