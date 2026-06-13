@@ -423,7 +423,7 @@ def public_settings(data: dict[str, Any]) -> dict[str, Any]:
         "githubLoginConfigured": github_login_configured,
         "qqLoginEnabled": qq_login_enabled,
         "qqLoginConfigured": qq_login_configured,
-        "maxLength": comments.get("maxLength", 1000),
+        "maxLength": comments.get("maxLength", 20000),
         "gitalk": {
             "clientID": gitalk.get("clientID", ""),
             "repo": gitalk.get("repo", ""),

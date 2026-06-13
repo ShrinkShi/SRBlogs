@@ -65,7 +65,7 @@ class CommentAttachment(BaseModel):
 class CommentCreate(BaseModel):
     author: str = Field(default="", max_length=40)
     email: Optional[str] = Field(default="", max_length=120)
-    content: str = Field(min_length=1, max_length=5000)
+    content: str = Field(min_length=1, max_length=20000)
     parentId: str = Field(default="", max_length=80)
     attachments: list[CommentAttachment] = Field(default_factory=list, max_length=5)
 

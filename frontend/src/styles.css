@@ -445,7 +445,11 @@ body::before {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: 0 10px 28px color-mix(in srgb, #000 12%, transparent);
-  transition: transform .56s cubic-bezier(.16, 1, .3, 1), background .32s ease, border-color .32s ease;
+  transition:
+    transform .56s cubic-bezier(.16, 1, .3, 1),
+    background .32s ease,
+    border-color .32s ease,
+    padding-bottom .22s ease;
 }
 
 .app-topbar-hidden {
@@ -866,9 +870,14 @@ body::before {
 }
 
 .search-button-theme {
-  background: var(--ct-search-button-bg, rgb(15 23 42)) !important;
+  background: transparent !important;
   color: var(--ct-search-button-text, rgb(255 255 255));
   transform: scale(var(--ct-search-button-size, 1));
+}
+
+.page-local-search button {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .home-search-wrap {
@@ -2404,4 +2413,10 @@ body::before {
     animation: none !important;
     opacity: .72;
   }
+}
+
+.page-local-search button,
+.search-button-theme {
+  background: transparent !important;
+  box-shadow: none !important;
 }

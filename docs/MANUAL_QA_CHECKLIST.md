@@ -4,8 +4,9 @@
 - 点击“检查更新”后能读取 `ShrinkShi/SRBlogs` 的最新 GitHub Release；网络失败时显示中文错误，不白屏。
 - 发现新版本时，“忽略此版本”能写入忽略状态，刷新后仍保留。
 - Windows 本地开发环境点击“一键更新”应显示“不支持”，不能伪造更新成功。
-- Linux 服务器点击“一键更新”只触发后端下载 GitHub Release 并调用 `deploy/update.sh`，不允许前端提交命令内容。
-- 更新启动后能看到任务状态、PID、启动时间和日志路径。
+- Linux 服务器点击“一键更新”只允许后端触发固定的 `srblogs-updater.service`，不允许前端提交命令内容，不允许后端直接执行 `deploy/update.sh`。
+- 未安装 updater service 时，WebUI 应提示执行 `deploy/install-updater.sh`。
+- 更新启动后能从 `/var/lib/srblogs/update/status.json` 看到任务状态、PID、启动时间、日志路径和回滚结果。
 - 更新检查、忽略、启动更新均写入审计日志。
 - 构建产物 Secret 搜索不得出现真实 OAuth Secret、SMTP Secret、管理员 token、AI Key 或更新脚本内容。
 

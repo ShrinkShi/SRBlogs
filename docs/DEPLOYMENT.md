@@ -102,7 +102,7 @@ sudo systemctl restart srblogs-backend
 
 安装期 `backend.env` 允许 `srblogs` 服务用户写入，便于 Web 安装向导完成初始化。安装后应尽量收紧，例如 `root:srblogs 640` 或 `root:root 600`，以实际服务加载方式为准。
 
-## 4. 更新
+## 4. 手动更新
 
 上传新 zip 后运行：
 
@@ -136,6 +136,18 @@ rollback attempted but healthcheck failed
 ```
 
 `update.sh` 默认只保留最近 3 个 `/opt/srblogs.backup.*`。不会自动删除 `/opt/srblogs.previous.*` 或 `/opt/srblogs.failed.*`，除非显式传入 `--cleanup`。
+
+## 4.1 WebUI 受限一键更新
+
+后台“检查更新”会继续读取 `ShrinkShi/SRBlogs` GitHub Releases。若要允许管理员在 WebUI 中点击“立即更新”，必须先由 root 安装受限 updater：
+
+```bash
+sudo bash /opt/srblogs/deploy/install-updater.sh
+```
+
+安装内容包括 `/usr/local/sbin/srblogs-update`、`srblogs-updater.service`、`/etc/sudoers.d/srblogs-updater` 和 `/var/lib/srblogs/update/` 状态目录。Web 后端只触发固定的 `sudo -n systemctl start srblogs-updater.service`，不会以 root 运行，也不会执行用户传入命令或 URL。
+
+如果未安装 updater service、没有 systemd、没有 sudoers 权限或不是 Linux，WebUI 会禁用“立即更新”并提示使用手动更新或执行 `deploy/install-updater.sh`。
 
 ## 5. 诊断
 
@@ -201,5 +213,5 @@ Summary: PASS=12 WARN=2 FAIL=0
 发布部署脚本变更前运行：
 
 ```bash
-bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh
+bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh deploy/install-updater.sh
 ```

@@ -64,10 +64,10 @@ def _comments_enabled(options: dict) -> bool:
 
 def _max_comment_length(options: dict) -> int:
     try:
-        value = int(options.get("maxLength", 1000))
+        value = int(options.get("maxLength", 20000))
     except (TypeError, ValueError):
-        value = 1000
-    return max(1, min(value, 5000))
+        value = 20000
+    return max(1, min(value, 20000))
 
 
 def _mask_email(email: str) -> str:

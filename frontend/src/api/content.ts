@@ -148,11 +148,11 @@ export const contentApi = {
     const { data } = await method<ContentItem>(url, payload)
     return data
   },
-  contentLikeStatus: async (section: 'posts' | 'moments' | 'chatters', slug: string) => {
+  contentLikeStatus: async (section: 'posts' | 'moments' | 'chatters' | 'photos', slug: string) => {
     const { data } = await http.get<ContentLikeStatus>(`/${section}/${slug}/likes`)
     return data
   },
-  toggleContentLike: async (section: 'posts' | 'moments' | 'chatters', slug: string) => {
+  toggleContentLike: async (section: 'posts' | 'moments' | 'chatters' | 'photos', slug: string) => {
     const { data } = await http.post<ContentLikeStatus>(`/${section}/${slug}/likes`)
     return data
   },
@@ -197,7 +197,7 @@ export const contentApi = {
     return data
   },
   runUpdate: async (tag = '') => {
-    const { data } = await http.post<UpdateStatus>('/admin/update/run', { tag })
+    const { data } = await http.post<UpdateStatus>('/admin/update/start', { tag })
     return data
   },
   updateTask: async () => {

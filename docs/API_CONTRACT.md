@@ -814,11 +814,11 @@ Sitemap: https://example.com/api/sitemap.xml
 
 2026-05-03 鏇存柊锛歚POST /api/upload` 缁х画瑕佹眰绠＄悊鍛?JWT锛屼絾鏈湴璧勬簮涓婁紶鑼冨洿浠庡浘鐗囨墿灞曚负鍥剧墖銆侀煶棰戙€佽棰戝拰姝岃瘝鏂囨湰銆傚悗鍙拌〃鍗曞彲灏嗕笂浼犺繑鍥炵殑 URL 鍥炲～鍒板ご鍍忋€佽儗鏅€佺収鐗?鐩稿唽銆佸皝闈€侀煶涔?URL銆佹瓕璇?URL 鎴栧悗缁棰戝瓧娈点€傛帴鍙ｄ粛蹇呴』鍚屾椂鏍￠獙鎵╁睍鍚嶃€丮IME 鍜屽ぇ灏忥紱闈炴硶绫诲瀷杩斿洖 `415`锛岃秴澶ф枃浠惰繑鍥?`413`銆?
 褰撳墠榛樿鍏佽锛?
-- 鍥剧墖锛歚.jpg`銆乣.jpeg`銆乣.png`銆乣.gif`銆乣.webp`銆乣.svg`
+- 鍥剧墖锛歚.jpg`銆乣.jpeg`銆乣.png`銆乣.gif`銆乣.webp`
 - 闊抽锛歚.mp3`銆乣.wav`銆乣.ogg`銆乣.m4a`
 - 瑙嗛锛歚.mp4`銆乣.webm`銆乣.mov`
 - 姝岃瘝锛歚.lrc`銆乣.txt`
-- MIME锛歚image/jpeg`銆乣image/png`銆乣image/gif`銆乣image/webp`銆乣image/svg+xml`銆乣audio/mpeg`銆乣audio/wav`銆乣audio/ogg`銆乣audio/mp4`銆乣video/mp4`銆乣video/webm`銆乣video/quicktime`
+- MIME锛歚image/jpeg`銆乣image/png`銆乣image/gif`銆乣image/webp`銆乣audio/mpeg`銆乣audio/wav`銆乣audio/ogg`銆乣audio/mp4`銆乣video/mp4`銆乣video/webm`銆乣video/quicktime`
 - 澶у皬涓婇檺鎸夌被鍨嬪垎妗ｏ細鍥剧墖榛樿 10 MB锛岄煶棰戦粯璁?100 MB锛岃棰戦粯璁?200 MB锛屾瓕璇嶉粯璁?1 MB锛涗笉鍏佽鏃犻檺鍒朵笂浼犮€?- 閿欒淇℃伅闇€鏄庣‘鎸囧嚭鍥剧墖銆侀煶棰戙€佽棰戞垨姝岃瘝瓒呰繃瀵瑰簲闄愬埗锛屾柟渚垮悗鍙?UI 鏄剧ず鍙閿欒銆?
 ### POST `/upload`
 
@@ -1480,7 +1480,7 @@ Albums remain limited to 50 photos. If a batch upload selection exceeds the rema
 
 保存被忽略的 Release tag，之后同一 tag 不再提示 `updateAvailable=true`。
 
-### `POST /api/admin/update/run`
+### `POST /api/admin/update/start`
 
 请求体：
 
@@ -1488,4 +1488,4 @@ Albums remain limited to 50 photos. If a batch upload selection exceeds the rema
 { "tag": "v1.2.2" }
 ```
 
-Linux 服务器会由后端下载 GitHub Release zipball，并调用仓库内 `deploy/update.sh --zip ... --app-dir ...`。后端会检查脚本存在、bash/sudo/root 权限和当前运行环境；Windows 或权限不足时返回 `status=unsupported`。启动后写入 `backend/data/update_logs/` 并记录审计日志。
+Linux 服务器不会由 Web 后端直接下载包或执行任意 shell。该接口仅写入 `/var/lib/srblogs/update/request.json`，然后执行固定命令 `sudo -n systemctl start srblogs-updater.service`。真正更新由 root-owned `/usr/local/sbin/srblogs-update` 和 `srblogs-updater.service` 完成。未安装 updater、无 systemd、无 sudoers 权限或 Windows 本地环境会返回 `status=unsupported`。兼容旧前端的 `POST /api/admin/update/run` 会转到同一逻辑。

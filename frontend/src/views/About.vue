@@ -341,7 +341,7 @@ onBeforeUnmount(() => {
 }
 
 .hero-section .about-shell {
-  transform: translateY(-4vh);
+  transform: translateY(calc(-4vh + 1.5rem));
 }
 
 .hero-content {

@@ -13,6 +13,7 @@ import { useUiStore } from '@/stores/ui'
 import { tagStyle } from '@/utils/tagStyles'
 
 type AlbumView = PhotoAlbum & { slug: string; sourceIndex: number }
+type AlbumLikeState = { liked: boolean; like_count: number }
 
 const rawPhotos = ref<Array<PhotoItem | PhotoAlbum>>([])
 const session = useSessionStore()
@@ -51,6 +52,10 @@ const editOpen = ref(false)
 const editingAlbum = ref<AlbumView | null>(null)
 const pageConfig = ref<PageConfig | null>(null)
 const toneMap = reactive<Record<string, ImageTone>>({})
+const albumLikeStates = reactive<Record<string, AlbumLikeState>>({})
+const albumCommentCounts = reactive<Record<string, number>>({})
+const likingAlbumSlug = ref('')
+const albumDeleteArmed = ref('')
 const title = computed(() => pageConfig.value?.pageText?.photos?.title || '相册')
 const subtitle = computed(() => pageConfig.value?.pageText?.photos?.subtitle || '相册记录从后端 JSON 动态读取，点击封面可查看组内照片。')
 useSeo({ title: () => title.value, description: () => subtitle.value, path: '/photowall' })
@@ -60,6 +65,7 @@ const dragGhostStyle = computed(() => ({
   left: `${dragState.x}px`,
   top: `${dragState.y}px`
 }))
+let albumDeleteTimer: number | undefined
 
 function slugify(value: string, fallback: string) {
   const slug = value
@@ -113,6 +119,7 @@ const filteredAlbums = computed(() => {
 watch(albums, (list) => {
   list.forEach(async (album) => {
     toneMap[album.slug] = await detectImageTone(album.cover || album.photos[0]?.url, 'dark')
+    void loadAlbumSocial(album)
   })
 }, { immediate: true })
 
@@ -132,6 +139,72 @@ async function load() {
 function openAlbumEditor(album: AlbumView) {
   editingAlbum.value = album
   editOpen.value = true
+}
+
+function albumStat(album: AlbumView, key: 'view_count' | 'like_count' | 'comment_count' | 'share_count') {
+  if (key === 'like_count') return Math.max(0, Number(albumLikeStates[album.slug]?.like_count ?? album.like_count ?? 0))
+  if (key === 'comment_count') return Math.max(0, Number(albumCommentCounts[album.slug] ?? album.comment_count ?? 0))
+  return Math.max(0, Number(album[key] || 0))
+}
+
+async function loadAlbumSocial(album: AlbumView) {
+  try {
+    albumLikeStates[album.slug] = await contentApi.contentLikeStatus('photos', album.slug)
+  } catch {
+    albumLikeStates[album.slug] = {
+      liked: false,
+      like_count: Math.max(0, Number(album.like_count || 0))
+    }
+  }
+  try {
+    const comments = await contentApi.comments('photos', album.slug)
+    albumCommentCounts[album.slug] = Array.isArray(comments) ? comments.length : Math.max(0, Number(album.comment_count || 0))
+  } catch {
+    albumCommentCounts[album.slug] = Math.max(0, Number(album.comment_count || 0))
+  }
+}
+
+async function toggleAlbumLike(album: AlbumView) {
+  if (likingAlbumSlug.value) return
+  likingAlbumSlug.value = album.slug
+  try {
+    const data = await contentApi.toggleContentLike('photos', album.slug)
+    albumLikeStates[album.slug] = data
+    const source = rawPhotos.value[album.sourceIndex]
+    if (source && typeof source === 'object') {
+      rawPhotos.value[album.sourceIndex] = { ...source, like_count: data.like_count }
+    }
+    ui.showToast(data.liked ? '已点赞' : '已取消点赞', 'success')
+  } catch (exc) {
+    ui.showToast(exc instanceof Error ? exc.message : '点赞失败，请先登录后重试', 'error')
+  } finally {
+    likingAlbumSlug.value = ''
+  }
+}
+
+async function deleteAlbum(album: AlbumView) {
+  if (!session.isAdmin) return
+  if (albumDeleteArmed.value !== album.slug) {
+    albumDeleteArmed.value = album.slug
+    window.clearTimeout(albumDeleteTimer)
+    albumDeleteTimer = window.setTimeout(() => {
+      if (albumDeleteArmed.value === album.slug) albumDeleteArmed.value = ''
+    }, 3000)
+    ui.showToast('再次点击红叉确认删除相册', 'info')
+    return
+  }
+  const next = rawPhotos.value.filter((_, index) => index !== album.sourceIndex)
+  try {
+    rawPhotos.value = next
+    await contentApi.adminPutJson('/photos', next)
+    delete albumLikeStates[album.slug]
+    delete albumCommentCounts[album.slug]
+    albumDeleteArmed.value = ''
+    ui.showToast('相册已删除', 'success')
+  } catch (exc) {
+    await load()
+    ui.showToast(exc instanceof Error ? exc.message : '相册删除失败', 'error')
+  }
 }
 
 function openAlbum(album: AlbumView) {
@@ -348,6 +421,7 @@ function resetPhotoDrag() {
 onMounted(load)
 onUnmounted(() => {
   window.clearTimeout(photoLongPressTimer)
+  window.clearTimeout(albumDeleteTimer)
   cleanupPhotoDragListeners()
 })
 </script>
@@ -410,27 +484,54 @@ onUnmounted(() => {
         @click="openAlbum(album)"
       >
         <SafeImage :src="album.cover || album.photos[0]?.url" :alt="album.title || 'album'" img-class="relative z-[1] aspect-[4/3] w-full object-cover transition duration-300 hover:scale-[1.035]" />
-        <div class="photo-card-content relative z-[1] flex min-h-48 flex-col p-4">
+        <div class="photo-card-content relative z-[1] flex min-h-48 flex-col p-4 pb-14">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h3 class="break-words font-bold text-white">{{ album.title || '未命名相册' }}</h3>
-            <span v-if="album.date" class="text-xs text-white/42">{{ album.date }}</span>
+            <span class="photo-count-chip" title="照片数量">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z" /><path d="M7 9l3.5 3.5 2.5-2.2 4 4.7" /></svg>
+              {{ album.photos.length }}
+            </span>
           </div>
-          <p class="mt-1 text-xs text-white/42">{{ album.photos.length }} 张照片</p>
+          <p v-if="album.date" class="mt-1 text-xs text-white/42">{{ album.date }}</p>
           <p v-if="album.description" class="mt-1 break-words text-sm leading-6 text-white/55">{{ album.description }}</p>
           <div v-if="album.tags?.length" class="mt-auto flex flex-wrap gap-2 pt-3">
             <span v-for="tag in album.tags" :key="tag" class="content-tag rounded-full border px-2 py-1 text-[11px]" :style="tagStyle(tag, album.tagColors)">#{{ tag }}</span>
           </div>
         </div>
       </button>
-      <button v-if="session.isAdmin" type="button" class="photo-admin-edit" @click="openAlbumEditor(album)">编辑</button>
+      <div class="photo-card-stats" aria-label="相册统计">
+        <button
+          type="button"
+          class="photo-stat photo-like-stat"
+          :class="{ active: albumLikeStates[album.slug]?.liked }"
+          :disabled="likingAlbumSlug === album.slug"
+          title="点赞"
+          @click.stop="toggleAlbumLike(album)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.3 5.3 0 0 0-7.5 0L12 5.9l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 20.8l8.8-8.7a5.3 5.3 0 0 0 0-7.5Z" /></svg>
+          {{ albumStat(album, 'like_count') }}
+        </button>
+        <span class="photo-stat" title="评论"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5Z" /></svg>{{ albumStat(album, 'comment_count') }}</span>
+        <span class="photo-stat" title="浏览"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="3" /></svg>{{ albumStat(album, 'view_count') }}</span>
+      </div>
+      <button
+        v-if="session.isAdmin"
+        type="button"
+        class="photo-admin-delete"
+        :class="{ armed: albumDeleteArmed === album.slug }"
+        title="删除相册"
+        aria-label="删除相册"
+        @click.stop="deleteAlbum(album)"
+      >×</button>
       </div>
       </div>
 
       <div v-else class="photo-link-mode">
       <div
-        v-for="album in filteredAlbums"
+        v-for="(album, index) in filteredAlbums"
         :key="album.title + album.cover"
-        class="relative"
+        class="photo-link-entry"
+        :class="index % 2 === 0 ? 'photo-link-left' : 'photo-link-right'"
       >
       <button
         type="button"
@@ -444,10 +545,13 @@ onUnmounted(() => {
               <SafeImage :src="album.cover || album.photos[0]?.url" :alt="album.title || 'album'" img-class="h-full w-full object-cover transition duration-300 hover:scale-[1.035]" />
               <div class="image-contrast-overlay absolute inset-0"></div>
             </div>
-            <div class="photo-card-content flex min-h-[14rem] flex-1 flex-col gap-3 p-5">
+            <div class="photo-card-content flex min-h-[14rem] flex-1 flex-col gap-3 p-5 pb-14">
               <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-white/45">
                 <span v-if="album.date">{{ album.date }}</span>
-                <span>{{ album.photos.length }} 张照片</span>
+                <span class="photo-count-chip" title="照片数量">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z" /><path d="M7 9l3.5 3.5 2.5-2.2 4 4.7" /></svg>
+                  {{ album.photos.length }}
+                </span>
               </div>
               <h2 class="line-clamp-2 text-xl font-black text-white">{{ album.title || '未命名相册' }}</h2>
               <p v-if="album.description" class="line-clamp-3 text-sm leading-7 text-white/58">{{ album.description }}</p>
@@ -458,7 +562,30 @@ onUnmounted(() => {
           </article>
         </GlassCard>
       </button>
-      <button v-if="session.isAdmin" type="button" class="photo-admin-edit photo-admin-edit-link" @click="openAlbumEditor(album)">编辑</button>
+      <div class="photo-card-stats photo-card-stats-link" aria-label="相册统计">
+        <button
+          type="button"
+          class="photo-stat photo-like-stat"
+          :class="{ active: albumLikeStates[album.slug]?.liked }"
+          :disabled="likingAlbumSlug === album.slug"
+          title="点赞"
+          @click.stop="toggleAlbumLike(album)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.3 5.3 0 0 0-7.5 0L12 5.9l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 20.8l8.8-8.7a5.3 5.3 0 0 0 0-7.5Z" /></svg>
+          {{ albumStat(album, 'like_count') }}
+        </button>
+        <span class="photo-stat" title="评论"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5Z" /></svg>{{ albumStat(album, 'comment_count') }}</span>
+        <span class="photo-stat" title="浏览"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" /><circle cx="12" cy="12" r="3" /></svg>{{ albumStat(album, 'view_count') }}</span>
+      </div>
+      <button
+        v-if="session.isAdmin"
+        type="button"
+        class="photo-admin-delete photo-admin-delete-link"
+        :class="{ armed: albumDeleteArmed === album.slug }"
+        title="删除相册"
+        aria-label="删除相册"
+        @click.stop="deleteAlbum(album)"
+      >×</button>
       </div>
       </div>
     </div>
@@ -561,16 +688,149 @@ onUnmounted(() => {
   right: 1rem;
   top: 1rem;
 }
-.photo-link-mode {
+.photo-admin-delete {
+  position: absolute;
+  right: .85rem;
+  top: .85rem;
+  z-index: 3;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
-  gap: 1.25rem;
-  align-items: stretch;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border: 1px solid rgba(248, 113, 113, .78);
+  border-radius: 999px;
+  background: rgba(127, 29, 29, .52);
+  color: #fecaca;
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 12px 28px rgba(127, 29, 29, .26);
+  transition: transform .18s ease, background .18s ease, border-color .18s ease;
+}
+.photo-admin-delete:hover,
+.photo-admin-delete.armed {
+  border-color: rgba(248, 113, 113, 1);
+  background: rgba(220, 38, 38, .68);
+  transform: scale(1.06);
+}
+.photo-admin-delete-link {
+  right: 1rem;
+  top: 1rem;
+}
+.photo-count-chip,
+.photo-card-stats,
+.photo-stat {
+  display: inline-flex;
+  align-items: center;
+}
+.photo-count-chip {
+  gap: .28rem;
+  margin-left: auto;
+  color: rgba(255, 255, 255, .62);
+  font-size: .78rem;
+  font-weight: 900;
+}
+.photo-count-chip::before {
+  content: '|';
+  margin-right: .25rem;
+  color: rgba(255, 255, 255, .28);
+}
+.photo-count-chip svg,
+.photo-stat svg {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.photo-card-stats {
+  position: absolute;
+  z-index: 3;
+  left: 1rem;
+  bottom: 1rem;
+  gap: .7rem;
+  color: rgba(255, 255, 255, .62);
+  font-size: .78rem;
+  font-weight: 900;
+}
+.photo-stat {
+  gap: .25rem;
+  min-height: 1.75rem;
+  color: inherit;
+}
+button.photo-stat {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+.photo-like-stat.active {
+  color: #fda4af;
+}
+.photo-like-stat:disabled {
+  cursor: wait;
+  opacity: .68;
+}
+.photo-card-stats-link {
+  left: 1.2rem;
+  bottom: 1.2rem;
+}
+.photo-link-mode {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(5rem, 10vw, 8rem);
+  overflow: visible;
+  padding: .5rem 0;
+}
+.photo-link-mode::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--accent) 55%, transparent), rgba(255, 255, 255, .22), transparent);
+}
+.photo-link-entry {
+  position: relative;
+  width: min(34%, 28rem);
+  min-width: 0;
+}
+.photo-link-left {
+  align-self: flex-start;
+  margin-left: max(0px, calc(50% - min(34%, 28rem) - 1.4rem));
+}
+.photo-link-right {
+  align-self: flex-start;
+  margin-left: calc(50% + 1.4rem);
+}
+.photo-link-entry::before {
+  content: '';
+  position: absolute;
+  top: 2.2rem;
+  z-index: 1;
+  width: .85rem;
+  height: .85rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 28px var(--shadow-glow);
+}
+.photo-link-left::before {
+  right: -1.82rem;
+}
+.photo-link-right::before {
+  left: -1.82rem;
 }
 .photo-link-node {
   display: block;
   width: 100%;
   height: 100%;
+  position: relative;
+  z-index: 2;
 }
 .photo-detail-page {
   display: grid;
@@ -767,6 +1027,24 @@ onUnmounted(() => {
   }
 }
 @media (max-width: 720px) {
+  .photo-link-mode {
+    gap: 4rem;
+  }
+  .photo-link-mode::before {
+    left: .35rem;
+  }
+  .photo-link-entry,
+  .photo-link-left,
+  .photo-link-right {
+    width: 100%;
+    margin-left: 0;
+    padding-left: 1.6rem;
+  }
+  .photo-link-left::before,
+  .photo-link-right::before {
+    left: -.02rem;
+    right: auto;
+  }
   .photo-detail-page {
     border-radius: 1.35rem;
     padding: .85rem;

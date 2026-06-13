@@ -60,7 +60,7 @@ const form = ref({
   },
   comments: {
     enabled: true,
-    maxLength: 1000,
+    maxLength: 20000,
     githubLoginEnabled: true,
     githubClientId: '',
     githubSecretConfigured: false,
@@ -162,7 +162,7 @@ function applyLoadedSettings(settings: AnyRecord, about: AnyRecord, pages: AnyRe
     },
     comments: {
       enabled: comments.enabled !== false,
-      maxLength: Number(comments.maxLength || 1000),
+      maxLength: Number(comments.maxLength || 20000),
       githubLoginEnabled: comments.providers?.github?.enabled ?? comments.githubLoginEnabled ?? true,
       githubClientId: String(gitalk.clientID || gitalk.clientId || ''),
       githubSecretConfigured: Boolean(serverSecrets.githubOAuthSecretConfigured || comments.providers?.github?.secretConfigured),

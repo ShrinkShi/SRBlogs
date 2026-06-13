@@ -552,13 +552,14 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-else class="music-tab-content music-playlist-table mt-5 max-h-[32rem] overflow-auto rounded-[24px]">
-          <div class="music-playlist-head" :class="{ 'with-select': batchMode }">
+          <div class="music-playlist-head" :class="{ 'with-select': batchMode, 'with-actions': session.isAdmin }">
             <span v-if="batchMode"></span>
             <span>#</span>
             <span>歌名</span>
             <span>歌手</span>
             <span>喜欢</span>
             <span>时长</span>
+            <span v-if="session.isAdmin">操作</span>
           </div>
           <article
             v-for="(item, index) in sortedTracks"
@@ -566,7 +567,8 @@ onBeforeUnmount(() => {
             class="music-playlist-item"
             :class="[
               player.current === index ? 'music-playlist-item-active' : '',
-              batchMode ? 'music-playlist-item-batch' : ''
+              batchMode ? 'music-playlist-item-batch' : '',
+              session.isAdmin ? 'music-playlist-item-admin' : ''
             ]"
           >
             <label v-if="batchMode" class="music-track-check" @click.stop>
@@ -640,6 +642,12 @@ onBeforeUnmount(() => {
 .music-playlist-head.with-select {
   grid-template-columns: 2.25rem 3rem minmax(0, 1.65fr) minmax(0, 1fr) 5rem 5rem;
 }
+.music-playlist-head.with-actions {
+  grid-template-columns: 3rem minmax(0, 1.65fr) minmax(0, 1fr) 5rem 5rem 4rem;
+}
+.music-playlist-head.with-select.with-actions {
+  grid-template-columns: 2.25rem 3rem minmax(0, 1.65fr) minmax(0, 1fr) 5rem 5rem 4rem;
+}
 .music-playlist-head {
   padding: .35rem .9rem .6rem;
   color: rgba(255, 255, 255, .38);
@@ -670,6 +678,12 @@ onBeforeUnmount(() => {
 .music-playlist-item-batch {
   grid-template-columns: 2.25rem minmax(0, 1fr);
 }
+.music-playlist-item-admin {
+  grid-template-columns: minmax(0, 1fr) max-content;
+}
+.music-playlist-item-admin.music-playlist-item-batch {
+  grid-template-columns: 2.25rem minmax(0, 1fr) max-content;
+}
 .music-track-check {
   grid-column: 1;
   grid-row: 1;
@@ -685,7 +699,7 @@ onBeforeUnmount(() => {
   accent-color: var(--accent);
 }
 .music-playlist-pick {
-  grid-column: 1 / -1;
+  grid-column: 1;
   grid-row: 1;
   border: 0;
   background: transparent;
@@ -718,10 +732,15 @@ onBeforeUnmount(() => {
 }
 .music-admin-actions {
   display: flex;
-  grid-column: 1 / -1;
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
   justify-content: flex-end;
   gap: .65rem;
-  padding-top: .1rem;
+  padding-top: 0;
+}
+.music-playlist-item-batch .music-admin-actions {
+  grid-column: 3;
 }
 .music-admin-actions button {
   color: rgba(255, 255, 255, .68);
@@ -757,8 +776,13 @@ onBeforeUnmount(() => {
     justify-self: end;
   }
   .music-admin-actions {
-    width: 100%;
+    width: auto;
+    grid-column: 2;
+    grid-row: 1;
     justify-content: flex-end;
+  }
+  .music-playlist-item-batch .music-admin-actions {
+    grid-column: 3;
   }
 }
 </style>

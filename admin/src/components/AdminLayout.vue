@@ -86,7 +86,10 @@ const detectionStatusLabel = computed(() => {
     github_timeout: '请求 GitHub 超时',
     github_rate_limited: 'GitHub API 限流',
     unsupported_platform: '当前环境不支持一键更新',
-    update_script_missing: '未找到更新脚本',
+    updater_service_missing: '未安装受限 updater，请执行 deploy/install-updater.sh',
+    updater_service_unavailable: 'updater service 当前不可用',
+    updater_request_write_failed: '无法写入 updater 请求文件',
+    update_script_missing: '未安装受限 updater，请执行 deploy/install-updater.sh',
     sudo_password_required: '当前服务器未配置免密码 sudo，无法通过 WebUI 一键更新。',
     stale_task: '更新进程已经退出，任务状态已自动修复。',
     version_constant_missing: '当前版本常量缺失',
@@ -341,7 +344,7 @@ async function runReleaseUpdate() {
     }
   } catch (exc) {
     updateError.value = exc instanceof Error ? exc.message : '启动更新失败'
-    localDebugLogs.value = [`前端请求 /api/admin/update/run 失败: ${updateError.value}`]
+    localDebugLogs.value = [`前端请求 /api/admin/update/start 失败: ${updateError.value}`]
     ui.error('启动更新失败')
   } finally {
     updateActionLoading.value = false

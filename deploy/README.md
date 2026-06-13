@@ -12,7 +12,8 @@
 ## 文件说明
 
 - `install.sh`：全新服务器一键安装。
-- `update.sh`：带备份、staging、健康检查和回滚的一键更新。
+- `update.sh`：带备份、staging、健康检查和回滚的手动更新。
+- `install-updater.sh`：安装 WebUI 受限 updater，不让 Web 后端以 root 运行。
 - `doctor.sh`：生产部署诊断。
 - `setup.sh`：兼容入口，内部转调 `install.sh`。
 - `build-all.sh`：构建前台、后台并检查后端语法。
@@ -55,7 +56,7 @@ sudo systemctl restart srblogs-backend
 sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
-## 更新已有部署
+## 手动更新已有部署
 
 预览：
 
@@ -71,6 +72,16 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
 `update.sh` 会将当前应用、`/etc/srblogs/backend.env`、Nginx 配置和 systemd unit 统一备份到 `/opt/srblogs.backup.TIMESTAMP/`。脚本先在 staging 中完成依赖安装和构建，再切换版本。依赖安装、构建、`nginx -t`、systemd restart 或 API healthcheck 失败都会触发回滚，并对恢复后的旧版本执行 healthcheck。healthcheck 会优先尝试 `/api/health`，再兼容旧的 `/api/system/health`，最多重试 30 次、每次间隔 2 秒，并输出失败原因。
+
+## WebUI 受限一键更新
+
+后台“检查更新”继续读取 `ShrinkShi/SRBlogs` GitHub Releases。若要在 WebUI 点击“立即更新”，先由 root 安装受限 updater：
+
+```bash
+sudo bash /opt/srblogs/deploy/install-updater.sh
+```
+
+安装后，Web 后端只写入 `/var/lib/srblogs/update/request.json` 并触发固定的 `srblogs-updater.service`。真正更新由 root-owned `/usr/local/sbin/srblogs-update` 执行；它只允许从 `ShrinkShi/SRBlogs` Releases 下载，不接收用户传入 URL 或 shell 命令。
 
 ## 安全规则
 
@@ -91,8 +102,10 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 - 上传目录：`/opt/srblogs/backend/data/uploads`
 - 审计日志：`/opt/srblogs/backend/data/audit/audit.log`
 - 安装锁：`/opt/srblogs/backend/data/.install.lock`
-- 更新日志：`/opt/srblogs/backend/data/update_logs`
+- 手动更新日志：`/opt/srblogs/backend/data/update_logs`
 - 更新下载缓存：`/opt/srblogs/backend/data/update_downloads`
+- WebUI updater 状态：`/var/lib/srblogs/update/status.json`
+- WebUI updater 日志：`/var/lib/srblogs/update/updater.log`
 - 后端日志：`sudo journalctl -u srblogs-backend -n 100 --no-pager`
 - 服务状态：`systemctl status srblogs-backend --no-pager`
 - 最近日志：`sudo journalctl -u srblogs-backend -n 100 --no-pager`
@@ -128,5 +141,5 @@ sudo chmod -R u+rwX,g+rwX /opt/srblogs/backend/data
 发布脚本变更前运行：
 
 ```bash
-bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh
+bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh deploy/install-updater.sh
 ```

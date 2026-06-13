@@ -159,9 +159,9 @@ check_services() {
   fi
   if [ -f /etc/systemd/system/srblogs-backend.service ]; then
     if grep -q '^KillMode=process' /etc/systemd/system/srblogs-backend.service 2>/dev/null; then
-      pass "srblogs-backend.service keeps update runner alive during backend restart."
+      pass "srblogs-backend.service uses KillMode=process for manual update compatibility."
     else
-      warn "srblogs-backend.service is missing KillMode=process; WebUI-triggered update may be interrupted during restart."
+      warn "srblogs-backend.service is missing KillMode=process; manual deploy/update.sh may be interrupted during restart."
     fi
   fi
   if command_exists ss && ss -ltn | grep -q ':8000 '; then
@@ -173,31 +173,68 @@ check_services() {
   fi
 }
 
-check_sudo_nopasswd() {
+check_updater_service() {
+  local service_user updater_bin updater_service sudoers state_dir output
+  service_user="$(service_user)"
+  updater_bin="/usr/local/sbin/srblogs-update"
+  updater_service="srblogs-updater.service"
+  sudoers="/etc/sudoers.d/srblogs-updater"
+  state_dir="/var/lib/srblogs/update"
+
+  if [ -x "$updater_bin" ]; then
+    pass "restricted updater binary exists: $updater_bin"
+  else
+    warn "restricted updater is not installed; WebUI one-click update is disabled. Install with: sudo bash /opt/srblogs/deploy/install-updater.sh"
+  fi
+
+  if [ -f "/etc/systemd/system/$updater_service" ]; then
+    pass "updater systemd service exists: $updater_service"
+  else
+    warn "updater systemd service is missing: $updater_service"
+  fi
+
+  if [ -f "$sudoers" ]; then
+    if grep -Eq 'NOPASSWD:[[:space:]]+.*/systemctl[[:space:]]+start[[:space:]]+srblogs-updater\.service' "$sudoers" 2>/dev/null &&
+       grep -Eq 'NOPASSWD:[[:space:]]+.*/systemctl[[:space:]]+status[[:space:]]+srblogs-updater\.service' "$sudoers" 2>/dev/null &&
+       ! grep -Eq 'NOPASSWD:[[:space:]]+ALL' "$sudoers" 2>/dev/null; then
+      pass "updater sudoers is restricted to start/status srblogs-updater.service."
+    else
+      warn "updater sudoers is missing the restricted start/status rule or is too broad: $sudoers"
+    fi
+  else
+    warn "updater sudoers file is missing: $sudoers"
+  fi
+
+  if [ -f "$state_dir/status.json" ] && [ -f "$state_dir/request.json" ]; then
+    pass "updater state files exist in $state_dir."
+  else
+    warn "updater state files are missing in $state_dir."
+  fi
+
+  if ! command_exists systemctl; then
+    warn "systemctl is missing; restricted WebUI updater is unavailable."
+    return
+  fi
   if ! command_exists sudo; then
-    warn "sudo is missing; WebUI update cannot escalate to run deploy/update.sh."
+    warn "sudo is missing; backend cannot trigger restricted updater service."
     return
   fi
   if [ "$(id -u)" -eq 0 ]; then
-    local service_user
-    service_user="$(service_user)"
     if ! id "$service_user" >/dev/null 2>&1; then
-      warn "service user $service_user does not exist; cannot verify WebUI update sudo permission."
+      warn "service user $service_user does not exist; cannot verify updater sudoers."
       return
     fi
-    local output
-    if output="$(sudo -u "$service_user" sudo -n true 2>&1)"; then
-      pass "sudo -n true succeeded for service user $service_user; WebUI update can run deploy/update.sh."
+    if output="$(sudo -u "$service_user" sudo -n systemctl status "$updater_service" --no-pager 2>&1)"; then
+      pass "service user $service_user can run fixed updater status command."
     else
-      warn "sudo -n true failed for service user $service_user; WebUI update will fail unless NOPASSWD sudo is configured. Reason: ${output:-unknown}"
+      warn "service user $service_user cannot run fixed updater status command. Reason: ${output:-unknown}"
     fi
-    return
-  fi
-  local output
-  if output="$(sudo -n true 2>&1)"; then
-    pass "sudo -n true succeeded; WebUI update can run deploy/update.sh without password prompt."
   else
-    warn "sudo -n true failed; WebUI update will fail unless NOPASSWD sudo is configured. Reason: ${output:-unknown}"
+    if output="$(sudo -n systemctl status "$updater_service" --no-pager 2>&1)"; then
+      pass "current user can run fixed updater status command."
+    else
+      warn "current user cannot run fixed updater status command. Reason: ${output:-unknown}"
+    fi
   fi
 }
 
@@ -428,29 +465,32 @@ check_data_permissions() {
 }
 
 check_update_task() {
-  local data_dir update_dir task_file info status pid log_path exit_code
-  data_dir="$(settings_data_dir)"
-  update_dir="$data_dir/update_logs"
-  task_file="$update_dir/update-task.json"
+  local state_dir task_file info status pid log_path exit_code parser
+  state_dir="/var/lib/srblogs/update"
+  task_file="$state_dir/status.json"
 
-  if [ -d "$update_dir" ]; then
-    pass "update_logs directory exists: $update_dir"
+  if [ -d "$state_dir" ]; then
+    pass "updater state directory exists: $state_dir"
   else
-    warn "update_logs directory is missing: $update_dir"
+    warn "updater state directory is missing: $state_dir"
     return
   fi
 
   if [ ! -f "$task_file" ]; then
-    warn "no update task record found yet: $task_file"
+    warn "no restricted updater status record found yet: $task_file"
     return
   fi
 
-  if ! command_exists python3.11; then
-    warn "python3.11 unavailable; cannot parse update task record."
+  if command_exists python3.11; then
+    parser="python3.11"
+  elif command_exists python3; then
+    parser="python3"
+  else
+    warn "python3 unavailable; cannot parse updater status record."
     return
   fi
 
-  info="$(python3.11 - "$task_file" <<'PY' 2>/dev/null || true
+  info="$("$parser" - "$task_file" <<'PY' 2>/dev/null || true
 import json
 import sys
 
@@ -465,7 +505,7 @@ for key in ("taskId", "status", "pid", "exitCode", "currentStep", "progress", "l
 PY
 )"
   if [ -z "$info" ]; then
-    warn "could not parse update task record: $task_file"
+    warn "could not parse updater status record: $task_file"
     return
   fi
 
@@ -473,30 +513,30 @@ PY
   pid="$(printf '%s\n' "$info" | sed -n 's/^pid=//p' | tail -n 1)"
   log_path="$(printf '%s\n' "$info" | sed -n 's/^logPath=//p' | tail -n 1)"
   exit_code="$(printf '%s\n' "$info" | sed -n 's/^exitCode=//p' | tail -n 1)"
-  log_line "update task: $(printf '%s' "$info" | tr '\n' ' ')"
+  log_line "updater status: $(printf '%s' "$info" | tr '\n' ' ')"
 
   if [ "$status" = "running" ]; then
     if [ -n "$pid" ] && kill -0 "$pid" >/dev/null 2>&1; then
-      pass "latest update task is running with pid $pid."
+      pass "restricted updater is running with pid $pid."
     else
-      warn "latest update task is running but pid is not alive; stale task may need review."
+      warn "restricted updater status is running but pid is not alive; stale task may need review."
     fi
   elif [ "$status" = "success" ]; then
-    pass "latest update task completed successfully."
+    pass "latest restricted update completed successfully."
   elif [ "$status" = "failed" ]; then
-    warn "latest update task failed with exitCode=${exit_code:-unknown}; review logs."
+    warn "latest restricted update failed with exitCode=${exit_code:-unknown}; review logs."
   elif [ "$status" = "idle" ] || [ -z "$status" ]; then
-    pass "no update task is running."
+    pass "no restricted update task is running."
   else
-    warn "latest update task has unknown status: $status"
+    warn "latest restricted update task has unknown status: $status"
   fi
 
   if [ -n "$log_path" ] && [ -f "$log_path" ]; then
-    pass "latest update log exists: $log_path"
+    pass "latest restricted update log exists: $log_path"
   elif [ -n "$log_path" ]; then
-    warn "latest update log path is recorded but missing: $log_path"
+    warn "latest restricted update log path is recorded but missing: $log_path"
   else
-    warn "latest update task has no logPath."
+    warn "latest restricted update task has no logPath."
   fi
 }
 
@@ -585,14 +625,14 @@ check_swap() {
 main() {
   if [ "$DRY_RUN" -eq 1 ]; then
     log_line "SRBlogs doctor dry-run plan for $APP_DIR on domain $DOMAIN."
-    log_line "Would check Python, Node/npm, services, sudo -n true, port 8000, HTTP endpoints, backend version, settings cache, data/update log permissions, update task logs, dist files, nginx defaults, and swap."
+    log_line "Would check Python, Node/npm, services, restricted updater service/sudoers, port 8000, HTTP endpoints, backend version, settings cache, data permissions, update task logs, dist files, nginx defaults, and swap."
     log_line "Summary: PASS=0 WARN=0 FAIL=0"
     return 0
   fi
   check_python
   check_node
   check_services
-  check_sudo_nopasswd
+  check_updater_service
   check_http
   check_version_endpoint
   check_files

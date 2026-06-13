@@ -3,15 +3,11 @@ from __future__ import annotations
 import json
 import os
 import platform
-import re
-import shlex
 import shutil
 import socket
 import subprocess
-import threading
 import urllib.error
 import urllib.request
-import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -44,37 +40,14 @@ DEFAULT_UPDATE_STATE: dict[str, Any] = {
     },
 }
 
-UPDATE_TASK_FILE = "update_logs/update-task.json"
-UPDATE_STEP_PROGRESS = {
-    "idle": 0,
-    "preparing": 5,
-    "download": 12,
-    "backup": 20,
-    "extract": 30,
-    "build": 50,
-    "install": 68,
-    "nginx": 78,
-    "systemd": 86,
-    "healthcheck": 94,
-    "cleanup": 98,
-    "done": 100,
-}
-UPDATE_STEP_KEYWORDS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("done", ("done", "complete", "success", "update complete", "安装完成", "更新完成", "完成")),
-    ("cleanup", ("cleanup", "clean up", "清理")),
-    ("healthcheck", ("healthcheck", "/api/health", "健康检查", "health check")),
-    ("systemd", ("systemctl", "srblogs-backend", "systemd")),
-    ("nginx", ("nginx -t", "reload nginx", "nginx")),
-    ("install", ("switch", "staging", "current", "安装", "切换")),
-    ("build", ("npm run build", "npm ci", "npm install", "pip install", "build", "构建")),
-    ("extract", ("extract", "unzip", "normalize", "解压")),
-    ("backup", ("backup", "备份")),
-    ("download", ("download", "zipball", "下载")),
-    ("preparing", ("prepare", "preparing", "准备")),
-)
-UPDATE_PROGRESS_RE = re.compile(r"\[(\d{1,3})%\]\s*(.+)")
 STALE_TASK_MESSAGE = "更新进程已经退出，任务状态已自动修复。"
 SUDO_PASSWORD_REQUIRED_MESSAGE = "当前服务器未配置免密码 sudo，无法通过 WebUI 一键更新。"
+UPDATER_STATE_DIR = Path(os.getenv("SRBLOGS_UPDATER_STATE_DIR", "/var/lib/srblogs/update"))
+UPDATER_SERVICE = os.getenv("SRBLOGS_UPDATER_SERVICE", "srblogs-updater.service")
+UPDATER_BINARY = Path(os.getenv("SRBLOGS_UPDATER_BINARY", "/usr/local/sbin/srblogs-update"))
+UPDATER_STATUS_FILE = UPDATER_STATE_DIR / "status.json"
+UPDATER_REQUEST_FILE = UPDATER_STATE_DIR / "request.json"
+UPDATER_DEFAULT_LOG = UPDATER_STATE_DIR / "updater.log"
 
 
 class IgnoreRequest(BaseModel):
@@ -83,10 +56,6 @@ class IgnoreRequest(BaseModel):
 
 class RunUpdateRequest(BaseModel):
     tag: str = ""
-
-
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[3]
 
 
 def _store() -> JsonStore:
@@ -118,14 +87,138 @@ def _default_update_task() -> dict[str, Any]:
     }
 
 
-def _task_store() -> JsonStore:
-    return JsonStore(get_settings().data_path, UPDATE_TASK_FILE, _default_update_task())
+def _default_updater_status() -> dict[str, Any]:
+    return {
+        "taskId": "",
+        "status": "idle",
+        "startedAt": "",
+        "finishedAt": "",
+        "updatedAt": "",
+        "pid": None,
+        "exitCode": None,
+        "currentStep": "idle",
+        "progress": 0,
+        "logPath": str(UPDATER_DEFAULT_LOG),
+        "lastLines": [],
+        "errorCode": "",
+        "errorMessage": "",
+        "message": "",
+        "repo": GITHUB_REPO,
+        "targetVersion": "",
+        "previousVersion": "",
+        "rollback": False,
+    }
 
 
-def _log_dir() -> Path:
-    path = get_settings().data_path / "update_logs"
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+def _read_json_file(path: Path, fallback: dict[str, Any]) -> dict[str, Any]:
+    if not path.exists() or not path.is_file():
+        return dict(fallback)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return dict(fallback)
+    if not isinstance(payload, dict):
+        return dict(fallback)
+    merged = dict(fallback)
+    merged.update(payload)
+    return merged
+
+
+def _read_updater_status(lines: int = 100) -> dict[str, Any]:
+    status = _read_json_file(UPDATER_STATUS_FILE, _default_updater_status())
+    log_path = str(status.get("logPath") or UPDATER_DEFAULT_LOG)
+    status["lastLines"] = _tail_lines(log_path, lines)
+    status["lastLogAt"] = _log_mtime(log_path)
+    if status.get("status") == "running" and status.get("pid") and not _pid_is_alive(status.get("pid")):
+        status.update({
+            "status": "failed",
+            "finishedAt": status.get("finishedAt") or _now(),
+            "updatedAt": _now(),
+            "exitCode": status.get("exitCode") if status.get("exitCode") is not None else -1,
+            "errorCode": "stale_task",
+            "errorMessage": STALE_TASK_MESSAGE,
+            "message": STALE_TASK_MESSAGE,
+        })
+    return status
+
+
+def _updater_status_to_task(status: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "taskId": status.get("taskId") or "",
+        "status": status.get("status") or "idle",
+        "startedAt": status.get("startedAt") or "",
+        "finishedAt": status.get("finishedAt") or "",
+        "pid": status.get("pid"),
+        "exitCode": status.get("exitCode"),
+        "currentStep": status.get("currentStep") or "idle",
+        "progress": max(0, min(100, int(status.get("progress") or 0))),
+        "logPath": status.get("logPath") or str(UPDATER_DEFAULT_LOG),
+        "lastLines": status.get("lastLines") or [],
+        "updatedAt": status.get("updatedAt") or status.get("lastLogAt") or "",
+        "lastLogAt": status.get("lastLogAt") or "",
+        "errorCode": status.get("errorCode") or "",
+        "errorMessage": status.get("errorMessage") or status.get("message") or "",
+        "tag": status.get("targetVersion") or "",
+    }
+
+
+def _systemctl_path() -> str:
+    return shutil.which("systemctl") or "systemctl"
+
+
+def _sudo_path() -> str:
+    return shutil.which("sudo") or "sudo"
+
+
+def _systemctl_command(action: str) -> list[str]:
+    command = [_systemctl_path(), action, UPDATER_SERVICE]
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        return command
+    return [_sudo_path(), "-n", *command]
+
+
+def _check_fixed_systemctl(action: str, debug_logs: list[str]) -> tuple[bool, str, str]:
+    command = _systemctl_command(action)
+    debug_logs.append(f"固定 systemctl 命令: {' '.join(command)}")
+    try:
+        result = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=8,
+            check=False,
+        )
+    except FileNotFoundError as exc:
+        debug_logs.append(f"systemctl/sudo 不存在: {exc}")
+        return False, "unsupported_platform", "当前环境缺少 systemd 或 sudo，无法使用一键更新。"
+    except subprocess.TimeoutExpired:
+        debug_logs.append("systemctl 权限检查超时")
+        return False, "updater_status_timeout", "检查 updater service 状态超时。"
+    except Exception as exc:
+        debug_logs.append(f"systemctl 权限检查异常: {exc}")
+        return False, "unknown_error", str(exc)
+    if result.returncode == 0:
+        return True, "", ""
+    stderr = (result.stderr or result.stdout or "").strip()
+    debug_logs.append(f"systemctl {action} exitCode: {result.returncode}")
+    if stderr:
+        debug_logs.append(f"systemctl {action} output: {stderr[:500]}")
+    if "password is required" in stderr.lower() or "a password is required" in stderr.lower():
+        return False, "sudo_password_required", "当前服务器未配置 srblogs 用户免密码启动 updater service。"
+    if "not found" in stderr.lower() or "could not be found" in stderr.lower() or "not-loaded" in stderr.lower():
+        return False, "updater_service_missing", "未安装 srblogs-updater.service，请先执行 deploy/install-updater.sh。"
+    return False, "updater_service_unavailable", stderr or "updater service 不可用。"
+
+
+def _write_updater_request(tag: str, actor: str) -> None:
+    payload = {
+        "repo": GITHUB_REPO,
+        "targetVersion": tag,
+        "requestedAt": _now(),
+        "requestedBy": actor,
+    }
+    UPDATER_REQUEST_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _tail_lines(path: str | Path, lines: int = 100) -> list[str]:
@@ -169,85 +262,6 @@ def _pid_is_alive(pid: Any) -> bool:
     return True
 
 
-def _infer_step(lines: list[str], fallback: str = "preparing") -> tuple[str, int]:
-    for line in reversed(lines[-120:]):
-        match = UPDATE_PROGRESS_RE.search(line)
-        if match:
-            progress = max(0, min(100, int(match.group(1))))
-            return match.group(2).strip() or fallback or "running", progress
-    text = "\n".join(lines[-80:]).lower()
-    for step, keywords in UPDATE_STEP_KEYWORDS:
-        if any(keyword.lower() in text for keyword in keywords):
-            return step, UPDATE_STEP_PROGRESS[step]
-    return fallback or "preparing", UPDATE_STEP_PROGRESS.get(fallback or "preparing", 5)
-
-
-def _finalize_task(task: dict[str, Any], exit_code: int, error_code: str = "", error_message: str = "") -> dict[str, Any]:
-    lines = _tail_lines(str(task.get("logPath") or ""), 100)
-    status = "success" if exit_code == 0 else "failed"
-    current_step, progress = _infer_step(lines, str(task.get("currentStep") or "preparing"))
-    if status == "success":
-        current_step, progress = "done", 100
-    task.update(
-        {
-            "status": status,
-            "finishedAt": task.get("finishedAt") or _now(),
-            "exitCode": exit_code,
-            "currentStep": current_step,
-            "progress": progress,
-            "lastLines": lines,
-            "updatedAt": _now(),
-            "lastLogAt": _log_mtime(str(task.get("logPath") or "")),
-            "errorCode": "" if exit_code == 0 else (error_code or str(task.get("errorCode") or "")),
-            "errorMessage": "" if exit_code == 0 else (error_message or f"更新脚本退出码: {exit_code}"),
-        }
-    )
-    return _write_task(task)
-
-
-def _sync_task_completion(task: dict[str, Any]) -> dict[str, Any]:
-    if task.get("status") != "running":
-        log_path = str(task.get("logPath") or "")
-        if log_path:
-            task["lastLines"] = _tail_lines(log_path, 100)
-            task["lastLogAt"] = _log_mtime(log_path)
-        task["updatedAt"] = task.get("updatedAt") or task.get("finishedAt") or task.get("startedAt") or ""
-        return task
-    log_path = str(task.get("logPath") or "")
-    task["lastLines"] = _tail_lines(log_path, 100)
-    task["lastLogAt"] = _log_mtime(log_path)
-    task["updatedAt"] = task["lastLogAt"] or _now()
-    current_step, progress = _infer_step(task["lastLines"], str(task.get("currentStep") or "preparing"))
-    task["currentStep"] = current_step
-    task["progress"] = progress
-    exit_path = str(task.get("exitPath") or "")
-    if exit_path and Path(exit_path).exists():
-        try:
-            exit_code = int(Path(exit_path).read_text(encoding="utf-8").strip())
-        except Exception:
-            exit_code = 1
-        return _finalize_task(task, exit_code)
-    if task.get("pid") and not _pid_is_alive(task.get("pid")):
-        return _finalize_task(task, -1, "stale_task", STALE_TASK_MESSAGE)
-    return task
-
-
-def _read_task() -> dict[str, Any]:
-    task = _task_store().read()
-    if not isinstance(task, dict):
-        return _default_update_task()
-    merged = _default_update_task()
-    merged.update(task)
-    return _sync_task_completion(merged)
-
-
-def _write_task(task: dict[str, Any]) -> dict[str, Any]:
-    merged = _default_update_task()
-    merged.update(task)
-    _task_store().write(merged)
-    return merged
-
-
 def _task_to_run(task: dict[str, Any]) -> dict[str, Any]:
     return {
         "status": task.get("status") or "idle",
@@ -261,38 +275,6 @@ def _task_to_run(task: dict[str, Any]) -> dict[str, Any]:
         "errorCode": task.get("errorCode") or "",
         "message": task.get("errorMessage") or "",
     }
-
-
-def _write_runner_script(command: list[str], log_path: Path, exit_path: Path) -> Path:
-    script_path = log_path.with_suffix(".runner.sh")
-    rendered = " ".join(shlex.quote(item) for item in command)
-    exit_target = shlex.quote(str(exit_path))
-    script_path.write_text(
-        "\n".join(
-            [
-                "#!/usr/bin/env bash",
-                "set -o pipefail",
-                f'echo "[{_now()}] runner command: {rendered}"',
-                rendered,
-                "code=$?",
-                f'echo "[{_now()}] runner exitCode=$code"',
-                f'printf "%s" "$code" > {exit_target}',
-                "exit \"$code\"",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    script_path.chmod(0o700)
-    return script_path
-
-
-def _monitor_update_process(process: subprocess.Popen[Any], task_id: str) -> None:
-    exit_code = process.wait()
-    task = _task_store().read()
-    if not isinstance(task, dict) or task.get("taskId") != task_id:
-        return
-    _finalize_task(task, int(exit_code))
 
 
 def _current_version(debug_logs: list[str]) -> tuple[dict[str, str], str, str]:
@@ -421,74 +403,47 @@ def _fetch_latest_release(repo: str, debug_logs: list[str]) -> dict[str, Any]:
     }
 
 
-def _download_release_zip(url: str, tag: str) -> Path:
-    if not url:
-        raise RuntimeError("GitHub Release 未返回可下载的 zipball_url")
-    download_dir = get_settings().data_path / "update_downloads"
-    download_dir.mkdir(parents=True, exist_ok=True)
-    safe_tag = tag.strip().replace("/", "-").replace("\\", "-") or "latest"
-    target = download_dir / f"SRBlogs-{safe_tag}.zip"
-    with urllib.request.urlopen(_github_request(url), timeout=120) as response:
-        with target.open("wb") as output:
-            shutil.copyfileobj(response, output)
-    return target
-
-
 def _runtime_support(script: Path, debug_logs: list[str]) -> tuple[bool, str, str]:
     system = platform.system()
     is_linux = system.lower() == "linux"
     debug_logs.append(f"运行系统: {system}")
     debug_logs.append(f"是否 Linux 环境: {is_linux}")
-    debug_logs.append(f"更新脚本路径: {script}")
-    debug_logs.append(f"更新脚本存在: {script.exists()}")
+    debug_logs.append(f"updater binary: {UPDATER_BINARY}")
+    debug_logs.append(f"updater service: {UPDATER_SERVICE}")
+    debug_logs.append(f"updater status: {UPDATER_STATUS_FILE}")
     if system.lower().startswith("win"):
         message = "当前环境不支持一键更新，请在 Linux 服务器执行"
         debug_logs.append(f"一键更新是否支持: False ({message})")
         return False, "unsupported_platform", message
-    if not script.exists():
-        message = f"未找到更新脚本：{script}"
-        debug_logs.append(f"一键更新是否支持: False ({message})")
-        return False, "update_script_missing", message
-    if not shutil.which("bash"):
-        message = "未找到 bash，无法执行 deploy/update.sh。"
+    if not is_linux:
+        message = "当前环境不支持一键更新，请在 Linux systemd 服务器执行。"
         debug_logs.append(f"一键更新是否支持: False ({message})")
         return False, "unsupported_platform", message
+    if not UPDATER_BINARY.exists():
+        message = "未安装受限 updater，请先执行 deploy/install-updater.sh。"
+        debug_logs.append(f"一键更新是否支持: False ({message})")
+        return False, "updater_service_missing", message
+    if not UPDATER_STATUS_FILE.exists():
+        message = "未找到 updater 状态文件，请先执行 deploy/install-updater.sh。"
+        debug_logs.append(f"一键更新是否支持: False ({message})")
+        return False, "updater_service_missing", message
     if not get_settings().srblogs_update_enabled:
         message = "后端一键更新已禁用，请设置 SRBLOGS_UPDATE_ENABLED=true。"
         debug_logs.append(f"一键更新是否支持: False ({message})")
         return False, "unsupported_platform", message
-    if hasattr(os, "geteuid") and os.geteuid() != 0 and not shutil.which("sudo"):
-        message = "当前后端进程不是 root，且未找到 sudo，无法执行需要系统权限的更新脚本。"
+    if not shutil.which("systemctl"):
+        message = "当前环境没有 systemctl，无法使用 updater service。"
         debug_logs.append(f"一键更新是否支持: False ({message})")
         return False, "unsupported_platform", message
-    if hasattr(os, "geteuid") and os.geteuid() != 0:
-        try:
-            result = subprocess.run(
-                ["sudo", "-n", "true"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                timeout=5,
-                check=False,
-            )
-        except Exception as exc:
-            debug_logs.append(f"sudo -n true 检查失败: {exc}")
-            return False, "sudo_password_required", SUDO_PASSWORD_REQUIRED_MESSAGE
-        if result.returncode != 0:
-            stderr = (result.stderr or result.stdout or "").strip()
-            debug_logs.append(f"sudo -n true exitCode: {result.returncode}")
-            if stderr:
-                debug_logs.append(f"sudo -n true stderr: {stderr[:300]}")
-            return False, "sudo_password_required", SUDO_PASSWORD_REQUIRED_MESSAGE
+    if hasattr(os, "geteuid") and os.geteuid() != 0 and not shutil.which("sudo"):
+        message = "当前后端进程不是 root，且未找到 sudo，无法启动 updater service。"
+        debug_logs.append(f"一键更新是否支持: False ({message})")
+        return False, "unsupported_platform", message
+    ok, code, message = _check_fixed_systemctl("status", debug_logs)
+    if not ok and code not in {"updater_service_unavailable"}:
+        return False, code, message
     debug_logs.append("一键更新是否支持: True")
     return True, "", ""
-
-
-def _update_command(script: Path, zip_path: Path) -> list[str]:
-    command = ["bash", str(script), "--zip", str(zip_path), "--app-dir", str(_repo_root())]
-    if hasattr(os, "geteuid") and os.geteuid() != 0:
-        return ["sudo", "-n", *command]
-    return command
 
 
 def _make_status(state: dict[str, Any], debug_logs: list[str] | None = None, prefer_run_status: bool = False) -> dict[str, Any]:
@@ -500,11 +455,24 @@ def _make_status(state: dict[str, Any], debug_logs: list[str] | None = None, pre
     latest_tag = str(latest.get("tag") or "")
     ignored_tag = str(state.get("ignoredTag") or "")
     has_update = _is_newer(latest_tag, current["version"]) and latest_tag != ignored_tag
-    task = _read_task()
+    task = _updater_status_to_task(_read_updater_status())
     if task.get("status") and task.get("status") != "idle":
         run_state = _task_to_run(task)
     else:
         run_state = state.get("run") or DEFAULT_UPDATE_STATE["run"]
+        if prefer_run_status and str(run_state.get("status") or "") == "running":
+            task.update(
+                {
+                    "status": "running",
+                    "startedAt": run_state.get("startedAt") or "",
+                    "currentStep": "queued",
+                    "progress": 1,
+                    "tag": run_state.get("tag") or "",
+                    "updatedAt": _now(),
+                    "errorCode": "",
+                    "errorMessage": "",
+                }
+            )
     latest_error_code = str(latest.get("errorCode") or latest.get("errorType") or "")
     detection_error_code = version_error_code or latest_error_code
     detection_error_message = version_error_message or str(latest.get("error") or "")
@@ -516,7 +484,7 @@ def _make_status(state: dict[str, Any], debug_logs: list[str] | None = None, pre
         status = "error"
     elif latest_tag:
         status = "update_available" if has_update else "latest"
-    script = _repo_root() / "deploy" / "update.sh"
+    script = UPDATER_BINARY
     supported, update_error_code, update_error_message = _runtime_support(script, logs)
     message = str(detection_error_message or update_error_message or "")
     if prefer_run_status and update_error_code == "sudo_password_required":
@@ -622,13 +590,13 @@ def ignore_update(payload: IgnoreRequest, request: Request, actor: str = Depends
 @router.get("/admin/update/task")
 @router.get("/admin/updates/task")
 def update_task():
-    return _read_task()
+    return _updater_status_to_task(_read_updater_status())
 
 
 @router.get("/admin/update/logs")
 @router.get("/admin/updates/logs")
 def update_logs(lines: int = Query(100, ge=1, le=500)):
-    task = _read_task()
+    task = _updater_status_to_task(_read_updater_status(lines))
     log_path = str(task.get("logPath") or "")
     return {
         "taskId": task.get("taskId") or "",
@@ -641,12 +609,11 @@ def update_logs(lines: int = Query(100, ge=1, le=500)):
 @router.get("/admin/update/progress")
 @router.get("/admin/updates/progress")
 def update_progress(lines: int = Query(100, ge=1, le=500)):
-    task = _read_task()
+    task = _updater_status_to_task(_read_updater_status(lines))
     log_path = str(task.get("logPath") or "")
-    last_lines = _tail_lines(log_path, lines)
-    current_step, progress = _infer_step(last_lines, str(task.get("currentStep") or "idle"))
-    if task.get("status") == "success":
-        current_step, progress = "done", 100
+    last_lines = task.get("lastLines") or _tail_lines(log_path, lines)
+    current_step = str(task.get("currentStep") or "idle")
+    progress = max(0, min(100, int(task.get("progress") or 0)))
     return {
         "taskId": task.get("taskId") or "",
         "status": task.get("status") or "idle",
@@ -665,14 +632,15 @@ def update_progress(lines: int = Query(100, ge=1, le=500)):
     }
 
 
+@router.post("/admin/update/start")
+@router.post("/admin/updates/start")
 @router.post("/admin/update/run")
 @router.post("/admin/updates/run")
-def run_update(payload: RunUpdateRequest, request: Request, actor: str = Depends(require_admin)):
+def start_update(payload: RunUpdateRequest, request: Request, actor: str = Depends(require_admin)):
     store = _store()
-    script = _repo_root() / "deploy" / "update.sh"
     debug_logs: list[str] = []
     state = store.read()
-    supported, support_code, reason = _runtime_support(script, debug_logs)
+    supported, support_code, reason = _runtime_support(UPDATER_BINARY, debug_logs)
     if not supported:
         run_status = "failed" if support_code == "sudo_password_required" else (support_code or "unsupported_platform")
         state["run"] = {
@@ -685,7 +653,7 @@ def run_update(payload: RunUpdateRequest, request: Request, actor: str = Depends
         store.write(state)
         return _make_status(state, debug_logs, prefer_run_status=True)
 
-    existing_task = _read_task()
+    existing_task = _updater_status_to_task(_read_updater_status())
     if existing_task.get("status") == "running":
         state["run"] = _task_to_run(existing_task)
         store.write(state)
@@ -696,7 +664,7 @@ def run_update(payload: RunUpdateRequest, request: Request, actor: str = Depends
 
     run_state = state.get("run") or {}
     if run_state.get("status") == "running":
-        task = _read_task()
+        task = _updater_status_to_task(_read_updater_status())
         if task.get("status") == "running":
             state["run"] = _task_to_run(task)
             store.write(state)
@@ -705,101 +673,58 @@ def run_update(payload: RunUpdateRequest, request: Request, actor: str = Depends
         raise HTTPException(status_code=502, detail=str(latest.get("error")))
 
     tag = payload.tag.strip() or str(latest.get("tag") or "")
+    if not tag:
+        raise HTTPException(status_code=400, detail="未检测到可更新的 GitHub Release")
+
     try:
-        zip_path = _download_release_zip(str(latest.get("zipballUrl") or ""), tag)
+        _write_updater_request(tag, actor)
     except Exception as exc:
-        log_dir = _log_dir()
-        log_path = log_dir / f"update-{datetime.now().strftime('%Y%m%d%H%M%S')}.log"
-        log_path.write_text(f"[{_now()}] Release 下载失败：{exc}\n", encoding="utf-8")
-        _write_task(
-            {
-                "taskId": uuid.uuid4().hex,
-                "status": "failed",
-                "startedAt": _now(),
-                "finishedAt": _now(),
-                "pid": None,
-                "exitCode": -1,
-                "currentStep": "download",
-                "progress": UPDATE_STEP_PROGRESS["download"],
-                "logPath": str(log_path),
-                "lastLines": _tail_lines(log_path, 100),
-                "errorMessage": f"Release 下载失败：{exc}",
-                "tag": tag,
-            }
-        )
+        debug_logs.append(f"写入 updater request 失败: {exc}")
         state["run"] = {
             **DEFAULT_UPDATE_STATE["run"],
             "status": "failed",
             "tag": tag,
-            "message": f"Release 下载失败：{exc}",
+            "errorCode": "updater_request_write_failed",
+            "message": "无法写入 updater 请求文件，请检查 /var/lib/srblogs/update/request.json 权限。",
         }
         store.write(state)
-        raise HTTPException(status_code=502, detail="Release 下载失败") from exc
+        write_audit(actor=actor, action="updates.start", resource="system", result="failed", message=str(exc))
+        return _make_status(state, debug_logs, prefer_run_status=True)
 
-    log_dir = _log_dir()
-    log_path = log_dir / f"update-{datetime.now().strftime('%Y%m%d%H%M%S')}.log"
-    exit_path = log_path.with_suffix(".exit")
-    command = _update_command(script, zip_path)
-    task_id = uuid.uuid4().hex
-    task = _write_task(
-        {
-            "taskId": task_id,
-            "status": "running",
-            "startedAt": _now(),
-            "finishedAt": "",
-            "pid": None,
-            "exitCode": None,
-            "currentStep": "preparing",
-            "progress": UPDATE_STEP_PROGRESS["preparing"],
-            "logPath": str(log_path),
-            "exitPath": str(exit_path),
-            "lastLines": [],
-            "errorMessage": "",
+    ok, code, message = _check_fixed_systemctl("start", debug_logs)
+    if not ok:
+        state["run"] = {
+            **DEFAULT_UPDATE_STATE["run"],
+            "status": "failed",
             "tag": tag,
+            "errorCode": code,
+            "message": message,
         }
-    )
-    try:
-        runner = _write_runner_script(command, log_path, exit_path)
-        log_handle = log_path.open("a", encoding="utf-8")
-        log_handle.write(f"\n[{_now()}] start update: {tag}\n")
-        log_handle.write(f"command: {' '.join(command)}\n")
-        process = subprocess.Popen(
-            ["bash", str(runner)],
-            cwd=str(_repo_root()),
-            stdout=log_handle,
-            stderr=subprocess.STDOUT,
-        )
-        log_handle.close()
-    except Exception as exc:
-        _write_task(
-            {
-                **task,
-                "status": "failed",
-                "finishedAt": _now(),
-                "exitCode": -1,
-                "errorMessage": f"更新脚本启动失败：{exc}",
-                "lastLines": _tail_lines(log_path, 100),
-            }
-        )
-        write_audit(actor=actor, action="updates.run", resource="system", result="failed", message=str(exc))
-        raise HTTPException(status_code=500, detail="更新脚本启动失败") from exc
+        store.write(state)
+        write_audit(actor=actor, action="updates.start", resource="system", result="failed", message=message)
+        return _make_status(state, debug_logs, prefer_run_status=True)
 
-    task["pid"] = process.pid
-    task["lastLines"] = _tail_lines(log_path, 100)
-    _write_task(task)
-    threading.Thread(target=_monitor_update_process, args=(process, task_id), daemon=True).start()
-
+    task = _updater_status_to_task(_read_updater_status())
+    if task.get("status") == "idle":
+        task.update({
+            "status": "running",
+            "currentStep": "queued",
+            "progress": 1,
+            "tag": tag,
+            "updatedAt": _now(),
+            "errorMessage": "",
+        })
     state["run"] = _task_to_run(task)
-    state["run"]["message"] = "更新任务已启动，可在版本弹窗查看实时进度。"
+    state["run"]["message"] = "受限 updater 已启动，可在版本弹窗查看状态。"
     store.write(state)
     write_audit(
         actor=actor,
-        action="updates.run",
+        action="updates.start",
         resource="system",
         target=tag,
         result="success",
-        message="Started deploy/update.sh",
+        message="Started srblogs-updater.service",
         ip=request.client.host if request.client else "",
-        detail={"pid": process.pid, "log": str(log_path), "taskId": task_id},
+        detail={"service": UPDATER_SERVICE, "request": str(UPDATER_REQUEST_FILE)},
     )
     return _make_status(state, debug_logs, prefer_run_status=True)

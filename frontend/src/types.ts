@@ -165,6 +165,10 @@ export interface PhotoItem {
   description?: string
   date?: string
   tags?: string[]
+  view_count?: number
+  like_count?: number
+  comment_count?: number
+  share_count?: number
 }
 
 export interface PhotoAlbum {
@@ -174,6 +178,10 @@ export interface PhotoAlbum {
   date?: string
   tags?: string[]
   tagColors?: Record<string, string>
+  view_count?: number
+  like_count?: number
+  comment_count?: number
+  share_count?: number
   photos: PhotoItem[]
 }
 

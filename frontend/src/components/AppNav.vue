@@ -5,17 +5,27 @@ import { useRoute } from 'vue-router'
 const open = ref(false)
 const hidden = ref(false)
 const route = useRoute()
-const links = [
-  ['首页', '/'],
-  ['文章', '/posts'],
-  ['相册', '/photowall'],
-  ['说说', '/moments'],
-  ['音乐', '/music'],
-  ['项目', '/projects'],
-  ['友链', '/friends']
+type NavItem = {
+  label: string
+  path: string
+}
+
+const links: NavItem[] = [
+  { label: '首页', path: '/' },
+  { label: '文章', path: '/posts' },
+  { label: '相册', path: '/photowall' },
+  { label: '说说', path: '/moments' },
+  { label: '音乐', path: '/music' },
+  { label: '项目', path: '/projects' },
+  { label: '友链', path: '/friends' }
 ]
 const activePath = computed(() => route.path)
 let lastY = 0
+
+function isActive(link: NavItem | { path: string }) {
+  if (link.path === '/posts') return activePath.value.startsWith('/posts') || activePath.value.startsWith('/chatters')
+  return activePath.value === link.path || (link.path !== '/' && activePath.value.startsWith(`${link.path}/`))
+}
 
 function onScroll() {
   const current = window.scrollY
@@ -44,7 +54,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <header class="app-topbar fixed left-0 right-0 top-0 z-40" :class="hidden ? 'app-topbar-hidden' : ''">
+  <header
+    class="app-topbar fixed left-0 right-0 top-0 z-40"
+    :class="[hidden ? 'app-topbar-hidden' : '']"
+  >
     <nav class="sr-page-shell flex min-w-0 items-center justify-between gap-4 py-3" aria-label="前台导航">
       <RouterLink to="/" class="group flex min-w-0 items-center" aria-label="返回首页">
         <span class="block min-w-0 truncate text-[24px] font-black leading-tight text-[var(--text-primary)]">
@@ -66,25 +79,25 @@ onBeforeUnmount(() => {
       <div class="hidden min-w-0 items-center gap-6 lg:flex xl:gap-10">
         <RouterLink
           v-for="link in links"
-          :key="link[1]"
-          :to="link[1]"
-          class="nav-link relative rounded-2xl px-3 py-2 text-sm transition"
-          :class="activePath === link[1] ? 'nav-link-active' : 'nav-link-idle'"
-        >
-          {{ link[0] }}
-        </RouterLink>
+          :key="link.path"
+            :to="link.path"
+            class="nav-link relative rounded-2xl px-3 py-2 text-sm transition"
+            :class="isActive(link) ? 'nav-link-active' : 'nav-link-idle'"
+          >
+            {{ link.label }}
+          </RouterLink>
       </div>
     </nav>
 
     <div v-if="open" id="mobile-nav" class="sr-page-shell grid grid-cols-2 gap-2 pb-3 sm:grid-cols-3 lg:hidden">
       <RouterLink
         v-for="link in links"
-        :key="link[1]"
-        :to="link[1]"
+        :key="link.path"
+        :to="link.path"
         class="rounded-2xl border border-white/10 bg-white/[0.07] px-3 py-2 text-sm text-white/80 hover:bg-white/10"
         @click="open = false"
       >
-        {{ link[0] }}
+        {{ link.label }}
       </RouterLink>
     </div>
   </header>

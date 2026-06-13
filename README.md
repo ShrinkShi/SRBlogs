@@ -43,7 +43,7 @@ SRBlogs 面向个人站长、内容创作者和需要轻量自托管博客的开
 - SEO 输出：提供 RSS、Sitemap、Robots、OpenGraph/Twitter Card 等公开输出。
 - 操作反馈：后台使用项目内 Toast 和确认弹窗，不再依赖浏览器原生 `alert` / `confirm`。
 - 运维能力：提供审计日志 API、备份/导入导出接口、生产环境模板、Nginx/systemd 示例和健康检查脚本。
-- 版本更新：后台读取本地版本常量并检测 GitHub Releases，提供错误分类和调试日志；Linux 服务器可由后端触发 `deploy/update.sh` 安全更新，Windows 本地开发环境仅支持检测并明确显示不支持一键更新。
+- 版本更新：后台读取本地版本常量并检测 GitHub Releases，提供错误分类和调试日志；Linux 服务器可安装 root-owned 受限 updater 后由 WebUI 触发 systemd 更新任务，Windows 本地开发环境仅支持版本检测。
 
 ## 后台管理体验
 
@@ -193,7 +193,7 @@ Windows 推荐从仓库根目录运行：
 | `SMTP_*` | 空 | 否 | 联系表单邮件发送配置 |
 | `SRBLOGS_UPDATE_REPO` | `ShrinkShi/SRBlogs` | 否 | GitHub Release 检测仓库 |
 | `SRBLOGS_UPDATE_ENABLED` | `true` | 否 | 是否允许 Linux 服务器端一键更新；Windows 本地只检测版本 |
-| `SRBLOGS_UPDATE_COMMAND` | 空 | 否 | 历史兼容字段；当前更新流程优先使用 `deploy/update.sh` |
+| `SRBLOGS_UPDATE_COMMAND` | 空 | 否 | 历史兼容字段；当前 WebUI 一键更新不读取该字段 |
 | `VITE_API_BASE_URL` | `http://127.0.0.1:8000/api` | 开发建议 | 前台/管理端 API 地址 |
 
 生产配置可从 `backend/.env.production.example` 复制，不要提交真实密钥。
@@ -282,7 +282,7 @@ sudo bash /opt/srblogs/deploy/doctor.sh
 sudo bash /opt/srblogs/deploy/doctor.sh
 ```
 
-诊断项包括 Python 3.11、Node/npm、nginx、systemd、`sudo -n true`、8000 端口、安装状态接口、后端版本、公开设置接口、更新任务日志、`backend/data` 写入权限、构建产物、默认 Nginx 冲突、swap 和默认弱密钥。后端健康检查优先使用 `/api/health`，兼容旧的 `/api/system/health`，最多重试 30 次、每次间隔 2 秒，并输出真实可用 endpoint。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
+诊断项包括 Python 3.11、Node/npm、nginx、systemd、受限 updater service/sudoers、8000 端口、安装状态接口、后端版本、公开设置接口、更新任务日志、`backend/data` 写入权限、构建产物、默认 Nginx 冲突、swap 和默认弱密钥。后端健康检查优先使用 `/api/health`，兼容旧的 `/api/system/health`，最多重试 30 次、每次间隔 2 秒，并输出真实可用 endpoint。存在 FAIL 时退出码为 `1`；只有 WARN 或全 PASS 时退出码为 `0`。
 
 #### 保守安全策略
 
@@ -321,14 +321,27 @@ sudo systemctl enable --now srblogs-backend
 后台左侧底部版本入口会请求：
 
 - `GET /api/admin/update/status`：读取 `backend/app/version.py` 当前版本，检测 GitHub Latest Release，并返回 `errorCode`、`errorMessage`、`platform` 和 `debugLogs`。
-- `POST /api/admin/update/run`：仅管理员可调用。Linux 服务器会下载 Release zip 并调用 `deploy/update.sh`；Windows 本地开发环境直接返回 `unsupported_platform`，不会尝试执行 shell 更新。
-- `GET /api/admin/update/task`：返回最近一次更新任务的 `taskId`、`status`、`pid`、`exitCode`、`currentStep`、`progress` 和日志路径。
-- `GET /api/admin/update/logs?lines=100`：返回最近 N 行更新日志，后台版本弹窗会每 2 秒轮询展示进度和终端日志。
+- `POST /api/admin/update/start`：仅管理员可调用。后端只会写入 `/var/lib/srblogs/update/request.json` 并执行固定命令 `sudo -n systemctl start srblogs-updater.service`；兼容旧前端的 `POST /api/admin/update/run` 也会转到同一逻辑。
+- `GET /api/admin/update/task`：读取 `/var/lib/srblogs/update/status.json`，返回最近一次更新任务的 `taskId`、`status`、`pid`、`exitCode`、`currentStep`、`progress` 和日志路径。
+- `GET /api/admin/update/logs?lines=100`：返回 updater 最近 N 行日志，版本弹窗会轮询展示进度和终端日志。
 - `GET /api/admin/update/progress`：返回面向 WebUI 的当前步骤、百分比、最近日志和 `updatedAt`，用于判断长时间无日志输出的卡住风险。
 
 如果 GitHub 没有创建 Release，弹窗会显示“未找到 GitHub Release”；如果网络不可达、超时或 API 限流，会显示对应错误并可展开“查看日志”。
 
-WebUI 触发的一键更新会在后台写入 `backend/data/update_logs/update-task.json` 和 `update-YYYYMMDDHHMMSS.log`。如果后端不是 root 运行，服务器必须配置免密码 sudo；否则接口会返回 `sudo_password_required`，不会启动更新任务。`srblogs-backend.service` 需要包含 `KillMode=process`，确保更新脚本在后端重启时继续执行并写回最终退出码。
+Web 后端不会以 root 运行，也不会接收或执行任意 shell 命令。生产服务器如需启用 WebUI 一键更新，先由 root 安装受限 updater：
+
+```bash
+sudo bash /opt/srblogs/deploy/install-updater.sh
+```
+
+安装内容包括：
+
+- `/usr/local/sbin/srblogs-update`：root:root 固定更新流程，只允许从 `ShrinkShi/SRBlogs` GitHub Releases 下载。
+- `/etc/systemd/system/srblogs-updater.service`：root 运行的一次性 updater service。
+- `/etc/sudoers.d/srblogs-updater`：只允许 `srblogs` 用户免密码执行 `systemctl start/status srblogs-updater.service`，禁止 `NOPASSWD: ALL`。
+- `/var/lib/srblogs/update/status.json`、`request.json` 和 `updater.log`：WebUI 读取状态、写入目标版本、展示日志。
+
+如果未安装 updater、没有 systemd、没有 sudoers 权限或不是 Linux，WebUI 会显示“当前环境不支持一键更新”，并提示执行 `deploy/install-updater.sh`。
 
 确认服务状态和日志：
 
@@ -392,10 +405,11 @@ sudo systemctl reload nginx
 | 生产构建 | `bash deploy/build-all.sh` |
 | Linux 一键安装预览 | `sudo bash deploy/install.sh --dry-run --zip /opt/SRBlogs-main.zip` |
 | Linux 一键安装 | `sudo bash deploy/install.sh --zip /opt/SRBlogs-main.zip` |
-| Linux 一键更新预览 | `sudo bash /opt/srblogs/deploy/update.sh --dry-run --zip /opt/SRBlogs-main.zip` |
-| Linux 一键更新 | `sudo bash /opt/srblogs/deploy/update.sh --zip /opt/SRBlogs-main.zip` |
+| Linux 手动更新预览 | `sudo bash /opt/srblogs/deploy/update.sh --dry-run --zip /opt/SRBlogs-main.zip` |
+| Linux 手动更新 | `sudo bash /opt/srblogs/deploy/update.sh --zip /opt/SRBlogs-main.zip` |
+| 安装 WebUI 受限 updater | `sudo bash /opt/srblogs/deploy/install-updater.sh` |
 | Linux 部署诊断 | `sudo bash /opt/srblogs/deploy/doctor.sh` |
-| 部署脚本语法检查 | `bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh` |
+| 部署脚本语法检查 | `bash -n deploy/install.sh deploy/update.sh deploy/doctor.sh deploy/install-updater.sh` |
 | 健康检查 | `PUBLIC_BASE_URL=https://example.com API_BASE_URL=http://127.0.0.1:8000 bash deploy/healthcheck.sh` |
 | 查看 systemd 服务 | `systemctl status srblogs-backend --no-pager` |
 | 查看 systemd 日志 | `sudo journalctl -u srblogs-backend -n 100 --no-pager` |
@@ -477,7 +491,7 @@ SRBlogs/
 - Nginx 的 `client_max_body_size` 应与 `UPLOAD_MAX_SIZE` 保持一致或更大。
 - 不要直接暴露 `.env`、`.manual_backups`、`audit`、源代码目录、`node_modules` 或构建内部文件。
 - 首次部署后访问 `/install` 完成初始化；安装完成会创建 `backend/data/.install.lock`，重复访问安装 API 会被拒绝。
-- 生产推荐先上传 zip，再执行 `deploy/install.sh --zip`；更新时使用 `deploy/update.sh --zip`，不要直接覆盖 `/opt/srblogs`。
+- 生产推荐先上传 zip，再执行 `deploy/install.sh --zip`；手动更新时使用 `deploy/update.sh --zip`，不要直接覆盖 `/opt/srblogs`。WebUI 一键更新需先安装受限 updater。
 - 如后台保存站点标题、主题外观后前台刷新仍不生效，运行 `sudo bash /opt/srblogs/deploy/doctor.sh`，检查 `settings.json`、`/api/settings/public` 内容和 Cache-Control 响应头。
 - 如更新失败且出现 `rollback attempted but healthcheck failed`，优先查看 `/var/log/srblogs/update.TIMESTAMP.log` 和 `sudo journalctl -u srblogs-backend -n 100 --no-pager`。
 - 更新脚本的健康检查以 `GET /api/health` 为准，返回示例为 `{"ok":true,"app":"SRBlogs API"}`；旧路径 `/api/system/health` 仅作为兼容兜底。
@@ -489,7 +503,7 @@ SRBlogs/
 - 上传接口需要管理员 JWT；后端会校验文件类型和大小。
 - 公开设置接口只应返回非敏感状态，例如 provider 是否已配置，不返回 Secret 明文。
 - 留言、登录、上传、备份、恢复、系统状态和更新触发等能力都应通过后端鉴权边界访问。
-- 一键更新由后端在 Linux 服务器上调用 `deploy/update.sh`；Windows 本地开发环境会显示不支持，不会伪造更新成功。
+- WebUI 一键更新只会触发 root-owned `srblogs-updater.service`，不会由后端直接执行 `deploy/update.sh` 或任意 shell 命令；Windows 本地开发环境只支持检查更新，不会伪造更新成功。
 
 ## 已知问题
 

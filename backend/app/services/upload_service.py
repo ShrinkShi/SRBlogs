@@ -11,7 +11,6 @@ ALLOWED_EXTENSIONS = {
     ".png",
     ".gif",
     ".webp",
-    ".svg",
     ".mp3",
     ".wav",
     ".ogg",
@@ -22,13 +21,12 @@ ALLOWED_EXTENSIONS = {
     ".lrc",
     ".txt",
 }
-COMMENT_UPLOAD_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".txt", ".md", ".pdf"}
+COMMENT_UPLOAD_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".txt", ".md", ".pdf"}
 COMMENT_UPLOAD_MIME_TYPES = {
     "image/jpeg",
     "image/png",
     "image/gif",
     "image/webp",
-    "image/svg+xml",
     "text/plain",
     "text/markdown",
     "application/pdf",
@@ -36,7 +34,7 @@ COMMENT_UPLOAD_MIME_TYPES = {
 }
 COMMENT_UPLOAD_MAX_SIZE = 2 * 1024 * 1024
 
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".ogg", ".m4a"}
 VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov"}
 LYRIC_EXTENSIONS = {".lrc", ".txt"}

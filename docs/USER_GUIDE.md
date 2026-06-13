@@ -463,6 +463,10 @@ QQ 邮箱通常需要 SMTP 授权码，不是 QQ 登录密码。SMTP 密码只�
 
 后台侧边栏版本入口会显示当前后端版本，并可检查 `ShrinkShi/SRBlogs` 的 GitHub Releases。发现新版本后，可以触发“一键更新”。
 
-一键更新只在 Linux 服务器环境执行：后端下载 GitHub Release zipball，并调用仓库内 `deploy/update.sh`。Windows 本地开发环境会明确显示“不支持”，不会伪造更新成功。
+一键更新只在 Linux 服务器环境执行，并且需要先由 root 安装受限 updater：
 
-后台页面不会保存或发送 shell 命令；更新流程必须由后端安全接口执行，并复用可备份、可回滚的部署脚本。
+```bash
+sudo bash /opt/srblogs/deploy/install-updater.sh
+```
+
+后台不会保存或发送 shell 命令。Web 后端只写入 `/var/lib/srblogs/update/request.json` 并触发固定的 `srblogs-updater.service`；真正更新由 root-owned `/usr/local/sbin/srblogs-update` 完成。Windows 本地开发环境只支持检查更新，会明确显示“不支持一键更新”。

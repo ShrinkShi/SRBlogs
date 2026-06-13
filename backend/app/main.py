@@ -30,6 +30,7 @@ from app.version import APP_NAME, APP_VERSION
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name)
+cors_allow_credentials = "*" not in settings.cors_list
 
 NO_STORE_HEADERS = {
     "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
@@ -72,7 +73,7 @@ async def validation_exception_handler(request, exc: RequestValidationError):
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_list,
-    allow_credentials=True,
+    allow_credentials=cors_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )

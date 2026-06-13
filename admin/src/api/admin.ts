@@ -197,7 +197,7 @@ export const adminApi = {
     return data
   },
   runUpdate: async (tag = '') => {
-    const { data } = await http.post<UpdateStatus>('/admin/update/run', { tag })
+    const { data } = await http.post<UpdateStatus>('/admin/update/start', { tag })
     return data
   },
   updateTask: async () => {
