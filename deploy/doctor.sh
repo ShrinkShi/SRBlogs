@@ -4,7 +4,7 @@ set -euo pipefail
 APP_DIR="/opt/srblogs"
 ENV_DIR="/etc/srblogs"
 DOMAIN="_"
-TARGET_VERSION="1.2.2"
+TARGET_VERSION="1.3.0"
 DRY_RUN=0
 PASS_COUNT=0
 WARN_COUNT=0

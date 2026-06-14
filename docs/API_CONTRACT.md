@@ -953,7 +953,7 @@ Query锛?- `limit`锛氶粯璁?50锛屾渶澶?200銆?- `offset`锛氶粯璁?0銆
     "readable": true,
     "writable": true
   },
-  "version": "1.2.2"
+  "version": "1.3.0"
 }
 ```
 
@@ -1434,19 +1434,19 @@ Albums remain limited to 50 photos. If a batch upload selection exceeds the rema
 ```json
 {
   "repo": "ShrinkShi/SRBlogs",
-  "currentVersion": "1.2.2",
-  "latestVersion": "v1.2.2",
+  "currentVersion": "1.3.0",
+  "latestVersion": "v1.3.0",
   "hasUpdate": false,
-  "releaseUrl": "https://github.com/ShrinkShi/SRBlogs/releases/tag/v1.2.2",
+  "releaseUrl": "https://github.com/ShrinkShi/SRBlogs/releases/tag/v1.3.0",
   "publishedAt": "2026-05-23T00:00:00Z",
   "notes": "...",
   "status": "latest",
   "message": "",
   "updateSupported": true,
   "latest": {
-    "tag": "v1.2.2",
-    "name": "v1.2.2",
-    "url": "https://github.com/ShrinkShi/SRBlogs/releases/tag/v1.2.2",
+    "tag": "v1.3.0",
+    "name": "v1.3.0",
+    "url": "https://github.com/ShrinkShi/SRBlogs/releases/tag/v1.3.0",
     "publishedAt": "2026-05-23T00:00:00Z",
     "body": "...",
     "error": ""
@@ -1475,7 +1475,7 @@ Albums remain limited to 50 photos. If a batch upload selection exceeds the rema
 请求体：
 
 ```json
-{ "tag": "v1.2.2" }
+{ "tag": "v1.3.0" }
 ```
 
 保存被忽略的 Release tag，之后同一 tag 不再提示 `updateAvailable=true`。
@@ -1485,7 +1485,7 @@ Albums remain limited to 50 photos. If a batch upload selection exceeds the rema
 请求体：
 
 ```json
-{ "tag": "v1.2.2" }
+{ "tag": "v1.3.0" }
 ```
 
 Linux 服务器不会由 Web 后端直接下载包或执行任意 shell。该接口仅写入 `/var/lib/srblogs/update/request.json`，然后执行固定命令 `sudo -n systemctl start srblogs-updater.service`。真正更新由 root-owned `/usr/local/sbin/srblogs-update` 和 `srblogs-updater.service` 完成。未安装 updater、无 systemd、无 sudoers 权限或 Windows 本地环境会返回 `status=unsupported`。兼容旧前端的 `POST /api/admin/update/run` 会转到同一逻辑。

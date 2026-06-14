@@ -1,4 +1,10 @@
 # HISTORY
+## 2026-06-14 - v1.3.0 发布准备：版本号同步
+
+- 项目版本统一到 `v1.3.0`，同步根目录 `VERSION`、后端 `backend/app/version.py`、前后台 `package.json` 与 lockfile 顶层版本。
+- `deploy/doctor.sh` 目标版本更新为 `v1.3.0`，便于生产部署诊断校验当前后端版本。
+- README 与 `docs/API_CONTRACT.md` 中的当前版本、版本接口示例和 Release 示例同步更新到 `v1.3.0`。
+
 ## 2026-06-13 - Linux 在线安装入口与部署文档收口
 
 - 新增 `deploy/install-online.sh`，支持一行 `curl` 下载后进入中文 TUI，优先适配 Ubuntu 22.04 `apt`，并兼容 `dnf` / `yum`。
